@@ -1,0 +1,117 @@
+COGNITIVE BEHAVIORAL THERAPY (CBT) — CORE KNOWLEDGE BASE
+
+=== WHAT IS CBT ===
+Cognitive Behavioral Therapy is a structured, evidence-based psychological treatment that focuses on the relationship between thoughts, feelings, and behaviors. It is based on the idea that negative thought patterns cause negative emotions and behaviors, and that changing these patterns leads to improved wellbeing.
+
+=== CORE PRINCIPLES ===
+1. Thoughts influence feelings and behaviors
+2. Negative automatic thoughts (NATs) distort reality
+3. Behavioral patterns reinforce emotional states
+4. Skills can be learned to identify and change unhelpful patterns
+5. Present-focused — addresses current problems, not just past causes
+
+=== COGNITIVE DISTORTIONS ===
+These are irrational thought patterns that cause distress:
+
+ALL-OR-NOTHING THINKING: Seeing things in black and white, no middle ground.
+Example: "If I don't get 90%, I'm a complete failure."
+Response: "What would be a more balanced way to see this? Partial success is still progress."
+
+CATASTROPHIZING: Expecting the worst possible outcome.
+Example: "I failed this test. My life is ruined."
+Response: "What is the most realistic outcome? How likely is the worst case?"
+
+MIND READING: Assuming you know what others think.
+Example: "Everyone thinks I'm stupid."
+Response: "What evidence do you have for this? Could there be another explanation?"
+
+OVERGENERALIZATION: Drawing broad conclusions from one event.
+Example: "This always happens to me. I never succeed at anything."
+Response: "Is this always true? Can you think of times it wasn't?"
+
+PERSONALIZATION: Blaming yourself for things outside your control.
+Example: "My parents are fighting because of me."
+Response: "What factors are actually within your control here?"
+
+EMOTIONAL REASONING: Believing feelings reflect reality.
+Example: "I feel worthless, so I must be worthless."
+Response: "Feelings are not facts. What evidence exists for and against this thought?"
+
+SHOULD STATEMENTS: Rigid rules about how things must be.
+Example: "I should always be productive. I should never feel sad."
+Response: "Where did this rule come from? Is it realistic and helpful?"
+
+FILTERING: Focusing only on negatives, ignoring positives.
+Example: "I got one question wrong. The whole exam was terrible."
+Response: "What did you do well? What is the complete picture?"
+
+=== CBT TECHNIQUES ===
+
+THOUGHT RECORD (5-column technique):
+1. Situation: What happened?
+2. Automatic thought: What went through your mind?
+3. Emotion: What did you feel? Rate intensity 0-100
+4. Evidence for / against the thought
+5. Balanced thought: A more realistic perspective
+
+BEHAVIORAL ACTIVATION:
+When depressed, people withdraw from activities. This worsens depression.
+Steps: 1) List activities that used to bring pleasure. 2) Schedule small ones daily. 3) Do them even when you don't feel like it. 4) Notice mood changes.
+
+GRADED EXPOSURE:
+For anxiety and fear: Create a hierarchy of feared situations (least to most scary).
+Start with least scary. Practice until anxiety reduces. Move to next level.
+
+PROBLEM SOLVING:
+1. Define the problem clearly
+2. Brainstorm all possible solutions
+3. Evaluate pros and cons of each
+4. Choose best solution
+5. Implement and review
+
+RELAXATION AND BREATHING:
+4-7-8 breathing: Inhale 4 counts, hold 7 counts, exhale 8 counts.
+Progressive muscle relaxation: Tense and release muscle groups systematically.
+
+=== CBT FOR COMMON ISSUES ===
+
+DEPRESSION:
+- Identify and challenge negative thoughts about self, world, future (Beck's cognitive triad)
+- Behavioral activation — schedule pleasurable activities
+- Activity monitoring — track mood vs activity
+- Social connection — isolation worsens depression
+
+ANXIETY:
+- Identify anxiety triggers
+- Challenge catastrophic thinking
+- Gradual exposure to feared situations
+- Relaxation techniques
+- Worry time — schedule 15 minutes daily for worries
+
+EXAM AND ACADEMIC STRESS (very common in India):
+- Separate performance from self-worth
+- Realistic goal setting
+- Study skills and time management
+- Challenge perfectionism
+- Address fear of disappointing family
+
+FAMILY PRESSURE (Indian context):
+- Validate feelings without feeding catastrophic thoughts
+- Communication skills — express needs assertively
+- Boundary setting
+- Distinguish between others' expectations and personal values
+
+LOW SELF-ESTEEM:
+- Core belief identification
+- Positive data log — record evidence against negative beliefs
+- Self-compassion exercises
+- Challenging the inner critic
+
+=== SOCRATIC QUESTIONING ===
+Use these questions to challenge unhelpful thoughts:
+- What is the evidence for and against this thought?
+- What would you tell a friend who had this thought?
+- Is there another way to look at this situation?
+- What is the worst that could happen? How likely is it? Could you cope?
+- What is the most realistic outcome?
+- How will you feel about this in 5 years?
