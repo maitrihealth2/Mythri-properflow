@@ -576,6 +576,9 @@ export default function VoiceModePage() {
             <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
             </Link>
+            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
+            </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
             <button onClick={() => { localStorage.clear(); router.replace('/login'); }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout

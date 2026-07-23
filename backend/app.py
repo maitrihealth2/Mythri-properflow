@@ -19,6 +19,7 @@ from api.consultation import router as consultation_router
 from api.voice import router as voice_router
 from api.streaming import router as streaming_router
 from api.telemetry import router as telemetry_router
+from api.feedback import router as feedback_router
 
 import asyncio
 
@@ -91,6 +92,7 @@ app.include_router(consultation_router)
 app.include_router(voice_router)
 app.include_router(streaming_router)
 app.include_router(telemetry_router)
+app.include_router(feedback_router)
 
 
 from fastapi.exceptions import RequestValidationError
@@ -124,6 +126,10 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     log_error_to_file(err)
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    from fastapi import Response
+    return Response(status_code=204)
 
 @app.get("/health")
 def health():

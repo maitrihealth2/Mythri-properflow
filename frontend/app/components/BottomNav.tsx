@@ -7,6 +7,7 @@ const navItems = [
   { href: '/history', label: 'Journal', icon: 'history' },
   { href: '/consultation', label: 'Chat', icon: 'health_and_safety' },
   { href: '/profile', label: 'Profile', icon: 'person' },
+  { href: '/feedback', label: 'Feedback', icon: 'feedback' },
 ]
 
 export default function BottomNav() {

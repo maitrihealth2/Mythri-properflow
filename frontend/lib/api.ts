@@ -112,3 +112,8 @@ export async function getDashboardStats() {
   const res = await api.get('/api/consultation/dashboard_stats/overview')
   return res.data
 }
+
+export async function submitFeedback(content: string) {
+  const res = await api.post('/api/feedback/submit', { content })
+  return res.data
+}

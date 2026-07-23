@@ -305,6 +305,16 @@ class RiskLog(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     session = relationship("Session", back_populates="risk_logs")
+class UserFeedback(Base):
+    __tablename__ = "user_feedback"
+    __table_args__ = {'comment': 'User feedback and feature requests'}
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=func.now())
+
+    user = relationship("User")
 
 
 def get_db():
