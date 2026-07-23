@@ -1,9 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { login, register, googleLogin } from '../../lib/api'
 import { auth, googleProvider } from '../../lib/firebase'
-import { signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { signInWithPopup } from 'firebase/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -14,41 +14,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth)
-        if (result) {
-          setLoading(true)
-          const idToken = await result.user.getIdToken()
-          const data = await googleLogin(idToken)
-          localStorage.setItem('mb_token', data.access_token)
-          localStorage.setItem('mb_username', data.username)
-          localStorage.setItem('mb_language', 'en-IN')
-          sessionStorage.removeItem('mb_session_id')
-          if (typeof window !== 'undefined' && (window as any).gtag) {
-             (window as any).gtag('event', 'login', { method: 'Google' })
-          }
-          window.location.href = '/home'
-        }
-      } catch (err: any) {
-        console.error("Redirect Error:", err)
-        setError(err?.response?.data?.detail || err.message || "Google Sign-In failed.")
-      } finally {
-        setLoading(false)
-      }
-    }
-    handleRedirectResult()
-  }, [router])
-
   const handleGoogleLogin = async () => {
     try {
       setLoading(true)
       setError('')
-      await signInWithRedirect(auth, googleProvider)
+      const result = await signInWithPopup(auth, googleProvider)
+      const idToken = await result.user.getIdToken()
+      const data = await googleLogin(idToken)
+      localStorage.setItem('mb_token', data.access_token)
+      localStorage.setItem('mb_username', data.username)
+      localStorage.setItem('mb_language', 'en-IN')
+      sessionStorage.removeItem('mb_session_id')
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'login', { method: 'Google' })
+      }
+      window.location.href = '/home'
     } catch (err: any) {
       console.error("Google Auth Error:", err)
-      setError(err?.message || "Failed to initialize Google Sign-In.")
+      setError(err?.response?.data?.detail || err.message || "Google Sign-In failed.")
       setLoading(false)
     }
   }

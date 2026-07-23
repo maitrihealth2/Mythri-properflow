@@ -8,7 +8,7 @@ api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('mb_token')
     if (token) {
-      config.headers.set('Authorization', `Bearer ${token}`)
+      config.headers.Authorization = `Bearer ${token}`
     }
   }
   return config
@@ -18,7 +18,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && !error.config?.url?.includes('/api/auth/')) {
         localStorage.removeItem('mb_token')
         localStorage.removeItem('mb_username')
         localStorage.removeItem('mb_language')

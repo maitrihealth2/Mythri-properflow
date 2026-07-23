@@ -1,6 +1,12 @@
 import os
+import pathlib
 import httpx
 from fastapi import HTTPException
+from dotenv import load_dotenv
+
+_BACKEND_DIR = pathlib.Path(__file__).resolve().parent.parent
+load_dotenv(_BACKEND_DIR / ".env")
+load_dotenv(_BACKEND_DIR / ".env.local", override=True)
 
 FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
 

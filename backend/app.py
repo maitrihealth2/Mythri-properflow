@@ -1,5 +1,10 @@
+import os
+import pathlib
 from dotenv import load_dotenv
-load_dotenv()  # Load .env before anything else reads os.getenv()
+
+_BACKEND_DIR = pathlib.Path(__file__).resolve().parent
+load_dotenv(_BACKEND_DIR / ".env")
+load_dotenv(_BACKEND_DIR / ".env.local", override=True)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,7 +68,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
