@@ -47,7 +47,16 @@ class RestartHandler(FileSystemEventHandler):
         print(f"\n[Watcher] Detected change in {event.src_path}. Restarting...")
         self.start_server()
 
+def check_rag_initialization():
+    chroma_path = os.path.join("knowledge", "chroma_db")
+    if not os.path.exists(chroma_path):
+        print(f"\n[Warning] RAG ChromaDB not found at '{chroma_path}'.")
+        print("[Warning] RAG features might fail. Please ensure your knowledge base is initialized.\n")
+    else:
+        print(f"[Info] RAG ChromaDB found at '{chroma_path}'. Seamless RAG is ready.\n")
+
 if __name__ == "__main__":
+    check_rag_initialization()
     event_handler = RestartHandler()
     observer = Observer()
     observer.schedule(event_handler, path='.', recursive=True)
