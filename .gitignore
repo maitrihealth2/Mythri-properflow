@@ -90,3 +90,6 @@ test_voice_output.wav
 
 # --- Personal Logs ---
 fareed_logs/
+
+# --- Agents ---
+.agents/
