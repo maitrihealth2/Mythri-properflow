@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindBridge | AI Architecture Data Routing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; margin: 0; padding: 0; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .diagram-container { position: relative; width: 1200px; height: 650px; margin: 40px auto; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 20px 20px; border-radius: 20px; border: 1px solid #1e293b; box-shadow: inset 0 0 50px #000; }
+        svg.data-routes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .route-line { fill: none; stroke: rgba(56, 189, 248, 0.2); stroke-width: 2; stroke-dasharray: 4; animation: dash 20s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -1000; } }
+        .data-packet { fill: #38bdf8; filter: drop-shadow(0 0 6px #38bdf8); opacity: 0; }
+        .data-packet.ai-packet { fill: #a855f7; filter: drop-shadow(0 0 6px #a855f7); }
+        .data-packet.api-packet { fill: #34d399; filter: drop-shadow(0 0 6px #34d399); }
+        .node { position: absolute; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(51, 65, 85, 0.8); backdrop-filter: blur(8px); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 15px; z-index: 20; transition: all 0.3s ease; transform: translate(-50%, -50%); }
+        .node h3 { font-size: 14px; font-weight: 700; margin-bottom: 5px; color: #f8fafc; }
+        .node p { font-size: 10px; color: #94a3b8; line-height: 1.2; }
+        .node-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+        .node.active { border-color: #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.3); transform: translate(-50%, -50%) scale(1.05); }
+        .node.active-ai { border-color: #a855f7; box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); transform: translate(-50%, -50%) scale(1.05); }
+        .node.active-api { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.3); transform: translate(-50%, -50%) scale(1.05); }
+        .bar { width: 3px; background: #38bdf8; border-radius: 2px; display: inline-block; margin: 0 1px; animation: equalize 1s infinite alternate ease-in-out; }
+        @keyframes equalize { 0% { height: 4px; } 100% { height: 20px; } }
+        .bar:nth-child(1) { animation-delay: 0.1s; } .bar:nth-child(2) { animation-delay: 0.4s; } .bar:nth-child(3) { animation-delay: 0.0s; }
+        .brain-internal { background: rgba(0,0,0,0.4); border: 1px solid rgba(168,85,247,0.3); border-radius: 8px; padding: 10px; width: 100%; margin-bottom: 8px; text-align: left; }
+        .brain-internal span { font-size: 9px; text-transform: uppercase; color: #c084fc; font-weight: bold; }
+        .brain-internal div { font-size: 10px; color: #cbd5e1; font-family: monospace; margin-top: 4px; }
+    </style>
+</head>
+<body class="flex flex-col items-center pb-20">
+
+    <!-- 1: VOICE ARCHITECTURE -->
+    <header class="text-center mt-10 mb-4 w-full max-w-6xl">
+        <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-purple-500 mb-2">
+            MindBridge Live Data Routing: Voice Consultation
+        </h1>
+        <p class="text-slate-400">Next.js Client ➔ FastAPI (`voice.py`) ➔ Sarvam STT API ➔ AI Engine Cluster (`voice_client.py`) ➔ Sarvam TTS API ➔ SSE Stream</p>
+    </header>
+
+    <div class="diagram-container" id="diagram-voice">
+        <svg class="data-routes" id="svg-routes-voice">
+            <defs>
+                <marker id="arrow-sky" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(56, 189, 248, 0.5)" />
+                </marker>
+                <marker id="arrow-purple" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(168, 85, 247, 0.5)" />
+                </marker>
+            </defs>
+            <path id="path-mic-api" d="M 120 150 C 200 150, 200 325, 300 325" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-api-ffmpeg" d="M 300 325 C 250 450, 250 500, 300 500" class="route-line" />
+            <path id="path-ffmpeg-api" d="M 300 500 C 350 450, 350 450, 300 325" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-api-stt" d="M 300 325 C 400 150, 500 150, 600 150" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-stt-brain" d="M 600 150 C 750 150, 750 325, 950 325" class="route-line" style="stroke: rgba(168, 85, 247, 0.3)" marker-end="url(#arrow-purple)" />
+            
+            <path id="path-brain-tts" d="M 950 325 C 750 325, 750 500, 600 500" class="route-line" style="stroke: rgba(168, 85, 247, 0.3)" marker-end="url(#arrow-purple)" />
+            
+            <path id="path-tts-vpo" d="M 600 500 C 550 500, 500 500, 450 500" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-vpo-api" d="M 450 500 C 400 500, 400 325, 300 325" class="route-line" marker-end="url(#arrow-sky)" />
+            
+            <path id="path-api-speaker" d="M 300 325 C 200 325, 200 500, 120 500" class="route-line" marker-end="url(#arrow-sky)" />
+        </svg>
+
+        <div class="node" id="node-mic" style="left: 120px; top: 150px; width: 160px;">
+            <div class="node-icon bg-slate-800 border border-sky-500/50"><svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></div>
+            <h3>Client Mic</h3>
+            <p>Next.js Web Audio</p>
+            <div class="mt-2 h-6 flex items-end justify-center hidden w-full" id="eq-mic"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+        </div>
+
+        <div class="node" id="node-speaker" style="left: 120px; top: 500px; width: 160px;">
+            <div class="node-icon bg-slate-800 border border-green-500/50"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 19l-7-7 7-7v14z"></path></svg></div>
+            <h3>Client Speaker</h3>
+            <p>SSE Stream Playback</p>
+            <div class="mt-2 h-6 flex items-end justify-center hidden w-full" id="eq-speaker"><div class="bar !bg-green-400"></div><div class="bar !bg-green-400"></div><div class="bar !bg-green-400"></div></div>
+        </div>
+
+        <div class="node" id="node-fastapi" style="left: 300px; top: 325px; width: 140px; border-top: 3px solid #38bdf8;">
+            <h3>FastAPI Server</h3>
+            <p class="mono text-[9px] text-sky-300 mt-1">backend/app.py</p>
+            <p class="mt-2 text-[9px]">Uvicorn / WatchFiles</p>
+        </div>
+
+        <div class="node" id="node-ffmpeg" style="left: 300px; top: 500px; width: 140px; border-bottom: 3px solid #eab308;">
+            <h3>FFmpeg</h3>
+            <p class="mono text-[9px] text-yellow-300 mt-1">subprocess (Local)</p>
+            <p class="mt-1 text-[8px] bg-black p-1 rounded mono text-slate-300">-> 16kHz Mono WAV</p>
+        </div>
+        
+        <div class="node" id="node-vpo" style="left: 450px; top: 500px; width: 120px; border-bottom: 3px solid #f472b6;">
+            <h3>Vocal Prosody</h3>
+            <p class="mono text-[9px] text-pink-300 mt-1">Pitch Adjust</p>
+            <div class="mt-2 text-[8px] text-slate-400">Pitch & Speed</div>
+        </div>
+
+        <div class="node" id="node-stt" style="left: 600px; top: 150px; width: 160px; border-left: 3px solid #34d399;">
+            <div class="absolute -top-3 bg-emerald-500/20 text-emerald-400 text-[9px] px-2 py-0.5 rounded border border-emerald-500/50">API</div>
+            <h3>Sarvam STT</h3>
+            <p class="mono text-[9px] text-emerald-300 mt-1">Saaras:v3</p>
+            <div class="w-full bg-black/50 rounded mt-2 p-1 text-left min-h-[30px]"><span class="text-[9px] text-slate-500 block">Output:</span><span id="stt-text" class="text-[10px] text-white mono"></span></div>
+        </div>
+
+        <div class="node" id="node-tts" style="left: 600px; top: 500px; width: 160px; border-left: 3px solid #34d399;">
+            <div class="absolute -top-3 bg-emerald-500/20 text-emerald-400 text-[9px] px-2 py-0.5 rounded border border-emerald-500/50">API</div>
+            <h3>Sarvam TTS</h3>
+            <p class="mono text-[9px] text-emerald-300 mt-1">Bulbul v1</p>
+            <div class="w-full bg-black/50 rounded mt-2 p-1 text-left min-h-[30px]"><span class="text-[9px] text-slate-500 block">Input:</span><span id="tts-text" class="text-[10px] text-white mono"></span></div>
+        </div>
+
+        <div class="node border-2 border-purple-500/50" id="node-brain" style="left: 950px; top: 325px; width: 280px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(168,85,247,0.15);">
+            <div class="absolute -top-4 bg-purple-600 text-white text-[10px] px-3 py-1 rounded font-bold uppercase tracking-widest shadow-[0_0_10px_rgba(168,85,247,0.8)]">MindBridge AI Brain</div>
+            <div class="w-full grid grid-cols-2 gap-2 mt-2">
+                <div class="brain-internal" id="brain-emotion">
+                    <span>Emotion (Local)</span>
+                    <div>HuggingFace roberta</div>
+                    <div id="status-emotion" class="text-[9px] text-slate-500 mt-1">Idle</div>
+                </div>
+                <div class="brain-internal" id="brain-rag">
+                    <span>Therapy RAG</span>
+                    <div>knowledge/</div>
+                    <div id="status-rag" class="text-[9px] text-slate-500 mt-1">Idle</div>
+                </div>
+                <div class="brain-internal col-span-2" id="brain-analyst">
+                    <span>Dialogue State Manager (Brain 1)</span>
+                    <div>analyst.py</div>
+                    <div id="status-analyst" class="text-[9px] text-slate-500 mt-1">Idle</div>
+                </div>
+            </div>
+            <div class="w-full grid grid-cols-2 gap-2 mt-2 border-t border-purple-500/30 pt-2">
+                <div class="brain-internal !bg-slate-800/80 !border-slate-500" id="brain-transliterate">
+                    <span>Transliteration</span>
+                    <div>voice_client.py</div>
+                    <div id="status-transliterate" class="text-[9px] text-slate-400 mt-1">Idle</div>
+                </div>
+                <div class="brain-internal !bg-slate-800/80 !border-slate-500" id="brain-chunking">
+                    <span>Chunking & Pad</span>
+                    <div>voice_client.py</div>
+                    <div id="status-chunking" class="text-[9px] text-slate-400 mt-1">Idle</div>
+                </div>
+            </div>
+            <div class="w-full border-t border-purple-500/30 mt-2 pt-2">
+                <div class="brain-internal !bg-purple-900/20 !border-purple-400" id="brain-llm">
+                    <span>Maitri LLM Speaker (Brain 2)</span>
+                    <div>sarvam_client.py (sarvam-105b)</div>
+                    <div class="text-[8px] text-purple-300 mt-1">Phase Instructions Injected</div>
+                    <div id="status-llm" class="text-[10px] text-white mt-1 min-h-[40px] italic">Waiting for context...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2: FASTAPI SERVER -->
+    <header class="text-center mt-20 mb-4 w-full max-w-6xl">
+        <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400 mb-2">
+            FastAPI Server Architecture (Local)
+        </h2>
+        <p class="text-slate-400">Next.js Client ➔ API Router ➔ Local Database & Telemetry</p>
+    </header>
+    <div class="diagram-container" id="diagram-fastapi">
+        <svg class="data-routes" id="svg-routes-fastapi">
+            <defs>
+                <marker id="arrow-emerald" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(52, 211, 153, 0.5)" />
+                </marker>
+            </defs>
+            <path id="path-req-mid" d="M 120 325 C 200 325, 200 325, 250 325" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-mid-app" d="M 390 325 C 450 325, 450 325, 500 325" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-app-auth" d="M 640 325 C 750 325, 750 100, 850 100" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-app-cons" d="M 640 325 C 750 325, 750 210, 850 210" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-app-voice" d="M 640 325 C 750 325, 750 325, 850 325" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-app-stream" d="M 640 325 C 750 325, 750 435, 850 435" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-app-telem" d="M 640 325 C 750 325, 750 550, 850 550" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-router-db" d="M 990 325 C 1050 325, 1050 325, 1080 325" class="route-line" style="stroke: rgba(52, 211, 153, 0.3)" marker-end="url(#arrow-emerald)" />
+        </svg>
+
+        <div class="node" id="f-client" style="left: 120px; top: 325px; width: 140px;">
+            <h3>Client Request</h3>
+            <p>HTTP / SSE (Next.js)</p>
+        </div>
+        <div class="node" id="f-mid" style="left: 320px; top: 325px; width: 140px; border-top: 3px solid #f43f5e;">
+            <h3>Middlewares</h3>
+            <p>CORS, Error Handlers</p>
+        </div>
+        <div class="node border-2 border-sky-500/50" id="f-app" style="left: 570px; top: 325px; width: 140px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(56,189,248,0.15);">
+            <h3>FastAPI App</h3>
+            <p class="mono text-[9px] text-sky-300 mt-1">app.py Core</p>
+            <p class="text-[9px] text-slate-400 mt-2 text-left bg-black/40 p-2 rounded w-full">app = FastAPI(...)<br>app.include_router(...)</p>
+        </div>
+        <div class="node" id="f-auth" style="left: 920px; top: 100px; width: 140px; border-left: 3px solid #8b5cf6;">
+            <h3>Auth Router</h3>
+            <p class="mono text-[9px] text-purple-300 mt-1">/api/auth.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">JWT, Login, Register</p>
+        </div>
+        <div class="node" id="f-cons" style="left: 920px; top: 210px; width: 140px; border-left: 3px solid #8b5cf6;">
+            <h3>Consultation</h3>
+            <p class="mono text-[9px] text-purple-300 mt-1">/api/consultation.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">Text Chat, Exercise Tag</p>
+        </div>
+        <div class="node" id="f-voice" style="left: 920px; top: 325px; width: 140px; border-left: 3px solid #8b5cf6;">
+            <h3>Voice Router</h3>
+            <p class="mono text-[9px] text-purple-300 mt-1">/api/voice.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">Process Audio API</p>
+        </div>
+        <div class="node" id="f-stream" style="left: 920px; top: 435px; width: 140px; border-left: 3px solid #8b5cf6;">
+            <h3>Streaming</h3>
+            <p class="mono text-[9px] text-purple-300 mt-1">/api/streaming.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">SSE Audio Chunks</p>
+        </div>
+        <div class="node" id="f-telem" style="left: 920px; top: 550px; width: 140px; border-left: 3px solid #f97316;">
+            <h3>Telemetry Router</h3>
+            <p class="mono text-[9px] text-orange-300 mt-1">/api/telemetry.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">Live SSE Events</p>
+        </div>
+
+        <div class="node border-2 border-emerald-500/50" id="f-db" style="left: 1080px; top: 325px; width: 140px;">
+            <div class="node-icon bg-slate-800 border border-emerald-500/50"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg></div>
+            <h3>NeonDB Database</h3>
+            <p class="mono text-[9px] text-emerald-300 mt-1">Cloud PostgreSQL</p>
+            <p class="text-[9px] mt-1 text-slate-400">SQLAlchemy ORM</p>
+        </div>
+    </div>
+
+    <!-- 3: AI BRAIN INTERNALS -->
+    <header class="text-center mt-20 mb-4 w-full max-w-6xl">
+        <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 mb-2">
+            MindBridge Dual-Brain Internals (Local + Cloud)
+        </h2>
+        <p class="text-slate-400">Local HF Emotion ➔ Dialogue State Analyst (Brain 1) ➔ Memory/RAG ➔ Maitri Speaker (Brain 2)</p>
+    </header>
+    <div class="diagram-container" id="diagram-brain">
+        <svg class="data-routes" id="svg-routes-brain">
+            <path id="path-brain-in" d="M 120 325 C 200 325, 200 325, 250 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-analyst-emo" d="M 390 325 C 450 325, 450 150, 520 150" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-analyst-mem" d="M 390 325 C 450 325, 450 500, 520 500" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-analyst-rag" d="M 390 325 C 450 325, 450 325, 520 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-emo-llm" d="M 680 150 C 780 150, 780 325, 850 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-mem-llm" d="M 680 500 C 780 500, 780 325, 850 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-rag-llm" d="M 680 325 C 780 325, 780 325, 850 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-llm-out" d="M 1090 325 C 1120 325, 1120 325, 1150 325" class="route-line" marker-end="url(#arrow-purple)" />
+        </svg>
+
+        <div class="node" id="b-input" style="left: 120px; top: 325px; width: 140px;">
+            <h3>Input</h3>
+            <p>Text / Transcribed STT</p>
+        </div>
+        <div class="node" id="b-analyst" style="left: 320px; top: 325px; width: 140px; border-left: 3px solid #c084fc;">
+            <div class="absolute -top-3 bg-purple-500/20 text-purple-400 text-[9px] px-2 py-0.5 rounded border border-purple-500/50">BRAIN 1</div>
+            <h3>Dialogue State Analyst</h3>
+            <p class="mono text-[9px] text-purple-300 mt-1">analyst.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">Phase Instruction</p>
+        </div>
+        <div class="node" id="b-emo" style="left: 600px; top: 150px; width: 160px; border-left: 3px solid #f472b6;">
+            <div class="absolute -top-3 bg-fuchsia-500/20 text-fuchsia-400 text-[9px] px-2 py-0.5 rounded border border-fuchsia-500/50">LOCAL HF MODEL</div>
+            <h3>Emotion Detector</h3>
+            <p class="mono text-[9px] text-pink-300 mt-1">emotion_detector.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">roberta-base-go_emotions</p>
+        </div>
+        <div class="node" id="b-rag" style="left: 600px; top: 325px; width: 160px; border-left: 3px solid #38bdf8;">
+            <h3>Therapy RAG</h3>
+            <p class="mono text-[9px] text-sky-300 mt-1">FAISS / knowledge</p>
+            <p class="text-[9px] mt-1 text-slate-400">Knowledge Retrieval</p>
+        </div>
+        <div class="node" id="b-mem" style="left: 600px; top: 500px; width: 160px; border-left: 3px solid #fbbf24;">
+            <div class="absolute -top-3 bg-yellow-500/20 text-yellow-400 text-[9px] px-2 py-0.5 rounded border border-yellow-500/50">NEONDB CLOUD</div>
+            <h3>Memory Manager</h3>
+            <p class="mono text-[9px] text-yellow-300 mt-1">PostgreSQL DB</p>
+            <p class="text-[9px] mt-1 text-slate-400">Context & History</p>
+        </div>
+        <div class="node border-2 border-purple-500/50" id="b-llm" style="left: 970px; top: 325px; width: 240px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(168,85,247,0.15);">
+            <div class="absolute -top-3 bg-purple-500/20 text-purple-400 text-[9px] px-2 py-0.5 rounded border border-purple-500/50">BRAIN 2 (SARVAM API)</div>
+            <div class="node-icon bg-slate-800 border border-purple-500/50"><svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+            <h3>Maitri LLM Speaker</h3>
+            <p class="text-[10px] text-purple-300 mt-1 font-bold">True Companion Persona</p>
+            <p class="mono text-[9px] text-slate-300 mt-1">sarvam-105b</p>
+            <p class="text-[10px] text-slate-400 mt-3 text-left bg-black/50 p-2 rounded w-full font-mono">Prompt Synthesizer:<br>+ Analyst Phase Instruction<br>+ User Text<br>+ RAG Context<br>+ Memory DB</p>
+        </div>
+        <div class="node" id="b-out" style="left: 1150px; top: 325px; width: 120px;">
+            <h3>Output</h3>
+            <p>Response / TTS</p>
+        </div>
+    </div>
+
+    <!-- 4: TEXT CHAT DETAILED FLOW -->
+    <header class="text-center mt-20 mb-4 w-full max-w-6xl">
+        <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 mb-2">
+            Text Consultation & Exercise UI Routing
+        </h2>
+        <p class="text-slate-400">Next.js Keyboard ➔ FastAPI ➔ HF Emotion + RAG + DB ➔ Sarvam LLM ➔ Exercise UI Trigger</p>
+    </header>
+    <div class="diagram-container" id="diagram-text">
+        <svg class="data-routes" id="svg-routes-text">
+            <path id="path-key-router" d="M 120 325 C 200 325, 200 325, 320 325" class="route-line" marker-end="url(#arrow-sky)" />
+            <path id="path-router-crisis" d="M 320 325 C 450 325, 450 150, 550 150" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-router-rag" d="M 320 325 C 450 325, 450 260, 550 260" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-router-emo" d="M 320 325 C 450 325, 450 370, 550 370" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-router-mem" d="M 320 325 C 450 325, 450 480, 550 480" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-text-crisis-llm" d="M 550 150 C 700 150, 700 325, 850 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-text-rag-llm" d="M 550 260 C 700 260, 700 325, 850 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-text-emo-llm" d="M 550 370 C 700 370, 700 325, 850 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-text-mem-llm" d="M 550 480 C 700 480, 700 325, 850 325" class="route-line" marker-end="url(#arrow-purple)" />
+            <path id="path-text-llm-screen" d="M 850 325 C 980 325, 980 325, 1080 325" class="route-line" marker-end="url(#arrow-sky)" />
+        </svg>
+
+        <div class="node" id="n-text-key" style="left: 120px; top: 325px; width: 140px;">
+            <div class="node-icon bg-slate-800 border border-sky-500/50"><svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2zM4 10h16v4H4v-4zm2 2h2v2H6v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2z"></path></svg></div>
+            <h3>Client Keyboard</h3>
+            <p>Next.js Form</p>
+        </div>
+        <div class="node" id="n-text-router" style="left: 320px; top: 325px; width: 140px; border-left: 3px solid #38bdf8;">
+            <h3>FastAPI Router</h3>
+            <p class="mono text-[9px] text-sky-300 mt-1">consultation.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">Request Handler</p>
+        </div>
+        <div class="node" id="n-text-crisis" style="left: 550px; top: 150px; width: 160px; border-left: 3px solid #ef4444;">
+            <h3>Crisis Engine</h3>
+            <p class="mono text-[9px] text-red-300 mt-1">crisis_handler.py</p>
+            <p class="text-[9px] mt-1 text-slate-400">High-Risk Scan</p>
+        </div>
+        <div class="node" id="n-text-rag" style="left: 550px; top: 260px; width: 160px; border-left: 3px solid #38bdf8;">
+            <h3>Therapy RAG</h3>
+            <p class="mono text-[9px] text-sky-300 mt-1">knowledge base</p>
+            <p class="text-[9px] mt-1 text-slate-400">Vector Search</p>
+        </div>
+        <div class="node" id="n-text-emo" style="left: 550px; top: 370px; width: 160px; border-left: 3px solid #f472b6;">
+            <div class="absolute -top-3 bg-fuchsia-500/20 text-fuchsia-400 text-[9px] px-2 py-0.5 rounded border border-fuchsia-500/50">LOCAL HF</div>
+            <h3>Emotion Engine</h3>
+            <p class="mono text-[9px] text-pink-300 mt-1">roberta-base</p>
+            <p class="text-[9px] mt-1 text-slate-400">Anxiety/Anger/Sadness</p>
+        </div>
+        <div class="node" id="n-text-mem" style="left: 550px; top: 480px; width: 160px; border-left: 3px solid #fbbf24;">
+            <div class="absolute -top-3 bg-yellow-500/20 text-yellow-400 text-[9px] px-2 py-0.5 rounded border border-yellow-500/50">LOCAL DB</div>
+            <h3>Cross-Session Mem</h3>
+            <p class="mono text-[9px] text-yellow-300 mt-1">sqlite DB</p>
+            <p class="text-[9px] mt-1 text-slate-400">Past Messages</p>
+        </div>
+        <div class="node border-2 border-purple-500/50" id="n-text-llm" style="left: 850px; top: 325px; width: 200px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(168,85,247,0.15);">
+            <div class="absolute -top-3 bg-purple-500/20 text-purple-400 text-[9px] px-2 py-0.5 rounded border border-purple-500/50">SARVAM API</div>
+            <div class="node-icon bg-slate-800 border border-purple-500/50"><svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+            <h3>Sarvam LLM Engine</h3>
+            <p class="mono text-[9px] text-slate-300 mt-1">sarvam-105b</p>
+            <p class="text-[10px] text-slate-400 mt-3 text-left bg-black/50 p-2 rounded w-full font-mono">Generates:<br>Text + [EXERCISE] tag</p>
+        </div>
+        <div class="node" id="n-text-screen" style="left: 1080px; top: 325px; width: 140px; border-right: 3px solid #10b981;">
+            <div class="node-icon bg-slate-800 border border-green-500/50"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
+            <h3>Next.js Frontend</h3>
+            <p class="mono text-[9px] text-green-300 mt-1">ExerciseOverlay.tsx</p>
+            <p class="text-[9px] mt-1 text-slate-400">Trigger UI animations</p>
+        </div>
+    </div>
+
+    <!-- Live Logs Terminal -->
+    <div class="w-full max-w-[1200px] mx-auto bg-[#09090b] rounded-xl border border-slate-700 overflow-hidden shadow-2xl mt-10">
+        <div class="bg-slate-800 px-4 py-2 flex justify-between items-center border-b border-slate-700">
+            <div class="flex items-center gap-3">
+                <div class="flex gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-red-500"></div><div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div><div class="w-2.5 h-2.5 rounded-full bg-green-500"></div></div>
+                <span class="text-[11px] text-slate-400 ml-4 mono uppercase tracking-widest font-semibold text-emerald-400 flex items-center gap-2">
+                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
+                    Live Telemetry Stream Connected
+                </span>
+            </div>
+            <div class="text-xs text-slate-400">Listening to FastAPI SSE...</div>
+        </div>
+        <div class="p-4 h-56 overflow-y-auto font-mono text-[12px] leading-relaxed text-slate-300 scroll-smooth" id="terminal-logs"></div>
+    </div>
+
+    <script>
+        const logs = document.getElementById('terminal-logs');
+        const svgVoice = document.getElementById('svg-routes-voice');
+        const svgFastAPI = document.getElementById('svg-routes-fastapi');
+        const svgBrain = document.getElementById('svg-routes-brain');
+        const svgText = document.getElementById('svg-routes-text');
+
+        function logMsg(msg, type = 'info') {
+            const colors = { info: 'text-slate-300', success: 'text-green-400', api: 'text-emerald-400', ai: 'text-purple-400', warn: 'text-yellow-400', sys: 'text-sky-400', route: 'text-orange-400' };
+            const div = document.createElement('div');
+            const time = new Date().toISOString().split('T')[1].slice(0,12);
+            div.className = `${colors[type] || colors.info} mb-1`;
+            div.innerHTML = `<span class="text-slate-600 mr-2">[${time}]</span> ${msg}`;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function flashNode(id, type = 'active', duration = 2000) {
+            const node = document.getElementById(id);
+            if(!node) return;
+            node.classList.add(type);
+            setTimeout(() => node.classList.remove(type), duration);
+        }
+
+        function flashInternal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.backgroundColor = 'rgba(168,85,247,0.3)';
+            el.style.borderColor = '#c084fc';
+            setTimeout(() => {
+                el.style.backgroundColor = '';
+                el.style.borderColor = '';
+            }, 2000);
+        }
+
+        function spawnPacket(pathId, colorClass, durationStr, targetSvg) {
+            if (!targetSvg) targetSvg = svgVoice;
+            const packet = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            packet.setAttribute("r", "5");
+            packet.setAttribute("class", `data-packet ${colorClass}`);
+            
+            const animate = document.createElementNS("http://www.w3.org/2000/svg", "animateMotion");
+            animate.setAttribute("dur", durationStr);
+            animate.setAttribute("fill", "freeze");
+            animate.setAttribute("calcMode", "spline");
+            animate.setAttribute("keySplines", "0.4 0 0.2 1");
+            
+            const mpath = document.createElementNS("http://www.w3.org/2000/svg", "mpath");
+            mpath.setAttribute("href", `#${pathId}`);
+            
+            animate.appendChild(mpath);
+            packet.appendChild(animate);
+            targetSvg.appendChild(packet);
+            
+            packet.style.opacity = "1";
+            setTimeout(() => {
+                packet.style.opacity = "0";
+                setTimeout(() => packet.remove(), 500);
+            }, parseFloat(durationStr) * 1000);
+        }
+
+        logMsg("[SYSTEM] Connecting to backend telemetry stream...", "sys");
+        const evtSource = new EventSource("http://localhost:8000/api/telemetry/stream");
+        
+        evtSource.onopen = function() {
+            logMsg("[SYSTEM] Connected to Live AI Brain Data Stream", "success");
+            flashNode('node-fastapi', 'active', 2000);
+        };
+        
+        evtSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                handleTelemetryEvent(data);
+            } catch(e) {
+                console.error("Error parsing telemetry", e);
+            }
+        };
+
+        evtSource.onerror = function(err) {
+            logMsg("[SYSTEM] Telemetry Connection Lost! Backend reloading...", "warn");
+        };
+
+        function resetUI() {
+            document.getElementById('eq-speaker').classList.add('hidden');
+            document.getElementById('eq-mic').classList.add('hidden');
+            document.getElementById('status-emotion').innerText = "Idle";
+            document.getElementById('status-rag').innerText = "Idle";
+            document.getElementById('status-analyst').innerText = "Idle";
+            document.getElementById('status-llm').innerText = "Waiting for context...";
+            const translit = document.getElementById('status-transliterate');
+            if(translit) translit.innerText = "Idle";
+            const chunking = document.getElementById('status-chunking');
+            if(chunking) chunking.innerText = "Idle";
+            document.getElementById('stt-text').innerText = "";
+            document.getElementById('tts-text').innerText = "";
+        }
+
+        function handleTelemetryEvent(payload) {
+            const { event_type, message, data } = payload;
+            
+            if(event_type === "ROUTING") {
+                logMsg(`[ROUTING] ${message}`, "route");
+                
+                if(message.includes("Mic -> FastAPI") || message.includes("Client WebSocket -> FastAPI")) {
+                    resetUI();
+                    document.getElementById('eq-mic').classList.remove('hidden');
+                    flashNode('node-mic', 'active', 2000);
+                    spawnPacket('path-mic-api', '', '0.8s', svgVoice);
+                    setTimeout(() => flashNode('node-fastapi', 'active', 1500), 800);
+                    
+                    flashNode('f-client', 'active', 500);
+                    spawnPacket('path-req-mid', 'api-packet', '0.6s', svgFastAPI);
+                    setTimeout(() => {
+                        flashNode('f-mid', 'active', 500);
+                        spawnPacket('path-mid-app', 'api-packet', '0.6s', svgFastAPI);
+                        setTimeout(() => {
+                            flashNode('f-app', 'active', 500);
+                            spawnPacket('path-app-stream', 'api-packet', '0.8s', svgFastAPI);
+                            setTimeout(() => { flashNode('f-stream', 'active', 500); }, 800);
+                        }, 600);
+                    }, 600);
+                } 
+                else if(message.includes("FastAPI -> FFmpeg")) {
+                    spawnPacket('path-api-ffmpeg', '', '0.5s', svgVoice);
+                    setTimeout(() => flashNode('node-ffmpeg', 'active', 1000), 500);
+                }
+                else if(message.includes("FFmpeg -> FastAPI")) {
+                    spawnPacket('path-ffmpeg-api', '', '0.5s', svgVoice);
+                    setTimeout(() => flashNode('node-fastapi', 'active', 1000), 500);
+                }
+                else if(message.includes("FastAPI -> Sarvam STT API")) {
+                    spawnPacket('path-api-stt', 'api-packet', '0.8s', svgVoice);
+                    spawnPacket('path-app-voice', 'api-packet', '0.8s', svgFastAPI);
+                    setTimeout(() => { flashNode('f-voice', 'active', 500); }, 800);
+                }
+                else if(message.includes("STT Text -> AI Brain Cluster")) {
+                    document.getElementById('eq-mic').classList.add('hidden');
+                    spawnPacket('path-stt-brain', 'ai-packet', '1.0s', svgVoice);
+                    flashNode('b-input', 'active-ai', 500);
+                    spawnPacket('path-brain-in', 'ai-packet', '0.6s', svgBrain);
+                    setTimeout(() => { flashNode('b-analyst', 'active-ai', 500); }, 600);
+                }
+                else if(message.includes("LLM Text -> TTS API") || message.includes("LLM -> TTS API")) {
+                    spawnPacket('path-brain-tts', 'api-packet', '1.0s', svgVoice);
+                    spawnPacket('path-llm-out', 'ai-packet', '0.6s', svgBrain);
+                    flashInternal('brain-transliterate');
+                    setTimeout(() => { flashInternal('brain-chunking'); setTimeout(() => flashNode('b-out', 'active-ai', 500), 800); }, 800);
+                }
+                else if(message.includes("TTS Audio -> FastAPI") || message.includes("TTS -> FastAPI")) {
+                    spawnPacket('path-tts-vpo', '', '0.8s', svgVoice);
+                    setTimeout(() => flashNode('node-vpo', 'active', 1000), 800);
+                }
+                else if(message.includes("FastAPI -> Client WebSocket Playback")) {
+                    spawnPacket('path-api-speaker', '', '0.8s', svgVoice);
+                    setTimeout(() => {
+                        flashNode('node-speaker', 'active', 3000);
+                        document.getElementById('eq-speaker').classList.remove('hidden');
+                        setTimeout(() => document.getElementById('eq-speaker').classList.add('hidden'), 3000);
+                    }, 800);
+                    spawnPacket('path-app-stream', 'api-packet', '0.8s', svgFastAPI);
+                    setTimeout(() => flashNode('f-stream', 'active', 500), 800);
+                }
+            }
+            else if(event_type === "TEXT_START") {
+                flashNode('n-text-key', 'active', 2000);
+                spawnPacket('path-key-router', 'api-packet', '0.8s', svgText);
+                setTimeout(() => flashNode('n-text-router', 'active', 1000), 800);
+                
+                flashNode('f-client', 'active', 500);
+                spawnPacket('path-req-mid', 'api-packet', '0.6s', svgFastAPI);
+                setTimeout(() => {
+                    flashNode('f-mid', 'active', 500);
+                    spawnPacket('path-mid-app', 'api-packet', '0.6s', svgFastAPI);
+                    setTimeout(() => {
+                        flashNode('f-app', 'active', 500);
+                        spawnPacket('path-app-cons', 'api-packet', '0.8s', svgFastAPI);
+                        setTimeout(() => { flashNode('f-cons', 'active', 500); }, 800);
+                    }, 600);
+                }, 600);
+                logMsg(`[TEXT CHAT] ${message}`, "api");
+            }
+            else if(event_type === "STT_START") {
+                flashNode('node-stt', 'active-api', 2000);
+                logMsg(`[API] ${message}`, "api");
+                document.getElementById('stt-text').innerText = "Listening...";
+            }
+            else if(event_type === "STT_DONE") {
+                flashNode('node-stt', 'active-api', 1000);
+                document.getElementById('stt-text').innerText = data.text;
+                logMsg(`[STT Output] "${data.text}"`, "success");
+            }
+            else if(event_type === "LLM_START") {
+                flashNode('node-brain', 'active-ai', 4000);
+                logMsg(`[AI BRAIN] ${message}`, "ai");
+                
+                if (message.includes("Assessor Skipped")) {
+                    flashInternal('brain-analyst');
+                    document.getElementById('status-analyst').innerText = "Skipped (Fast Path)";
+                } else if (message.includes("Assessor Evaluating")) {
+                    flashInternal('brain-analyst');
+                    document.getElementById('status-analyst').innerText = "Evaluating State...";
+                } else if (message.includes("Maitri Generation")) {
+                    flashInternal('brain-llm');
+                    document.getElementById('status-llm').innerText = "Generating Persona Output...";
+                } else {
+                    flashInternal('brain-rag');
+                    document.getElementById('status-rag').innerText = "Searching FAISS index...";
+                    setTimeout(() => {
+                        flashInternal('brain-analyst');
+                        document.getElementById('status-analyst').innerText = "Processing intent...";
+                    }, 500);
+                }
+                
+                // Removed simultaneous spawning to allow specific events to animate them
+                // spawnPacket('path-analyst-emo', 'ai-packet', '0.6s', svgBrain);
+                // spawnPacket('path-analyst-mem', 'ai-packet', '0.6s', svgBrain);
+                // spawnPacket('path-analyst-rag', 'ai-packet', '0.6s', svgBrain);
+                // Flash nodes individually upon their respective _FETCH events now.
+                
+                if (message && (message.includes("Synthesizing") || message.includes("Maitri Generation"))) {
+                    spawnPacket('path-text-crisis-llm', 'ai-packet', '0.8s', svgText);
+                    spawnPacket('path-text-rag-llm', 'ai-packet', '0.8s', svgText);
+                    spawnPacket('path-text-emo-llm', 'ai-packet', '0.8s', svgText);
+                    spawnPacket('path-text-mem-llm', 'ai-packet', '0.8s', svgText);
+                    setTimeout(() => flashNode('n-text-llm', 'active-ai', 1000), 800);
+                    if(!message.includes("Maitri Generation")) logMsg(`[LLM ENGINE] ${message}`, "ai");
+                }
+            }
+            else if (event_type === "CRISIS_CHECK") {
+                spawnPacket('path-router-crisis', 'api-packet', '0.6s', svgText);
+                setTimeout(() => flashNode('n-text-crisis', 'active-ai', 1000), 600);
+                logMsg(`[CRISIS] ${message}`, "sys");
+            }
+            else if (event_type === "RAG_FETCH") {
+                // Diagram 4
+                spawnPacket('path-router-rag', 'api-packet', '0.6s', svgText);
+                setTimeout(() => flashNode('n-text-rag', 'active-ai', 1000), 600);
+                
+                // Diagram 3
+                spawnPacket('path-analyst-rag', 'ai-packet', '0.6s', svgBrain);
+                setTimeout(() => flashNode('b-rag', 'active-ai', 1000), 600);
+                
+                logMsg(`[RAG] ${message}`, "sys");
+            }
+            else if (event_type === "MEMORY_FETCH") {
+                // Diagram 4
+                spawnPacket('path-router-mem', 'api-packet', '0.6s', svgText);
+                setTimeout(() => flashNode('n-text-mem', 'active-ai', 1000), 600);
+                
+                // Diagram 3
+                spawnPacket('path-analyst-mem', 'ai-packet', '0.6s', svgBrain);
+                setTimeout(() => flashNode('b-mem', 'active-ai', 1000), 600);
+                
+                logMsg(`[MEMORY] ${message}`, "sys");
+            }
+            else if (event_type === "EMOTION_FETCH") {
+                // Diagram 4
+                spawnPacket('path-router-emo', 'api-packet', '0.6s', svgText);
+                setTimeout(() => flashNode('n-text-emo', 'active-ai', 1000), 600);
+                
+                // Diagram 3
+                spawnPacket('path-analyst-emo', 'ai-packet', '0.6s', svgBrain);
+                setTimeout(() => flashNode('b-emo', 'active-ai', 1000), 600);
+                
+                logMsg(`[EMOTION] Local HF Pipeline: ${message}`, "sys");
+            }
+            else if(event_type === "EMOTION_DETECTED") {
+                flashInternal('brain-emotion');
+                document.getElementById('status-emotion').innerText = message;
+                logMsg(`[AI BRAIN] Emotion Detector: ${message}`, "ai");
+                
+                if (!message.includes("Crisis")) {
+                    spawnPacket('path-emo-llm', 'ai-packet', '0.8s', svgBrain);
+                    spawnPacket('path-mem-llm', 'ai-packet', '0.8s', svgBrain);
+                    spawnPacket('path-rag-llm', 'ai-packet', '0.8s', svgBrain);
+                    setTimeout(() => flashNode('b-llm', 'active-ai', 1000), 800);
+                }
+            }
+            else if(event_type === "LLM_DONE") {
+                flashInternal('brain-llm');
+                document.getElementById('status-llm').innerText = data && data.response ? `"${data.response}"` : "Done";
+                logMsg(`[LLM ENGINE] Generated Response via Sarvam-105b`, "success");
+                
+                spawnPacket('path-router-db', 'api-packet', '0.8s', svgFastAPI);
+                setTimeout(() => flashNode('f-db', 'active', 500), 800);
+
+                spawnPacket('path-text-llm-screen', 'api-packet', '0.8s', svgText);
+                setTimeout(() => {
+                    flashNode('n-text-screen', 'active', 2000);
+                    if(data && data.response && data.response.includes("[EXERCISE")) {
+                        logMsg(`[UI TRIGGER] Exercise Overlay activated!`, "warn");
+                    }
+                }, 800);
+            }
+            else if (event_type === "TTS_START") {
+                flashNode('node-tts', 'active-api', 2000);
+                logMsg(`[TTS] ${message}`, "api");
+            }
+            else if (event_type === "TTS_OPTIMIZE") {
+                flashNode('node-vpo', 'active', 2000);
+                logMsg(`[VPO] ${message}`, "sys");
+                spawnPacket('path-vpo-api', '', '0.8s', svgVoice);
+                setTimeout(() => flashNode('node-fastapi', 'active', 1000), 800);
+            }
+            else if (event_type === "TTS_DONE") {
+                logMsg(`[TTS] ${message}`, "success");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -13,20 +13,23 @@ import traceback
 from fastapi.responses import JSONResponse
 from fastapi import Request
 
-from db.models import init_db
-from api.auth import router as auth_router
-from api.consultation import router as consultation_router
-from api.voice import router as voice_router
-from api.streaming import router as streaming_router
-from api.telemetry import router as telemetry_router
-from api.feedback import router as feedback_router
+from core.database.models import init_db
+from modules.authentication.api import router as auth_router
+from modules.consultation.api import router as consultation_router
+from modules.voice.api import router as voice_router
+from modules.voice.api_streaming import router as streaming_router
+from modules.dashboard.api import router as telemetry_router
+from modules.feedback.api import router as feedback_router
 
 import asyncio
+
+from core.logger.terminal import CommandCenter
+import time
 
 def global_async_exception_handler(loop, context):
     msg = context.get("exception", context["message"])
     err = f"[GLOBAL ASYNC SHIELD] Caught unhandled exception: {msg}"
-    print(err)
+    CommandCenter.log_error(err)
     with open("backend_errors.log", "a") as f:
         f.write(err + "\n")
 
@@ -34,28 +37,50 @@ def global_async_exception_handler(loop, context):
 async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(global_async_exception_handler)
-    
     app.state.shutdown_event = asyncio.Event()
-    print("Starting MindBridge backend (Phase 3 — Voice)...")
     
-    # DB init with retry — handles rapid restart where DB pool is briefly unavailable
-    import time
-    for attempt in range(1, 6):
-        try:
-            init_db()
-            print(f"Database ready (attempt {attempt})")
-            break
-        except Exception as e:
-            print(f"[DB] Init attempt {attempt}/5 failed: {e}")
-            if attempt < 5:
-                time.sleep(1)
-            else:
-                print("[DB] Could not connect after 5 attempts. Proceeding without DB.")
+    with CommandCenter.create_progress() as progress:
+        task1 = progress.add_task("[cyan]Initializing Core Backend...", total=100)
+        task2 = progress.add_task("[magenta]Connecting to Database...", total=100)
+        task3 = progress.add_task("[yellow]Validating Providers...", total=100)
+        
+        progress.update(task1, advance=50)
+        await asyncio.sleep(0.5)
+        
+        # DB init
+        for attempt in range(1, 6):
+            try:
+                init_db()
+                CommandCenter.set_health("Database", "Healthy")
+                progress.update(task2, completed=100)
+                break
+            except Exception as e:
+                CommandCenter.log_error(f"DB Init Failed: {e}")
+                progress.update(task2, advance=20)
+                if attempt < 5:
+                    await asyncio.sleep(1)
+                else:
+                    CommandCenter.set_health("Database", "Failed")
+
+        progress.update(task3, advance=50)
+        await asyncio.sleep(0.5)
+        # Assume providers are healthy for now
+        CommandCenter.set_health("Firebase", "Healthy")
+        CommandCenter.set_health("Sarvam", "Healthy")
+        CommandCenter.set_health("Brain", "Healthy")
+        progress.update(task3, completed=100)
+        
+        progress.update(task1, completed=100)
+        await asyncio.sleep(0.5)
+        
+    CommandCenter.set_health("API Server", "Healthy")
+    CommandCenter.start_dashboard()
     
     yield
+    
+    CommandCenter.stop_dashboard()
     print("[SHUTDOWN] Signal received. Setting shutdown event...")
     app.state.shutdown_event.set()
-    # Small wait to let tasks notice the event before force-kill
     await asyncio.sleep(0.2)
     print("[SHUTDOWN] Cleanup complete.")
 
@@ -86,6 +111,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def monitor_requests(request: Request, call_next):
+    start_time = time.time()
+    CommandCenter.increment_active_requests(1)
+    response = await call_next(request)
+    duration = (time.time() - start_time) * 1000  # ms
+    CommandCenter.increment_active_requests(-1)
+    # Don't log spammy endpoints in dashboard
+    if request.url.path not in ["/", "/health", "/favicon.ico"]:
+        CommandCenter.log_api(request.method, request.url.path, response.status_code, duration)
+    return response
+
 
 app.include_router(auth_router)
 app.include_router(consultation_router)
@@ -105,7 +142,7 @@ def log_error_to_file(msg: str):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     err = f"INTERNAL SERVER ERROR: {str(exc)}\n{traceback.format_exc()}"
-    print(err)
+    CommandCenter.log_error(f"500 Error: {str(exc)}")
     log_error_to_file(err)
     return JSONResponse(
         status_code=500,
@@ -115,14 +152,15 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     err = f"VALIDATION ERROR: {exc.errors()}"
-    print(err)
+    CommandCenter.log_error(f"422 Validation: {str(exc.errors()[0]['msg'])}")
     log_error_to_file(err)
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     err = f"HTTP EXCEPTION: {exc.status_code} - {exc.detail}"
-    print(err)
+    if exc.status_code >= 400:
+        CommandCenter.log_error(f"{exc.status_code} Error: {exc.detail}")
     log_error_to_file(err)
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 

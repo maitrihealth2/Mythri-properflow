@@ -20,14 +20,18 @@ Accessing mental health care is often hindered by stigma, high costs, and a lack
 ## 🚀 What's Built So Far
 Mythri currently features a robust, modern architecture with a full end-to-end pipeline:
 
+- **Modular Domain-Driven Architecture:** Codebase has been fully refactored into distinct modules, providers, and core logic, ensuring scalable and decoupled components for both frontend and backend.
 - **Real-Time Voice Pipeline:** Deep integration with Sarvam AI for high-accuracy Speech-to-Text (STT) and emotionally expressive Text-to-Speech (TTS). Includes advanced, language-aware text chunking to ensure natural pitch and cadence for dense regional scripts (Telugu, Tamil, Hindi).
-- **Contextual AI Engine:** An advanced LLM system with an underlying Neural Analyst, designed to evaluate conversation history, detect emotional shifts, and provide therapeutic responses.
-- **Emotion & Crisis Detection:** Real-time analysis using local HuggingFace transformers pipelines to gauge the user's emotional state and instantly flag high-risk phrases.
+- **Dual-Agent Meta-Cognitive Architecture:** An advanced AI pipeline utilizing a Neural Analyst for dynamic clinical phase selection and a Maitri Responder for empathetic response generation.
+- **RAG Knowledge Retrieval:** Integrates local ChromaDB and `all-MiniLM-L6-v2` embeddings for retrieving structured psychological data and clinical theories during sessions.
+- **Cross-Session Memory Tracking:** Working memory and persistent persona state tracking to monitor the user's emotional shifts and risk metrics across multiple consultation sessions.
+- **Emotion & Crisis Detection:** Real-time analysis using local HuggingFace transformers pipelines (`SamLowe/roberta-base-go_emotions`) to gauge emotional state, combined with deterministic, fast-scan rules for instantaneous crisis detection and safety overriding.
 - **Interactive Modern UI:** A calming, responsive frontend built with Next.js 16, React 19, and Tailwind CSS. Features a dynamic, **circular radial audio spectrum visualizer** that reacts perfectly symmetrically to voice frequencies.
 - **Interactive Exercises:** Automated pop-up exercises (Box Breathing, Grounding, Reflection) that perfectly synchronize with the AI's response generation to provide immediate, actionable relief during crisis or high stress.
-- **Enhanced Languaging:** Highly tuned regional prompts to ensure a natural conversational tone (e.g., proper Hinglish blending) and suppress melodramatic or overly sad biases in Telugu and Tamil.
-- **Robust Backend & Telemetry:** A high-performance FastAPI Python backend managing JWT authentication, Server-Sent Events (SSE) for live telemetry, and an HTML-based live architecture visualizer that routes packets in real-time.
+- **Firebase Auth Integration:** Full Firebase-backed authentication system for secure and persistent user identity management.
+- **Robust Backend & Telemetry:** A high-performance FastAPI Python backend managing SSE for live telemetry, paired with an HTML-based live architecture visualizer that maps and animates data flows (Voice, Text, RAG, Memory, Emotion) in real-time.
 - **Windows-Optimized Reloading:** Backend utilizes `nodemon` to completely bypass native Windows/Uvicorn signal crashing, ensuring stable hot-reloading even with heavy local PyTorch processes.
+- **Fine-Tuning Readiness:** Complete `finetuning` pipeline built-in for Supervised Fine-Tuning (SFT) and dataset preparation for future open-weights model integrations.
 ---
 
 ## 📂 File & Folder Tree
@@ -38,41 +42,45 @@ mindbridge/
 ├── backend/
 │   ├── app.py                        ← FastAPI entry point
 │   ├── requirements.txt              ← Python packages
-│   ├── .env                          ← API keys
+│   ├── .env                          ← Environment & API keys
 │   │
-│   ├── api/
-│   │   ├── auth.py                   ← Register / Login / JWT routes
-│   │   ├── consultation.py           ← Chat / Session / History routes
-│   │   ├── voice.py                  ← Voice pipeline routes
-│   │   ├── streaming.py              ← Streaming responses
-│   │   └── telemetry.py              ← SSE live telemetry feed
+│   ├── core/                         ← Core System Infrastructure
+│   │   ├── brain/                    ← AI Brain & Prompt generation logic
+│   │   ├── database/                 ← Database connections & ORM logic
+│   │   ├── logger/                   ← System logging & debugging
+│   │   └── security/                 ← Auth and JWT/Firebase security
 │   │
-│   ├── ai_engine/
-│   │   ├── sarvam_client.py          ← Sarvam AI (LLM) integration
-│   │   ├── voice_client.py           ← Text chunking & translation layer
-│   │   ├── analyst.py                ← Neural Analyst context engine
-│   │   └── emotion_detector.py       ← Local HuggingFace sentiment pipeline
+│   ├── modules/                      ← Domain-Driven API Modules
+│   │   ├── authentication/           ← User login/signup routes
+│   │   ├── consultation/             ← Text chat and crisis triggers
+│   │   ├── dashboard/                ← Analytics and live metrics
+│   │   ├── feedback/                 ← User rating collection
+│   │   ├── knowledge/                ← Data structuring routes
+│   │   ├── profile/                  ← User profile management
+│   │   └── voice/                    ← Streaming voice routes & pipelines
 │   │
-│   ├── db/
-│   │   └── models.py                 ← SQLAlchemy DB models + init
+│   ├── providers/                    ← External Services Integration
+│   │   ├── firebase/                 ← Firebase connection handling
+│   │   └── sarvam/                   ← Sarvam LLM, STT, and TTS clients
 │   │
-│   └── services/
-│       ├── auth.py                   ← Password hashing + JWT utils
-│       └── crisis_handler.py         ← Safety / crisis detection
+│   ├── memory/                       ← Cross-session state and persona tracking
+│   ├── rag/                          ← Retrieval-Augmented Generation & FAISS
+│   └── finetuning/                   ← Dataset generation and SFT pipelines
 │
-├── frontend/
-│   ├── package.json                  ← Next.js dependencies
-│   ├── .env.local                    ← NEXT_PUBLIC_API_URL
-│   │
-│   ├── lib/
-│   │   └── api.ts                    ← API wrapper functions
-│   │
-│   └── app/
-│       ├── voice/page.tsx            ← Voice Chat with radial visualizer
-│       ├── consultation/page.tsx     ← Text Chat mode
-│       └── history/page.tsx          ← Session history + transcripts
-│
-└── architecture_flow.html            ← Live system architecture visualizer
+└── frontend/
+    ├── package.json                  ← Next.js dependencies
+    ├── .env.local                    ← NEXT_PUBLIC_API_URL
+    │
+    ├── app/                          ← Next.js App Router (Pages & Layouts)
+    │   ├── voice/                    ← Voice consultation interface
+    │   ├── consultation/             ← Text consultation interface
+    │   └── auth/                     ← Authentication screens
+    │
+    ├── core/                         ← Global providers, store, and config
+    ├── modules/                      ← Feature-specific React components
+    ├── shared/                       ← Reusable UI elements (buttons, inputs)
+    └── public/                       ← Static assets
+        └── telemetry.html            ← Live system architecture visualizer
 ```
 
 ---
@@ -119,7 +127,7 @@ npm run dev
 ```
 
 Open your browser and navigate to: **http://localhost:3000**
-To view the live telemetry architecture board: **Open `architecture_flow.html` in your browser.**
+To view the live telemetry architecture board: **Navigate to `http://localhost:3000/telemetry.html` in your browser.**
 
 ---
 

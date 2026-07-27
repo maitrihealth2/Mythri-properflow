@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { Literata } from 'next/font/google'
 import Script from 'next/script'
-import { Providers } from './providers'
-import BottomNav from './components/BottomNav'
+import { Providers } from '@/core/providers'
+import BottomNav from '@/shared/components/BottomNav'
 import './globals.css'
 
 const literata = Literata({

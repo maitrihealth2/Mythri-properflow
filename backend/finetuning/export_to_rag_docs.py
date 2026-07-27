@@ -6,7 +6,7 @@ knowledge/docs/*.txt files so the RAG loader picks them up.
 Run once:
   python finetuning/export_to_rag_docs.py
 Then:
-  python -m knowledge.loader
+  python -m modules.knowledge.loader
 """
 import json
 import pathlib
@@ -49,7 +49,7 @@ def main():
         print(f"  Exported {len(texts)} chunks -> {out_path.name}")
 
     print(f"\n[DONE] Exported {len(chunks)} chunks to {DOCS_DIR}")
-    print("Now run: python -m knowledge.loader")
+    print("Now run: python -m modules.knowledge.loader")
 
 if __name__ == "__main__":
     main()

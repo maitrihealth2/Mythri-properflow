@@ -87,3 +87,6 @@ test_voice_output.wav
 *.mp3
 *.mp4
 *.webm
+
+# --- Personal Logs ---
+fareed_logs/

@@ -32,6 +32,7 @@ class RestartHandler(FileSystemEventHandler):
             sys.executable, "-m", "uvicorn", "app:app",
             "--port", "8000",
             "--timeout-graceful-shutdown", "3",  # Max 3s for connections to close
+            "--log-level", "warning", # Suppress standard access logs for Terminal Command Center
         ])
 
     def on_any_event(self, event):
@@ -48,7 +49,7 @@ class RestartHandler(FileSystemEventHandler):
         self.start_server()
 
 def check_rag_initialization():
-    chroma_path = os.path.join("knowledge", "chroma_db")
+    chroma_path = os.path.join("modules", "knowledge", "chroma_db")
     if not os.path.exists(chroma_path):
         print(f"\n[Warning] RAG ChromaDB not found at '{chroma_path}'.")
         print("[Warning] RAG features might fail. Please ensure your knowledge base is initialized.\n")
