@@ -186,7 +186,11 @@ def root():
 
 
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import os
+
+# Mount the static telemetry files
+app.mount("/telemetry_ui", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "telemetry_ui"), html=True), name="telemetry_ui")
 
 @app.get("/architecture", response_class=HTMLResponse)
 def architecture_view():

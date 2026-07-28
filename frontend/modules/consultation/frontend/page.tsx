@@ -142,6 +142,17 @@ export default function ConsultationPage() {
     }
   }, [messages, loading])
 
+  // Lock body scroll for the chat interface
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    document.body.style.height = '100dvh'
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.height = ''
+    }
+  }, [])
+
+
   const initSession = async () => {
     try {
       const existingSessionId = sessionStorage.getItem('mb_session_id')
@@ -228,6 +239,14 @@ export default function ConsultationPage() {
     initSession()
   }
 
+  useEffect(() => {
+    const handleShortcutNewChat = () => handleNewChat()
+    window.addEventListener('shortcut:new-chat', handleShortcutNewChat)
+    return () => {
+      window.removeEventListener('shortcut:new-chat', handleShortcutNewChat)
+    }
+  }, [handleNewChat])
+
   if (starting) return (
     <div className="bg-background text-on-background min-h-screen flex items-center justify-center pt-24">
        <span className="material-symbols-outlined text-4xl text-primary animate-pulse">spa</span>
@@ -239,7 +258,7 @@ export default function ConsultationPage() {
       <ExerciseOverlay exerciseMode={exerciseMode} onClose={() => setExerciseMode(null)} />
 
       {/* Desktop Header */}
-      <header className="hidden md:flex fixed top-0 z-40 justify-between items-center w-full px-margin-desktop py-4 pointer-events-none animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+      <header className="hidden md:flex fixed top-0 z-40 justify-between items-center w-full px-margin-desktop py-4 pointer-events-none animate-fade-in-up bg-transparent" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center gap-4 pointer-events-auto">
           <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all hover:bg-white/80 active:scale-95 shadow-sm">home</Link>
           <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
@@ -283,7 +302,7 @@ export default function ConsultationPage() {
       </header>
 
       {/* Mobile Header */}
-      <header className="flex md:hidden fixed top-0 z-40 justify-between items-center w-full px-4 py-4 pointer-events-none">
+      <header className="flex md:hidden fixed top-0 z-40 justify-between items-center w-full px-4 py-3 bg-white/60 backdrop-blur-md border-b border-white/40 shadow-sm pointer-events-none">
         <div className="flex items-center gap-3 pointer-events-auto">
           <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all active:scale-95 shadow-sm">home</Link>
           <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
@@ -300,10 +319,10 @@ export default function ConsultationPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className={`flex-1 min-h-0 flex flex-col w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto px-margin-mobile relative md:px-8 lg:px-12 pt-20 md:pt-16 pb-28 md:pb-6 z-10 transition-all duration-700 animate-fade-in-up ${exerciseMode ? 'opacity-30 scale-[0.95] blur-[2px] pointer-events-none' : ''}`} style={{ animationDelay: '0.2s' }}>
+      <main className={`flex-1 min-h-0 flex flex-col w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto px-margin-mobile relative md:px-8 lg:px-12 pt-20 md:pt-16 z-10 transition-all duration-700 animate-fade-in-up ${exerciseMode ? 'opacity-30 scale-[0.95] blur-[2px] pointer-events-none' : ''}`} style={{ animationDelay: '0.2s' }}>
         
         {/* Chat Thread */}
-        <div className="flex-1 overflow-y-auto pt-4 pb-stack-lg flex flex-col gap-6 hide-scrollbar pr-2" onClick={() => {setMenuOpen(false); setLangMenuOpen(false);}}>
+        <div className="flex-1 overflow-y-auto pt-4 pb-48 md:pb-36 flex flex-col gap-6 hide-scrollbar pr-2" onClick={() => {setMenuOpen(false); setLangMenuOpen(false);}}>
           {messages.map((m, i) => (
             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end self-end max-w-[90%] md:max-w-[65%]' : 'items-start max-w-[90%] md:max-w-[65%]'} animate-msg`}>
               <span className={`text-label-md text-on-surface-variant mb-2 ${m.role === 'user' ? 'mr-2' : 'ml-2'}`}>
@@ -361,50 +380,51 @@ export default function ConsultationPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input Bar Section */}
-        <div className="sticky bottom-0 bg-transparent pt-4 pb-safe pb-6 md:pb-12 w-full z-30 pointer-events-none">
-          <div className="mb-6 md:mb-0 pointer-events-auto flex flex-col items-center w-full">
-            
-            {/* Animated Quick Replies */}
-            <div className={`w-full transition-all duration-500 ease-in-out overflow-hidden ${showQuickReplies ? 'max-h-32 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
-              <div className="flex flex-wrap justify-center gap-3 w-full px-2">
-                {quickReplies.map((q, i) => (
-                  <button key={i} onClick={() => handleTextSend(q)} className="bg-white/60 backdrop-blur-md border border-white/60 px-5 py-2.5 rounded-full text-label-md hover:bg-white/80 hover:shadow-md active:scale-95 transition-all shadow-sm text-on-surface-variant">
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
+      </main>
 
-            {/* Floating Glass Composer */}
-            <div className={`relative flex items-center gap-2 md:gap-4 backdrop-blur-3xl border border-white/60 rounded-[2rem] p-2 md:p-3 pl-6 md:pl-8 focus-within:border-white transition-all shadow-lg hover:shadow-xl w-full ${exerciseMode ? 'bg-white/50' : 'bg-white/75'}`}>
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={handleTextareaChange}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend() } }}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-body-md py-2 md:py-3 resize-none max-h-24 md:max-h-32 hide-scrollbar text-on-surface placeholder:text-on-surface-variant/70 font-body-md focus:outline-none"
-                placeholder={inputPlaceholder}
-                rows={1}
-              />
-              <div className="flex items-center gap-1 md:gap-2 pr-1">
-                <button onClick={() => router.push('/voice-chat')} className="material-symbols-outlined text-primary bg-primary/10 md:bg-transparent md:text-outline p-2.5 hover:bg-white/60 rounded-full transition-colors hover:text-primary active:scale-95 shadow-sm md:shadow-none">mic</button>
-                <button
-                  onClick={() => handleTextSend()}
-                  disabled={!input.trim() || loading}
-                  className="bg-primary md:bg-primary-container text-on-primary p-3 md:p-3.5 rounded-full hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-40"
-                >
-                  {loading ? (
-                    <span className="material-symbols-outlined text-[20px] md:text-[22px] animate-spin">progress_activity</span>
-                  ) : (
-                    <span className="material-symbols-outlined text-[20px] md:text-[22px]">arrow_upward</span>
-                  )}
+      {/* Floating Composer — fixed, no strip wrapper */}
+      <div className={`fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center px-margin-mobile md:px-8 lg:px-12 pb-20 md:pb-8 pointer-events-none transition-all duration-700 ${exerciseMode ? 'opacity-30 pointer-events-none' : ''}`}>
+        <div className="w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto flex flex-col items-center pointer-events-auto">
+
+          {/* Animated Quick Replies */}
+          <div className={`w-full transition-all duration-500 ease-in-out overflow-hidden ${showQuickReplies ? 'max-h-32 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+            <div className="flex flex-wrap justify-center gap-3 w-full px-2">
+              {quickReplies.map((q, i) => (
+                <button key={i} onClick={() => handleTextSend(q)} className="bg-white/60 backdrop-blur-md border border-white/60 px-5 py-2.5 rounded-full text-label-md hover:bg-white/80 hover:shadow-md active:scale-95 transition-all shadow-sm text-on-surface-variant">
+                  {q}
                 </button>
-              </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Floating Glass Composer */}
+          <div className={`relative flex items-center gap-2 md:gap-4 backdrop-blur-3xl border border-white/60 rounded-[2rem] p-2 md:p-3 pl-6 md:pl-8 focus-within:border-white transition-all shadow-lg hover:shadow-xl w-full ${exerciseMode ? 'bg-white/50' : 'bg-white/75'}`}>
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={handleTextareaChange}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend() } }}
+              className="flex-1 bg-transparent border-none focus:ring-0 text-body-md py-2 md:py-3 resize-none max-h-24 md:max-h-32 hide-scrollbar text-on-surface placeholder:text-on-surface-variant/70 font-body-md focus:outline-none"
+              placeholder={inputPlaceholder}
+              rows={1}
+            />
+            <div className="flex items-center gap-1 md:gap-2 pr-1">
+              <button onClick={() => router.push('/voice-chat')} className="material-symbols-outlined text-primary bg-primary/10 md:bg-transparent md:text-outline p-2.5 hover:bg-white/60 rounded-full transition-colors hover:text-primary active:scale-95 shadow-sm md:shadow-none">mic</button>
+              <button
+                onClick={() => handleTextSend()}
+                disabled={!input.trim() || loading}
+                className="bg-primary md:bg-primary-container text-on-primary p-3 md:p-3.5 rounded-full hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-sm hover:shadow-md disabled:opacity-40"
+              >
+                {loading ? (
+                  <span className="material-symbols-outlined text-[20px] md:text-[22px] animate-spin">progress_activity</span>
+                ) : (
+                  <span className="material-symbols-outlined text-[20px] md:text-[22px]">arrow_upward</span>
+                )}
+              </button>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </>
   )
 }

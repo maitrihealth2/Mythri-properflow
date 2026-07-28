@@ -3,6 +3,7 @@ import { Literata } from 'next/font/google'
 import Script from 'next/script'
 import { Providers } from '@/core/providers'
 import BottomNav from '@/shared/components/BottomNav'
+import GlobalShortcuts from '@/shared/components/GlobalShortcuts'
 import './globals.css'
 
 const literata = Literata({
@@ -34,6 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gtag('config', 'G-DBD64NEBF5');
           `}
         </Script>
+
+        <GlobalShortcuts />
 
         {/* Background Grain and Ambient Blobs */}
         <div className="bg-grain"></div>

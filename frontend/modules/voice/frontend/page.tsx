@@ -335,6 +335,17 @@ export default function VoiceModePage() {
     router.push('/text-chat')
   }
 
+  useEffect(() => {
+    const handleShortcutMute = () => toggleMute()
+    const handleShortcutEndCall = () => handleStopConversation()
+    window.addEventListener('shortcut:toggle-mute', handleShortcutMute)
+    window.addEventListener('shortcut:end-call', handleShortcutEndCall)
+    return () => {
+      window.removeEventListener('shortcut:toggle-mute', handleShortcutMute)
+      window.removeEventListener('shortcut:end-call', handleShortcutEndCall)
+    }
+  }, [isMuted, isPaused, toggleMute, handleStopConversation])
+
   const startChunk = () => {
     if (!streamRef.current || !isListeningRef.current) return
     try {

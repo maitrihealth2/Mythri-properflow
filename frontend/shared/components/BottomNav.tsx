@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const navItems = [
-  { href: '/', label: 'Home', icon: 'home' },
+  { href: '/home', label: 'Home', icon: 'home' },
   { href: '/history', label: 'Journal', icon: 'history' },
-  { href: '/consultation', label: 'Chat', icon: 'health_and_safety' },
+  { href: '/text-chat', label: 'Chat', icon: 'health_and_safety' },
   { href: '/profile', label: 'Profile', icon: 'person' },
   { href: '/feedback', label: 'Feedback', icon: 'feedback' },
 ]
