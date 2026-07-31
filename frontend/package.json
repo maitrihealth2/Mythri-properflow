@@ -1,0 +1,37 @@
+{
+  "name": "mindbridge-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@heroui/react": "^3.0.1",
+    "@heroui/styles": "^3.0.1",
+    "@heroui/theme": "^2.4.26",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/three": "^0.184.1",
+    "axios": "^1.7.2",
+    "firebase": "^12.16.0",
+    "framer-motion": "^12.38.0",
+    "next": "^16.2.12",
+    "next-themes": "^1.0.0-beta.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "three": "^0.184.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5"
+  }
+}

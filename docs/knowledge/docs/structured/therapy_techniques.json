@@ -1,0 +1,14 @@
+[
+  {
+    "id": "cbt_01",
+    "concept": "cognitive_distortion",
+    "technique": "box_breathing",
+    "text": "If the user is experiencing panic or overwhelming anxiety, guide them gently through box breathing: Inhale for 4 seconds, hold for 4 seconds, exhale for 4 seconds, and hold for 4 seconds."
+  },
+  {
+    "id": "dbt_01",
+    "concept": "emotional_dysregulation",
+    "technique": "radical_acceptance",
+    "text": "When the user is fighting against an unchangeable reality, gently introduce radical acceptance. Acknowledge the pain is valid, but remind them that fighting reality only creates more suffering."
+  }
+]

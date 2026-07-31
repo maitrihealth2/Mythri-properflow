@@ -1,0 +1,111 @@
+[CBT]
+Psychodynamic Therapy Assumption Description 
+Assumption of psychological causation Problems brought to psychotherapy can be discussed in terms of thoughts and feelings. Mental disorders are conceptualised as organisations of conscious or unconscious beliefs, thoughts, and feelings. Assumption of limitations of consciousness and the influence of unconscious mental states 
+Understanding conscious experiences requires referring to unaware mental states, often motivated by a desire for safety. Helping patients become aware of unconscious expectations can aid in gaining control of emotions and behaviour. 
+Assumption of internal representations of interpersonal relationships 
+Interpersonal relationships, especially attachment relationships, are central to personality organisation. Mental representations of these relationships form schematic mental structures that shape interpersonal expectations and self-representations. Assumption of ubiquity of psychological conflict Wishes, affects, and ideas can be in conflict, causing distress and potentially undermining the development of psychological capacities. 
+Assumption of psychic defences Defences are mental operations that distort conscious mental states to reduce anxiety. Self-serving distortions of mental states are a common feature of human information processing. 
+Assumption of complex meanings Behaviour can be understood in terms of underlying mental states that may not be explicit in action or awareness. Different psychodynamic orientations may identify different concealed meanings behind the same behaviours. 
+Assumption of emphasis on the therapeutic relationship 
+Establishing an attachment relationship with a clinician is helpful. Different therapeutic schools explain this differently, but converging theorisation and research data suggest that engagement with an understanding adult triggers human capacities for relatedness that are therapeutic. Assumption of the validity of a developmental perspective Psychodynamic psychotherapists are oriented to the developmental aspects of their patients’ problems and work to optimise developmental processes.
+
+---
+
+[PSYCHODYNAMIC]
+Psychodynamic Therapy Freudian psychoanalysis Sigmund Freud’s psychoanalytic theory, which emphasises the inﬂuence of childhood experiences on adult psychopathology, has been inﬂuential in the ﬁeld of psychology. While later psychoanalytic theories have built upon and sometimes diverged from Freud’s ideas, the developmental perspective remains a core aspect of psychodynamic psychotherapy. Despite criticisms of its emphasis on early childhood and the challenges of empirical validation, the developmental model continues to be a valuable framework for understanding psychological disturbance. Structural Approach Theorist Key Contributions Concepts Heinz Hartmann Proposed the key developmental assumption of change of function. Secondary autonomy, ego’s undifferentiated origin 
+Erik Erikson Focused on the interaction of social norms and biological drives in generating self and identity. 
+Eight developmental stages, identity diffusion, basic trust vs. basic mistrust René Spitz Ascribed primary importance to the mother-infant interaction. Organisers, shifts in psychological organisation 
+Edith Jacobson Assumed a state of primitive fusion between early object representations and self-representation. Primitive fusion 
+Hans Loewald Proposed that integrative experience is at the centre of development. Internalisation, relationality, interactional and intersubjective experiences The structural approach in psychoanalysis, criticised for its quasi-physiological character and emphasis on sexuality, has been reinterpreted and adapted over time. While some analysts remain committed to updated structural models, others have embraced object relations theory or developed alternative models like relational theory and self-psychology. Despite criticisms, the structural approach’s inﬂuence persists in developmental theories and recent research linking anxiety, craving, and dreaming to instinctual drive states. Anna Freud Aspect of Theory Description Examples Developmental Model Emphasises developmental progress through resolving conflicts. 
+Child finding a compromise among wishes, needs, perceptions, etc. Role of Drives Maintains Freudian view that drives are crucial in N/A
+
+---
+
+[PSYCHODYNAMIC]
+Psychodynamic Therapy ego and superego formation. Influence of Child-Rearing Acknowledges the impact of child-rearing on ego and superego development. N/A 
+Developmental Lines Metaphor for continuous and cumulative child development. Dependency to emotional self-reliance, egocentrism to social partnerships, etc. Pathology Defined as discrepancies or lags in developmental lines. Arrest or regression along a developmental line 
+Specific Issues Identified disturbances in narcissism, object relatedness, aggression control, etc. N/A 
+Anxiety Distinguished between objective anxiety (fear of external world) and internal anxiety (fear of impulses, wishes, feelings). N/A 
+Empirical Support Her work with infants at Hampstead war nurseries supported her theories. Study on children’s reactions to Scud missile attacks in Israel Margaret Mahler Subphase Age Description Normal Autism First weeks of life State of undifferentiation between the infant and the mother. Symbiotic Phase Around 2-4 months Infant experiences a sense of unity with the mother. Differentiation Around 4-9 months Infant begins to distinguish themselves from the mother. Practicing 9-15-18 months Infant explores their own autonomy and independence. Rapprochement Second half of the second year Infant seeks closeness and reunion with the mother. Consolidation of Individuality Beginning of the third year Infant solidifies their sense of self and individuality.
+
+---
+
+[PSYCHODYNAMIC]
+Psychodynamic Therapy Joseph Sandler 
+ 
+Concept Description Integration of Psychoanalysis Modernised psychoanalysis for integration with developmental sciences. Common Ground Found common ground between American ego psychology and British object relations theory. Representational World Introduced the concept of the representational world, similar to schema theory. Motivation Placed feeling states at the centre of motivation, rather than psychic energy. Background of Safety Introduced the concept of background of safety, where the ego aims to maximise safety. Drives Explained the influence of drives on behaviour through their impact on feelings. Patient-Therapist Relationships Suggested that patients create relationships to actualize unconscious fantasies. 
+Internal Object Representations Differentiated between past unconscious (hypothetical structures) and present unconscious (works irrationally, concerned with current experience). Developmental Model of Depression Proposed a developmental model of depression based on the representational world construct. Projective Identification Explained projective identification without extravagant assumptions. Therapeutic Phenomena His models explain therapeutic phenomena like countertransference. Influence His theories are widely used but not always attributed to him.
+
+---
+
+[PSYCHODYNAMIC]
+Psychodynamic Therapy Object Rela>on Theory Category Description Key Figures Examples 
+Hard Object Relations Theories 
+Derive relationships from drive theory; emphasise the individual’s experience of being with others, including the therapist. 
+Melanie Klein, Ronald Fairbairn, Otto Kernberg 
+Klein’s work on the depressive position and paranoid-schizoid position 
+Soft Object Relations Theories 
+Derive drives from object relations; focus on the individual’s experience of being with others, including the therapist. 
+Michael Balint, D. W. Winnicott, Heinz Kohut Bion’s work on emotional development and pathology 
+ Concept Description Controversy 
+Projective Identification An interpersonal process where the self gets rid of feelings by evoking the same feelings in another self. 
+Characterised as a defensive mechanism by some. 
+Infancy Roots of Projective Identification Process originates in infancy. Debate over the extent to which infants possess complex psychological capacities. 
+Innate Violent Tendencies Klein suggested that children innately possess ruthless and sadistic fantasies. 
+Controversial claim that violent tendencies are innate rather than caused by environmental influences. Mediation of Genetic Vulnerability Model has been influential in understanding how genetic vulnerability is mediated. 
+Supported by evidence of physical aggression and destructiveness in early childhood. Paranoid-Schizoid Position A predominance of this position leads to mental disorder. N/A 
+Depressive Position Relative stability of this position reflects mental health. Bion argued that the depressive position is never permanently achieved. 
+Psychotic States Intense annihilatory/persecutory anxieties lead to projective identification and reintrojection. 
+Delusions of external control over the mind or body. 
+Neurotic Problems Consequences of unresolved depressive anxiety. N/A Depression Arises from the experience of loss, Chronic depression occurs when the person cannot
+
+---
+
+[PSYCHODYNAMIC]
+Psychodynamic Therapy reminding the person of the damage caused to the good object. escape the fear of injuring the loved object. 
+Narcissistic Character Structure A defence against envy and dependence. Characterised by ruthless use of others and a professed lack of need for them. Evidence for Early Origins of Mental Disorders Evidence suggests that most adult mental disorders are foreshadowed in infancy. 
+Debate over the interpretation of psychoanalytic infant observation. Early Brain Development Increasingly seen as pivotal in the development of mental disorders. N/A 
+ HEINZ KOHUT AND SELF PSYCHOLOGY Concept Description Narcissistic Development Proceeds along a unique path, with parents serving as selfobjects. Empathic Responses Allow the unfolding of exhibitionism and grandiosity from the mirroring selfobject. Frustration Promotes the modulation of infantile omnipotence through the transmuting internalisation of the mirroring selfobject. Consolidation of the Nuclear Self Occurs gradually through the transmuting internalisation of the mirroring selfobject. Idealisation of Selfobjects Leads to the development of ideals through internalisation. Concept Description Criticism Cohesive Self Goal to be attained, a self that remains constant over time. May overlook the natural evolution of the self over time. 
+Enfeebled Self Result of inadequate emotional attunement from selfobjects, leading to defensive pleasure-seeking behaviours. 
+Could be seen as overly simplistic in explaining complex psychological phenomena. Anxiety Primarily experienced as a defect or lack of continuity in the self. May neglect other potential sources of anxiety. 
+Deficiency-Based Theory Assumes that a lack of facilitating experiences leads to a primary psychic deficit, an inadequately developed self. 
+Criticised as parent blaming and overemphasising environmental influences. Psychosis Characterised by a complete lack of a cohesive sense of self. N/A
+
+---
+
+[PSYCHODYNAMIC]
+Psychodynamic Therapy 
+Personality Disorders Enfeebled self vulnerable to temporary fragmentation. May oversimplify the complexities of personality disorders. Neurosis Associated with a robust self structure. May overlook other potential underlying causes of neurosis. 
+Narcissistic Personality Developmental arrest at the grandiose exhibitionistic self stage due to inadequate mirroring from parents. 
+Criticised for being overly deterministic and neglecting genetic influences. 
+Borderline Personality Inability to psychologically hold on to selfobjects that could be soothing. May oversimplify the complexities of borderline personality disorder. Drug Addiction Seen as a way to fill a missing gap in the psyche. May be seen as an overly simplistic explanation of addiction. Mirror Neurons Brain cells activated when an individual observes a movement analogous to its own. 
+Somewhat far-fetched to consider it a direct confirmation of self psychological ideas. Genetic Influences Increasing evidence of genetically rooted personality traits. Challenges the notion of primarily environmental influences on development. Passive Genotype-Environment Correlation Child’s genetically rooted characteristics can shape the family environment. Challenges the idea of a direct causal relationship between parenting style and child behaviour. Child-to-Parent Effect Child’s genetically rooted characteristics can influence the family environment. Challenges the notion of a primarily environmental impact on development. Family Environment Moderating Genetic Influence 
+Qualities of the family environment can influence the expression of genetic predispositions. 
+Supports the idea of a complex interplay between genetics and environment. STRUCTURAL OBJECT RELATIONS: OTTO KERNBERG Otto Kernberg’s structural object relations theory, a synthesis of the Klein-Bion model and modern structural theory, emphasises the role of affects in the motivational system. Kernberg’s approach to neurotic problems focuses on the patient’s current thinking and utilises psychiatric diagnostic categories to predict treatment response. His work on personality disorders, particularly borderline personality disorder, highlights the importance of ego structures and aggressive impulses, and his transference-focused psychotherapy has shown efﬁcacy in treating these disorders.
+
+---
+
+[PSYCHODYNAMIC]
+Psychodynamic Therapy THE INTERPERSONAL RELATIONAL APPROACH Approach Description Key Concepts 1. Nonreflective, presymbolic behaviour Organises relational fields around reciprocal influences and mutual regulation Reciprocal influences, mutual regulation 2. Affective permeability Shared experience of intense affect across permeable boundaries Direct resonances, interpersonal dyads 3. Self-other configurations Organisation of experience into self-other configurations Self-other configurations 4. Intersubjectivity Mutual recognition of self-reflective agents Mutual recognition, self-reflective agents Approach Evidence Base Notes Interpersonal Therapy (IPT) Strong evidence for depression in adults; some evidence for adolescents May have deviated from its psychodynamic roots 
+Psychoanalytic Adaptations Controlled studies show effectiveness for mood disorders and eating disorders 
+Retain a focus on the relationship-seeking aspect of human character Schema Theory Theorist(s) Integration Approach Key Concepts Applications Boesky (1988), Peterfreund (1971), Rosenblatt and Thickstun (1977) Psychoanalysis and Systems Theory Unconscious relationship procedures 
+Psychotherapy based on describing unconscious processes 
+Horowitz et al. (1995) British Object Relations Theory, Cognitive Science, and Systems Theory Person schemas Cognitive analytic therapy addressing underlying relationship patterns 
+Anthony Ryle Psychoanalysis and Systems Theory 
+Reciprocal role procedures (care, dependency, control, submission, love, anger) 
+Therapist-patient correspondence in cognitive analytic therapy 
+Daniel Stern Psychoanalysis and Systems Theory Self development phases (emerging, core, subjective, narrative) 
+Development of personality disorders and neurosis 
+Stern Psychoanalysis and Systems Theory 
+Emergent moments, schematic representations, feeling shapes, protonarrative envelopes 
+Distortions in basic schemas leading to psychopathology
+
+---
+
+[EMOTION]
+Psychodynamic Therapy Mentaliza>on Theory Process Description Potential Outcome of Disruption Labelling and understanding of affect Identifying and comprehending emotions Difficulty in emotional regulation and expression Arousal regulation Managing emotional arousal and reactivity Difficulty in self-soothing and emotional control Effortful control Regulating impulses and behaviour Impulsivity and difficulty in goal-directed behaviour Mentalizing/Mind-reading capacities Understanding and inferring mental states of oneself and others Difficulty in social cognition and empathy Area Description Consequences Agentive Self Dysfunctions in the agentive self are central to psychopathology. Severe personality disorder or borderline personality organisation Interpersonal Interpretive Function Dysfunctions in this function lead to problems with understanding others. Disorganised attachment and disorganisation of the self 
+Attachment System Disorganised attachment results from incongruent mirroring and insecure base. 
+Alien self formation, where ideas/feelings are experienced as not belonging to the self 
+Trauma Impact Trauma exacerbates vulnerabilities in individuals with insecure early environments. 
+Inhibited playfulness, impaired affect regulation, attentional control difficulties, and potential failure of mentalization Treatment Approach Stable, coherent representation of the patient’s internal world is proposed. 
+Randomised controlled trial showed promising results in partial hospital setting

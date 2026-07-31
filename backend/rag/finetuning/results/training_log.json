@@ -1,0 +1,72 @@
+{
+  "config": {
+    "base_model": "sarvamai/sarvam-2b-v0.5",
+    "max_seq_length": 512,
+    "num_train_epochs": 3,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.05,
+    "lr_scheduler_type": "cosine",
+    "logging_steps": 5,
+    "eval_steps": 50,
+    "save_steps": 100,
+    "optim": "paged_adamw_8bit",
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "lora_target_modules": [
+      "q_proj",
+      "v_proj",
+      "k_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "load_in_4bit": true,
+    "bnb_4bit_quant_type": "nf4",
+    "bnb_4bit_compute_dtype": "float16",
+    "bnb_4bit_use_double_quant": true
+  },
+  "train_loss": [
+    {
+      "step": 5,
+      "loss": 2.567242,
+      "lr": 0.00013827
+    }
+  ],
+  "eval_loss": [
+    {
+      "epoch": 3,
+      "step": 9,
+      "loss": 1.898972,
+      "perplexity": 6.679
+    }
+  ],
+  "epoch_summary": [
+    {
+      "epoch": 1,
+      "avg_train_loss": 0.0,
+      "eval_loss": 0.0,
+      "perplexity": 1.0
+    },
+    {
+      "epoch": 2,
+      "avg_train_loss": 2.567242,
+      "eval_loss": 0.0,
+      "perplexity": 1.0
+    },
+    {
+      "epoch": 3,
+      "avg_train_loss": 0.0,
+      "eval_loss": 1.898972,
+      "perplexity": 6.679
+    }
+  ],
+  "training_time_seconds": 43.4,
+  "start_time": "2026-07-23 14:14:26",
+  "end_time": "2026-07-23 14:15:30"
+}
