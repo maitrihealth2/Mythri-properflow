@@ -26,6 +26,7 @@ class _CommandCenter:
             "Total Requests": 0,
             "Active Requests": 0,
             "Avg Response (ms)": 0.0,
+            "Last Chat Latency (ms)": 0.0,
             "Total DB Queries": 0,
         }
         self._total_response_time = 0.0
@@ -82,6 +83,8 @@ class _CommandCenter:
         self.perf_stats["Total Requests"] += 1
         self._total_response_time += duration_ms
         self.perf_stats["Avg Response (ms)"] = self._total_response_time / self.perf_stats["Total Requests"]
+        if "/api/consultation/message" in endpoint:
+            self.perf_stats["Last Chat Latency (ms)"] = duration_ms
         
         color = "green" if status < 400 else "red"
         text = Text()
@@ -112,13 +115,52 @@ class _CommandCenter:
         text.append(details, style="magenta")
         console.print(text)
 
-    def log_error(self, msg: str):
+    def log_error(self, msg: str, exc: Exception = None):
         self._check_snapshot()
-        console.print(Panel(f"[bold red]ERROR at {self._ts()}:[/bold red]\n{msg}", border_style="red"))
+        
+        file_path = "Unknown"
+        line = "?"
+        func = ""
+        problem = msg
+
+        import os
+        import traceback
+        import inspect
+
+        if exc and hasattr(exc, "__traceback__") and exc.__traceback__:
+            tb = traceback.extract_tb(exc.__traceback__)
+            if tb:
+                last_frame = tb[-1]
+                try:
+                    file_path = os.path.relpath(last_frame.filename, start=os.getcwd())
+                except ValueError:
+                    file_path = last_frame.filename
+                line = str(last_frame.lineno)
+                func = last_frame.name
+        else:
+            try:
+                frame = inspect.currentframe().f_back
+                try:
+                    file_path = os.path.relpath(frame.f_code.co_filename, start=os.getcwd())
+                except ValueError:
+                    file_path = frame.f_code.co_filename
+                line = str(frame.f_lineno)
+                func = frame.f_code.co_name
+            except Exception:
+                pass
+                
+        func_text = f" (in {func})" if func and func != "<module>" else ""
+        content = (
+            f"[bold white]File:[/bold white]    [cyan]{file_path}[/cyan]\n"
+            f"[bold white]Line:[/bold white]    [yellow]{line}{func_text}[/yellow]\n"
+            f"[bold white]Problem:[/bold white] [bold red]{problem}[/bold red]"
+        )
+
+        console.print(Panel(content, title=f"[bold red]ERROR at {self._ts()}[/bold red]", border_style="red", expand=False))
         try:
             from modules.dashboard.api import broadcast_event
             loop = asyncio.get_running_loop()
-            loop.create_task(broadcast_event("ERROR", msg))
+            loop.create_task(broadcast_event("ERROR", problem))
         except Exception:
             pass
 

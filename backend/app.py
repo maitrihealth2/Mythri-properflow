@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from fastapi import Request
 
 from core.database.models import init_db
-from modules.authentication.api import router as auth_router
+from security.authentication.api import router as auth_router
 from modules.consultation.api import router as consultation_router
 from modules.voice.api import router as voice_router
 from modules.voice.api_streaming import router as streaming_router
@@ -27,9 +27,10 @@ from core.logger.terminal import CommandCenter
 import time
 
 def global_async_exception_handler(loop, context):
-    msg = context.get("exception", context["message"])
+    exc = context.get("exception")
+    msg = exc or context.get("message")
     err = f"[GLOBAL ASYNC SHIELD] Caught unhandled exception: {msg}"
-    CommandCenter.log_error(err)
+    CommandCenter.log_error(f"Async Error: {msg}", exc=exc if isinstance(exc, Exception) else None)
     with open("backend_errors.log", "a") as f:
         f.write(err + "\n")
 
@@ -97,7 +98,6 @@ allowed_origins = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
-    "https://maitri-v6-frontend.onrender.com",
 ]
 if cors_origins_env:
     allowed_origins.extend([o.strip() for o in cors_origins_env.split(",") if o.strip()])
@@ -105,7 +105,7 @@ if cors_origins_env:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"https://.*\.onrender\.com",
+    allow_origin_regex=r"https://.*\.onrender\.com|https://.*\.vercel\.app|http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -131,6 +131,9 @@ app.include_router(streaming_router)
 app.include_router(telemetry_router)
 app.include_router(feedback_router)
 
+from modules.src.features.feature_flags.api import router as features_router
+app.include_router(features_router)
+
 
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -142,7 +145,7 @@ def log_error_to_file(msg: str):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     err = f"INTERNAL SERVER ERROR: {str(exc)}\n{traceback.format_exc()}"
-    CommandCenter.log_error(f"500 Error: {str(exc)}")
+    CommandCenter.log_error(f"500 Error: {type(exc).__name__}: {str(exc)}", exc=exc)
     log_error_to_file(err)
     return JSONResponse(
         status_code=500,
@@ -190,7 +193,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 # Mount the static telemetry files
-app.mount("/telemetry_ui", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "telemetry_ui"), html=True), name="telemetry_ui")
+app.mount("/telemetry_ui", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "modules", "telemetry_ui"), html=True), name="telemetry_ui")
 
 @app.get("/architecture", response_class=HTMLResponse)
 def architecture_view():

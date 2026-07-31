@@ -59,7 +59,7 @@ async def assess_turn(
     """
     Call the internal assessor model to update the case file JSON.
     """
-    client = AsyncOpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL)
+    client = AsyncOpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=3.0)
 
     # Convert last 3 exchanges to string
     last_3 = ""

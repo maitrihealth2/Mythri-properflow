@@ -110,7 +110,11 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-            <button onClick={() => { localStorage.clear(); router.replace('/login'); }} className="text-error hover:bg-error/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
+            <button onClick={() => { 
+              localStorage.clear(); 
+              document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+              router.replace('/login'); 
+            }} className="text-error hover:bg-error/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>

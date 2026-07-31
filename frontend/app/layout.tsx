@@ -41,11 +41,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Background Grain and Ambient Blobs */}
         <div className="bg-grain"></div>
         {/* Desktop Blobs (hidden on small) */}
-        <div className="hidden md:block fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-tertiary-fixed/30 mix-blend-multiply filter blur-[120px] pointer-events-none z-0"></div>
-        <div className="hidden md:block fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-secondary-fixed/40 mix-blend-multiply filter blur-[120px] pointer-events-none z-0"></div>
+        <div className="hidden md:block fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-tertiary-fixed/10 opacity-30 pointer-events-none z-0"></div>
+        <div className="hidden md:block fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-secondary-fixed/20 opacity-30 pointer-events-none z-0"></div>
         {/* Mobile Blobs */}
-        <div className="block md:hidden fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-slate-300/40 mix-blend-multiply filter blur-[120px] pointer-events-none z-0"></div>
-        <div className="block md:hidden fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-stone-200/50 mix-blend-multiply filter blur-[120px] pointer-events-none z-0"></div>
+        <div className="block md:hidden fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-slate-300/20 opacity-30 pointer-events-none z-0"></div>
+        <div className="block md:hidden fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-stone-200/20 opacity-30 pointer-events-none z-0"></div>
         <Providers>
           {children}
         </Providers>

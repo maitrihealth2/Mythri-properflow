@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from core.database.models import get_db, User
-from modules.authentication.service import hash_password, verify_password, create_access_token, decode_token
+from security.authentication.service import hash_password, verify_password, create_access_token, decode_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 bearer = HTTPBearer()

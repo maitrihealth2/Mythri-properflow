@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
 
-const api = axios.create({ baseURL: API_URL })
+const api = axios.create({ baseURL: API_URL, timeout: 0 })
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
@@ -22,6 +22,7 @@ api.interceptors.response.use(
         localStorage.removeItem('mb_token')
         localStorage.removeItem('mb_username')
         localStorage.removeItem('mb_language')
+        document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
         window.location.href = '/login'
       }
     }

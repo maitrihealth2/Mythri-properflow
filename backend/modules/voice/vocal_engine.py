@@ -3,7 +3,7 @@ import wave
 import numpy as np
 import soundfile as sf
 from pedalboard import Pedalboard, PitchShift, Compressor, HighShelfFilter, LowShelfFilter, Reverb
-from core.brain.emotion_detector import EmotionResult
+from rag.brain.emotion_detector import EmotionResult
 
 def get_prosody_params(emotion_label: str) -> dict:
     """

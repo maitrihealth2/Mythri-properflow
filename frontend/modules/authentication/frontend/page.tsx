@@ -24,6 +24,7 @@ export default function LoginPage() {
       localStorage.setItem('mb_token', data.access_token)
       localStorage.setItem('mb_username', data.username)
       localStorage.setItem('mb_language', 'en-IN')
+      document.cookie = `mb_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`
       sessionStorage.removeItem('mb_session_id')
       if (typeof window !== 'undefined' && (window as any).gtag) {
         (window as any).gtag('event', 'login', { method: 'Google' })
@@ -57,6 +58,7 @@ export default function LoginPage() {
       localStorage.setItem('mb_token', data.access_token)
       localStorage.setItem('mb_username', data.username)
       localStorage.setItem('mb_language', 'en-IN')
+      document.cookie = `mb_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`
       sessionStorage.removeItem('mb_session_id')
       window.location.href = '/home' // Force hard redirect to dashboard
     } catch (err: any) {

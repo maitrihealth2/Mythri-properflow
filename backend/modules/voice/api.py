@@ -15,16 +15,16 @@ from core.database.models import get_db, Session as DBSession, Message, MessageE
 from providers.sarvam.voice_client import synthesize_speech, get_language_prompt, get_supported_languages
 from modules.voice.stt_batcher import batch_transcribe_audio
 from providers.sarvam.sarvam_client import chat_with_maitri
-from core.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
-from core.brain.analyst import should_skip_assessor, assess_turn
+from rag.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
+from rag.brain.analyst import should_skip_assessor, assess_turn
 from modules.voice.vocal_engine import optimize_pitch
-from core.security.crisis_handler import check_for_crisis
-from core.brain.state_tracker import tracker
-from modules.authentication.api import get_current_user
+from security.crisis_handler import check_for_crisis
+from rag.brain.state_tracker import tracker
+from security.authentication.api import get_current_user
 from modules.dashboard.api import broadcast_event
 
 try:
-    from modules.knowledge.retriever import retrieve_context, is_knowledge_base_ready
+    from rag.knowledge.retriever import retrieve_context, is_knowledge_base_ready
     RAG_AVAILABLE = is_knowledge_base_ready()
 except Exception:
     RAG_AVAILABLE = False

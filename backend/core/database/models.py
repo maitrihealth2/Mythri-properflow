@@ -330,6 +330,28 @@ class UserFeedback(Base):
     user = relationship("User")
 
 
+class FeatureFlag(Base):
+    __tablename__ = "feature_flags"
+    __table_args__ = {'comment': 'Feature flags for beta testing and gradual rollouts'}
+
+    id = Column(Integer, primary_key=True, index=True)
+    feature_name = Column(String(100), unique=True, index=True, nullable=False)
+    is_active_for_all = Column(Boolean, default=False)
+    beta_users_only = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=func.now())
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+
+class UserFeatureAccess(Base):
+    __tablename__ = "user_feature_access"
+    __table_args__ = {'comment': 'Mapping of beta users to specific features'}
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    feature_name = Column(String(100), ForeignKey("feature_flags.feature_name", ondelete="CASCADE"), index=True, nullable=False)
+    granted_at = Column(DateTime(timezone=True), default=func.now())
+
+
+
 def get_db():
     db = SessionLocal()
     try:

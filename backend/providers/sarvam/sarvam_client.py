@@ -201,7 +201,7 @@ def on_user_turn(user_message, last_3_exchanges, case_file):
 
 
 def get_client() -> OpenAI:
-    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL)
+    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
 
 
 LANGUAGE_NAMES = {
@@ -241,7 +241,7 @@ def chat_with_maitri(
     rag_context: str = "",
     case_file: dict = None,
     language_prompt: str = "",
-    max_tokens: int = 1500,
+    max_tokens: int = 250,
     reasoning_effort: str | None = None,
     is_crisis: bool = False,
     exercise_phase: str = "idle",
@@ -317,8 +317,14 @@ def chat_with_maitri(
             messages=api_messages,
             max_tokens=max_tokens,
             temperature=0.75,
+            stream=True,
         )
-        return (response.choices[0].message.content or "").strip()
+        full_text = []
+        for chunk in response:
+            if chunk.choices and chunk.choices[0].delta.content:
+                full_text.append(chunk.choices[0].delta.content)
+        result = "".join(full_text).strip()
+        return result if result else "I am right here with you. How are you holding up?"
     except Exception as e:
         print(f"Maitri LLM Error: {e}")
         return "I am here with you. Take your time."

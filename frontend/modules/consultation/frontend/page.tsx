@@ -70,13 +70,6 @@ function TypewriterText({ text, animate, onComplete }: { text: string; animate: 
   return <>{displayed}</>
 }
 
-const QUICK_REPLIES: Record<string, string[]> = {
-  'en-IN': ['Anxious', "Can't sleep", 'Lonely', 'Reflecting', 'Overwhelmed'],
-  'hi-IN': ['चिंतित', 'नींद नहीं आ रही', 'अकेलापन', 'विचारशील', 'व्याकुल'],
-  'te-IN': ['ఆందోళనగా', 'నిద్రరావడం లేదు', 'ఒంటరిగా', 'ఆలోచిస్తున్నాను', 'అతిగా అనిపిస్తుంది'],
-  'ta-IN': ['கவலை', 'தூக்கமின்மை', 'தனிமை', 'சிந்தனை', 'மிகுந்த சுமை'],
-}
-
 const WELCOME_MSGS: Record<string, string> = {
   'en-IN': "Welcome back. This is your quiet space. What would you like to talk about today?",
   'hi-IN': "वापसी पर स्वागत है। यह आपके विचारों के लिए एक शांत जगह है। आप इस समय कैसा महसूस कर रहे हैं?",
@@ -108,12 +101,12 @@ export default function ConsultationPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const initialized = useRef(false)
 
-  const quickReplies = QUICK_REPLIES[language] || QUICK_REPLIES['en-IN']
+
   const welcomeMsg = WELCOME_MSGS[language] || WELCOME_MSGS['en-IN']
   const inputPlaceholder = INPUT_PLACEHOLDERS[language] || INPUT_PLACEHOLDERS['en-IN']
 
   const userMessageCount = messages.filter(m => m.role === 'user').length
-  const showQuickReplies = userMessageCount <= 2 && !loading
+
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
@@ -213,8 +206,9 @@ export default function ConsultationPage() {
       } else if (data.exercise_state === 'completed' || data.exercise_state === 'idle') {
         setExerciseMode(null)
       }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Connection issue.' }])
+    } catch (err) {
+      console.error("Chat send error:", err)
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Connection issue. Please try again.' }])
     } finally { setLoading(false) }
   }
 
@@ -385,17 +379,6 @@ export default function ConsultationPage() {
       {/* Floating Composer — fixed, no strip wrapper */}
       <div className={`fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center px-margin-mobile md:px-8 lg:px-12 pb-20 md:pb-8 pointer-events-none transition-all duration-700 ${exerciseMode ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto flex flex-col items-center pointer-events-auto">
-
-          {/* Animated Quick Replies */}
-          <div className={`w-full transition-all duration-500 ease-in-out overflow-hidden ${showQuickReplies ? 'max-h-32 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
-            <div className="flex flex-wrap justify-center gap-3 w-full px-2">
-              {quickReplies.map((q, i) => (
-                <button key={i} onClick={() => handleTextSend(q)} className="bg-white/60 backdrop-blur-md border border-white/60 px-5 py-2.5 rounded-full text-label-md hover:bg-white/80 hover:shadow-md active:scale-95 transition-all shadow-sm text-on-surface-variant">
-                  {q}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Floating Glass Composer */}
           <div className={`relative flex items-center gap-2 md:gap-4 backdrop-blur-3xl border border-white/60 rounded-[2rem] p-2 md:p-3 pl-6 md:pl-8 focus-within:border-white transition-all shadow-lg hover:shadow-xl w-full ${exerciseMode ? 'bg-white/50' : 'bg-white/75'}`}>

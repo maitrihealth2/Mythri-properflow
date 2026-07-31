@@ -1,7 +1,7 @@
 import os
 from sqlalchemy.orm import Session
 from core.database.models import SessionLocal, User
-from modules.authentication.service import hash_password
+from security.authentication.service import hash_password
 
 def reset_password():
     db = SessionLocal()

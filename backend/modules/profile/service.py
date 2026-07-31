@@ -82,7 +82,7 @@ def _extract_life_focus(messages: List[str]) -> List[str]:
 
 
 def _absolutism_score_from_messages(messages: List[str]) -> float:
-    from core.brain.pattern_analyzer import _absolutism_score
+    from rag.brain.pattern_analyzer import _absolutism_score
     if not messages:
         return 0.0
     scores = [_absolutism_score(m) for m in messages]

@@ -26,10 +26,12 @@ class RestartHandler(FileSystemEventHandler):
                 self.process.kill()
                 self.process.wait()
             print("[Watcher] Old process stopped.")
+            time.sleep(1.5)  # Allow OS time to release the port socket on Windows
         
         print("\n--- Starting Uvicorn Server ---")
         self.process = subprocess.Popen([
             sys.executable, "-m", "uvicorn", "app:app",
+            "--host", "0.0.0.0",
             "--port", "8000",
             "--timeout-graceful-shutdown", "3",  # Max 3s for connections to close
             "--log-level", "warning", # Suppress standard access logs for Terminal Command Center

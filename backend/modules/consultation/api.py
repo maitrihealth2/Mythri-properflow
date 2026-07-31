@@ -8,19 +8,19 @@ from pydantic import BaseModel
 
 from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, RiskLog, User, ExerciseLog, UserPersonaProfile
 from providers.sarvam.sarvam_client import chat_with_maitri
-from core.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
-from core.brain.analyst import should_skip_assessor, assess_turn
-from core.brain.pattern_analyzer import analyze_patterns
+from rag.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
+from rag.brain.analyst import should_skip_assessor, assess_turn
+from rag.brain.pattern_analyzer import analyze_patterns
 from providers.sarvam.voice_client import get_language_prompt
-from core.security.crisis_handler import check_for_crisis
+from security.crisis_handler import check_for_crisis
 from modules.profile.service import get_persona_summary, update_persona
-from core.brain.state_tracker import tracker
-from modules.authentication.api import get_current_user
+from rag.brain.state_tracker import tracker
+from security.authentication.api import get_current_user
 from modules.dashboard.api import broadcast_event
 from core.logger.terminal import CommandCenter
 
 try:
-    from modules.knowledge.retriever import retrieve_context, is_knowledge_base_ready
+    from rag.knowledge.retriever import retrieve_context, is_knowledge_base_ready
     RAG_AVAILABLE = is_knowledge_base_ready()
     if RAG_AVAILABLE:
         print("[RAG] Knowledge base loaded")
@@ -114,13 +114,15 @@ async def send_message(
         session.is_crisis_flagged = True
         db.commit()
 
-    # ── Staggered telemetry ───────────────────────────────────────────────────
-    async def stagger_telemetry():
-        await asyncio.sleep(0.5); await broadcast_event("RAG_FETCH", "Fetching knowledge"); CommandCenter.log_ai("RAG_FETCH", "Vector database retrieval initiated")
-        await asyncio.sleep(0.5); await broadcast_event("MEMORY_FETCH", "Fetching cross-session memory")
-        await asyncio.sleep(0.5); await broadcast_event("EMOTION_FETCH", "Analyzing tone"); CommandCenter.log_ai("EMOTION_FETCH", "Emotion detector activated")
-        await asyncio.sleep(0.5); await broadcast_event("LLM_START", "Synthesizing Prompt -> LLM")
-    asyncio.create_task(stagger_telemetry())
+    # ── Real Telemetry (Staggered UI updates without blocking) ───────────────
+    async def fast_telemetry():
+        await broadcast_event("RAG_FETCH", "Fetching knowledge")
+        CommandCenter.log_ai("RAG_FETCH", "Vector database retrieval initiated")
+        await broadcast_event("MEMORY_FETCH", "Fetching cross-session memory")
+        await broadcast_event("EMOTION_FETCH", "Analyzing tone")
+        CommandCenter.log_ai("EMOTION_FETCH", "Emotion detector activated")
+        await broadcast_event("LLM_START", "Synthesizing Prompt -> LLM")
+    asyncio.create_task(fast_telemetry())
 
     # ── Fetch conversation history ────────────────────────────────────────────
     past = db.query(Message).filter(
@@ -175,15 +177,22 @@ async def send_message(
     else:
         await broadcast_event("LLM_START", "Assessor Evaluating...")
         CommandCenter.log_ai("LLM_START", "Assessor model evaluating conversational trajectory")
-        case_file = await assess_turn(
-            messages       = history,
-            case_file      = case_file,
-            user_message   = req.message,
-            emotion_label  = emotion.label,
-            rag_context    = rag_context,
-            pattern_block  = pattern_block,
-            persona_summary= persona_summary,
-        )
+        try:
+            case_file = await asyncio.wait_for(
+                assess_turn(
+                    messages       = history,
+                    case_file      = case_file,
+                    user_message   = req.message,
+                    emotion_label  = emotion.label,
+                    rag_context    = rag_context,
+                    pattern_block  = pattern_block,
+                    persona_summary= persona_summary,
+                ),
+                timeout=3.0
+            )
+        except Exception as e:
+            print(f"[Assessor] Timed out or failed ({e}). Proceeding directly with RESPOND mode.")
+            case_file["runtime_state"]["decision"] = "RESPOND"
         tracker.update_case_file(session.id, case_file)
 
     decision = case_file.get("runtime_state", {}).get("decision", "RESPOND")

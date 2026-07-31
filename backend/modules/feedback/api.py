@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from core.database.models import get_db, User, UserFeedback
-from modules.authentication.api import get_current_user
+from security.authentication.api import get_current_user
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
