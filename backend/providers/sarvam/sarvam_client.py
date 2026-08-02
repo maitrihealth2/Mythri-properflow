@@ -45,6 +45,27 @@ Inside `<scratchpad>`, you MUST answer these 6 questions:
 
 After closing the `</scratchpad>`, generate your warm, natural, curious response to the user. Do not sound like Google, ChatGPT, or a self-help article. Be genuine.
 
+REQUIRED OUTPUT FORMAT:
+<scratchpad>
+1. Facts: ...
+2. Assumptions: ...
+3. Evidence: ...
+4. Missing: ...
+5. Best Question: ...
+6. Advice appropriate?: ...
+</scratchpad>
+[Your actual conversational response here]
+
+CRITICAL REFINEMENT - ELIMINATE MICRO-ASSUMPTIONS:
+You must NEVER explain the user's experience unless the explanation is directly supported by what the user explicitly said.
+- The "Why" Rule: You may describe what the user said, noticed, or explicitly feels. You are NOT allowed to explain *why* it happened, *what* it means, what their brain is doing, or what psychological process is occurring until enough evidence exists.
+- Ban These Patterns: Reject or rewrite sentences containing: "It sounds like...", "It's like...", "This suggests...", "This means...", "Your brain...", "Your mind...", "You're trying to...", "You're looking for...", "You're processing...", "You're holding onto...", "Part of you...", "You're caught between...", "You're struggling with..." (unless those ideas came directly from the user).
+- Literal Reflection Only: 
+  Bad: "Your mind keeps trying to process it." 
+  Good: "You've found yourself thinking about it since then."
+- The One-Sentence Test: For every sentence you write, ask: "Could I point to the exact words the user said that support this sentence?" If NO, rewrite it.
+- Target Behavior: You should never sound like you already understand. You should sound like you are genuinely trying to understand. Curiosity must always win over interpretation.
+
 IDENTITY:
 You are an AI named Maitri, built by the MindBridge team.
 """
@@ -109,6 +130,8 @@ DECISION & QUESTION RANKING ENGINE:
 - ASK: User situation is ambiguous. Set `recommended_question` by choosing the question with highest information gain, openness, and emotional safety. Avoid leading questions.
 - RESPOND: Full situation is clear (Stage is Guide/Summarize).
 - GROUND/CRISIS: Risk levels moderate/high.
+- EXERCISE_CONTINUE: User is actively engaging in the ongoing exercise.
+- EXERCISE_BREAK: User is distracted, confused, refusing, or has completed the exercise.
 
 Return ONLY valid JSON matching the schema. No markdown wrappers.
 """
@@ -244,7 +267,24 @@ def chat_with_maitri(
         for chunk in response:
             if chunk.choices and chunk.choices[0].delta.content:
                 full_text.append(chunk.choices[0].delta.content)
-        result = "".join(full_text).strip()
+        raw_result = "".join(full_text).strip()
+        
+        # Clean up the hidden scratchpad block
+        import re
+        result = re.sub(r'<scratchpad>.*?</scratchpad>', '', raw_result, flags=re.DOTALL | re.IGNORECASE).strip()
+        
+        # Just in case the model forgot the closing tag
+        if '<scratchpad>' in result.lower():
+            # The model forgot </scratchpad>. Let's salvage the actual response from the bottom.
+            parts = result.split('\n\n')
+            if len(parts) > 1 and not re.match(r'^\d+\.', parts[-1].strip()):
+                result = parts[-1].strip()
+            else:
+                result = ""
+            
+        if not result:
+            print(f"[MAITRI DEBUG] LLM generated empty response. Raw output was:\n{raw_result}\n-----------------")
+            
         return result if result else "I am right here with you. How are you holding up?"
     except Exception as e:
         print(f"Maitri LLM Error: {e}")

@@ -193,7 +193,7 @@ async def send_message(
                     pattern_block  = pattern_block,
                     persona_summary= persona_summary,
                 ),
-                timeout=3.0
+                timeout=15.0
             )
         except Exception as e:
             print(f"[Assessor] Timed out or failed ({e}). Proceeding directly with RESPOND mode.")

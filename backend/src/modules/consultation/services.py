@@ -113,7 +113,7 @@ class ConsultationService:
                         pattern_block=pattern_block,
                         persona_summary=persona_summary,
                     ),
-                    timeout=3.0
+                    timeout=15.0
                 )
             except Exception as e:
                 logger.error(f"[Assessor] Timed out or failed ({e}). Defaulting to RESPOND.")

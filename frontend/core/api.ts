@@ -2,7 +2,22 @@ import axios from 'axios'
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
 
-const api = axios.create({ baseURL: API_URL, timeout: 0 })
+const api = axios.create({ baseURL: API_URL, timeout: 0, withCredentials: true })
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+}
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
@@ -16,14 +31,48 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined' && !error.config?.url?.includes('/api/auth/')) {
-        localStorage.removeItem('mb_token')
-        localStorage.removeItem('mb_username')
-        localStorage.removeItem('mb_language')
-        document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-        window.location.href = '/login'
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (typeof window !== 'undefined' && !originalRequest.url?.includes('/api/auth/')) {
+        if (isRefreshing) {
+          return new Promise(function(resolve, reject) {
+            failedQueue.push({ resolve, reject })
+          }).then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          }).catch(err => {
+            return Promise.reject(err);
+          });
+        }
+        
+        originalRequest._retry = true;
+        isRefreshing = true;
+        
+        try {
+          const { data } = await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
+          
+          const new_token = data.access_token;
+          localStorage.setItem('mb_token', new_token);
+          if (data.username) localStorage.setItem('mb_username', data.username);
+          
+          api.defaults.headers.common['Authorization'] = `Bearer ${new_token}`;
+          originalRequest.headers.Authorization = `Bearer ${new_token}`;
+          
+          processQueue(null, new_token);
+          return api(originalRequest);
+        } catch (err) {
+          processQueue(err, null);
+          localStorage.removeItem('mb_token')
+          localStorage.removeItem('mb_username')
+          localStorage.removeItem('mb_language')
+          document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+          window.location.href = '/login'
+          return Promise.reject(err);
+        } finally {
+          isRefreshing = false;
+        }
       }
     }
     return Promise.reject(error)

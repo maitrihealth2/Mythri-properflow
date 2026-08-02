@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { login, register, googleLogin } from '@/core/api'
 import { auth, googleProvider } from '@/core/firebase'
@@ -13,6 +13,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null;
+    if (token) {
+      router.replace('/home');
+    }
+  }, [router]);
 
   const handleGoogleLogin = async () => {
     try {
