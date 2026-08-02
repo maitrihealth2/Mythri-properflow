@@ -1,26 +1,85 @@
+# ==========================
+# Base Image
+# ==========================
 FROM python:3.12-slim
+
+# ==========================
+# Environment
+# ==========================
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PORT=8000
 
 WORKDIR /app
 
-# System deps some ML libs need (skip if you don't need them)
+# ==========================
+# System Dependencies
+# ==========================
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    gcc \
     curl \
     ffmpeg \
     libsndfile1 \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PyTorch CPU first to avoid 5GB bloat
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+# ==========================
+# Upgrade pip
+# ==========================
+RUN python -m pip install --upgrade pip setuptools wheel
 
+# ==========================
+# Install PyTorch CPU
+# (Remove torch from requirements.txt)
+# ==========================
+RUN pip install \
+    torch \
+    torchvision \
+    torchaudio \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# ==========================
+# Install Python Dependencies
+# ==========================
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
-# Pre-download NLTK data required by rouge-score / tokenizers
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+RUN pip install \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.txt
 
+# ==========================
+# Download NLTK Data
+# ==========================
+RUN python - <<EOF
+import nltk
+nltk.download("punkt")
+nltk.download("punkt_tab")
+EOF
+
+# ==========================
+# Copy Project
+# ==========================
 COPY . .
 
-# Use Gunicorn as the process manager to balance load across multiple Uvicorn workers natively
-CMD unicorn app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120
+# ==========================
+# Create Non-root User
+# ==========================
+RUN useradd -m appuser
+USER appuser
+
+EXPOSE 8000
+
+# ==========================
+# Start Server
+# ==========================
+CMD ["gunicorn", "app:app", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "--workers", "4", \
+     "--bind", "0.0.0.0:8000", \
+     "--timeout", "120", \
+     "--keep-alive", "30", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]
