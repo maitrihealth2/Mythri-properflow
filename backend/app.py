@@ -20,6 +20,7 @@ from modules.voice.api import router as voice_router
 from modules.voice.api_streaming import router as streaming_router
 from modules.dashboard.api import router as telemetry_router
 from modules.feedback.api import router as feedback_router
+from modules.profile.api import router as profile_router
 from rag.brain.emotion_detector import preload_models
 from providers.sarvam.voice_client import close_http_client
 
@@ -149,6 +150,7 @@ app.include_router(voice_router)
 app.include_router(streaming_router)
 app.include_router(telemetry_router)
 app.include_router(feedback_router)
+app.include_router(profile_router)
 
 from modules.src.features.feature_flags.api import router as features_router
 app.include_router(features_router)

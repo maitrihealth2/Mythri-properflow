@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getDashboardStats } from '@/core/api'
+import { getDashboardStats, getOnboardingStatus } from '@/core/api'
 
 const getMoodIcon = (mood: string) => {
   switch (mood?.toLowerCase()) {
@@ -32,7 +32,15 @@ export default function DashboardPage() {
     } else {
       const storedName = localStorage.getItem('mb_username')
       if (storedName) setUsername(storedName)
-      getDashboardStats().then(setStats).catch(console.error)
+      
+      // Check onboarding status
+      getOnboardingStatus().then(status => {
+        if (!status.completed) {
+          router.replace('/onboarding')
+        } else {
+          getDashboardStats().then(setStats).catch(console.error)
+        }
+      }).catch(console.error)
     }
 
     const hour = new Date().getHours()

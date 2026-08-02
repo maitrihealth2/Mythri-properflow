@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, RiskLog, User, ExerciseLog, UserPersonaProfile
+from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, RiskLog, User, ExerciseLog, UserPersonaProfile, UserOnboarding
 from providers.sarvam.sarvam_client import chat_with_maitri
 from rag.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
 from rag.brain.analyst import should_skip_assessor, assess_turn
@@ -77,9 +77,51 @@ def start_session(
     # Initialize state tracker for this session
     tracker.init_session(session.id, is_first_session=is_first)
 
+    initial_message = "Session started."
+    if is_first:
+        # Check onboarding data
+        onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
+        if onboarding:
+            goals = ", ".join(onboarding.goals) if onboarding.goals else onboarding.primary_goal or "personal growth"
+            reasons = ", ".join(onboarding.reasons) if onboarding.reasons else "various reasons"
+            emotion = onboarding.initial_emotion or "okay"
+            name = onboarding.preferred_name or current_user.username
+            
+            system_prompt = f"""You are generating the very FIRST welcome message for a user who just finished onboarding.
+User Name: {name}
+Recent feelings: {emotion}
+Brought them here: {reasons}
+Goals: {goals}
+
+Instructions:
+1. Warmly welcome them by name.
+2. Acknowledge what brought them here and how they've been feeling, naturally weaving it into the greeting.
+3. Keep it brief (3-4 sentences max).
+4. Do NOT ask a generic "How can I help you today?". End with a gentle, open-ended question like "Where would you like to start?" or "What's on your mind today?".
+5. Maintain the Mythri tone: calm, non-judgmental, grounded, deeply empathetic."""
+            
+            try:
+                # Use a specific mock history to trigger the greeting generation
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": "Generate my personalized onboarding greeting."}
+                ]
+                initial_message = chat_with_maitri(
+                    messages=messages,
+                    language=onboarding.language or current_user.preferred_language or "en-IN",
+                    max_tokens=250
+                )
+                # Store the generated message in history so the LLM remembers saying it!
+                ai_msg = Message(session_id=session.id, role="maitri", content=initial_message, emotion="calm")
+                db.add(ai_msg)
+                db.commit()
+            except Exception as e:
+                print(f"[ONBOARDING_GREETING_ERROR] {e}")
+                initial_message = f"Welcome, {name}. This is your quiet space. What would you like to talk about today?"
+
     return StartSessionResponse(
         session_id=token,
-        message="Session started.",
+        message=initial_message,
         is_first_session=is_first,
     )
 

@@ -101,6 +101,16 @@ export async function getMe() {
   return res.data
 }
 
+export async function getOnboardingStatus() {
+  const res = await api.get('/api/user/onboarding/status')
+  return res.data
+}
+
+export async function submitOnboarding(data: any) {
+  const res = await api.post('/api/user/onboarding', data)
+  return res.data
+}
+
 export async function startSession() {
   const res = await api.post('/api/consultation/start')
   return res.data

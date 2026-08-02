@@ -168,7 +168,8 @@ export default function ConsultationPage() {
       sessionStorage.setItem('mb_session_id', data.session_id)
       
       const currentLang = localStorage.getItem('mb_language') || 'en-IN'
-      const welcome = WELCOME_MSGS[currentLang] || WELCOME_MSGS['en-IN']
+      const defaultWelcome = WELCOME_MSGS[currentLang] || WELCOME_MSGS['en-IN']
+      const welcome = (data.message && data.message !== "Session started.") ? data.message : defaultWelcome
       setMessages([{ role: 'assistant', content: welcome, is_new: true }])
     } catch {
       // router.replace('/')

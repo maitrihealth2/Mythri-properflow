@@ -22,4 +22,4 @@ RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
 COPY . .
 
 # Use Gunicorn as the process manager to balance load across multiple Uvicorn workers natively
-CMD ["gunicorn", "app:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120"]
+CMD gunicorn app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120

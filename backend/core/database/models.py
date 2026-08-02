@@ -67,6 +67,7 @@ class User(Base):
     memories = relationship("CompanionMemory", back_populates="user", cascade="all, delete-orphan")
     persona = relationship("UserPersonaProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     exercise_logs = relationship("ExerciseLog", back_populates="user", cascade="all, delete-orphan")
+    onboarding_data = relationship("UserOnboarding", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -83,6 +84,27 @@ class UserProfile(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="profile")
+
+
+class UserOnboarding(Base):
+    __tablename__ = "user_onboarding"
+    __table_args__ = {'comment': 'Initial onboarding preferences and data'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    preferred_name = Column(String(50), nullable=True)
+    language = Column(String(20), nullable=True)
+    conversation_style = Column(String(50), nullable=True)
+    communication_mode = Column(String(20), nullable=True)
+    initial_emotion = Column(String(50), nullable=True)
+    primary_goal = Column(String(100), nullable=True)
+    check_in_preference = Column(String(50), nullable=True)
+    goals = Column(JSON, nullable=True)
+    reasons = Column(JSON, nullable=True)
+    version = Column(String(20), default="v1")
+    completed_at = Column(DateTime(timezone=True), default=func.now())
+    
+    user = relationship("User", back_populates="onboarding_data")
 
 
 class UserPreferences(Base):
