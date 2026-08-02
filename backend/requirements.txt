@@ -29,9 +29,6 @@ gunicorn==23.0.0
 fastapi
 uvicorn
 sse-starlette
-pydantic-settings
-PyMuPDF
-langchain-text-splitters
 rouge-score
 bert-score
 torch
@@ -49,4 +46,3 @@ python-docx
 langchain-text-splitters
 pydantic-settings>=2.5.2
 loguru>=0.7.2
-gunicorn==21.2.0
