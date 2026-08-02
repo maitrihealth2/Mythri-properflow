@@ -20,6 +20,8 @@ from modules.voice.api import router as voice_router
 from modules.voice.api_streaming import router as streaming_router
 from modules.dashboard.api import router as telemetry_router
 from modules.feedback.api import router as feedback_router
+from rag.brain.emotion_detector import preload_models
+from providers.sarvam.voice_client import close_http_client
 
 import asyncio
 
@@ -63,6 +65,8 @@ async def lifespan(app: FastAPI):
                     CommandCenter.set_health("Database", "Failed")
 
         progress.update(task3, advance=50)
+        # Preload models
+        preload_models()
         # Assume providers are healthy for now
         CommandCenter.set_health("Firebase", "Healthy")
         CommandCenter.set_health("Sarvam", "Healthy")
@@ -79,6 +83,7 @@ async def lifespan(app: FastAPI):
     CommandCenter.stop_dashboard()
     print("[SHUTDOWN] Signal received. Setting shutdown event...")
     app.state.shutdown_event.set()
+    await close_http_client()
     await asyncio.sleep(0.2)
     print("[SHUTDOWN] Cleanup complete.")
 
@@ -107,6 +112,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*.pinggy.link", "*.vercel.app", "*.onrender.com"])
+
+from core.middleware.security import SecurityMiddleware
+app.add_middleware(SecurityMiddleware, max_payload_bytes=10 * 1024 * 1024)
+
+from core.middleware.audit import AuditLoggerMiddleware
+app.add_middleware(AuditLoggerMiddleware)
 
 @app.middleware("http")
 async def monitor_requests(request: Request, call_next):
@@ -140,40 +154,8 @@ from modules.src.features.feature_flags.api import router as features_router
 app.include_router(features_router)
 
 
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
-def log_error_to_file(msg: str):
-    try:
-        with open("backend_errors.log", "a") as f:
-            f.write(msg + "\n")
-    except Exception:
-        pass
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    err = f"INTERNAL SERVER ERROR: {str(exc)}\n{traceback.format_exc()}"
-    CommandCenter.log_error(f"500 Error: {type(exc).__name__}: {str(exc)}", exc=exc)
-    log_error_to_file(err)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal Server Error", "message": str(exc)},
-    )
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    err = f"VALIDATION ERROR: {exc.errors()}"
-    CommandCenter.log_error(f"422 Validation: {str(exc.errors()[0]['msg'])}")
-    log_error_to_file(err)
-    return JSONResponse(status_code=422, content={"detail": exc.errors()})
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    err = f"HTTP EXCEPTION: {exc.status_code} - {exc.detail}"
-    if exc.status_code >= 400:
-        CommandCenter.log_error(f"{exc.status_code} Error: {exc.detail}")
-    log_error_to_file(err)
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+from core.exceptions import register_exception_handlers
+register_exception_handlers(app)
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():

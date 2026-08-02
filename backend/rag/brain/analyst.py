@@ -59,7 +59,7 @@ async def assess_turn(
     """
     Call the internal assessor model to update the case file JSON.
     """
-    client = AsyncOpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=3.0)
+    client = AsyncOpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=10.0)
 
     # Convert last 3 exchanges to string
     last_3 = ""
@@ -117,6 +117,12 @@ async def assess_turn(
                 updated_case_file["runtime_state"] = case_file.get("runtime_state", {"decision": "RESPOND"})
             if "conversation_state" not in updated_case_file:
                 updated_case_file["conversation_state"] = case_file.get("conversation_state", {})
+            
+            cs = updated_case_file["conversation_state"]
+            if "hypotheses" not in cs:
+                cs["hypotheses"] = case_file.get("conversation_state", {}).get("hypotheses", {"Unknown": 100.0})
+            if "phase" not in cs:
+                cs["phase"] = case_file.get("conversation_state", {}).get("phase", "Listen")
             return updated_case_file
         return case_file
     except Exception as e:

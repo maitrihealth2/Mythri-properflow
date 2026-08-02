@@ -17,20 +17,27 @@ import json
 def empty_case_file() -> dict:
     return {
       "conversation_state": {
-        "facts": [],
+        "known_facts": [],
+        "unanswered_questions": [],
+        "assumptions_made": [],
         "emotion": {"value": None, "confidence": 0.0, "source": "inferred"},
         "emotion_history": [],
+        "hypotheses": {
+            "Burnout": 0.0,
+            "Stress": 0.0,
+            "Relationship Conflict": 0.0,
+            "Routine Change": 0.0,
+            "Sleep Issue": 0.0,
+            "Anxiety": 0.0,
+            "Grief": 0.0,
+            "Unknown": 100.0
+        },
         "conversation_goal": "unknown",
         "risk_level": "none",
-        "phase": "opening",
+        "phase": "Listen",
         "possible_contradiction": False,
         "asked_topics": [],
-        "recommended_question": None,
-        "situation_classification": {
-          "category": "unknown",
-          "summary": None,
-          "confidence": 0.0
-        }
+        "recommended_question": None
       },
       "runtime_state": {
         "decision": "GREETING",

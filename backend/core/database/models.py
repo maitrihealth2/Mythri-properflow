@@ -13,14 +13,21 @@ load_dotenv(_BASE / ".env.local", override=True)
 # Expects postgresql://...
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mindbridge.db")
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
-    pool_pre_ping=True,       # Test connection liveness before every checkout
-    pool_recycle=300,          # Recycle connections older than 5 min
-    pool_reset_on_return="rollback",  # Roll back any open transaction on connection return
-    pool_timeout=10,           # Don't hang forever if pool is exhausted — fail fast
-)
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+    "pool_reset_on_return": "rollback",
+    "pool_timeout": 30,  # Increased timeout for high concurrency
+}
+
+if "sqlite" in DATABASE_URL:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    # Production PostgreSQL pooling
+    engine_kwargs["pool_size"] = 20
+    engine_kwargs["max_overflow"] = 20
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

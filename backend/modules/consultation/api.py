@@ -261,19 +261,32 @@ async def send_message(
         is_crisis      = crisis.is_crisis,
         exercise_phase = current_exercise_state,
     )
+    
+    import re
+    scratchpad_match = re.search(r'<scratchpad>(.*?)</scratchpad>', ai_response, re.DOTALL | re.IGNORECASE)
+    if scratchpad_match:
+        # We can log this to the terminal so developers see the internal thought process
+        reasoning = scratchpad_match.group(1).strip()
+        CommandCenter.log_ai("REASONING", f"Internal reasoning: {reasoning[:100]}...")
+        
+    ai_response = re.sub(r'<scratchpad>.*?</scratchpad>', '', ai_response, flags=re.DOTALL | re.IGNORECASE).strip()
+    
     await broadcast_event("LLM_DONE", "Response generated")
     CommandCenter.log_ai("LLM_DONE", f"Response ready: {ai_response[:50]}...")
 
     # ── Save Messages ─────────────────────────────────────────────────────────
-    user_msg = Message(session_id=session.id, role="user", content=req.message, language=req.language)
-    db.add(user_msg); db.flush()
-
-    if emotion and emotion.label:
-        db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
-
-    ai_msg = Message(session_id=session.id, role="assistant", content=ai_response, language=req.language)
-    db.add(ai_msg)
-    db.commit()
+    # ── Save Messages ─────────────────────────────────────────────────────────
+    def _save_messages():
+        user_msg = Message(session_id=session.id, role="user", content=req.message, language=req.language)
+        db.add(user_msg)
+        db.flush()
+        if emotion and emotion.label:
+            db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
+        ai_msg = Message(session_id=session.id, role="assistant", content=ai_response, language=req.language)
+        db.add(ai_msg)
+        db.commit()
+        
+    await asyncio.to_thread(_save_messages)
 
     # ── Async Persona Update (non-blocking, every 5 user messages) ────────────
     total_user_msgs = len([m for m in past if m.role == "user"]) + 1

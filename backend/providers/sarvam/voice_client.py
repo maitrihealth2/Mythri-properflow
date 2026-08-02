@@ -19,6 +19,22 @@ load_dotenv(_BASE / ".env.local", override=True)
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 BASE_URL = "https://api.sarvam.ai"
 
+# Global HTTP client for connection pooling and reuse
+_http_client = None
+
+def get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None:
+        limits = httpx.Limits(max_connections=100, max_keepalive_connections=20)
+        _http_client = httpx.AsyncClient(limits=limits, timeout=120.0)
+    return _http_client
+
+async def close_http_client():
+    global _http_client
+    if _http_client is not None:
+        await _http_client.aclose()
+        _http_client = None
+
 SUPPORTED_LANGUAGES = {
     "en-IN": {
         "name": "English", "native": "English",
@@ -443,17 +459,17 @@ async def transcribe_audio(audio_bytes: bytes, language: str = "en-IN") -> str:
     # Convert to clean WAV
     wav_bytes = convert_to_wav(audio_bytes)
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(
-            f"{BASE_URL}/speech-to-text",
-            headers={"api-subscription-key": SARVAM_API_KEY},
-            files={"file": ("recording.wav", wav_bytes, "audio/wav")},
-            data={
-                "language_code": stt_code,
-                "model": "saaras:v3",
-                "with_timestamps": "false",
-            },
-        )
+    client = get_http_client()
+    response = await client.post(
+        f"{BASE_URL}/speech-to-text",
+        headers={"api-subscription-key": SARVAM_API_KEY},
+        files={"file": ("recording.wav", wav_bytes, "audio/wav")},
+        data={
+            "language_code": stt_code,
+            "model": "saaras:v3",
+            "with_timestamps": "false",
+        },
+    )
 
     print(f"[STT] Response {response.status_code}: {response.text[:200]}")
 
@@ -566,36 +582,36 @@ async def synthesize_speech(
     import base64
     wav_bytes_list = []
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        for chunk in chunks:
-            response = await client.post(
-                f"{BASE_URL}/text-to-speech",
-                headers={
-                    "api-subscription-key": SARVAM_API_KEY,
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "inputs": [chunk],
-                    "target_language_code": language,
-                    "speaker": speaker,
-                    "pace": final_pace,
-                    "temperature": final_temp,
-                    "speech_sample_rate": 22050,
-                    "enable_preprocessing": True,
-                    "model": "bulbul:v3",
-                },
-            )
+    client = get_http_client()
+    for chunk in chunks:
+        response = await client.post(
+            f"{BASE_URL}/text-to-speech",
+            headers={
+                "api-subscription-key": SARVAM_API_KEY,
+                "Content-Type": "application/json",
+            },
+            json={
+                "inputs": [chunk],
+                "target_language_code": language,
+                "speaker": speaker,
+                "pace": final_pace,
+                "temperature": final_temp,
+                "speech_sample_rate": 22050,
+                "enable_preprocessing": True,
+                "model": "bulbul:v3",
+            },
+        )
 
-            if response.status_code != 200:
-                print(f"[TTS Chunk Error] {response.status_code} — {response.text}")
-                continue
+        if response.status_code != 200:
+            print(f"[TTS Chunk Error] {response.status_code} — {response.text}")
+            continue
 
-            resp_json = response.json()
-            audios = resp_json.get("audios", [])
-            audio_b64 = audios[0] if audios else resp_json.get("audio")
-            
-            if audio_b64:
-                wav_bytes_list.append(base64.b64decode(audio_b64))
+        resp_json = response.json()
+        audios = resp_json.get("audios", [])
+        audio_b64 = audios[0] if audios else resp_json.get("audio")
+        
+        if audio_b64:
+            wav_bytes_list.append(base64.b64decode(audio_b64))
 
     if not wav_bytes_list:
         raise Exception("TTS failed: No audio generated for any chunks")

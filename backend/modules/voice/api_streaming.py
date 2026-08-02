@@ -8,6 +8,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 from modules.dashboard.api import broadcast_event
+from core.database.models import get_db, Session as DBSession, User
+from modules.voice.api import handle_voice_turn
 
 import pathlib
 
@@ -53,15 +55,17 @@ async def streaming_stt(websocket: WebSocket, session_id: str):
             last_transcript = "" 
             
             # Lookup user from session for handle_voice_turn
-            generator = get_db()
-            db = next(generator)
-            try:
-                db_session = db.query(DBSession).filter(DBSession.session_token == session_id).first()
-                current_user = db.query(User).get(db_session.user_id) if db_session else None
-            finally:
-                # We close immediately after lookup to stay lean
-                # handle_voice_turn will open its own db context if needed (it takes db as arg)
-                pass 
+            def _lookup_user():
+                generator = get_db()
+                db = next(generator)
+                try:
+                    db_session = db.query(DBSession).filter(DBSession.session_token == session_id).first()
+                    return db.query(User).get(db_session.user_id) if db_session else None
+                finally:
+                    try: next(generator) 
+                    except StopIteration: pass
+                    
+            current_user = await asyncio.to_thread(_lookup_user)
 
             async def receive_from_sarvam():
                 """Relay transcripts from Sarvam back to Browser."""
@@ -116,6 +120,18 @@ async def streaming_stt(websocket: WebSocket, session_id: str):
                                 await broadcast_event("ROUTING", "Client WebSocket -> FastAPI -> AI Brain")
                                 
                                 # Use a fresh DB session for the turn
+                                def _run_turn(text, sess, lang, usr):
+                                    gen = get_db()
+                                    turn_db = next(gen)
+                                    try:
+                                        # Since handle_voice_turn is async, we can't run it inside threadpool like this 
+                                        # Wait, handle_voice_turn is an async function. We can just call it, but pass the DB.
+                                        pass
+                                    finally:
+                                        try: next(gen) 
+                                        except StopIteration: pass
+                                        
+                                # Wait, we need to pass a valid DB session without blocking.
                                 gen = get_db()
                                 turn_db = next(gen)
                                 try:
@@ -134,9 +150,11 @@ async def streaming_stt(websocket: WebSocket, session_id: str):
                                     })
                                     last_transcript = "" # Reset for next turn
                                 finally:
-                                    # Explicitly close the generator
-                                    try: next(gen) 
-                                    except StopIteration: pass
+                                    # We run the cleanup in thread to prevent blocking
+                                    def _close_gen():
+                                        try: next(gen)
+                                        except StopIteration: pass
+                                    await asyncio.to_thread(_close_gen)
                                 
                             except Exception as e:
                                 print(f"[WS] Error in handle_voice_turn: {e}")

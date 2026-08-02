@@ -43,6 +43,7 @@ export default function TopNav() {
 
   const handleLogout = () => {
     localStorage.removeItem('mb_token')
+    document.cookie = "mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
     router.replace('/login')
   }
 

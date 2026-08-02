@@ -29,6 +29,12 @@ def get_emotion_pipeline():
             _emotion_pipeline = "FAILED"
     return _emotion_pipeline
 
+def preload_models():
+    """Eagerly loads the emotion detection model into memory."""
+    print("[HF Emotion] Preloading models...")
+    get_emotion_pipeline()
+    print("[HF Emotion] Models preloaded successfully.")
+
 EMOTION_KEYWORDS = {
     "Admiration": ["admire", "impress", "respect", "amazing", "wow", "brilliant", "admiration", "arputham", "adbhutam"],
     "Amusement": ["funny", "hilarious", "laugh", "haha", "lol", "lmao", "amused", "joke", "sirippu", "navvu"],

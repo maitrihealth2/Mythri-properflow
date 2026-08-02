@@ -58,10 +58,27 @@ def get_prosody_params(emotion_label: str) -> dict:
 
     return params
 
+# Cache for initialized DSP chains to avoid high CPU initialization cost per request
+_DSP_CHAINS = {}
+
+def _get_or_create_board(emotion_label: str) -> Pedalboard:
+    """Returns a pre-initialized Pedalboard chain for the given emotion."""
+    if emotion_label not in _DSP_CHAINS:
+        params = get_prosody_params(emotion_label)
+        _DSP_CHAINS[emotion_label] = Pedalboard([
+            Compressor(threshold_db=params["compressor_threshold"], ratio=params["compressor_ratio"]),
+            PitchShift(semitones=params["semitones"]),
+            LowShelfFilter(cutoff_hz=300, gain_db=params["low_eq_db"]),
+            HighShelfFilter(cutoff_hz=4000, gain_db=params["high_eq_db"]),
+            Reverb(room_size=params["reverb_room_size"], damping=0.9, dry_level=1.0, wet_level=0.1)
+        ])
+    return _DSP_CHAINS[emotion_label]
+
 def optimize_pitch(audio_bytes: bytes, emotion_label: str) -> bytes:
     """
     Applies real-time pitch shifting and prosody optimization using Pedalboard.
     Takes raw WAV audio bytes from Sarvam TTS, applies DSP, and returns optimized WAV bytes.
+    NOTE: Should be run in a threadpool (e.g. asyncio.to_thread) as board() is CPU bound.
     """
     if not audio_bytes:
         return audio_bytes
@@ -78,17 +95,8 @@ def optimize_pitch(audio_bytes: bytes, emotion_label: str) -> bytes:
         # Soundfile reads as (frames, channels), pedalboard wants (channels, frames)
         audio_data = audio_data.T
 
-        # 2. Get emotion parameters
-        params = get_prosody_params(emotion_label)
-
-        # 3. Build DSP chain
-        board = Pedalboard([
-            Compressor(threshold_db=params["compressor_threshold"], ratio=params["compressor_ratio"]),
-            PitchShift(semitones=params["semitones"]),
-            LowShelfFilter(cutoff_hz=300, gain_db=params["low_eq_db"]),
-            HighShelfFilter(cutoff_hz=4000, gain_db=params["high_eq_db"]),
-            Reverb(room_size=params["reverb_room_size"], damping=0.9, dry_level=1.0, wet_level=0.1)
-        ])
+        # 2 & 3. Get cached DSP chain
+        board = _get_or_create_board(emotion_label)
 
         # 4. Process audio
         effected = board(audio_data, sample_rate)

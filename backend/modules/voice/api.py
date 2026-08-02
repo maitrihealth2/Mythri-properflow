@@ -51,7 +51,7 @@ async def speak(
     try:
         audio_bytes = await synthesize_speech(req.text, req.language)
         # Apply Vocal Prosody Optimization
-        audio_bytes = optimize_pitch(audio_bytes, "Neutral")
+        audio_bytes = await asyncio.to_thread(optimize_pitch, audio_bytes, "Neutral")
         return Response(content=audio_bytes, media_type="audio/wav")
     except Exception as e:
         print(f"[VOICE] Speak failed: {type(e).__name__} - {e}")
@@ -240,7 +240,7 @@ async def handle_voice_turn(
         )
         # 6. Prosody & Pitch Optimization
         await broadcast_event("TTS_OPTIMIZE", "Optimizing vocal pitch and prosody...")
-        response_audio = optimize_pitch(response_audio, emotion.label)
+        response_audio = await asyncio.to_thread(optimize_pitch, response_audio, emotion.label)
         
         audio_b64 = base64.b64encode(response_audio).decode()
         await broadcast_event("TTS_DONE", "Audio ready")
@@ -291,8 +291,9 @@ async def voice_conversation(
             msg = "I'm sorry, that was a bit too long for me to process at once. Could you repeat that in shorter pieces?"
             try:
                 err_audio = await synthesize_speech(msg, language)
-                err_audio = optimize_pitch(err_audio, "Neutral")
-                err_b64 = base64.b64encode(err_audio).decode()
+                if err_audio:
+                    err_audio = await asyncio.to_thread(optimize_pitch, err_audio, "Neutral")
+                    err_b64 = base64.b64encode(err_audio).decode()
             except Exception:
                 err_b64 = ""
             return {

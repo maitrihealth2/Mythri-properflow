@@ -194,67 +194,7 @@ Maitri-V5/
 │   │   ├── components
 │   │   │   ├── BottomNav.tsx
 │   │   │   ├── ExerciseOverlay.tsx
-│   │   │   ├── Mitra
-│   │   │   │   ├── MitraCanvas.tsx
-│   │   │   │   ├── MitraCharacter.tsx
-│   │   │   │   ├── animation
-│   │   │   │   │   ├── blinking.ts
-│   │   │   │   │   ├── breathing.ts
-│   │   │   │   │   ├── emissivePulse.ts
-│   │   │   │   │   ├── headTracking.ts
-│   │   │   │   │   ├── sleeping.ts
-│   │   │   │   │   ├── useProceduralAnimation.ts
-│   │   │   │   │   └── walking.ts
-│   │   │   │   ├── attention
-│   │   │   │   │   ├── AttentionPriority.ts
-│   │   │   │   │   └── AttentionSystem.ts
-│   │   │   │   ├── comfort
-│   │   │   │   │   └── ComfortMode.ts
-│   │   │   │   ├── contexts
-│   │   │   │   │   ├── ConsultationContext.tsx
-│   │   │   │   │   ├── DashboardContext.tsx
-│   │   │   │   │   └── HistoryContext.tsx
-│   │   │   │   ├── interactions
-│   │   │   │   │   ├── CallOverInteraction.ts
-│   │   │   │   │   ├── ParticleSystem.tsx
-│   │   │   │   │   ├── PetInteraction.tsx
-│   │   │   │   │   ├── SendHomeInteraction.tsx
-│   │   │   │   │   ├── SpeechBubble.tsx
-│   │   │   │   │   └── WaveInteraction.tsx
-│   │   │   │   ├── journal
-│   │   │   │   │   └── CompanionJournal.tsx
-│   │   │   │   ├── navigation
-│   │   │   │   │   ├── JumpNodes.ts
-│   │   │   │   │   ├── NavigationController.tsx
-│   │   │   │   │   └── NavigationSystem.ts
-│   │   │   │   ├── rare
-│   │   │   │   │   └── RareBehaviorSystem.ts
-│   │   │   │   ├── scheduler
-│   │   │   │   │   └── BehaviorScheduler.ts
-│   │   │   │   └── settings
-│   │   │   │       └── MitraSettings.tsx
-│   │   │   ├── MitraCompanion.tsx
-│   │   │   ├── TopNav.tsx
-│   │   │   └── companion
-│   │   │       ├── core
-│   │   │       │   ├── BehaviourSystem.ts
-│   │   │       │   ├── CompanionEngine.ts
-│   │   │       │   └── StateMachine.ts
-│   │   │       ├── handlers
-│   │   │       │   ├── ChatInteractionHandler.ts
-│   │   │       │   └── VoiceInteractionHandler.ts
-│   │   │       ├── render
-│   │   │       │   ├── AnimationController.ts
-│   │   │       │   ├── CompanionOverlay.tsx
-│   │   │       │   ├── MitraCharacter.tsx
-│   │   │       │   ├── ParticleController.tsx
-│   │   │       │   └── VineSystem.tsx
-│   │   │       └── systems
-│   │   │           ├── CursorTracker.ts
-│   │   │           ├── EmotionSystem.ts
-│   │   │           ├── FriendshipSystem.ts
-│   │   │           ├── NavigationSystem.ts
-│   │   │           └── WorldTracker.ts
+│   │   │   └── TopNav.tsx
 │   │   ├── hooks
 │   │   │   ├── useDOMTerrain.ts
 │   │   │   ├── useEmotionalDecay.ts
@@ -264,10 +204,8 @@ Maitri-V5/
 │   │   │   └── useReducedMotion.ts
 │   │   ├── hooks_app
 │   │   │   └── useMitraPresence.ts
-│   │   ├── stores
-│   │   │   └── mitraStore.ts
-│   │   └── utils
-│   │       └── domTo3D.ts
+│   │   └── stores
+│   │       └── mitraStore.ts
 │   └── tsconfig.json
 ├── implementation_plan.md
 ├── pinggy_backend_err.log
