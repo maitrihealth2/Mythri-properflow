@@ -23,7 +23,6 @@ transformers==4.44.2
 alembic==1.13.3
 requests==2.32.3
 watchdog==4.0.2
-gunicorn==23.0.0
 
 # --- Added based on backend imports ---
 fastapi

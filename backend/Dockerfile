@@ -77,11 +77,4 @@ EXPOSE 8000
 # ==========================
 # Start Server
 # ==========================
-CMD ["gunicorn", "app:app", \
-     "-k", "uvicorn.workers.UvicornWorker", \
-     "--workers", "4", \
-     "--bind", "0.0.0.0:8000", \
-     "--timeout", "120", \
-     "--keep-alive", "30", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 4
