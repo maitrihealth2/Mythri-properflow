@@ -2,23 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps some ML libs need (skip if you don't need them)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    ffmpeg \
-    libsndfile1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PyTorch CPU first to avoid 5GB bloat
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 COPY requirements.txt .
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Pre-download NLTK data required by rouge-score / tokenizers
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+RUN pip install -r requirements.txt
 
 COPY . .
 
