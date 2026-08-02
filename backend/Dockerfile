@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
     git \
+    python3-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # ==========================
