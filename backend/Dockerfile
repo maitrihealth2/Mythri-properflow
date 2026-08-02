@@ -1,80 +1,26 @@
-# ==========================
-# Base Image
-# ==========================
 FROM python:3.12-slim
-
-# ==========================
-# Environment
-# ==========================
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PORT=8000
 
 WORKDIR /app
 
-# ==========================
-# System Dependencies
-# ==========================
+# System deps some ML libs need (skip if you don't need them)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    gcc \
     curl \
     ffmpeg \
     libsndfile1 \
-    git \
-    python3-dev \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# ==========================
-# Upgrade pip
-# ==========================
-RUN python -m pip install --upgrade pip setuptools wheel
+# Install PyTorch CPU first to avoid 5GB bloat
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
-# ==========================
-# Install PyTorch CPU
-# (Remove torch from requirements.txt)
-# ==========================
-RUN pip install \
-    torch \
-    torchvision \
-    torchaudio \
-    --index-url https://download.pytorch.org/whl/cpu
-
-# ==========================
-# Install Python Dependencies
-# ==========================
 COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install \
-    --extra-index-url https://download.pytorch.org/whl/cpu \
-    -r requirements.txt
+# Pre-download NLTK data required by rouge-score / tokenizers
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
 
-# ==========================
-# Download NLTK Data
-# ==========================
-RUN python - <<EOF
-import nltk
-nltk.download("punkt")
-nltk.download("punkt_tab")
-EOF
-
-# ==========================
-# Copy Project
-# ==========================
 COPY . .
 
-# ==========================
-# Create Non-root User
-# ==========================
-RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 8000
-
-# ==========================
-# Start Server
-# ==========================
-CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 4
+# Use Gunicorn as the process manager to balance load across multiple Uvicorn workers natively
+CMD gunicorn app:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120
