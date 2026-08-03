@@ -101,6 +101,7 @@ class UserOnboarding(Base):
     check_in_preference = Column(String(50), nullable=True)
     goals = Column(JSON, nullable=True)
     reasons = Column(JSON, nullable=True)
+    raw_responses = Column(JSON, nullable=True, comment="Raw flexible JSON dump of all onboarding data")
     version = Column(String(20), default="v1")
     completed_at = Column(DateTime(timezone=True), default=func.now())
     

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Persona Updater — Updates the UserPersonaProfile at the end of each session.
 
 This is a living psychological profile that tracks behavioral change over time:
@@ -226,5 +226,12 @@ def get_persona_summary(db: Session, user_id: int) -> str:
         parts.append(f"Clinical observation: {persona.behavioral_notes}")
     if persona.initial_presenting_topic:
         parts.append(f"Originally came to Maitri about: {persona.initial_presenting_topic}")
+
+    # Inject raw onboarding JSON for deepest context
+    from core.database.models import UserOnboarding
+    onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == user_id).first()
+    if onboarding and onboarding.raw_responses:
+        import json
+        parts.append(f"\n[Raw Onboarding Context]\n{json.dumps(onboarding.raw_responses)}")
 
     return "\n".join(parts)

@@ -82,16 +82,20 @@ def start_session(
         # Check onboarding data
         onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
         if onboarding:
-            goals = ", ".join(onboarding.goals) if onboarding.goals else onboarding.primary_goal or "personal growth"
-            reasons = ", ".join(onboarding.reasons) if onboarding.reasons else "various reasons"
-            emotion = onboarding.initial_emotion or "okay"
             name = onboarding.preferred_name or current_user.username
+            if onboarding.raw_responses:
+                import json
+                context_str = json.dumps(onboarding.raw_responses, indent=2)
+            else:
+                goals = ", ".join(onboarding.goals) if onboarding.goals else onboarding.primary_goal or "personal growth"
+                reasons = ", ".join(onboarding.reasons) if onboarding.reasons else "various reasons"
+                emotion = onboarding.initial_emotion or "okay"
+                context_str = f"Recent feelings: {emotion}\nBrought them here: {reasons}\nGoals: {goals}"
             
             system_prompt = f"""You are generating the very FIRST welcome message for a user who just finished onboarding.
 User Name: {name}
-Recent feelings: {emotion}
-Brought them here: {reasons}
-Goals: {goals}
+Onboarding Data Context:
+{context_str}
 
 Instructions:
 1. Warmly welcome them by name.

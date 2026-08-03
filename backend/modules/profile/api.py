@@ -41,6 +41,7 @@ def save_onboarding(
     onboarding.check_in_preference = data.check_in_preference
     onboarding.goals = data.goals
     onboarding.reasons = data.reasons
+    onboarding.raw_responses = data.model_dump()
     
     db.commit()
     
