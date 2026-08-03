@@ -118,4 +118,25 @@ npm run dev
 
 ---
 
+## 📂 Codebase Directory Mapping (Quick Links)
+
+Navigate the codebase quickly using these links to the core architecture files:
+
+### 🌐 Frontend (Next.js)
+- **App Entry Point:** [`frontend/app/layout.tsx`](./frontend/app/layout.tsx)
+- **Consultation UI:** [`frontend/modules/dashboard/frontend/page.tsx`](./frontend/modules/dashboard/frontend/page.tsx)
+
+### 🧠 Backend (FastAPI)
+- **Server Entry / Dev Watcher:** [`backend/run_dev.py`](./backend/run_dev.py)
+- **Consultation API & Core Logic:** [`backend/modules/consultation/api.py`](./backend/modules/consultation/api.py)
+- **Crisis Handler:** [`backend/security/crisis_handler.py`](./backend/security/crisis_handler.py)
+
+### 🤖 AI Brains & Integrations
+- **AI Dual-Agent Analyst:** [`backend/rag/brain/analyst.py`](./backend/rag/brain/analyst.py)
+- **Emotion Detector (HuggingFace):** [`backend/rag/brain/emotion_detector.py`](./backend/rag/brain/emotion_detector.py)
+- **RAG ChromaDB Retriever:** [`backend/rag/knowledge/retriever.py`](./backend/rag/knowledge/retriever.py)
+- **Sarvam AI STT/TTS Client:** [`backend/providers/sarvam/sarvam_client.py`](./backend/providers/sarvam/sarvam_client.py)
+
+---
+
 *Maitri — Designing the future of empathetic AI.*
