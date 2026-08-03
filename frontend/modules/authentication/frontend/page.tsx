@@ -36,7 +36,11 @@ export default function LoginPage() {
       if (typeof window !== 'undefined' && (window as any).gtag) {
         (window as any).gtag('event', 'login', { method: 'Google' })
       }
-      window.location.href = '/home'
+      if (data.needs_onboarding) {
+        window.location.href = '/onboarding'
+      } else {
+        window.location.href = '/home'
+      }
     } catch (err: any) {
       console.error("Google Auth Error:", err)
       setError(err?.response?.data?.detail || err.message || "Google Sign-In failed.")
@@ -67,7 +71,11 @@ export default function LoginPage() {
       localStorage.setItem('mb_language', 'en-IN')
       document.cookie = `mb_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`
       sessionStorage.removeItem('mb_session_id')
-      window.location.href = '/home' // Force hard redirect to dashboard
+      if (data.needs_onboarding) {
+        window.location.href = '/onboarding'
+      } else {
+        window.location.href = '/home'
+      }
     } catch (err: any) {
       console.error("API Error:", err)
       setError(err?.response?.data?.detail || err.message || "Something didn't quite work. Please check your details.")

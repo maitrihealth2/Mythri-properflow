@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, EmailStr
 
-from core.database.models import get_db, User
+from core.database.models import get_db, User, UserOnboarding
 from security.authentication.service import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -26,6 +26,15 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     username: str
+    needs_onboarding: bool = False
+
+def check_needs_onboarding(db: Session, user_id: int) -> bool:
+    onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == user_id).first()
+    if not onboarding:
+        return True
+    if not onboarding.raw_responses or "consent" not in onboarding.raw_responses:
+        return True
+    return False
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
@@ -70,7 +79,8 @@ async def register(req: RegisterRequest, response: Response, db: Session = Depen
     refresh_token = create_refresh_token({"user_id": user.id, "username": user.username})
     set_refresh_cookie(response, refresh_token)
     
-    return TokenResponse(access_token=token, username=user.username)
+    needs_onboarding = check_needs_onboarding(db, user.id)
+    return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
 
 @router.post("/login", response_model=TokenResponse)
 async def login(req: LoginRequest, response: Response, db: Session = Depends(get_db)):
@@ -85,7 +95,8 @@ async def login(req: LoginRequest, response: Response, db: Session = Depends(get
     refresh_token = create_refresh_token({"user_id": user.id, "username": user.username})
     set_refresh_cookie(response, refresh_token)
     
-    return TokenResponse(access_token=token, username=user.username)
+    needs_onboarding = check_needs_onboarding(db, user.id)
+    return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
 
 @router.post("/google", response_model=TokenResponse)
 async def google_login(req: GoogleLoginRequest, response: Response, db: Session = Depends(get_db)):
@@ -136,7 +147,8 @@ async def google_login(req: GoogleLoginRequest, response: Response, db: Session 
         refresh_token = create_refresh_token({"user_id": user.id, "username": user.username})
         set_refresh_cookie(response, refresh_token)
         
-        return TokenResponse(access_token=token, username=user.username)
+        needs_onboarding = check_needs_onboarding(db, user.id)
+        return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_access_token(request: __import__('fastapi').Request, db: Session = Depends(get_db)):

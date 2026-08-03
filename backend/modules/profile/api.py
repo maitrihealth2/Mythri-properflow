@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from core.database.models import get_db, User, UserOnboarding
 from security.authentication.api import get_current_user
@@ -18,6 +18,7 @@ class OnboardingData(BaseModel):
     check_in_preference: Optional[str] = None
     goals: List[str] = []
     reasons: List[str] = []
+    consent: Optional[Dict[str, Any]] = None
 
 @router.post("/onboarding")
 def save_onboarding(
@@ -53,6 +54,11 @@ def get_onboarding_status(
     db: Session = Depends(get_db)
 ):
     onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
+    completed = False
+    if onboarding:
+        if onboarding.raw_responses and "consent" in onboarding.raw_responses:
+            completed = True
+            
     return {
-        "completed": onboarding is not None
+        "completed": completed
     }
