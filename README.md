@@ -1,27 +1,50 @@
-# 🌿 Mythri — Technical Architecture & Developer Guide
+# 🌿 Maitri (Mythri) — AI Mental Health Companion
 
-This document serves as the core technical manual for the Mythri AI mental health companion repository. It details the internal functionalities, the modular domain-driven architecture, and provides a strict mapping of where to find and modify specific logic.
+Welcome to **Maitri** (also known as Mythri), an advanced, empathy-driven AI mental health companion. This repository contains the complete full-stack architecture, combining a highly interactive Next.js frontend with a powerful, multi-agent FastAPI backend.
 
 ---
 
-## ⚙️ Core Functionalities & How They Work
+## 📖 Product Walkthrough
 
-### 🚀 Recent Updates (v8.2)
-- **Next.js 16.2 Turbopack Compatibility:** Deprecated `middleware.ts` in favor of `proxy.ts` to resolve Turbopack compilation panics and comply with new routing standards.
-- **Git Repository Migration:** Transferred local codebase tracking to the official `maitrihealth2/maitri-fullstack` GitHub origin.
-- **Custom Python Watcher:** Replaced `nodemon` with a native `run_dev.py` script in the backend to handle graceful Uvicorn shutdowns and prevent port conflicts on Windows.
-- **Backend Stability**: Implemented robust exception shielding in FastAPI middleware to prevent the server from shutting down on unexpected errors.
-- **Enhanced Consultation Flow**: Introduced a `GREETING` decision mode for warm check-ins and mandated a questioning flow for ambiguous user shares to improve AI empathy and guidance.
-- **Situation Classification**: Upgraded the internal Assessor model to classify user situations, providing better context for therapeutic responses.
+Maitri is designed to replicate the nuances of a real therapy session through a seamless, voice-first interface. Here is the user journey:
 
-The system is built on a highly decoupled FastAPI backend and a Next.js frontend, utilizing advanced AI streaming pipelines. Here is a breakdown of the core functionalities:
+### 1. Onboarding & Authentication
+Users are greeted with a calming, minimalist interface (strict adherence to "Absolute minimalism and calm. No glassmorphism or blurs."). Authentication is handled securely via Firebase.
 
-- **Real-Time Voice & Streaming Pipeline:** The Next.js frontend captures microphone audio using the Web Audio API and streams it via WebSockets. The FastAPI backend receives this stream, transcodes it to 16kHz Mono WAV using `FFmpeg` subprocesses, and sends it to the Sarvam API for highly accurate Speech-to-Text (STT).
-- **Dual-Agent Meta-Cognitive Architecture:** Input text first routes to a **Dialogue State Analyst (Brain 1)** which evaluates the user's intent. Instructions are passed to the **Maitri Responder (Brain 2)**, which synthesizes the final empathetic response.
-- **Retrieval-Augmented Generation (RAG):** Utilizing ChromaDB and local embeddings, the system retrieves structured clinical theories from the `knowledge/` directory.
-- **Cross-Session Memory Tracking:** Interactions are logged to a PostgreSQL/SQLite database.
-- **Emotion Engine & Crisis Checking:** Utterances run through a local HuggingFace pipeline (`SamLowe/roberta-base-go_emotions`) to gauge real-time emotional state. A deterministic regex engine checks for self-harm triggers.
-- **Interactive UI & 3D Avatar:** The Next.js frontend features a React Three Fiber `<Mitra />` 3D Avatar and a live telemetry dashboard connected to backend SSE.
+### 2. The Dashboard
+Upon logging in, users access their personal dashboard where they can:
+- View past session transcripts and emotional trajectories.
+- Start a new real-time consultation.
+- Access telemetry data for debugging and system transparency.
+
+### 3. The Consultation Interface
+This is the core of the Maitri experience.
+- **`<Mitra />` 3D Avatar:** A React Three Fiber-powered visual avatar that gives the AI a calming, interactive presence.
+- **Voice-First Interaction:** Users can speak naturally into their microphone. The audio is streamed in real-time using WebSockets, transcribed instantly, and the AI replies with natural, emotionally-aware voice synthesis.
+- **Fallback Chat:** A seamless text-chat fallback is available for users who prefer typing.
+
+### 4. Post-Session Analysis
+Behind the scenes, Maitri analyzes the emotional arc of the session, stores the conversational state in a PostgreSQL/SQLite database, and flags any potential crisis situations for human review.
+
+---
+
+## ⚙️ Core Integrations & Architecture
+
+Maitri operates on a decoupled architecture, ensuring that heavy machine learning workloads do not block the frontend user experience.
+
+### 1. Frontend ↔ Backend (Next.js & FastAPI)
+- **REST APIs:** Used for authentication, session history, and fetching telemetry data.
+- **WebSockets (`/api/voice/stream`):** Used for low-latency, bi-directional audio streaming. The Next.js frontend captures raw microphone data (Web Audio API) and streams it to the backend.
+
+### 2. Backend ↔ AI Providers (Sarvam & OpenAI)
+- **Speech-to-Text (STT) & Text-to-Speech (TTS):** The backend utilizes **Sarvam AI**. FFmpeg chunks and decodes the audio stream, sending it to Sarvam for highly accurate transcription and realistic voice generation.
+- **The Dual-Agent Brain:** Text is sent to a multi-agent system powered by **OpenAI**. 
+  - *Brain 1 (Dialogue State Analyst):* Evaluates user intent and checks for ambiguity.
+  - *Brain 2 (Maitri Responder):* Synthesizes the final empathetic response based on clinical guidelines.
+
+### 3. Backend ↔ Local ML Models
+- **Emotion Engine:** Utterances are passed through a local HuggingFace pipeline (`SamLowe/roberta-base-go_emotions`) to gauge the user's real-time emotional state.
+- **Retrieval-Augmented Generation (RAG):** Using a local **ChromaDB** instance and `all-MiniLM-L6-v2` embeddings, the system retrieves structured clinical theories (CBT, DBT) from the `knowledge/` directory to ground the AI's responses in proven therapeutic frameworks.
 
 ---
 
@@ -57,7 +80,7 @@ npm install
 
 ---
 
-## ▶️ How to Run & Access the Application
+## ▶️ How to Run Locally
 
 The application consists of two servers running simultaneously. 
 
@@ -76,36 +99,23 @@ cd frontend
 npm run dev
 ```
 *Access:* The Next.js web application is available at **http://localhost:3000**
-*Telemetry UI:* The live visualization dashboard is at **http://localhost:3000/telemetry.html**
 
 ---
 
-## 🧪 How to Check & Test the System
+## 🧪 Testing the System
 
-1. **Verify Backend Startup:** When you run `python run_dev.py`, ensure the terminal outputs `[Info] RAG ChromaDB found...` or a warning if not. Look for the `Uvicorn running on http://0.0.0.0:8000` confirmation.
-2. **Verify Frontend Next.js:** Ensure Turbopack compiles successfully without panicking. Check that `proxy.ts` correctly redirects unauthenticated users to `/login`.
+1. **Verify Backend Startup:** When you run `python run_dev.py`, ensure the terminal outputs `[Info] RAG ChromaDB found...`. Look for the `Uvicorn running on http://0.0.0.0:8000` confirmation.
+2. **Verify Frontend Next.js:** Ensure the app compiles successfully.
 3. **Verify Local Emotion Model:** Send a test message in the chat UI. Observe the backend terminal; you should see a log like `[Local HF Emotion] Detected 'confusion' (0.49)`.
 
 ---
 
-## 🎯 What We Should Do Next
+## 🎯 Next Steps & Roadmap
 
-Now that the core architecture is stable and running, the immediate next steps are:
-
-1. **Initialize the Knowledge Base (RAG):**
-   - The backend currently warns `[Warning] RAG ChromaDB not found`.
-   - **Action:** We need to ingest clinical documents into the ChromaDB vector store so Maitri can fetch grounded therapeutic advice.
-2. **Supervised Fine-Tuning (SFT) Preparation:**
-   - **Action:** Begin curating and testing our conversational datasets located in `training/datasets/finetuning_datasets/` to eventually run the Colab LoRA tuning script on `sarvam-30b` or `qwen3`.
-3. **End-to-End Voice Testing:**
-   - **Action:** Test the full WebSocket pipeline from the Next.js React Three Fiber Avatar to the Sarvam STT/TTS endpoints. Verify that FFmpeg is correctly chunking and decoding the audio streams on Windows.
+1. **Initialize the Knowledge Base (RAG):** Ingest clinical documents into the ChromaDB vector store so Maitri can fetch grounded therapeutic advice.
+2. **Supervised Fine-Tuning (SFT):** Curate conversational datasets in `training/datasets/finetuning_datasets/` to eventually run LoRA tuning on `sarvam-30b` or `qwen3`.
+3. **End-to-End Voice Validation:** Test the full WebSocket pipeline from the React Three Fiber Avatar to the Sarvam endpoints.
 
 ---
 
-## 📂 Architecture Mapping
-
-- **Backend Entry:** `backend/run_dev.py`
-- **Frontend Entry:** `frontend/app/layout.tsx`
-- **Authentication Proxy:** `frontend/proxy.ts`
-- **AI Brains:** `backend/core/brain/`
-- **LLM Integrations:** `backend/providers/sarvam/`
+*Maitri — Designing the future of empathetic AI.*
