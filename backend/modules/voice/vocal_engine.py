@@ -2,8 +2,14 @@ import io
 import wave
 import numpy as np
 import soundfile as sf
-from pedalboard import Pedalboard, PitchShift, Compressor, HighShelfFilter, LowShelfFilter, Reverb
 from rag.brain.emotion_detector import EmotionResult
+
+try:
+    from pedalboard import Pedalboard, PitchShift, Compressor, HighShelfFilter, LowShelfFilter, Reverb
+    PEDALBOARD_AVAILABLE = True
+except ImportError:
+    PEDALBOARD_AVAILABLE = False
+    Pedalboard = None
 
 def get_prosody_params(emotion_label: str) -> dict:
     """
@@ -79,9 +85,13 @@ def optimize_pitch(audio_bytes: bytes, emotion_label: str) -> bytes:
     Applies real-time pitch shifting and prosody optimization using Pedalboard.
     Takes raw WAV audio bytes from Sarvam TTS, applies DSP, and returns optimized WAV bytes.
     NOTE: Should be run in a threadpool (e.g. asyncio.to_thread) as board() is CPU bound.
+    Falls back to raw audio if pedalboard is not installed (e.g. on Render free tier).
     """
     if not audio_bytes:
         return audio_bytes
+
+    if not PEDALBOARD_AVAILABLE:
+        return audio_bytes  # Graceful fallback — no DSP, raw TTS audio returned
 
     try:
         # 1. Load audio bytes into numpy array
