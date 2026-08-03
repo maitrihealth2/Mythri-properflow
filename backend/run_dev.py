@@ -6,7 +6,13 @@ import signal
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-COOLDOWN = 1.0  # seconds to wait after a change before restarting (debounce)
+COOLDOWN = 1.5  # seconds to wait after a change before restarting (debounce)
+
+# Directories to ignore completely
+IGNORED_DIRS = {
+    "venv", ".venv", "__pycache__", ".git", "node_modules",
+    "chroma_db", "training", "scripts", "knowledge",
+}
 
 class RestartHandler(FileSystemEventHandler):
     def __init__(self):
@@ -40,8 +46,15 @@ class RestartHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         if event.is_directory:
             return
+
+        # Ignore changes inside venv or other non-source directories
+        path_parts = event.src_path.replace("\\", "/").split("/")
+        if any(part in IGNORED_DIRS for part in path_parts):
+            return
+
         if not (event.src_path.endswith('.py') or event.src_path.endswith('.env')):
             return
+
         # Debounce: ignore rapid duplicate events (e.g. editor writes temp file)
         now = time.time()
         if now - self._last_restart < COOLDOWN:
@@ -49,6 +62,20 @@ class RestartHandler(FileSystemEventHandler):
         self._last_restart = now
         print(f"\n[Watcher] Detected change in {event.src_path}. Restarting...")
         self.start_server()
+
+def free_port(port: int):
+    """Kill any process occupying the given port so we can bind cleanly."""
+    import socket
+    import psutil
+    for conn in psutil.net_connections(kind='tcp'):
+        if conn.laddr.port == port and conn.pid:
+            try:
+                psutil.Process(conn.pid).terminate()
+                print(f"[Watcher] Freed port {port} (killed PID {conn.pid})")
+                time.sleep(0.5)
+            except Exception:
+                pass
+
 
 def check_rag_initialization():
     chroma_path = os.path.join("modules", "knowledge", "chroma_db")
@@ -59,6 +86,7 @@ def check_rag_initialization():
         print(f"[Info] RAG ChromaDB found at '{chroma_path}'. Seamless RAG is ready.\n")
 
 if __name__ == "__main__":
+    free_port(8000)
     check_rag_initialization()
     event_handler = RestartHandler()
     observer = Observer()

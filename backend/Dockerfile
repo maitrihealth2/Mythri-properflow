@@ -2,33 +2,36 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system-level dependencies needed by some packages
+# Install system-level dependencies needed by native packages (libsndfile1 for soundfile, gcc/g++ for C++ builds)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    g++ \
     libffi-dev \
     libssl-dev \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies first (layer caching)
+# Copy requirements file first for Docker layer caching
 COPY requirements.txt .
-RUN pip install --upgrade pip
 
-# Install CPU-only torch first (avoids downloading the full 2GB CUDA build)
-RUN pip install torch --extra-index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir --upgrade pip
 
-# Install remaining requirements
-RUN pip install -r requirements.txt
+# Install CPU-only torch to minimize Docker image size (~150MB vs ~2GB CUDA image)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
-# Create a non-root user and grant ownership so logs/audit files can be written
+# Create a non-root user and grant ownership
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Expose the port Render will bind to
+# Expose port
 EXPOSE 8000
 
-# Uvicorn in production mode (single worker, async)
-CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --loop uvloop --http httptools
+# Uvicorn production server
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
+
