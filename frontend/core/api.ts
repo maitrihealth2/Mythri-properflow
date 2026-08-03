@@ -177,3 +177,19 @@ export async function submitFeedback(content: string) {
   const res = await api.post('/api/feedback/submit', { content })
   return res.data
 }
+
+// ==========================================
+// Admin
+// ==========================================
+export const adminLogin = async (data: any) => {
+  const response = await api.post('/api/admin/login', data)
+  return response.data
+}
+export const getAdminConsents = async () => {
+  const response = await api.get('/api/admin/consents')
+  return response.data
+}
+export const getAdminFeedback = async () => {
+  const response = await api.get('/api/admin/feedback')
+  return response.data
+}
