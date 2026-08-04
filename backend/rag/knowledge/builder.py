@@ -170,8 +170,14 @@ def build_knowledge_base():
         except Exception as e:
             print(f"[RAG] Directory reset note: {e}")
 
-    embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name="all-MiniLM-L6-v2"
+    import os
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        print("[WARNING] HF_TOKEN not found in environment. HuggingFace embedding API may fail or rate-limit.")
+
+    embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
+        api_key=hf_token,
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
     from chromadb.config import Settings

@@ -24,8 +24,11 @@ def get_collection():
             settings=Settings(anonymized_telemetry=False)
         )
         from chromadb.utils import embedding_functions
-        embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
+        import os
+        hf_token = os.getenv("HF_TOKEN")
+        embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
+            api_key=hf_token,
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
         _collection = _client.get_collection(
             name=COLLECTION_NAME,
