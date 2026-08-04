@@ -17,23 +17,30 @@ def get_collection():
     """Lazy-load ChromaDB collection (singleton)."""
     global _client, _collection
     if _collection is None:
-        import chromadb
-        from chromadb.config import Settings
-        _client = chromadb.PersistentClient(
-            path=CHROMA_DIR,
-            settings=Settings(anonymized_telemetry=False)
-        )
-        from chromadb.utils import embedding_functions
-        import os
-        hf_token = os.getenv("HF_TOKEN")
-        embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
-            api_key=hf_token,
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-        _collection = _client.get_collection(
-            name=COLLECTION_NAME,
-            embedding_function=embedding_fn,
-        )
+        try:
+            import chromadb
+            from chromadb.config import Settings
+            _client = chromadb.PersistentClient(
+                path=CHROMA_DIR,
+                settings=Settings(anonymized_telemetry=False)
+            )
+            from chromadb.utils import embedding_functions
+            hf_token = os.getenv("HF_TOKEN")
+            if not hf_token:
+                print("[RAG] Warning: HF_TOKEN missing. RAG is disabled.")
+                return None
+                
+            embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
+                api_key=hf_token,
+                model_name="sentence-transformers/all-MiniLM-L6-v2"
+            )
+            _collection = _client.get_collection(
+                name=COLLECTION_NAME,
+                embedding_function=embedding_fn,
+            )
+        except Exception as e:
+            print(f"[RAG] Initialization failed gracefully: {e}")
+            _collection = None
     return _collection
 
 
@@ -42,8 +49,10 @@ def retrieve_context(query: str, n_results: int = 3) -> str:
     Retrieve the top-n most relevant therapy knowledge chunks for a query.
     Returns a formatted string ready to inject into the LLM prompt.
     """
+    collection = get_collection()
+    if not collection:
+        return ""
     try:
-        collection = get_collection()
         results = collection.query(
             query_texts=[query],
             n_results=n_results,

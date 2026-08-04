@@ -170,15 +170,20 @@ def build_knowledge_base():
         except Exception as e:
             print(f"[RAG] Directory reset note: {e}")
 
-    import os
     hf_token = os.getenv("HF_TOKEN")
     if not hf_token:
-        print("[WARNING] HF_TOKEN not found in environment. HuggingFace embedding API may fail or rate-limit.")
+        print("[WARNING] HF_TOKEN not found in environment. Skipping RAG build during Docker build.")
+        return None
 
-    embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
-        api_key=hf_token,
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    try:
+        embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
+            api_key=hf_token,
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+    except Exception as e:
+        print(f"[WARNING] Could not initialize HuggingFaceEmbeddingFunction: {e}")
+        print("[WARNING] Skipping RAG build.")
+        return None
 
     from chromadb.config import Settings
     client = chromadb.PersistentClient(
@@ -192,11 +197,34 @@ def build_knowledge_base():
     except Exception:
         pass
 
-    collection = client.create_collection(
-        name=COLLECTION_NAME,
-        embedding_function=embedding_fn,
-        metadata={"hnsw:space": "cosine"},
-    )
+    try:
+        collection = client.create_collection(
+            name=COLLECTION_NAME,
+            embedding_function=embedding_fn,
+            metadata={"hnsw:space": "cosine"},
+        )
+    except Exception as e:
+        if "conflict" in str(e).lower() or "huggingface vs" in str(e).lower() or "already exists" in str(e).lower():
+            print("[WARNING] Detected embedding function conflict. Wiping database to rebuild...")
+            # If the API delete fails because of schema mismatch, we must wipe the folder
+            try:
+                if os.path.exists(CHROMA_DIR):
+                    shutil.rmtree(CHROMA_DIR)
+                client = chromadb.PersistentClient(
+                    path=CHROMA_DIR,
+                    settings=Settings(anonymized_telemetry=False)
+                )
+                collection = client.create_collection(
+                    name=COLLECTION_NAME,
+                    embedding_function=embedding_fn,
+                    metadata={"hnsw:space": "cosine"},
+                )
+            except Exception as inner_e:
+                print(f"[ERROR] Fatal rebuild error: {inner_e}")
+                return None
+        else:
+            print(f"[ERROR] Failed to create collection: {e}")
+            return None
 
     batch_size = 50
     for i in range(0, len(documents), batch_size):

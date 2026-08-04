@@ -25,9 +25,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Build the RAG Knowledge Base during image creation
-RUN python rag/knowledge/builder.py
-
 # Create a non-root user and grant ownership
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
