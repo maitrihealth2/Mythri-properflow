@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { submitOnboarding } from '@/core/api'
+import { submitOnboarding, getOnboardingStatus } from '@/core/api'
 
 type OnboardingData = {
   preferred_name: string
@@ -38,6 +38,25 @@ export default function OnboardingPage() {
     reasons: [],
     goals: []
   })
+
+  // PHASE 5 — ONBOARDING PAGE GUARD
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    if (!token) {
+      router.replace('/login')
+      return
+    }
+
+    getOnboardingStatus().then(status => {
+      console.log('[ONBOARDING] OnboardingPage mount guard check status:', status)
+      if (status && status.completed) {
+        console.log('[ONBOARDING] User has already completed onboarding. Redirecting -> /home')
+        router.replace('/home')
+      }
+    }).catch(err => {
+      console.error('[ONBOARDING_ERROR] Failed to check onboarding status on mount:', err)
+    })
+  }, [router])
 
   // For Screen 14 Rotating Messages
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0)

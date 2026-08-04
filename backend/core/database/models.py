@@ -104,6 +104,7 @@ class UserOnboarding(Base):
     raw_responses = Column(JSON, nullable=True, comment="Raw flexible JSON dump of all onboarding data")
     version = Column(String(20), default="v1")
     completed_at = Column(DateTime(timezone=True), default=func.now())
+    is_completed = Column(Boolean, default=False, nullable=False, comment="Dedicated boolean flag for onboarding completion status")
     
     user = relationship("User", back_populates="onboarding_data")
 

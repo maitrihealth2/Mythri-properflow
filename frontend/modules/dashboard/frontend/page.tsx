@@ -35,12 +35,17 @@ export default function DashboardPage() {
       
       // Check onboarding status
       getOnboardingStatus().then(status => {
-        if (!status.completed) {
+        console.log('[ONBOARDING] Dashboard status check:', status)
+        if (!status || !status.completed) {
+          console.log('[ONBOARDING] Onboarding incomplete -> redirecting to /onboarding')
           router.replace('/onboarding')
         } else {
+          console.log('[ONBOARDING] Onboarding complete -> loading dashboard stats')
           getDashboardStats().then(setStats).catch(console.error)
         }
-      }).catch(console.error)
+      }).catch(err => {
+        console.error('[ONBOARDING_ERROR] Dashboard status check failed:', err)
+      })
     }
 
     const hour = new Date().getHours()

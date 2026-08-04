@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
-from core.database.models import get_db, User, UserOnboarding
+from core.database.models import get_db, User, UserOnboarding, UserPersonaProfile, func
 from security.authentication.api import get_current_user
 
 router = APIRouter(prefix="/api/user", tags=["user"])
@@ -26,27 +26,51 @@ def save_onboarding(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Check if exists
-    onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
-    
-    if not onboarding:
-        onboarding = UserOnboarding(user_id=current_user.id)
-        db.add(onboarding)
+    print(f"[ONBOARDING] Saving onboarding for User ID={current_user.id} ({current_user.username})...")
+    try:
+        # 1. Update or create UserOnboarding record
+        onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
         
-    onboarding.preferred_name = data.preferred_name
-    onboarding.language = data.language
-    onboarding.conversation_style = data.conversation_style
-    onboarding.communication_mode = data.communication_mode
-    onboarding.initial_emotion = data.initial_emotion
-    onboarding.primary_goal = data.primary_goal
-    onboarding.check_in_preference = data.check_in_preference
-    onboarding.goals = data.goals
-    onboarding.reasons = data.reasons
-    onboarding.raw_responses = data.model_dump()
-    
-    db.commit()
-    
-    return {"status": "success", "message": "Onboarding data saved successfully"}
+        if not onboarding:
+            onboarding = UserOnboarding(user_id=current_user.id)
+            db.add(onboarding)
+            
+        onboarding.preferred_name = data.preferred_name
+        onboarding.language = data.language
+        onboarding.conversation_style = data.conversation_style
+        onboarding.communication_mode = data.communication_mode
+        onboarding.initial_emotion = data.initial_emotion
+        onboarding.primary_goal = data.primary_goal
+        onboarding.check_in_preference = data.check_in_preference
+        onboarding.goals = data.goals
+        onboarding.reasons = data.reasons
+        onboarding.raw_responses = data.model_dump()
+        onboarding.is_completed = True
+        onboarding.completed_at = func.now()
+
+        # 2. Atomically sync UserPersonaProfile
+        persona = db.query(UserPersonaProfile).filter(UserPersonaProfile.user_id == current_user.id).first()
+        if not persona:
+            persona = UserPersonaProfile(
+                user_id=current_user.id,
+                onboarding_complete=True,
+                initial_presenting_topic=data.primary_goal or (data.reasons[0] if data.reasons else "onboarding"),
+                communication_style=data.conversation_style or "balanced"
+            )
+            db.add(persona)
+        else:
+            persona.onboarding_complete = True
+            if data.primary_goal:
+                persona.initial_presenting_topic = data.primary_goal
+
+        # 3. Commit transaction
+        db.commit()
+        print(f"[ONBOARDING] Transaction commit successful for User {current_user.id}: is_completed=True, persona.onboarding_complete=True")
+        return {"status": "success", "message": "Onboarding data saved successfully"}
+    except Exception as e:
+        db.rollback()
+        print(f"[ONBOARDING_ERROR] Transaction commit failed for User {current_user.id}, rolled back: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save onboarding data: {str(e)}")
 
 @router.get("/onboarding/status")
 def get_onboarding_status(
@@ -54,11 +78,8 @@ def get_onboarding_status(
     db: Session = Depends(get_db)
 ):
     onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
-    completed = False
-    if onboarding:
-        if onboarding.raw_responses and "consent" in onboarding.raw_responses:
-            completed = True
-            
+    completed = onboarding.is_completed if (onboarding and onboarding.is_completed is not None) else False
+    print(f"[ONBOARDING] GET /api/user/onboarding/status for User {current_user.id}: completed={completed}")
     return {
         "completed": completed
     }

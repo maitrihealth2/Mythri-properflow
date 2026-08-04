@@ -31,10 +31,11 @@ class TokenResponse(BaseModel):
 def check_needs_onboarding(db: Session, user_id: int) -> bool:
     onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == user_id).first()
     if not onboarding:
+        print(f"[ONBOARDING] User {user_id}: No UserOnboarding record found -> needs_onboarding=True")
         return True
-    if not onboarding.raw_responses or "consent" not in onboarding.raw_responses:
-        return True
-    return False
+    needs = not onboarding.is_completed
+    print(f"[ONBOARDING] User {user_id}: onboarding.is_completed={onboarding.is_completed} -> needs_onboarding={needs}")
+    return needs
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
