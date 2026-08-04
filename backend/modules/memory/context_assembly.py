@@ -138,10 +138,7 @@ class MemoryContextEngine:
                 elif cat == MemoryCategory.RELATIONSHIP:
                     context.relationships.candidates.append(rc)
                 elif cat == MemoryCategory.FACT:
-                    if cand.metadata.importance >= 0.8:
-                        context.personal_facts.candidates.append(rc)
-                    else:
-                        context.important_long_term_facts.candidates.append(rc)
+                    context.personal_facts.candidates.append(rc)
                 else:
                     context.important_long_term_facts.candidates.append(rc)
 

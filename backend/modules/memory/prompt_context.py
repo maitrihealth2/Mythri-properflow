@@ -106,9 +106,9 @@ class PromptContextEngine:
                         prompt_ctx.emotional_context.add_item(content)
                     elif cand.kind == WorkingMemoryKind.TEMPORARY_PREFERENCE:
                         prompt_ctx.preferences.add_item(content)
-                    else:
+                    elif not content.endswith("?"):
                         prompt_ctx.current_session.add_item(content)
-                else:
+                elif not content.endswith("?"):
                     prompt_ctx.current_session.add_item(content)
 
             # 2. Map Episodic Narrative Experiences
@@ -128,10 +128,7 @@ class PromptContextEngine:
                 elif cat == MemoryCategory.RELATIONSHIP:
                     prompt_ctx.relationships.add_item(content)
                 elif cat == MemoryCategory.FACT:
-                    if cand.metadata.importance >= 0.8:
-                        prompt_ctx.personal_facts.add_item(content)
-                    else:
-                        prompt_ctx.background_context.add_item(content)
+                    prompt_ctx.personal_facts.add_item(content)
                 else:
                     prompt_ctx.background_context.add_item(content)
                     

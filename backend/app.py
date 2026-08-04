@@ -2,6 +2,11 @@ import os
 import pathlib
 from dotenv import load_dotenv
 
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+
 _BACKEND_DIR = pathlib.Path(__file__).resolve().parent
 load_dotenv(_BACKEND_DIR / ".env")
 load_dotenv(_BACKEND_DIR / ".env.local", override=True)
@@ -66,10 +71,7 @@ async def lifespan(app: FastAPI):
                 else:
                     CommandCenter.set_health("Database", "Failed")
 
-        progress.update(task3, advance=50)
-        # Preload models
-        preload_models()
-        # Assume providers are healthy for now
+        # Models are lazy-loaded on first request to conserve RAM on Render Free (512 MB)
         CommandCenter.set_health("Firebase", "Healthy")
         CommandCenter.set_health("Sarvam", "Healthy")
         CommandCenter.set_health("Brain", "Healthy")

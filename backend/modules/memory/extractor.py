@@ -68,7 +68,7 @@ class MemoryExtractor(MemoryExtractorProtocol):
         (
             MemoryCategory.RELATIONSHIP,
             re.compile(
-                r"\b(?:my\s+(?:brother|sister|mother|father|mom|dad|friend|boss|partner|wife|husband|doctor|therapist|colleague|teacher|son|daughter|girl|guy|crush|ex|boyfriend|girlfriend|person|classmate|roommate|neighbor|coworker|relative|uncle|aunt)|met a\s+(?:girl|guy|person|friend)|talking to a\s+(?:girl|guy|person)|there's a\s+(?:girl|guy|person))\b(?:\s+is|\s+named|\s+called|\s+who)?\s*(.*)",
+                r"\b(?:my\s+(?:brother|sister|mother|father|mom|dad|friend|boss|partner|wife|husband|doctor|therapist|colleague|teacher|son|daughter|girl|guy|crush|ex|boyfriend|girlfriend|person|classmate|roommate|neighbor|coworker|relative|uncle|aunt)|met\s+(?:a\s+)?(?:girl|guy|person|friend|[A-Z]\w+|\w+)|talking to\s+(?:a\s+)?(?:girl|guy|person|[A-Z]\w+|\w+)|there's a\s+(?:girl|guy|person))\b(?:\s+is|\s+named|\s+called|\s+who)?\s*(.*)",
                 re.IGNORECASE,
             ),
             0.85,

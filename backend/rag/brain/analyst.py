@@ -38,11 +38,12 @@ def should_skip_assessor(user_message: str, case_file: dict) -> bool:
     if case_file.get("conversation_state", {}).get("risk_level") not in (None, "none", "Low"): # Note: State tracker uses 'Low' by default
         return False
 
+    import re
     if word_count <= 2 and msg in TRIVIAL_ACK:
         return True
-    if any(p in msg for p in GREETING_PATTERNS) and word_count <= 4:
+    if any(re.search(rf"\b{re.escape(p)}\b", msg) for p in GREETING_PATTERNS) and word_count <= 4:
         return True
-    if any(p in msg for p in SMALLTALK_PATTERNS) and word_count <= 6:
+    if any(re.search(rf"\b{re.escape(p)}\b", msg) for p in SMALLTALK_PATTERNS) and word_count <= 6:
         return True
     return False
 

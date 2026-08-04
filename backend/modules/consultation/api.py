@@ -245,9 +245,16 @@ async def send_message(
             session_id=session.id,
             token_budget=TokenBudget(max_total_tokens=500)
         )
+
+        from modules.memory.intent import MemoryIntentEngine
+        intent_engine = MemoryIntentEngine()
+        existing_mems = repo.get_memories_by_user(current_user.id, limit=50) if repo else []
+        intent_result = intent_engine.classify_intent(req.message, existing_memories=existing_mems)
+        memory_usage_mode = intent_result.mode.value
     except Exception as e:
         CommandCenter.log_ai("MEMORY_READ_ERROR", f"Failed to fetch memory context: {e}")
         memory_context = ""
+        memory_usage_mode = "SILENT_BACKGROUND"
 
     # ── MAITRI AGENT LOOP v2: Assessor Phase ──────────────────────────────────
     case_file = tracker.get_case_file(session.id)
@@ -369,6 +376,7 @@ async def send_message(
         is_crisis      = crisis.is_crisis,
         exercise_phase = current_exercise_state,
         memory_context = memory_context,
+        memory_usage_mode = memory_usage_mode,
     )
     
     import re

@@ -148,6 +148,7 @@ def chat_with_maitri(
     is_crisis: bool = False,
     exercise_phase: str = "idle",
     memory_context: str = "",
+    memory_usage_mode: str = "SILENT_BACKGROUND",
     max_tokens: int = 250,
 ) -> str:
     """
@@ -172,16 +173,24 @@ def chat_with_maitri(
             "Do NOT ask complex questions. Guide them to take a slow breath in and release."
         )
 
-    # Cognitive Memory Context (High Priority — placed before dialogue manager rules)
+    # Cognitive Memory Context (Intent-Aware Rules)
     if memory_context and memory_context.strip():
-        system_parts.append(
-            "PRIMARY DIRECTIVE FOR THIS TURN: ACTIVE COGNITIVE MEMORIES ARE PRESENT FOR THIS USER.\n"
-            "1. DO NOT SAY 'I am right here with you', 'How are you holding up', OR GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
-            "2. DO NOT TRY TO IDENTIFY A THERAPEUTIC ISSUE OR GIVE ACTIONABLE STEPS WHEN ANSWERING MEMORY OR PERSONAL QUESTIONS.\n"
-            "3. YOU MUST DIRECTLY, FACTUALLY, AND WARMLY ANSWER THE USER'S QUESTION USING THE STORED MEMORIES BELOW.\n"
-            "4. MANDATORY: Answer the user's question factually and directly based on the stored memories.\n\n"
-            f"COGNITIVE MEMORY:\n{memory_context.strip()}"
-        )
+        if memory_usage_mode == "EXPLICIT_RECALL":
+            system_parts.append(
+                "PRIMARY DIRECTIVE FOR THIS TURN: THE USER EXPLICITLY REQUESTED MEMORY RECALL.\n"
+                "1. You MUST answer the user's question directly, factually, and warmly based on the stored memories below.\n"
+                "2. Do NOT give generic check-ins or ask probing therapeutic questions.\n\n"
+                f"COGNITIVE MEMORY:\n{memory_context.strip()}"
+            )
+        else:
+            system_parts.append(
+                "BACKGROUND COGNITIVE MEMORY CONTEXT FOR THIS USER:\n"
+                f"{memory_context.strip()}\n\n"
+                "CRITICAL CONVERSATIONAL RULES FOR MEMORY USAGE:\n"
+                "1. Memory is provided SILENTLY as background knowledge so you know who/what the user is talking about.\n"
+                "2. DO NOT say 'I remember', 'I remember the following about you', or announce stored facts.\n"
+                "3. Speak naturally, warmly, and empathically as a human companion/therapist who naturally knows their history."
+            )
 
     # MAITRI AGENT LOOP v2 - Case file context
     if case_file:
@@ -243,8 +252,8 @@ def chat_with_maitri(
         if result and len(result) >= 15:
             return result
         
-        # Memory-Aware Fallback (Phase 2 Requirement)
-        if memory_context and memory_context.strip():
+        # Memory-Aware Fallback
+        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
             facts = [line.strip('• ').strip() for line in memory_context.split('\n') if line.strip().startswith('•')]
             if facts:
                 prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
@@ -252,10 +261,10 @@ def chat_with_maitri(
                 chosen_facts = matching_facts if matching_facts else facts
                 facts_str = "; ".join(chosen_facts)
                 return f"I remember the following about you: {facts_str}."
-        return "I am right here with you. How are you holding up?"
+        return "I hear you. Tell me more about what's on your mind."
     except Exception as e:
         print(f"Maitri LLM Error: {e}")
-        if memory_context and memory_context.strip():
+        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
             facts = [line.strip('• ').strip() for line in memory_context.split('\n') if line.strip().startswith('•')]
             if facts:
                 prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
