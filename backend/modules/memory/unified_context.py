@@ -206,7 +206,6 @@ class UnifiedCognitiveContextEngine:
             # 4. Query Companion Memories (Filtered by user_id)
             memories = db.query(CompanionMemory).filter(
                 CompanionMemory.user_id == user_id,
-                CompanionMemory.is_active == True
             ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(30).all()
 
             seen_facts: Set[str] = set()
