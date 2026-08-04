@@ -84,7 +84,8 @@ async def handle_voice_turn(
     db: Session,
 ):
     """
-    Process a single voice turn: Crisis check -> Emotion -> RAG -> LLM -> TTS.
+    Process a single voice turn — IDENTICAL cognitive pipeline to text consultation:
+    Crisis -> Emotion -> RAG -> Unified Context -> CRSE -> Assessor -> Sarvam -> TTS.
     Returns the full response dictionary.
     """
     # ── Validate session ──────────────────────────────────────────────────────
@@ -133,16 +134,19 @@ async def handle_voice_turn(
         session.is_crisis_flagged = True
         db.commit()
 
-    # ── Emotion + LLM ────────────────────────────────────────────────────────
-    print(f"[VOICE] Computing emotion heuristically and calling LLM...")
     await broadcast_event("ROUTING", "STT Text -> AI Brain Cluster")
-    
-    # Bypass RAG completely for voice to save 1-2 seconds of latency
+
+    # ── RAG (lightweight for voice: n=2 to reduce latency) ──────────────────
     rag_context = ""
+    if RAG_AVAILABLE:
+        try:
+            rag_context = retrieve_context(transcript, n_results=2)
+        except Exception:
+            rag_context = ""
 
     # Append voice brevity instructions to lang_prompt
     lang_prompt = get_language_prompt(language)
-    lang_prompt += " Keep your response conversational and natural, as this is a real-time voice call. Provide clear reasoning if needed."
+    lang_prompt += " Keep your response conversational and natural, as this is a real-time voice call."
 
     # Fetch last 30 messages for this specific session
     past = db.query(Message).filter(
@@ -153,12 +157,11 @@ async def handle_voice_turn(
     history = [{"role": m.role, "content": m.content} for m in past]
     history.append({"role": "user", "content": transcript})
     
-    # ── Sequential Processing: Emotion -> Analyst -> LLM ─────────────────────
-    # 1. Get True Emotion from local HuggingFace pipeline
+    # ── Emotion Detection ─────────────────────────────────────────────────────
     try:
         emotion = await asyncio.wait_for(detect_emotion(transcript), timeout=2.0)
         print(f"[VOICE] DL Emotion: {emotion.label} ({emotion.score:.2f})")
-    except Exception as te:
+    except Exception:
         print(f"[VOICE] DL Emotion timeout/error, falling back to heuristic")
         emotion = detect_emotion_heuristic(transcript)
 
@@ -170,7 +173,50 @@ async def handle_voice_turn(
         tracker.set_crisis_risk(session.id, "High")
     state_summary = tracker.get_summary(session.id)
 
-    # 2. MAITRI AGENT LOOP v2: Assessor Phase Check
+    # ── Unified Cognitive Context + CRSE ─────────────────────────────────────
+    # SYNCHRONIZED with text consultation pipeline — one cognitive pipeline for both modes
+    memory_context = ""
+    memory_usage_mode = "SILENT_BACKGROUND"
+    try:
+        from modules.memory.unified_context import UnifiedCognitiveContextEngine
+        from modules.memory.conversation_intent import ConversationSpeechActEngine
+        from modules.memory.context_relevance import ContextRelevanceSelector
+
+        unified_engine = UnifiedCognitiveContextEngine()
+        speech_engine = ConversationSpeechActEngine()
+        crse = ContextRelevanceSelector()
+
+        unified_profile = unified_engine.build_context(
+            db, user_id=current_user.id, session_id=session.id, query=transcript
+        )
+
+        # Extract known entities from companion memories & onboarding
+        known_ents = set()
+        if unified_profile.preferred_name:
+            known_ents.add(unified_profile.preferred_name)
+        for r in unified_profile.relationships:
+            for word in r.split():
+                clean_word = word.strip(".,;:!?\"'")
+                if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
+                    known_ents.add(clean_word)
+
+        # Analyze speech act & select relevant context
+        intent_analysis = speech_engine.analyze(transcript, known_entities=list(known_ents))
+        selection = crse.select(
+            message=transcript,
+            intent=intent_analysis,
+            profile=unified_profile,
+            known_entities=list(known_ents),
+        )
+        memory_context = selection.to_prompt_block()
+        memory_usage_mode = selection.selection_mode
+        print(f"[VOICE] CRSE: {selection.telemetry_summary()}")
+    except Exception as e:
+        print(f"[VOICE] Memory/CRSE (non-fatal): {e}")
+        memory_context = ""
+        memory_usage_mode = "SILENT_BACKGROUND"
+
+    # ── MAITRI AGENT LOOP v2: Assessor Phase ─────────────────────────────────
     case_file = tracker.get_case_file(session.id)
     if should_skip_assessor(transcript, case_file):
         await broadcast_event("LLM_START", "Assessor Skipped (Trivial Input)")
@@ -186,11 +232,12 @@ async def handle_voice_turn(
             rag_context=rag_context,
             pattern_block="",
             persona_summary=state_summary,
+            memory_context=memory_context,
         )
         tracker.update_case_file(session.id, case_file)
         print(f"[VOICE] Assessor Decision: {case_file.get('runtime_state', {}).get('decision')}")
 
-    # 3. Generate response with Maitri (passing the case file)
+    # ── Maitri LLM Response ───────────────────────────────────────────────────
     await broadcast_event("LLM_START", "Maitri Generation...")
     
     try:
@@ -201,9 +248,10 @@ async def handle_voice_turn(
             rag_context=rag_context,
             case_file=case_file,
             language_prompt=lang_prompt,
-            max_tokens=1500,
-            reasoning_effort=None,
             is_crisis=crisis.is_crisis,
+            memory_context=memory_context,
+            memory_usage_mode=memory_usage_mode,
+            max_tokens=1500,
         )
         await broadcast_event("LLM_DONE", "Response generated", {"response": ai_response})
         print(f"[VOICE] LLM response: '{ai_response[:80]}...'")
@@ -225,6 +273,13 @@ async def handle_voice_turn(
         db.commit()
     except Exception as e:
         print(f"[VOICE] DB save failed (continuing): {type(e).__name__} - {e}")
+
+    # ── Async Memory Write (same as text pipeline) ────────────────────────────
+    asyncio.create_task(_process_voice_memory_write_async(
+        user_id=current_user.id,
+        user_message=transcript,
+        session_id=session.id,
+    ))
 
     # ── TTS ───────────────────────────────────────────────────────────────────
     print(f"[VOICE] Calling TTS...")
@@ -311,3 +366,52 @@ async def voice_conversation(
         raise HTTPException(status_code=500, detail={"message": f"STT failed: {err_str}"})
 
     return await handle_voice_turn(transcript, session_id, language, current_user, db)
+
+
+async def _process_voice_memory_write_async(user_id: int, user_message: str, session_id: int) -> None:
+    """
+    Voice Memory Write Worker — identical to text consultation memory write path.
+    Executes asynchronously after the voice response is sent to client.
+    Completely isolated so background errors never impact the live voice turn.
+    """
+    from core.database.models import SessionLocal
+    from modules.memory import MemoryManager
+
+    def _run_task():
+        db = SessionLocal()
+        try:
+            from modules.memory import MemoryManager, short_term_engine, index_engine, WorkingMemoryKind
+
+            # 1. Update Short-Term Working Memory
+            short_term_engine.add_item(
+                session_id=session_id,
+                user_id=user_id,
+                kind=WorkingMemoryKind.TURN_FACT,
+                content=user_message[:300]
+            )
+
+            # 2. Execute Memory Write Pipeline
+            manager = MemoryManager(db_session=db)
+            result = manager.process_turn(
+                user_id=user_id,
+                user_message=user_message,
+                session_id=session_id,
+            )
+
+            # 3. Synchronize Memory Index Engine
+            for dec in result.decisions:
+                if dec.is_actionable and dec.candidate:
+                    index_engine.on_memory_created(dec.candidate)
+
+            if result.has_actionable_decisions:
+                print(f"[VOICE MEMORY] Extracted {len(result.candidates)} candidates, "
+                      f"executed {len(result.decisions)} decisions for user {user_id}")
+        except Exception as err:
+            print(f"[VOICE MEMORY] Background write failed (non-fatal): {err}")
+        finally:
+            db.close()
+
+    try:
+        await asyncio.to_thread(_run_task)
+    except Exception as exc:
+        print(f"[VOICE MEMORY] Isolated task execution error (non-fatal): {exc}")
