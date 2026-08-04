@@ -215,48 +215,59 @@ async def send_message(
     exercise_ctx    = tracker.get_exercise_context(session.id)
     is_onboarding   = state.is_onboarding
 
-    # ── Memory Subsystem Read Path (Milestone 25) ─────────────────────────────
+    # ── Memory Subsystem Read Path + Context Relevance Selection Engine (CRSE) ──
     memory_context = ""
+    memory_usage_mode = "SILENT_BACKGROUND"
+    crse_telemetry = ""
     try:
         from modules.memory.repository import MemoryRepository
         from modules.memory.unified_context import UnifiedCognitiveContextEngine
         from modules.memory.conversation_intent import ConversationSpeechActEngine
+        from modules.memory.context_relevance import ContextRelevanceSelector
 
         repo = MemoryRepository(db)
         unified_engine = UnifiedCognitiveContextEngine()
         speech_engine = ConversationSpeechActEngine()
+        crse = ContextRelevanceSelector()
 
         # Build full unified profile
-        unified_profile = unified_engine.build_context(db, user_id=current_user.id, session_id=session.id, query=req.message)
+        unified_profile = unified_engine.build_context(
+            db, user_id=current_user.id, session_id=session.id, query=req.message
+        )
 
         # Extract known entities from companion memories & onboarding
         known_ents = set()
         if unified_profile.preferred_name:
             known_ents.add(unified_profile.preferred_name)
         for r in unified_profile.relationships:
-            # Extract simple names
             for word in r.split():
-                if word[0].isupper() and len(word) > 2:
-                    known_ents.add(word)
+                clean_word = word.strip(".,;:!?\"'")
+                if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
+                    known_ents.add(clean_word)
 
         # Analyze current message speech act & memory necessity
         intent_analysis = speech_engine.analyze(req.message, known_entities=list(known_ents))
 
-        if intent_analysis.is_explicit_recall:
-            memory_usage_mode = "EXPLICIT_RECALL"
-            memory_context = unified_profile.to_formatted_context_block(max_tokens=500)
-        elif intent_analysis.is_memory_needed:
-            memory_usage_mode = "SILENT_BACKGROUND"
-            memory_context = unified_profile.to_formatted_context_block(max_tokens=300)
-        else:
-            # Speech acts like expressing_emotion ("I'm feeling lonely") or asking_for_advice: ZERO memory dump!
-            memory_usage_mode = "SILENT_BACKGROUND"
-            memory_context = f"[USER PREFERENCES]\n• Name: {unified_profile.preferred_name} | Style: {unified_profile.conversation_style}"
+        # ── CONTEXT RELEVANCE SELECTOR ────────────────────────────────────────
+        # Instead of passing the entire cognitive profile wholesale to the LLM,
+        # CRSE scores every context item and selects only what is genuinely
+        # relevant to THIS specific user message.
+        selection = crse.select(
+            message=req.message,
+            intent=intent_analysis,
+            profile=unified_profile,
+            known_entities=list(known_ents),
+        )
+
+        memory_context = selection.to_prompt_block()
+        memory_usage_mode = selection.selection_mode
+        crse_telemetry = selection.telemetry_summary()
 
     except Exception as e:
         CommandCenter.log_ai("MEMORY_READ_ERROR", f"Failed to fetch memory context: {e}")
         memory_context = ""
         memory_usage_mode = "SILENT_BACKGROUND"
+        crse_telemetry = f"ERROR: {e}"
 
     # ── MAITRI AGENT LOOP v2: Assessor Phase ──────────────────────────────────
     case_file = tracker.get_case_file(session.id)
@@ -304,18 +315,20 @@ async def send_message(
                 }
         tracker.update_case_file(session.id, case_file)
 
-    # Phase 3 & 4 Terminal Evidence
-    print("\n===========================")
-    print("MEMORY PIPELINE VERIFICATION")
-    print("===========================")
+    # Phase 3 & 4 Terminal Evidence + CRSE Telemetry
+    print("\n===============================================")
+    print("MEMORY PIPELINE + CRSE VERIFICATION")
+    print("===============================================")
     print(f"User ID: {current_user.id}")
     print(f"Session ID: {session.id}")
+    print(f"CRSE: {crse_telemetry}")
+    print(f"Selection Mode: {memory_usage_mode}")
     print(f"Injected Memory Context Present: {bool(memory_context.strip())}")
     if memory_context.strip():
-        print(f"Memory Content Snippet:\n{memory_context.strip()}")
+        print(f"Filtered Context Block:\n{memory_context.strip()}")
     print(f"Injected into Analyst: YES")
     print(f"Injected into Maitri: YES")
-    print("===========================\n")
+    print("===============================================\n")
 
     decision = case_file.get("runtime_state", {}).get("decision", "RESPOND")
 
