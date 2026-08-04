@@ -218,25 +218,41 @@ async def send_message(
     # ── Memory Subsystem Read Path (Milestone 25) ─────────────────────────────
     memory_context = ""
     try:
-        from modules.memory.retrieval import MemoryRetrievalEngine
-        from modules.memory.ranking import MemoryRankingEngine
-        from modules.memory.context_assembly import MemoryContextEngine
-        from modules.memory.attention import AttentionEngine, TokenBudget
-        from modules.memory.read_pipeline import MemoryReadPipeline
-        from modules.memory.conversation_adapter import MemoryConversationAdapter
         from modules.memory.repository import MemoryRepository
-        from modules.memory.episodic import EpisodicMemoryStore
-        from modules.memory import short_term_engine, index_engine
         from modules.memory.unified_context import UnifiedCognitiveContextEngine
-        unified_engine = UnifiedCognitiveContextEngine()
-        unified_profile = unified_engine.build_context(db, user_id=current_user.id, session_id=session.id, query=req.message)
-        memory_context = unified_profile.to_formatted_context_block(max_tokens=500)
+        from modules.memory.conversation_intent import ConversationSpeechActEngine
 
-        from modules.memory.intent import MemoryIntentEngine
-        intent_engine = MemoryIntentEngine()
-        existing_mems = repo.get_memories_by_user(current_user.id, limit=50) if repo else []
-        intent_result = intent_engine.classify_intent(req.message, existing_memories=existing_mems)
-        memory_usage_mode = intent_result.mode.value
+        repo = MemoryRepository(db)
+        unified_engine = UnifiedCognitiveContextEngine()
+        speech_engine = ConversationSpeechActEngine()
+
+        # Build full unified profile
+        unified_profile = unified_engine.build_context(db, user_id=current_user.id, session_id=session.id, query=req.message)
+
+        # Extract known entities from companion memories & onboarding
+        known_ents = set()
+        if unified_profile.preferred_name:
+            known_ents.add(unified_profile.preferred_name)
+        for r in unified_profile.relationships:
+            # Extract simple names
+            for word in r.split():
+                if word[0].isupper() and len(word) > 2:
+                    known_ents.add(word)
+
+        # Analyze current message speech act & memory necessity
+        intent_analysis = speech_engine.analyze(req.message, known_entities=list(known_ents))
+
+        if intent_analysis.is_explicit_recall:
+            memory_usage_mode = "EXPLICIT_RECALL"
+            memory_context = unified_profile.to_formatted_context_block(max_tokens=500)
+        elif intent_analysis.is_memory_needed:
+            memory_usage_mode = "SILENT_BACKGROUND"
+            memory_context = unified_profile.to_formatted_context_block(max_tokens=300)
+        else:
+            # Speech acts like expressing_emotion ("I'm feeling lonely") or asking_for_advice: ZERO memory dump!
+            memory_usage_mode = "SILENT_BACKGROUND"
+            memory_context = f"[USER PREFERENCES]\n• Name: {unified_profile.preferred_name} | Style: {unified_profile.conversation_style}"
+
     except Exception as e:
         CommandCenter.log_ai("MEMORY_READ_ERROR", f"Failed to fetch memory context: {e}")
         memory_context = ""

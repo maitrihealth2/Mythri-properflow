@@ -190,15 +190,17 @@ class UnifiedCognitiveContextEngine:
             # 3. Query Persona Profile
             persona = db.query(UserPersonaProfile).filter(UserPersonaProfile.user_id == user_id).first()
             if persona:
-                if persona.initial_presenting_problem:
+                if getattr(persona, 'initial_presenting_topic', None):
+                    profile.presenting_problem = persona.initial_presenting_topic
+                elif getattr(persona, 'initial_presenting_problem', None):
                     profile.presenting_problem = persona.initial_presenting_problem
-                if persona.coping_mechanisms:
+                if getattr(persona, 'coping_mechanisms', None):
                     profile.coping_mechanisms = str(persona.coping_mechanisms)
-                if persona.perceived_support_system:
+                if getattr(persona, 'perceived_support_system', None):
                     profile.support_system = str(persona.perceived_support_system)
-                if persona.personality_traits:
+                if getattr(persona, 'personality_traits', None):
                     profile.personality_traits = str(persona.personality_traits)
-                if persona.risk_level:
+                if getattr(persona, 'risk_level', None):
                     profile.risk_level = persona.risk_level
 
             # 4. Query Companion Memories (Filtered by user_id)
