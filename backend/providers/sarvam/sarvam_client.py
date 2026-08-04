@@ -136,6 +136,52 @@ def _build_language_lock(language: str, language_prompt: str) -> str:
     return "CRITICAL LANGUAGE LOCK: Respond in natural, warm English."
 
 
+def _extract_facts_from_memory_block(memory_context: str, active_prompt: str) -> list:
+    """
+    Extracts meaningful fact strings from a memory context block for fallback recall.
+    Handles both legacy bullet format (• fact) and CRSE section format ([SECTION] fact; fact2).
+    """
+    facts = []
+    prompt_words = {w for w in active_prompt.lower().split() if len(w) > 3}
+
+    for line in memory_context.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+
+        # Legacy format: "• some fact"
+        if line.startswith('•'):
+            facts.append(line.lstrip('•').strip())
+            continue
+
+        # CRSE section format: "[RELATIONSHIPS] Jay is a close friend; Ramu is..."
+        # Skip the persona identity line
+        if line.startswith('[USER]'):
+            continue
+
+        # Parse [SECTION_NAME] content
+        import re
+        section_match = re.match(r'^\[([^\]]+)\]\s*(.+)$', line)
+        if section_match:
+            section_name = section_match.group(1)
+            content = section_match.group(2).strip()
+            # Skip persona line (already in system prompt)
+            if section_name in ('USER',):
+                continue
+            # Split semicolon-separated items
+            items = [item.strip() for item in content.split(';') if item.strip()]
+            facts.extend(items)
+
+    if not facts:
+        return []
+
+    # Filter to most relevant facts given the prompt keywords
+    if prompt_words:
+        matching = [f for f in facts if any(w in f.lower() for w in prompt_words)]
+        return matching if matching else facts[:5]
+    return facts[:5]
+
+
 def chat_with_maitri(
     messages: list[dict],
     language: str = "en-IN",
@@ -246,27 +292,25 @@ def chat_with_maitri(
             if chunk.choices and chunk.choices[0].delta.content:
                 full_text.append(chunk.choices[0].delta.content)
         result = "".join(full_text).strip()
-        if result and len(result) >= 15:
+
+        # For EXPLICIT_RECALL the bar is lower — a short "I don't know" reply
+        # from Sarvam should be caught and overridden with the memory block.
+        min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
+        if result and len(result) >= min_length:
             return result
-        
-        # Memory-Aware Fallback
+
+        # Memory-Aware Fallback — handles both old bullet format and CRSE section format
         if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
-            facts = [line.strip('• ').strip() for line in memory_context.split('\n') if line.strip().startswith('•')]
+            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
             if facts:
-                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
-                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
-                chosen_facts = matching_facts if matching_facts else facts
-                facts_str = "; ".join(chosen_facts)
+                facts_str = "; ".join(facts)
                 return f"I remember the following about you: {facts_str}."
         return "I hear you. Tell me more about what's on your mind."
     except Exception as e:
         print(f"Maitri LLM Error: {e}")
         if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
-            facts = [line.strip('• ').strip() for line in memory_context.split('\n') if line.strip().startswith('•')]
+            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
             if facts:
-                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
-                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
-                chosen_facts = matching_facts if matching_facts else facts
-                facts_str = "; ".join(chosen_facts)
+                facts_str = "; ".join(facts)
                 return f"I remember the following about you: {facts_str}."
         return "I am here with you. Take your time."
