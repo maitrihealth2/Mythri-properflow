@@ -274,17 +274,83 @@ def is_knowledge_base_up_to_date() -> bool:
     return True
 
 
+_INIT_LOCK_FILE = os.path.join(os.path.dirname(__file__), "chroma_db", ".init_lock")
+_init_completed = False
+
+
 def ensure_knowledge_base_built(force: bool = False):
     """
     Ensures knowledge base is initialized on startup.
-    Skips rebuild if database exists and is up-to-date.
+    - Logs clearly whether KB exists, was built, or failed.
+    - Uses a file-based lock to prevent parallel worker initialization.
+    - Validates the collection is readable after build.
+    - Skips rebuild if database exists and is up-to-date.
+    - Executes exactly once per process (guarded by module-level flag).
     """
-    if not force and is_knowledge_base_up_to_date():
-        print("[RAG] Knowledge Base is up to date. Skipping rebuild.")
+    global _init_completed
+    if _init_completed and not force:
+        print("[RAG] Knowledge base already initialized in this process. Skipping.")
         return None
-    return build_knowledge_base()
+
+    # --- Check up-to-date first ---
+    if not force and is_knowledge_base_up_to_date():
+        print("[RAG] ✓ Knowledge Base is up to date. Skipping rebuild.")
+        _init_completed = True
+        return None
+
+    # --- File-based lock to prevent simultaneous worker initialization ---
+    lock_dir = os.path.dirname(_INIT_LOCK_FILE)
+    if lock_dir:
+        os.makedirs(lock_dir, exist_ok=True)
+    if os.path.exists(_INIT_LOCK_FILE):
+        print("[RAG] Another worker is already building the knowledge base. Waiting...")
+        import time as _time
+        for _ in range(60):  # Wait up to 60 seconds
+            _time.sleep(1)
+            if not os.path.exists(_INIT_LOCK_FILE):
+                break
+        print("[RAG] ✓ Knowledge Base initialized by another worker.")
+        _init_completed = True
+        return None
+
+    # --- Acquire lock ---
+    try:
+        with open(_INIT_LOCK_FILE, "w") as lf:
+            lf.write(str(os.getpid()))
+    except Exception:
+        pass  # Non-fatal — proceed without lock
+
+    print("[RAG] ⚙ Knowledge Base missing or outdated. Building now...")
+    collection = None
+    try:
+        collection = build_knowledge_base()
+    except Exception as e:
+        print(f"[RAG] ✗ Knowledge Base build failed: {e}")
+    finally:
+        # Always release lock
+        try:
+            os.remove(_INIT_LOCK_FILE)
+        except Exception:
+            pass
+
+    if collection is not None:
+        try:
+            count = collection.count()
+            print(f"[RAG] ✓ Knowledge Base ready — {count} chunks indexed.")
+        except Exception as e:
+            print(f"[RAG] ✗ Knowledge Base validation failed: {e}")
+    else:
+        hf_token = os.getenv("HF_TOKEN")
+        if not hf_token:
+            print("[RAG] ✗ Knowledge Base NOT built — HF_TOKEN is missing. RAG will be disabled until token is provided.")
+        else:
+            print("[RAG] ✗ Knowledge Base build returned no collection. Check logs above for errors.")
+
+    _init_completed = True
+    return collection
 
 
 if __name__ == "__main__":
     ensure_knowledge_base_built()
     print("\n[RAG] Done! Multi-format knowledge base is ready.")
+
