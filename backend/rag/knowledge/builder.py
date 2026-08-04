@@ -170,7 +170,9 @@ def build_knowledge_base():
         except Exception as e:
             print(f"[RAG] Directory reset note: {e}")
 
-    embedding_fn = embedding_functions.ONNXMiniLM_L6_V2()
+    embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
+    )
 
     from chromadb.config import Settings
     client = chromadb.PersistentClient(
