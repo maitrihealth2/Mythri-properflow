@@ -54,6 +54,7 @@ backend/mindbridge.db
 
 # --- Vector Store (large, auto-rebuilt) ---
 backend/knowledge/chroma_db/
+backend/rag/knowledge/chroma_db/
 
 # --- Fine-tuning Model Weights (large binaries) ---
 backend/finetuning/model/

@@ -77,51 +77,53 @@ def start_session(
     # Initialize state tracker for this session
     tracker.init_session(session.id, is_first_session=is_first)
 
-    initial_message = "Session started."
-    if is_first:
-        # Check onboarding data
-        onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
-        if onboarding:
-            name = onboarding.preferred_name or current_user.username
-            if onboarding.raw_responses:
-                import json
-                context_str = json.dumps(onboarding.raw_responses, indent=2)
-            else:
-                goals = ", ".join(onboarding.goals) if onboarding.goals else onboarding.primary_goal or "personal growth"
-                reasons = ", ".join(onboarding.reasons) if onboarding.reasons else "various reasons"
-                emotion = onboarding.initial_emotion or "okay"
-                context_str = f"Recent feelings: {emotion}\nBrought them here: {reasons}\nGoals: {goals}"
-            
-            system_prompt = f"""You are generating the very FIRST welcome message for a user who just finished onboarding.
-User Name: {name}
-Onboarding Data Context:
-{context_str}
+    # ── Generate Dynamic Personalized Opening Message ────────────────────────
+    try:
+        from modules.memory.unified_context import UnifiedCognitiveContextEngine
+        unified_engine = UnifiedCognitiveContextEngine()
+        profile = unified_engine.build_context(db, user_id=current_user.id)
+        unified_ctx_block = profile.to_formatted_context_block()
+
+        if is_first:
+            system_prompt = f"""You are generating the very FIRST welcome message for a new user who just completed onboarding.
+USER COGNITIVE PROFILE:
+{unified_ctx_block}
 
 Instructions:
-1. Warmly welcome them by name.
-2. Acknowledge what brought them here and how they've been feeling, naturally weaving it into the greeting.
-3. Keep it brief (3-4 sentences max).
-4. Do NOT ask a generic "How can I help you today?". End with a gentle, open-ended question like "Where would you like to start?" or "What's on your mind today?".
-5. Maintain the Mythri tone: calm, non-judgmental, grounded, deeply empathetic."""
-            
-            try:
-                # Use a specific mock history to trigger the greeting generation
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": "Generate my personalized onboarding greeting."}
-                ]
-                initial_message = chat_with_maitri(
-                    messages=messages,
-                    language=onboarding.language or current_user.preferred_language or "en-IN",
-                    max_tokens=250
-                )
-                # Store the generated message in history so the LLM remembers saying it!
-                ai_msg = Message(session_id=session.id, role="maitri", content=initial_message, emotion="calm")
-                db.add(ai_msg)
-                db.commit()
-            except Exception as e:
-                print(f"[ONBOARDING_GREETING_ERROR] {e}")
-                initial_message = f"Welcome, {name}. This is your quiet space. What would you like to talk about today?"
+1. Warmly welcome them by name ({profile.preferred_name}).
+2. Acknowledge what brought them here and their primary goal, naturally weaving it into the greeting.
+3. Keep it brief (2-3 sentences max).
+4. End with a gentle open question like "Where would you like to start today?".
+5. Maintain Mythri tone: calm, grounded, deeply empathetic."""
+        else:
+            system_prompt = f"""You are generating a personalized WELCOME BACK opening message for a returning user starting a new session.
+USER COGNITIVE PROFILE:
+{unified_ctx_block}
+
+Instructions:
+1. Greet them warmly by name ({profile.preferred_name}).
+2. Naturally reference their recent progress, goals, or last conversation topic if available (e.g. "Last time we spoke you were working on...").
+3. Do NOT say 'I remember the following about you'. Keep it completely natural and conversational.
+4. Keep it brief (2-3 sentences max). End with a gentle check-in like "How have things been since then?" or "What's on your mind today?".
+5. Maintain Mythri tone: warm, attentive, non-judgmental."""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "Generate my personalized session opening greeting."}
+        ]
+        initial_message = chat_with_maitri(
+            messages=messages,
+            language=profile.language or "en-IN",
+            memory_context=unified_ctx_block,
+            memory_usage_mode="SILENT_BACKGROUND",
+            max_tokens=200
+        )
+        ai_msg = Message(session_id=session.id, role="maitri", content=initial_message, emotion="calm")
+        db.add(ai_msg)
+        db.commit()
+    except Exception as e:
+        print(f"[PERSONALIZED_GREETING_ERROR] {e}")
+        initial_message = f"Welcome back, {current_user.username}. This is your quiet space. What would you like to talk about today?"
 
     return StartSessionResponse(
         session_id=token,
@@ -225,26 +227,10 @@ async def send_message(
         from modules.memory.repository import MemoryRepository
         from modules.memory.episodic import EpisodicMemoryStore
         from modules.memory import short_term_engine, index_engine
-        
-        repo = MemoryRepository(db)
-        ep_store = EpisodicMemoryStore(db)
-        st_engine = short_term_engine
-        idx_engine = index_engine
-        
-        read_pipeline = MemoryReadPipeline(
-            retrieval_engine=MemoryRetrievalEngine(repo, ep_store, st_engine, idx_engine),
-            ranking_engine=MemoryRankingEngine(),
-            context_engine=MemoryContextEngine(),
-            attention_engine=AttentionEngine()
-        )
-        adapter = MemoryConversationAdapter(read_pipeline=read_pipeline)
-        
-        memory_context = adapter.fetch_analyst_context(
-            user_id=current_user.id,
-            query=req.message,
-            session_id=session.id,
-            token_budget=TokenBudget(max_total_tokens=500)
-        )
+        from modules.memory.unified_context import UnifiedCognitiveContextEngine
+        unified_engine = UnifiedCognitiveContextEngine()
+        unified_profile = unified_engine.build_context(db, user_id=current_user.id, session_id=session.id, query=req.message)
+        memory_context = unified_profile.to_formatted_context_block(max_tokens=500)
 
         from modules.memory.intent import MemoryIntentEngine
         intent_engine = MemoryIntentEngine()

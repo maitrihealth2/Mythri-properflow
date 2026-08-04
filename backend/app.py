@@ -71,6 +71,13 @@ async def lifespan(app: FastAPI):
                 else:
                     CommandCenter.set_health("Database", "Failed")
 
+        # Ensure RAG Knowledge Base is initialized (smart skip if up-to-date)
+        try:
+            from rag.knowledge.builder import ensure_knowledge_base_built
+            await asyncio.to_thread(ensure_knowledge_base_built)
+        except Exception as e:
+            CommandCenter.log_error(f"RAG Knowledge Base Startup Check Note: {e}")
+
         # Models are lazy-loaded on first request to conserve RAM on Render Free (512 MB)
         CommandCenter.set_health("Firebase", "Healthy")
         CommandCenter.set_health("Sarvam", "Healthy")

@@ -200,8 +200,55 @@ def build_knowledge_base():
         )
 
     print(f"[RAG] Knowledge base built: {collection.count()} chunks stored")
+    
+    # Save timestamp marker file for smart deployment builds
+    try:
+        marker_path = os.path.join(CHROMA_DIR, ".built_at")
+        with open(marker_path, "w") as f:
+            f.write(str(os.path.getmtime(CHROMA_DIR)))
+    except Exception:
+        pass
+
     return collection
 
+
+def is_knowledge_base_up_to_date() -> bool:
+    """
+    Check if the ChromaDB vector database exists and is newer than all document source files.
+    """
+    if not os.path.exists(CHROMA_DIR):
+        return False
+
+    marker_path = os.path.join(CHROMA_DIR, ".built_at")
+    if not os.path.exists(marker_path):
+        return False
+
+    built_time = os.path.getmtime(marker_path)
+
+    # Check docs directory timestamp
+    if not os.path.exists(DOCS_DIR):
+        return True
+
+    for root, _, files in os.walk(DOCS_DIR):
+        for file in files:
+            fp = os.path.join(root, file)
+            if os.path.getmtime(fp) > built_time:
+                return False
+
+    return True
+
+
+def ensure_knowledge_base_built(force: bool = False):
+    """
+    Ensures knowledge base is initialized on startup.
+    Skips rebuild if database exists and is up-to-date.
+    """
+    if not force and is_knowledge_base_up_to_date():
+        print("[RAG] Knowledge Base is up to date. Skipping rebuild.")
+        return None
+    return build_knowledge_base()
+
+
 if __name__ == "__main__":
-    build_knowledge_base()
+    ensure_knowledge_base_built()
     print("\n[RAG] Done! Multi-format knowledge base is ready.")
