@@ -20,6 +20,10 @@ PERSONALITY:
 You speak the way a true close friend talks - warm, authentic, unhurried. Direct, caring, and grounded.
 You are not clinical, cold, or overly formal. You speak with natural rhythm.
 
+MEMORY RECALL OVERRIDE (HIGHEST PRIORITY):
+When the user asks what you remember, what you know about them, their goals, preferences, job, or relationships, OR when Cognitive Memory is provided: YOU MUST ANSWER THEIR QUESTION DIRECTLY AND FACTUALLY USING THE STORED MEMORIES.
+NEVER say generic therapeutic check-ins like "I am right here with you" or "How are you holding up?" when answering memory recall questions.
+
 EMOTIONAL STYLE & GUIDANCE:
 1. Warm Empathy First: When someone is hurting or overwhelmed, acknowledge their feeling with genuine warmth.
 2. Context Understanding: Seek to understand the whole story. Ask gentle clarifying questions to learn why things happened.
@@ -88,8 +92,8 @@ SITUATION_CLASSIFICATION -- categorize the main issue facing the user:
 
 DECISION -- choose exactly one:
   GREETING -- user gave a simple greeting ("hi", "hello", "hey", "good morning").
-  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated. Populate `recommended_question`.
-  RESPOND  -- the full situation, cause, and emotion are clear, allowing for warm guidance.
+  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated. Populate `recommended_question`. (Do NOT choose ASK if user is asking a memory recall question).
+  RESPOND  -- the full situation, cause, emotion, or MEMORY RECALL REQUEST is being made. Always choose RESPOND when user asks "Do you remember...", "What do you remember...", "Tell me about...", or "What do you know about me?".
   GROUND   -- set this when ANY of the following are true:
                (a) risk_level is moderate: user describes active panic, overwhelm, or tension (e.g. "I can't breathe", "everything is too much", "I feel like I'm going to break");
                (b) user explicitly asks for a breathing exercise, grounding, calming, or a way to feel better right now;
@@ -110,35 +114,29 @@ def get_client() -> OpenAI:
     return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
 
 
-LANGUAGE_NAMES = {
-    "en-IN": "English",
-    "hi-IN": "Hindi",
-    "ta-IN": "Tamil",
-    "te-IN": "Telugu",
-}
-
-
 def _build_language_lock(language: str, language_prompt: str) -> str:
-    """Return the final, highest-priority language instruction block."""
-    lang_name = LANGUAGE_NAMES.get(language, "English")
-
-    if language == "en-IN":
-        return (
-            f"LANGUAGE - ABSOLUTE RULE:\n"
-            f"Respond in {lang_name} ONLY.\n"
-            f"Do not use any word, phrase, or sentence from Hindi, Tamil, Telugu, or any other language.\n"
-            f"Do not mix languages. Do not add Indian-language words as flavor or style.\n"
-            f"Pure {lang_name} from start to finish. Any deviation is a failure."
-        )
-    else:
-        return (
-            f"LANGUAGE - ABSOLUTE RULE:\n"
-            f"{language_prompt}\n"
-            f"Respond in {lang_name} ONLY.\n"
-            f"Regardless of what language appears in the conversation history, respond only in {lang_name}.\n"
-            f"Do not mix in English unless it is a technical word with no natural equivalent.\n"
-            f"Responding in the wrong language is a critical failure."
-        )
+    if language_prompt:
+        return language_prompt
+    code = (language or "en-IN").strip()
+    if code in ["hi-IN", "hi"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in HINDI script (Devanagari). Do not use English."
+    elif code in ["te-IN", "te"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in TELUGU script. Do not use English."
+    elif code in ["ta-IN", "ta"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in TAMIL script. Do not use English."
+    elif code in ["kn-IN", "kn"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in KANNADA script. Do not use English."
+    elif code in ["mr-IN", "mr"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in MARATHI script. Do not use English."
+    elif code in ["bn-IN", "bn"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in BENGALI script. Do not use English."
+    elif code in ["gu-IN", "gu"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in GUJARATI script. Do not use English."
+    elif code in ["ml-IN", "ml"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in MALAYALAM script. Do not use English."
+    elif code in ["pa-IN", "pa"]:
+        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in PUNJABI script. Do not use English."
+    return "CRITICAL LANGUAGE LOCK: Respond in natural, warm English."
 
 
 def chat_with_maitri(
@@ -147,55 +145,63 @@ def chat_with_maitri(
     rag_context: str = "",
     case_file: dict = None,
     language_prompt: str = "",
-    max_tokens: int = 450,
-    reasoning_effort: str | None = None,
     is_crisis: bool = False,
     exercise_phase: str = "idle",
+    memory_context: str = "",
+    max_tokens: int = 250,
 ) -> str:
-    # Crisis short-circuit - never reaches LLM
-    if is_crisis:
-        return (
-            "Hey... I am right here with you. You are not alone in this moment. "
-            "I really want you to talk to someone who can help properly too. "
-            "iCall is 9152987821, they are there 24/7 and they actually care. "
-            "Just breathe for a second. What you are feeling right now is temporary, "
-            "even if it does not feel like it."
-        )
-
+    """
+    Generate Maitri's conversational response.
+    """
     system_parts = [THERAPY_SYSTEM_PROMPT]
 
-    # Exercise phase tone
-    if exercise_phase == "in_progress":
+    # Crisis override takes absolute priority
+    if is_crisis:
         system_parts.append(
-            "[EXERCISE IN PROGRESS] Guide the user through the current exercise step. "
-            "Stay calm, slow, grounding. Speak like a friend sitting next to them, not a clinical instructor. "
-            "If the user goes off-topic, acknowledge it briefly then gently return to the exercise. "
-            "Do not abandon the exercise on the first distraction."
+            "CRISIS MODE ACTIVE: The user may be in severe distress or danger. "
+            "Respond with maximum empathy, validate their pain deeply, reassuring them they are not alone. "
+            "Gently remind them that support is available. Keep it short (2-3 sentences max). Do NOT give advice or ask probing questions."
         )
-    elif exercise_phase == "awaiting_feedback":
+
+    # Active Exercise Instruction
+    if exercise_phase != "idle":
         system_parts.append(
-            "[EXERCISE COMPLETE] The exercise is done. Ask warmly how it felt. "
-            "Be genuinely curious. Then naturally return to the conversation."
+            f"EXERCISE ACTIVE (phase: {exercise_phase}): "
+            "A breathing/grounding exercise overlay is active on screen. "
+            "Keep your words brief (1-2 sentences), reassuring, and focused on breathing with them. "
+            "Do NOT ask complex questions. Guide them to take a slow breath in and release."
+        )
+
+    # Cognitive Memory Context (High Priority — placed before dialogue manager rules)
+    if memory_context and memory_context.strip():
+        system_parts.append(
+            "PRIMARY DIRECTIVE FOR THIS TURN: ACTIVE COGNITIVE MEMORIES ARE PRESENT FOR THIS USER.\n"
+            "1. DO NOT SAY 'I am right here with you', 'How are you holding up', OR GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
+            "2. DO NOT TRY TO IDENTIFY A THERAPEUTIC ISSUE OR GIVE ACTIONABLE STEPS WHEN ANSWERING MEMORY OR PERSONAL QUESTIONS.\n"
+            "3. YOU MUST DIRECTLY, FACTUALLY, AND WARMLY ANSWER THE USER'S QUESTION USING THE STORED MEMORIES BELOW.\n"
+            "4. MANDATORY: Answer the user's question factually and directly based on the stored memories.\n\n"
+            f"COGNITIVE MEMORY:\n{memory_context.strip()}"
         )
 
     # MAITRI AGENT LOOP v2 - Case file context
     if case_file:
         import json
         system_parts.append(
-            f"[CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]\n"
+            f"[DIALOGUE MANAGER CONTEXT]\n"
             f"Case File:\n{json.dumps(case_file, indent=2)}\n"
-            "YOU MUST STRICTLY FOLLOW THE DECISION IN THE CASE FILE:\n"
+            "Guidelines for response generation:\n"
             "- If decision is 'GREETING':\n"
             "  1. Greet the user warmly and introduce yourself naturally (e.g. 'Hey! I'm Maitri. How are you doing today?').\n"
             "  2. Ask exactly ONE open, welcoming check-in question.\n"
             "- If decision is 'ASK':\n"
-            "  1. Validate their emotion with deep warmth and empathy (e.g., 'That sounds really disorienting and exhausting to feel disconnected from yourself when everything looks fine on the outside.').\n"
-            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface or when this shift began (e.g. 'When did you first notice this heavy feeling starting, or has a quiet pressure been building up for a while?').\n"
+            "  1. Validate their emotion with deep warmth and empathy.\n"
+            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface.\n"
             "  3. YOU MUST ASK A QUESTION. Exactly ONE question mark required.\n"
             "- If decision is 'RESPOND':\n"
-            "  1. Validate their feelings and state clearly what issue/situation is going on based on `situation_classification` (tell them what is wrong).\n"
-            "  2. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now.\n"
-            "  3. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
+            "  1. IF COGNITIVE MEMORY CONTEXT IS PRESENT OR THE USER ASKS A RECALL/PERSONAL QUESTION (e.g. 'do you remember...', 'what do you remember...', 'what do you know about me', 'tell me about...', 'what are my goals', 'what is my favourite...', 'what are my preferences', 'what do I work as'): YOU MUST FACTUALLY RECALL AND ANSWER WITH THE RECALLED STORED MEMORIES CONVERSATIONALLY AND WARMLY. DO NOT SAY 'I am here with you' OR GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
+            "  2. Otherwise (for general therapy turns without stored memories): validate their feelings and state clearly what issue/situation is going on based on `situation_classification`.\n"
+            "  3. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now if relevant.\n"
+            "  4. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
             "- If decision is 'GROUND':\n"
             "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
         )
@@ -234,7 +240,27 @@ def chat_with_maitri(
             if chunk.choices and chunk.choices[0].delta.content:
                 full_text.append(chunk.choices[0].delta.content)
         result = "".join(full_text).strip()
-        return result if result else "I am right here with you. How are you holding up?"
+        if result and len(result) >= 15:
+            return result
+        
+        # Memory-Aware Fallback (Phase 2 Requirement)
+        if memory_context and memory_context.strip():
+            facts = [line.strip('• ').strip() for line in memory_context.split('\n') if line.strip().startswith('•')]
+            if facts:
+                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
+                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
+                chosen_facts = matching_facts if matching_facts else facts
+                facts_str = "; ".join(chosen_facts)
+                return f"I remember the following about you: {facts_str}."
+        return "I am right here with you. How are you holding up?"
     except Exception as e:
         print(f"Maitri LLM Error: {e}")
+        if memory_context and memory_context.strip():
+            facts = [line.strip('• ').strip() for line in memory_context.split('\n') if line.strip().startswith('•')]
+            if facts:
+                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
+                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
+                chosen_facts = matching_facts if matching_facts else facts
+                facts_str = "; ".join(chosen_facts)
+                return f"I remember the following about you: {facts_str}."
         return "I am here with you. Take your time."

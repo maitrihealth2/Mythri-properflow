@@ -582,7 +582,7 @@ export default function VoiceModePage() {
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
             <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">history</span> Journal
+              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
             <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile

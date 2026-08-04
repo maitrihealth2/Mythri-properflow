@@ -20,21 +20,25 @@ export function FeatureFlagProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     const fetchFeatures = async () => {
       try {
-        const token = localStorage.getItem('mb_token')
+        const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
         if (!token) {
           setLoading(false)
           return
         }
-        const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
+        const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
         const res = await fetch(`${API_URL}/api/features/my-flags`, {
           headers: { Authorization: `Bearer ${token}` }
-        })
-        if (res.ok) {
+        }).catch(() => null)
+
+        if (res && res.ok) {
           const data = await res.json()
           setFeatures(data.features || [])
+        } else {
+          setFeatures([])
         }
       } catch (err) {
-        console.error("Failed to fetch feature flags", err)
+        console.warn("Feature flags unavailable:", err)
+        setFeatures([])
       } finally {
         setLoading(false)
       }

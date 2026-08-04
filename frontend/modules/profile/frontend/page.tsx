@@ -131,7 +131,7 @@ export default function ProfilePage() {
                             <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
                         </Link>
                         <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
-                            <span className="material-symbols-outlined text-[20px]">history</span> Journal
+                            <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
                         </Link>
                         <Link href="/profile" className="text-primary font-bold bg-white/80 px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md transition-colors">
                             <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>person</span> Profile
@@ -511,7 +511,7 @@ export default function ProfilePage() {
                 </Link>
                 <Link href="/history" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 px-5 py-1">
                     <span className="material-symbols-outlined text-[24px]">auto_stories</span>
-                    <span className="text-[10px] font-label-md mt-1">Journal</span>
+                    <span className="text-[10px] font-label-md mt-1">Your Sessions</span>
                 </Link>
                 <Link href="/text-chat" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 px-5 py-1">
                     <span className="material-symbols-outlined text-[24px]">health_and_safety</span>

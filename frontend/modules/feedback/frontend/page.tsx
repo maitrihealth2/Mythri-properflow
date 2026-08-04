@@ -83,7 +83,7 @@ export default function FeedbackPage() {
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
             <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">history</span> Journal
+              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
             <Link href="/feedback" className="text-primary font-bold bg-white/80 px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md transition-colors">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback

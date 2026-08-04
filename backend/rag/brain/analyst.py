@@ -55,11 +55,12 @@ async def assess_turn(
     rag_context: str = "",
     pattern_block: str = "",
     persona_summary: str = "",
+    memory_context: str = "",
 ) -> dict:
     """
     Call the internal assessor model to update the case file JSON.
     """
-    client = AsyncOpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=10.0)
+    client = AsyncOpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=18.0)
 
     # Convert last 3 exchanges to string
     last_3 = ""
@@ -72,7 +73,7 @@ async def assess_turn(
         f"Latest user message: {user_message}\n\n"
     )
 
-    if emotion_label or pattern_block or persona_summary or rag_context:
+    if emotion_label or pattern_block or persona_summary or rag_context or memory_context:
         input_text += "--- ADDITIONAL CONTEXT ---\n"
         if emotion_label:
             input_text += f"Detector Emotion: {emotion_label}\n"
@@ -82,6 +83,8 @@ async def assess_turn(
             input_text += f"Persona Summary: {persona_summary}\n"
         if rag_context:
             input_text += f"Therapeutic RAG: {rag_context}\n"
+        if memory_context:
+            input_text += f"Cognitive Memory:\n{memory_context}\n"
 
     # Add a strict instruction for Sarvam to only return JSON
     system_prompt = ASSESSOR_PROMPT + "\n\nCRITICAL: You must return ONLY valid JSON. Do not include markdown formatting like ```json or any other text."

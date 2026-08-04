@@ -110,7 +110,7 @@ export default function HistoryPage() {
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
             <Link href="/history" className="text-primary font-bold bg-white/80 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">history</span> Journal
+              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
             <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
@@ -255,7 +255,7 @@ export default function HistoryPage() {
           <div className="bg-primary text-white p-2.5 rounded-full shadow-lg transform -translate-y-3 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95">
             <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
           </div>
-          <span className="text-[10px] font-label-md font-bold -mt-2">Journal</span>
+          <span className="text-[10px] font-label-md font-bold -mt-2">Your Sessions</span>
         </Link>
         <Link href="/text-chat" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 hover:text-primary transition-colors">
           <span className="material-symbols-outlined text-[24px]">health_and_safety</span>

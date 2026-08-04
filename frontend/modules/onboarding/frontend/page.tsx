@@ -338,7 +338,7 @@ export default function OnboardingPage() {
           </div>
         )
       case 10:
-        const helps = ['Emotional support', 'Reflection', 'Stress management', 'Daily check-ins', 'Journaling', 'Personal growth']
+        const helps = ['Emotional support', 'Reflection', 'Stress management', 'Daily check-ins', 'Your Sessions', 'Personal growth']
         return (
           <div className="flex flex-col space-y-6 animate-fade-in-up w-full">
             <h2 className="text-plum-high-contrast font-headline-md text-2xl text-center">What Mythri Can Help With</h2>

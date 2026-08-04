@@ -112,7 +112,7 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
             <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">history</span> Journal
+              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
             <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                 <span className="font-headline-md text-base lg:text-lg text-primary">{stats?.total_sessions || 0}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs lg:text-sm text-on-surface-variant">Journal Entries</span>
+                <span className="text-xs lg:text-sm text-on-surface-variant">Session Entries</span>
                 <span className="font-headline-md text-base lg:text-lg text-primary">{stats?.journal_entries || 0}</span>
               </div>
               <div className="flex justify-between items-center">
@@ -237,8 +237,8 @@ export default function DashboardPage() {
                 <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>edit_document</span>
               </div>
               <div>
-                <h4 className="font-headline-md text-sm lg:text-base text-primary mb-0.5">Journal</h4>
-                <p className="text-[9px] lg:text-[10px] text-on-surface-variant">Write your thoughts</p>
+                <h4 className="font-headline-md text-sm lg:text-base text-primary mb-0.5">Your Sessions</h4>
+                <p className="text-[9px] lg:text-[10px] text-on-surface-variant">View your past conversations</p>
               </div>
             </Link>
 
@@ -286,14 +286,9 @@ export default function DashboardPage() {
                 <p className="text-[10px] lg:text-xs opacity-70 italic">— {stats?.today_reflection?.author || "Nayyirah Waheed"}</p>
               </div>
               
-              <div className="mt-4 pt-3 lg:pt-4 border-t border-white/10 flex flex-row justify-between items-center gap-3">
-                <div>
-                  <p className="font-label-md tracking-wider uppercase opacity-60 text-[9px] lg:text-[10px] mb-0.5">Today's Reflection</p>
-                  <p className="font-medium text-xs lg:text-sm">{stats?.today_reflection?.prompt || "Where can you allow yourself to be softer today?"}</p>
-                </div>
-                <button onClick={() => router.push('/text-chat')} className="bg-white text-primary px-4 py-2 rounded-full text-[10px] lg:text-xs font-label-md transition-transform hover:scale-105 active:scale-95 shrink-0 shadow-lg">
-                  Write Entry
-                </button>
+              <div className="mt-4 pt-3 lg:pt-4 border-t border-white/10">
+                <p className="font-label-md tracking-wider uppercase opacity-60 text-[9px] lg:text-[10px] mb-0.5">Today's Reflection</p>
+                <p className="font-medium text-xs lg:text-sm">{stats?.today_reflection?.prompt || "Where can you allow yourself to be softer today?"}</p>
               </div>
             </div>
           </div>
