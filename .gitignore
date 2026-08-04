@@ -92,9 +92,6 @@ test_voice_output.wav
 *.wav
 *.mp3
 *.mp4
-# *.webm
-!frontend/public/desktop_bg.webm
-!frontend/public/mobile_bg.webm
 
 # --- Personal Logs ---
 fareed_logs/
