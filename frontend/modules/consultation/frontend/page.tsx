@@ -303,6 +303,7 @@ export default function ConsultationPage() {
           <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
         </div>
         <div className="flex items-center gap-2 relative pointer-events-auto mr-2">
+          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all active:scale-95 shadow-sm">add</button>
           <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all active:scale-95 shadow-sm">language</button>
           <div className={`absolute right-0 top-[100%] mt-2 w-40 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
             <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>English</button>
