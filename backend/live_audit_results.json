@@ -1,0 +1,53 @@
+{
+  "1": {
+    "avg_latency": 22.921199560165405,
+    "median": 22.921199560165405,
+    "p95": 22.921199560165405,
+    "p99": 22.921199560165405,
+    "max_latency": 22.921199560165405,
+    "rps": 0.0436274622895801,
+    "success_rate": 1.0,
+    "failure_rate": 0.0,
+    "timeout_count": 0,
+    "fallback_count": 1,
+    "peak_ram_mb": 46.16015625,
+    "peak_cpu_percent": 0.7
+  },
+  "10": {
+    "avg_latency": 58.346977663040164,
+    "median": 70.03228449821472,
+    "p95": 77.47814178466797,
+    "p99": 77.47814178466797,
+    "max_latency": 77.47814178466797,
+    "rps": 0.12906370859891161,
+    "success_rate": 1.0,
+    "failure_rate": 0.0,
+    "timeout_count": 0,
+    "fallback_count": 0,
+    "peak_ram_mb": 47.2578125,
+    "peak_cpu_percent": 0.2
+  },
+  "20": {
+    "avg_latency": 0,
+    "median": 0,
+    "p95": 0,
+    "p99": 0,
+    "max_latency": 0,
+    "rps": 0.20257842733647868,
+    "success_rate": 0.0,
+    "failure_rate": 1.0,
+    "timeout_count": 0,
+    "fallback_count": 0,
+    "peak_ram_mb": 48.47265625,
+    "peak_cpu_percent": 0.1
+  },
+  "30": {
+    "error": "Authentication failed. Server might be down or unreachable."
+  },
+  "40": {
+    "error": "Authentication failed. Server might be down or unreachable."
+  },
+  "50": {
+    "error": "Authentication failed. Server might be down or unreachable."
+  }
+}

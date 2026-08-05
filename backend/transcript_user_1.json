@@ -1,0 +1,102 @@
+[
+  {
+    "user": "Hi Maitri, I'm feeling overwhelmed today.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.0,\"rag_used\":false,\"exercise_state\":\"suggested\",\"exercise_type\":\"GROUNDING\"}",
+    "latency": 25.5444393157959
+  },
+  {
+    "user": "I have too much work and my boss is really demanding.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.38241443037986755,\"rag_used\":false,\"exercise_state\":\"suggested\",\"exercise_type\":\"GROUNDING\"}",
+    "latency": 21.14140796661377
+  },
+  {
+    "user": "I'm worried I might miss my deadline.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Nervousness\",\"emotion_emoji\":\"\ud83d\ude30\",\"emotion_score\":0.5772064924240112,\"rag_used\":false,\"exercise_state\":\"suggested\",\"exercise_type\":\"GROUNDING\"}",
+    "latency": 23.496449947357178
+  },
+  {
+    "user": "Actually, I just feel like I'm not good enough.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Disappointment\",\"emotion_emoji\":\"\ud83d\ude1e\",\"emotion_score\":0.690287709236145,\"rag_used\":false,\"exercise_state\":\"suggested\",\"exercise_type\":\"GROUNDING\"}",
+    "latency": 23.75583243370056
+  },
+  {
+    "user": "Can you help me calm down?",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Caring\",\"emotion_emoji\":\"\ud83e\udd17\",\"emotion_score\":0.7596770524978638,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 33.4885528087616
+  },
+  {
+    "user": "I want to set a goal to manage my stress better.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Desire\",\"emotion_emoji\":\"\ud83e\udd24\",\"emotion_score\":0.8161003589630127,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 36.655543088912964
+  },
+  {
+    "user": "What kind of techniques from my preferences can I use?",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.6870020031929016,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 31.033021450042725
+  },
+  {
+    "user": "I'll try that mindfulness exercise.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.6154810786247253,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 28.25989031791687
+  },
+  {
+    "user": "I feel a bit better now, thanks.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Gratitude\",\"emotion_emoji\":\"\ud83d\ude4f\",\"emotion_score\":0.9803890585899353,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 32.127920150756836
+  },
+  {
+    "user": "By the way, what did I tell you my goal was?",
+    "maitri": "{\"response\":\"I remember the following about you: Primary Goal: Personal growth & emotional balance; I want to set a goal to manage my stress better..\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.6458637714385986,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 37.08117461204529
+  },
+  {
+    "user": "Do you remember why I was stressed?",
+    "maitri": "{\"response\":\"I remember the following about you: my boss is really demanding.; I am feeling a bit stressed today. Can you help me?; I have too much work and my boss is really demanding.; Primary Goal: Personal growth & emotional balance; I want to set a goal to manage my stress better..\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.5194584727287292,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 40.032307863235474
+  },
+  {
+    "user": "Yes, exactly. I want to change the topic now.",
+    "maitri": "{\"response\":\"Sure, what's on your mind?\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Approval\",\"emotion_emoji\":\"\ud83d\udc4d\",\"emotion_score\":0.5662640333175659,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 32.23695778846741
+  },
+  {
+    "user": "I also struggle with sleep.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.6726393699645996,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 23.143446445465088
+  },
+  {
+    "user": "It's hard to fall asleep because my mind keeps racing.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.26405102014541626,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 34.1365704536438
+  },
+  {
+    "user": "What can I do before bed?",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.4742123484611511,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 45.82528495788574
+  },
+  {
+    "user": "I will try avoiding screens.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.36844441294670105,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 37.13869047164917
+  },
+  {
+    "user": "Let's do a quick roleplay where you act as my demanding boss.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.735237717628479,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 29.886077165603638
+  },
+  {
+    "user": "Boss, I need an extension on the project.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.8964794278144836,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 34.393996238708496
+  },
+  {
+    "user": "Okay, roleplay over. That was helpful.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Gratitude\",\"emotion_emoji\":\"\ud83d\ude4f\",\"emotion_score\":0.6725744605064392,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 30.60740613937378
+  },
+  {
+    "user": "I think I'm ready to tackle the rest of my day.",
+    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"19a39ac3-97da-420a-9f73-0a92262b58bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.36213552951812744,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "latency": 33.434643507003784
+  }
+]

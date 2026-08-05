@@ -2,7 +2,7 @@
 Sarvam AI LLM Client - Maitri personality + strict language-locked responses.
 """
 import os
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
 import pathlib as _pl
 
@@ -107,8 +107,36 @@ Return ONLY valid JSON. No markdown wrappers.
 """
 
 
+_http_client = None
+_async_client = None
+
+def get_shared_http_client() -> "httpx.AsyncClient":
+    global _http_client
+    if _http_client is None:
+        import httpx
+        limits = httpx.Limits(max_keepalive_connections=50, max_connections=100, keepalive_expiry=30.0)
+        _http_client = httpx.AsyncClient(limits=limits, timeout=30.0)
+    return _http_client
+
 def get_client() -> OpenAI:
     return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
+
+def get_async_client() -> AsyncOpenAI:
+    global _async_client
+    if _async_client is None:
+        _async_client = AsyncOpenAI(
+            api_key=SARVAM_API_KEY, 
+            base_url=SARVAM_BASE_URL, 
+            http_client=get_shared_http_client(),
+            max_retries=1
+        )
+    return _async_client
+
+async def close_sarvam_client():
+    global _http_client
+    if _http_client is not None:
+        await _http_client.aclose()
+        _http_client = None
 
 
 def _build_language_lock(language: str, language_prompt: str) -> str:
@@ -182,7 +210,7 @@ def _extract_facts_from_memory_block(memory_context: str, active_prompt: str) ->
     return facts[:5]
 
 
-def chat_with_maitri(
+async def chat_with_maitri(
     messages: list[dict],
     language: str = "en-IN",
     rag_context: str = "",
@@ -278,39 +306,35 @@ def chat_with_maitri(
         api_messages.append({"role": msg["role"], "content": msg["content"]})
     api_messages.append({"role": "user", "content": active_prompt})
 
-    client = get_client()
+    client = get_async_client()   # noqa: F841  — kept for Assessor (analyst.py) compatibility
+
+    # ── Route through LLM Provider Router (OpenRouter → HuggingFace failover) ──
+    from providers.llm.router import llm_router
     try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=api_messages,
+        result = await llm_router.generate(
+            api_messages=api_messages,
             max_tokens=max_tokens,
             temperature=0.75,
-            stream=True,
         )
-        full_text = []
-        for chunk in response:
-            if chunk.choices and chunk.choices[0].delta.content:
-                full_text.append(chunk.choices[0].delta.content)
-        result = "".join(full_text).strip()
-
-        # For EXPLICIT_RECALL the bar is lower — a short "I don't know" reply
-        # from Sarvam should be caught and overridden with the memory block.
-        min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
-        if result and len(result) >= min_length:
-            return result
-
-        # Memory-Aware Fallback — handles both old bullet format and CRSE section format
-        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
-            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
-            if facts:
-                facts_str = "; ".join(facts)
-                return f"I remember the following about you: {facts_str}."
-        return "I hear you. Tell me more about what's on your mind."
     except Exception as e:
-        print(f"Maitri LLM Error: {e}")
-        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
-            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
-            if facts:
-                facts_str = "; ".join(facts)
-                return f"I remember the following about you: {facts_str}."
-        return "I am here with you. Take your time."
+        # Configuration errors (bad key, bad request) surface here
+        print(f"Maitri LLM Router Error: {e}")
+        result = None
+
+    if result is None:
+        result = ""
+
+    # For EXPLICIT_RECALL the bar is lower — a short "I don't know" reply
+    # from the provider should be caught and overridden with the memory block.
+    min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
+    if result and len(result) >= min_length:
+        return result
+
+    # Memory-Aware Fallback — handles both old bullet format and CRSE section format
+    if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+        facts = _extract_facts_from_memory_block(memory_context, active_prompt)
+        if facts:
+            facts_str = "; ".join(facts)
+            return f"I remember the following about you: {facts_str}."
+    return "I hear you. Tell me more about what's on your mind."
+

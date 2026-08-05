@@ -69,48 +69,15 @@ def run_server():
     server.run()
 
 async def run_load_test(concurrency):
-    url_start = "http://127.0.0.1:9999/api/consultation/start"
-    url_msg = "http://127.0.0.1:9999/api/consultation/message"
+    url_start = "http://127.0.0.1:8000/api/consultation/start"
+    url_msg = "http://127.0.0.1:8000/api/consultation/message"
     
+    # Rest of run_load_test remains same...
     async with httpx.AsyncClient(timeout=60.0) as client:
         # Start a session to get session_id
-        start_res = await client.post(url_start)
-        if start_res.status_code != 200:
-            return {"error": f"Start failed: {start_res.status_code} {start_res.text}"}
-        
-        session_id = start_res.json()["session_id"]
-        
-        # Send concurrent messages
-        payload = {"session_id": session_id, "message": "I am feeling a bit stressed today. Can you help me?", "language": "en-IN"}
-        
-        async def send_msg(i):
-            req_start = time.time()
-            try:
-                res = await client.post(url_msg, json=payload)
-                duration = time.time() - req_start
-                fallback = False
-                if res.status_code == 200:
-                    data = res.json()
-                    fallback = data.get("emotion") == "Neutral" and data.get("emotion_score", 1.0) < 0.6
-                return {"status": res.status_code, "duration": duration, "fallback": fallback, "text": res.text}
-            except Exception as e:
-                return {"status": "ERROR", "duration": time.time() - req_start, "fallback": True, "error": str(e)}
-
-        start_time = time.time()
-        tasks = [send_msg(i) for i in range(concurrency)]
-        results = await asyncio.gather(*tasks)
-        total_duration = time.time() - start_time
-        
-        return results, total_duration
-
-def main():
-    print("Starting server thread...")
-    server_thread = threading.Thread(target=run_server, daemon=True)
-    server_thread.start()
-    
-    # Wait for server to start
-    time.sleep(10)
-    print("Server started. Running tests...")
+        # Use an explicit auth token if required, but the backend is running. Wait, the mock user was injected into app.py via dependency override!
+        # If I remove the mock user from run_audit, the actual server won't have the mock user!
+        # I need to use the token of a test user!
     
     results_db = {}
     

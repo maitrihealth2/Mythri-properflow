@@ -47,6 +47,12 @@ def global_async_exception_handler(loop, context):
 async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(global_async_exception_handler)
+    
+    # PHASE 3: Fix ThreadPool Exhaustion
+    import concurrent.futures
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=300)
+    loop.set_default_executor(executor)
+    
     app.state.shutdown_event = asyncio.Event()
     
     with CommandCenter.create_progress() as progress:
@@ -94,6 +100,8 @@ async def lifespan(app: FastAPI):
     CommandCenter.stop_dashboard()
     print("[SHUTDOWN] Signal received. Setting shutdown event...")
     app.state.shutdown_event.set()
+    from providers.sarvam.sarvam_client import close_sarvam_client
+    await close_sarvam_client()
     await close_http_client()
     await asyncio.sleep(0.2)
     print("[SHUTDOWN] Cleanup complete.")

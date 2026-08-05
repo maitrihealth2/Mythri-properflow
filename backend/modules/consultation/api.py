@@ -62,26 +62,33 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/start", response_model=StartSessionResponse)
-def start_session(
+async def start_session(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    token = str(uuid.uuid4())
-    session = DBSession(user_id=current_user.id, session_token=token, channel="web")
-    db.add(session); db.commit(); db.refresh(session)
+    def _create_session():
+        token = str(uuid.uuid4())
+        new_session = DBSession(user_id=current_user.id, session_token=token, channel="web")
+        db.add(new_session); db.commit(); db.refresh(new_session)
+        session_count = db.query(DBSession).filter(DBSession.user_id == current_user.id).count()
+        return new_session.id, token, session_count == 1
 
-    # Detect if this is the user's very first session
-    session_count = db.query(DBSession).filter(DBSession.user_id == current_user.id).count()
-    is_first = session_count == 1
+    session_id, token, is_first = await asyncio.to_thread(_create_session)
 
     # Initialize state tracker for this session
-    tracker.init_session(session.id, is_first_session=is_first)
+    tracker.init_session(session_id, is_first_session=is_first)
 
     # ── Generate Dynamic Personalized Opening Message ────────────────────────
     try:
         from modules.memory.unified_context import UnifiedCognitiveContextEngine
+        from providers.llm.router import llm_router
+        
         unified_engine = UnifiedCognitiveContextEngine()
-        profile = unified_engine.build_context(db, user_id=current_user.id)
+        
+        def _get_profile():
+            return unified_engine.build_context(db, user_id=current_user.id)
+            
+        profile = await asyncio.to_thread(_get_profile)
         unified_ctx_block = profile.to_formatted_context_block()
 
         if is_first:
@@ -94,7 +101,7 @@ Instructions:
 2. Acknowledge what brought them here and their primary goal, naturally weaving it into the greeting.
 3. Keep it brief (2-3 sentences max).
 4. End with a gentle open question like "Where would you like to start today?".
-5. Maintain Mythri tone: calm, grounded, deeply empathetic."""
+5. Maintain Maitri tone: calm, grounded, deeply empathetic."""
         else:
             system_prompt = f"""You are generating a personalized WELCOME BACK opening message for a returning user starting a new session.
 USER COGNITIVE PROFILE:
@@ -103,27 +110,38 @@ USER COGNITIVE PROFILE:
 Instructions:
 1. Greet them warmly by name ({profile.preferred_name}).
 2. Naturally reference their recent progress, goals, or last conversation topic if available (e.g. "Last time we spoke you were working on...").
-3. Do NOT say 'I remember the following about you'. Keep it completely natural and conversational.
-4. Keep it brief (2-3 sentences max). End with a gentle check-in like "How have things been since then?" or "What's on your mind today?".
-5. Maintain Mythri tone: warm, attentive, non-judgmental."""
+3. Mention AT MOST ONE previous topic naturally. Do NOT dump multiple memories.
+4. Do NOT say 'I remember the following about you'. Never produce a profile summary. Keep it completely natural and conversational.
+5. Keep it brief (40-80 words max, 2-3 sentences). End with a gentle check-in like "How have things been since then?" or "What's on your mind today?".
+6. Maintain Maitri tone: warm, attentive, non-judgmental."""
 
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": "Generate my personalized session opening greeting."}
         ]
-        initial_message = chat_with_maitri(
-            messages=messages,
-            language=profile.language or "en-IN",
-            memory_context=unified_ctx_block,
-            memory_usage_mode="SILENT_BACKGROUND",
-            max_tokens=200
-        )
-        ai_msg = Message(session_id=session.id, role="maitri", content=initial_message, emotion="calm")
-        db.add(ai_msg)
-        db.commit()
+        
+        initial_message = await llm_router.generate(messages, max_tokens=150, temperature=0.7)
+        
+        if not initial_message or not initial_message.strip():
+            raise Exception("LLM router returned an empty response")
+            
+        def _save_message():
+            ai_msg = Message(session_id=session_id, role="maitri", content=initial_message)
+            db.add(ai_msg)
+            db.commit()
+            
+        await asyncio.to_thread(_save_message)
+
     except Exception as e:
         print(f"[PERSONALIZED_GREETING_ERROR] {e}")
         initial_message = f"Welcome back, {current_user.username}. This is your quiet space. What would you like to talk about today?"
+        
+        def _save_fallback():
+            ai_msg = Message(session_id=session_id, role="maitri", content=initial_message)
+            db.add(ai_msg)
+            db.commit()
+            
+        await asyncio.to_thread(_save_fallback)
 
     return StartSessionResponse(
         session_id=token,
@@ -138,12 +156,16 @@ async def send_message(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    import time
+    t_start = time.time()
+    
     def _get_session():
         return db.query(DBSession).filter(
             DBSession.session_token == req.session_id,
             DBSession.user_id == current_user.id,
         ).first()
     session = await asyncio.to_thread(_get_session)
+    t_session = time.time()
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -153,8 +175,6 @@ async def send_message(
     CommandCenter.log_ai("TEXT_START", f"User Input: {req.message[:50]}...")
 
     # ── Crisis first ─────────────────────────────────────────────────────────
-    await broadcast_event("CRISIS_CHECK", "Checking for triggers")
-    CommandCenter.log_ai("CRISIS_CHECK", "Scanning message for risk triggers")
     crisis = check_for_crisis(req.message)
     if crisis.is_crisis:
         db.add(RiskLog(
@@ -164,24 +184,19 @@ async def send_message(
         ))
         session.is_crisis_flagged = True
         db.commit()
+    t_crisis = time.time()
 
-    # ── Real Telemetry (Staggered UI updates without blocking) ───────────────
     async def fast_telemetry():
-        await broadcast_event("RAG_FETCH", "Fetching knowledge")
-        CommandCenter.log_ai("RAG_FETCH", "Vector database retrieval initiated")
-        await broadcast_event("MEMORY_FETCH", "Fetching cross-session memory")
-        await broadcast_event("EMOTION_FETCH", "Analyzing tone")
-        CommandCenter.log_ai("EMOTION_FETCH", "Emotion detector activated")
-        await broadcast_event("LLM_START", "Synthesizing Prompt -> LLM")
+        pass
     asyncio.create_task(fast_telemetry())
 
-    # ── Fetch conversation history ────────────────────────────────────────────
     def _get_past_messages():
         return db.query(Message).filter(
             Message.session_id == session.id
         ).order_by(Message.created_at.desc()).limit(30).all()
     past = await asyncio.to_thread(_get_past_messages)
     past.reverse()
+    t_db = time.time()
 
     history = [{"role": m.role, "content": m.content} for m in past]
     history.append({"role": "user", "content": req.message})
@@ -192,28 +207,26 @@ async def send_message(
         return analyze_patterns(recent_user_msgs, req.message)
     pattern_signal = await asyncio.to_thread(_run_pattern_analysis)
     pattern_block  = pattern_signal.as_prompt_block()
+    t_pattern = time.time()
 
     # ── Persona Profile ───────────────────────────────────────────────────────
-    await broadcast_event("MEMORY_FETCH", "Loading user persona")
-    CommandCenter.log_ai("MEMORY_FETCH", "Retrieved dynamic user persona profile")
     persona_summary = await asyncio.to_thread(get_persona_summary, db, current_user.id)
+    t_persona = time.time()
 
     # ── RAG ──────────────────────────────────────────────────────────────────
     def _fetch_rag():
         return retrieve_context(req.message) if RAG_AVAILABLE else ""
     rag_context = await asyncio.to_thread(_fetch_rag)
     lang_prompt = get_language_prompt(req.language)
+    t_rag = time.time()
 
     # ── Emotion Detection ─────────────────────────────────────────────────────
     try:
         emotion = await asyncio.wait_for(detect_emotion(req.message), timeout=2.0)
     except Exception:
         emotion = detect_emotion_heuristic(req.message)
+    t_emotion = time.time()
 
-    await broadcast_event("EMOTION_DETECTED", f"Detected: {emotion.label}")
-    CommandCenter.log_ai("EMOTION_DETECTED", f"AI detected: {emotion.label} (Confidence: {emotion.score:.2f})")
-
-    # Update state tracker
     tracker.update_emotion(session.id, emotion.label)
     tracker.record_message_length(session.id, len(req.message))
     if crisis.is_crisis:
@@ -224,23 +237,25 @@ async def send_message(
     exercise_ctx    = tracker.get_exercise_context(session.id)
     is_onboarding   = state.is_onboarding
 
-    # ── Memory Subsystem Read Path + Context Relevance Selection Engine (CRSE) ──
+    # ── CRSE Pipeline ────────────────────────────────────────────────────────
     memory_context = ""
     memory_usage_mode = "SILENT_BACKGROUND"
-    crse_telemetry = ""
     try:
         def _run_crse_pipeline():
+            from modules.memory.repository import MemoryRepository
+            from modules.memory.unified_context import UnifiedCognitiveContextEngine
+            from modules.memory.conversation_intent import ConversationSpeechActEngine
+            from modules.memory.context_relevance import ContextRelevanceSelector
+
             repo = MemoryRepository(db)
             unified_engine = UnifiedCognitiveContextEngine()
             speech_engine = ConversationSpeechActEngine()
             crse = ContextRelevanceSelector()
 
-            # Build full unified profile
             unified_profile = unified_engine.build_context(
                 db, user_id=current_user.id, session_id=session.id, query=req.message
             )
 
-            # Extract known entities from companion memories & onboarding
             known_ents = set()
             if unified_profile.preferred_name:
                 known_ents.add(unified_profile.preferred_name)
@@ -250,13 +265,8 @@ async def send_message(
                     if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
                         known_ents.add(clean_word)
 
-            # Analyze current message speech act & memory necessity
             intent_analysis = speech_engine.analyze(req.message, known_entities=list(known_ents))
 
-            # ── CONTEXT RELEVANCE SELECTOR ────────────────────────────────────────
-            # Instead of passing the entire cognitive profile wholesale to the LLM,
-            # CRSE scores every context item and selects only what is genuinely
-            # relevant to THIS specific user message.
             return crse.select(
                 message=req.message,
                 intent=intent_analysis,
@@ -265,23 +275,23 @@ async def send_message(
             )
 
         selection = await asyncio.to_thread(_run_crse_pipeline)
-
         memory_context = selection.to_prompt_block()
         memory_usage_mode = selection.selection_mode
-        crse_telemetry = selection.telemetry_summary()
 
     except Exception as e:
-        CommandCenter.log_ai("MEMORY_READ_ERROR", f"Failed to fetch memory context: {e}")
         memory_context = ""
         memory_usage_mode = "SILENT_BACKGROUND"
-        crse_telemetry = f"ERROR: {e}"
+    t_crse = time.time()
 
-    # ── MAITRI AGENT LOOP v2: Assessor Phase ──────────────────────────────────
+    # ── Assessor Phase ────────────────────────────────────────────────────────
     case_file = tracker.get_case_file(session.id)
 
+    # Release DB connection before long Assessor LLM call
+    def _release_db_conn_assessor():
+        db.commit()
+    await asyncio.to_thread(_release_db_conn_assessor)
+
     if should_skip_assessor(req.message, case_file):
-        await broadcast_event("LLM_START", "Assessor Skipped (Trivial Input)")
-        CommandCenter.log_ai("LLM_START", "Assessor skipped via fast-path filter")
         msg_clean = req.message.strip().lower()
         greetings = ["hi", "hey", "hello", "yo", "sup", "good morning", "good night", "hola"]
         if any(g in msg_clean for g in greetings) and len(msg_clean.split()) <= 4:
@@ -289,8 +299,6 @@ async def send_message(
         else:
             case_file["runtime_state"]["decision"] = "RESPOND"
     else:
-        await broadcast_event("LLM_START", "Assessor Evaluating...")
-        CommandCenter.log_ai("LLM_START", "Assessor model evaluating conversational trajectory")
         try:
             case_file = await asyncio.wait_for(
                 assess_turn(
@@ -306,40 +314,12 @@ async def send_message(
                 timeout=20.0
             )
         except Exception as e:
-            err_msg = f"{e.__class__.__name__}: {str(e) if str(e) else 'Timeout'}"
-            print(f"[Assessor Fallback Activated] Error: ({err_msg}). Proceeding with memory-aware RESPOND mode.")
             case_file["runtime_state"]["decision"] = "RESPOND"
-            
-            # Phase 2 Fix: If memory context exists or user message has recall intent, populate situation classification
-            msg_lower = req.message.lower()
-            recall_triggers = ["remember", "recall", "know", "goal", "goals", "about me", "favourite", "favorite", "colour", "color", "work", "girl", "job", "what", "who"]
-            if memory_context.strip() or any(w in msg_lower for w in recall_triggers):
-                cs = case_file.setdefault("conversation_state", {})
-                cs["situation_classification"] = {
-                    "summary": f"User asking conversational/memory question: '{req.message}'",
-                    "category": "memory_recall",
-                    "confidence": 0.95
-                }
         tracker.update_case_file(session.id, case_file)
-
-    # Phase 3 & 4 Terminal Evidence + CRSE Telemetry
-    print("\n===============================================")
-    print("MEMORY PIPELINE + CRSE VERIFICATION")
-    print("===============================================")
-    print(f"User ID: {current_user.id}")
-    print(f"Session ID: {session.id}")
-    print(f"CRSE: {crse_telemetry}")
-    print(f"Selection Mode: {memory_usage_mode}")
-    print(f"Injected Memory Context Present: {bool(memory_context.strip())}")
-    if memory_context.strip():
-        print(f"Filtered Context Block:\n{memory_context.strip()}")
-    print(f"Injected into Analyst: YES")
-    print(f"Injected into Maitri: YES")
-    print("===============================================\n")
+    t_assessor = time.time()
 
     decision = case_file.get("runtime_state", {}).get("decision", "RESPOND")
 
-    # ── Map Decision → Update State Machine ───────────────────────────────────
     if decision == "GROUND":
         if exercise_ctx.get("state", "idle") == "idle":
             exercise_type = "GROUNDING"
@@ -349,7 +329,6 @@ async def send_message(
                 triggered_by   = "assessor",
                 pre_emotion    = emotion.label,
             )
-            # Create ExerciseLog row
             ex_log = ExerciseLog(
                 session_id   = session.id,
                 user_id      = current_user.id,
@@ -363,35 +342,29 @@ async def send_message(
     elif decision == "EXERCISE_CONTINUE":
         current_ex_state = exercise_ctx.get("state", "idle")
         if current_ex_state == "suggested":
-            # User engaging with exercise → advance to in_progress
             tracker.advance_exercise_state(session.id, "in_progress")
-        elif current_ex_state == "in_progress":
-            # Keep it in progress
-            pass
 
     elif decision == "EXERCISE_BREAK":
         tracker.reset_exercise(session.id)
     
-    # Implicit break: if the assessor decides to ASK or RESPOND, drop the exercise
     elif exercise_ctx.get("state", "idle") != "idle":
         tracker.reset_exercise(session.id)
 
-
-    # Detect when user gives feedback (exercise was awaiting_feedback)
     if exercise_ctx.get("state") == "awaiting_feedback":
-        # User just gave feedback → complete the exercise
         await asyncio.to_thread(
             _complete_exercise, db, session.id, current_user.id, emotion.label, req.message
         )
         tracker.reset_exercise(session.id)
 
     # ── Maitri Response ───────────────────────────────────────────────────────
-    await broadcast_event("LLM_START", "Maitri Generation...")
-    CommandCenter.log_ai("LLM_START", "Maitri LLM generating final empathic response")
     current_exercise_state = tracker.get_state(session.id).exercise_state
 
-    ai_response = await asyncio.to_thread(
-        chat_with_maitri,
+    # Release DB connection to the pool during long LLM calls
+    def _release_db_conn():
+        db.commit()
+    await asyncio.to_thread(_release_db_conn)
+
+    ai_response = await chat_with_maitri(
         messages       = history,
         language       = req.language,
         rag_context    = rag_context,
@@ -404,19 +377,9 @@ async def send_message(
     )
     
     import re
-    scratchpad_match = re.search(r'<scratchpad>(.*?)</scratchpad>', ai_response, re.DOTALL | re.IGNORECASE)
-    if scratchpad_match:
-        # We can log this to the terminal so developers see the internal thought process
-        reasoning = scratchpad_match.group(1).strip()
-        CommandCenter.log_ai("REASONING", f"Internal reasoning: {reasoning[:100]}...")
-        
     ai_response = re.sub(r'<scratchpad>.*?</scratchpad>', '', ai_response, flags=re.DOTALL | re.IGNORECASE).strip()
-    
-    await broadcast_event("LLM_DONE", "Response generated")
-    CommandCenter.log_ai("LLM_DONE", f"Response ready: {ai_response[:50]}...")
+    t_maitri = time.time()
 
-    # ── Save Messages ─────────────────────────────────────────────────────────
-    # ── Save Messages ─────────────────────────────────────────────────────────
     def _save_messages():
         user_msg = Message(session_id=session.id, role="user", content=req.message, language=req.language)
         db.add(user_msg)
@@ -428,8 +391,22 @@ async def send_message(
         db.commit()
         
     await asyncio.to_thread(_save_messages)
+    t_save = time.time()
 
-    # ── Async Persona Update (non-blocking, every 5 user messages) ────────────
+    print(f"\n--- LATENCY BREAKDOWN (Session {session.id}) ---")
+    print(f"Session DB: {t_session - t_start:.3f}s")
+    print(f"Crisis: {t_crisis - t_session:.3f}s")
+    print(f"Past Msgs: {t_db - t_crisis:.3f}s")
+    print(f"Pattern: {t_pattern - t_db:.3f}s")
+    print(f"Persona: {t_persona - t_pattern:.3f}s")
+    print(f"RAG: {t_rag - t_persona:.3f}s")
+    print(f"Emotion: {t_emotion - t_rag:.3f}s")
+    print(f"CRSE: {t_crse - t_emotion:.3f}s")
+    print(f"Assessor: {t_assessor - t_crse:.3f}s")
+    print(f"Maitri: {t_maitri - t_assessor:.3f}s")
+    print(f"Save DB: {t_save - t_maitri:.3f}s")
+    print(f"TOTAL: {t_save - t_start:.3f}s\n")
+
     total_user_msgs = len([m for m in past if m.role == "user"]) + 1
     if total_user_msgs % 5 == 0 or total_user_msgs == 1:
         asyncio.create_task(_update_persona_async(
@@ -438,7 +415,6 @@ async def send_message(
             is_first_session = is_onboarding,
         ))
 
-    # ── Async Memory Subsystem Write Path (non-blocking, Milestone 11) ─────────
     asyncio.create_task(_process_memory_write_path_async(
         user_id      = current_user.id,
         user_message = req.message,

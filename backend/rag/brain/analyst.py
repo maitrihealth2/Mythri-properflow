@@ -61,7 +61,8 @@ async def assess_turn(
     """
     Call the internal assessor model to update the case file JSON.
     """
-    client = AsyncOpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=18.0)
+    from providers.sarvam.sarvam_client import get_async_client
+    client = get_async_client()
 
     # Convert last 3 exchanges to string
     last_3 = ""
@@ -114,6 +115,11 @@ async def assess_turn(
             clean_content = clean_content[:-3]
         clean_content = clean_content.strip()
             
+        if not clean_content:
+            print("Assessor warning: LLM returned empty content. Defaulting to RESPOND.")
+            case_file["runtime_state"]["decision"] = "RESPOND"
+            return case_file
+
         updated_case_file = json.loads(clean_content)
         if isinstance(updated_case_file, dict):
             # Ensure critical keys exist

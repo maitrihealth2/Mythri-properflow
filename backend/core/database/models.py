@@ -24,8 +24,8 @@ if "sqlite" in DATABASE_URL:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 else:
     # Production PostgreSQL pooling
-    engine_kwargs["pool_size"] = 20
-    engine_kwargs["max_overflow"] = 20
+    engine_kwargs["pool_size"] = 100
+    engine_kwargs["max_overflow"] = 50
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
