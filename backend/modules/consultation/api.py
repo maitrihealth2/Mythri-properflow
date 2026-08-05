@@ -138,10 +138,13 @@ async def send_message(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    session = db.query(DBSession).filter(
-        DBSession.session_token == req.session_id,
-        DBSession.user_id == current_user.id,
-    ).first()
+    def _get_session():
+        return db.query(DBSession).filter(
+            DBSession.session_token == req.session_id,
+            DBSession.user_id == current_user.id,
+        ).first()
+    session = await asyncio.to_thread(_get_session)
+    
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
@@ -173,9 +176,11 @@ async def send_message(
     asyncio.create_task(fast_telemetry())
 
     # ── Fetch conversation history ────────────────────────────────────────────
-    past = db.query(Message).filter(
-        Message.session_id == session.id
-    ).order_by(Message.created_at.desc()).limit(30).all()
+    def _get_past_messages():
+        return db.query(Message).filter(
+            Message.session_id == session.id
+        ).order_by(Message.created_at.desc()).limit(30).all()
+    past = await asyncio.to_thread(_get_past_messages)
     past.reverse()
 
     history = [{"role": m.role, "content": m.content} for m in past]
@@ -183,16 +188,20 @@ async def send_message(
 
     # ── Pattern Analysis ──────────────────────────────────────────────────────
     recent_user_msgs = [m.content for m in past if m.role == "user"][-5:]
-    pattern_signal = analyze_patterns(recent_user_msgs, req.message)
+    def _run_pattern_analysis():
+        return analyze_patterns(recent_user_msgs, req.message)
+    pattern_signal = await asyncio.to_thread(_run_pattern_analysis)
     pattern_block  = pattern_signal.as_prompt_block()
 
     # ── Persona Profile ───────────────────────────────────────────────────────
     await broadcast_event("MEMORY_FETCH", "Loading user persona")
     CommandCenter.log_ai("MEMORY_FETCH", "Retrieved dynamic user persona profile")
-    persona_summary = get_persona_summary(db, current_user.id)
+    persona_summary = await asyncio.to_thread(get_persona_summary, db, current_user.id)
 
     # ── RAG ──────────────────────────────────────────────────────────────────
-    rag_context = retrieve_context(req.message) if RAG_AVAILABLE else ""
+    def _fetch_rag():
+        return retrieve_context(req.message) if RAG_AVAILABLE else ""
+    rag_context = await asyncio.to_thread(_fetch_rag)
     lang_prompt = get_language_prompt(req.language)
 
     # ── Emotion Detection ─────────────────────────────────────────────────────
@@ -220,44 +229,42 @@ async def send_message(
     memory_usage_mode = "SILENT_BACKGROUND"
     crse_telemetry = ""
     try:
-        from modules.memory.repository import MemoryRepository
-        from modules.memory.unified_context import UnifiedCognitiveContextEngine
-        from modules.memory.conversation_intent import ConversationSpeechActEngine
-        from modules.memory.context_relevance import ContextRelevanceSelector
+        def _run_crse_pipeline():
+            repo = MemoryRepository(db)
+            unified_engine = UnifiedCognitiveContextEngine()
+            speech_engine = ConversationSpeechActEngine()
+            crse = ContextRelevanceSelector()
 
-        repo = MemoryRepository(db)
-        unified_engine = UnifiedCognitiveContextEngine()
-        speech_engine = ConversationSpeechActEngine()
-        crse = ContextRelevanceSelector()
+            # Build full unified profile
+            unified_profile = unified_engine.build_context(
+                db, user_id=current_user.id, session_id=session.id, query=req.message
+            )
 
-        # Build full unified profile
-        unified_profile = unified_engine.build_context(
-            db, user_id=current_user.id, session_id=session.id, query=req.message
-        )
+            # Extract known entities from companion memories & onboarding
+            known_ents = set()
+            if unified_profile.preferred_name:
+                known_ents.add(unified_profile.preferred_name)
+            for r in unified_profile.relationships:
+                for word in r.split():
+                    clean_word = word.strip(".,;:!?\"'")
+                    if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
+                        known_ents.add(clean_word)
 
-        # Extract known entities from companion memories & onboarding
-        known_ents = set()
-        if unified_profile.preferred_name:
-            known_ents.add(unified_profile.preferred_name)
-        for r in unified_profile.relationships:
-            for word in r.split():
-                clean_word = word.strip(".,;:!?\"'")
-                if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
-                    known_ents.add(clean_word)
+            # Analyze current message speech act & memory necessity
+            intent_analysis = speech_engine.analyze(req.message, known_entities=list(known_ents))
 
-        # Analyze current message speech act & memory necessity
-        intent_analysis = speech_engine.analyze(req.message, known_entities=list(known_ents))
+            # ── CONTEXT RELEVANCE SELECTOR ────────────────────────────────────────
+            # Instead of passing the entire cognitive profile wholesale to the LLM,
+            # CRSE scores every context item and selects only what is genuinely
+            # relevant to THIS specific user message.
+            return crse.select(
+                message=req.message,
+                intent=intent_analysis,
+                profile=unified_profile,
+                known_entities=list(known_ents),
+            )
 
-        # ── CONTEXT RELEVANCE SELECTOR ────────────────────────────────────────
-        # Instead of passing the entire cognitive profile wholesale to the LLM,
-        # CRSE scores every context item and selects only what is genuinely
-        # relevant to THIS specific user message.
-        selection = crse.select(
-            message=req.message,
-            intent=intent_analysis,
-            profile=unified_profile,
-            known_entities=list(known_ents),
-        )
+        selection = await asyncio.to_thread(_run_crse_pipeline)
 
         memory_context = selection.to_prompt_block()
         memory_usage_mode = selection.selection_mode
@@ -373,7 +380,9 @@ async def send_message(
     # Detect when user gives feedback (exercise was awaiting_feedback)
     if exercise_ctx.get("state") == "awaiting_feedback":
         # User just gave feedback → complete the exercise
-        _complete_exercise(db, session.id, current_user.id, emotion.label, req.message)
+        await asyncio.to_thread(
+            _complete_exercise, db, session.id, current_user.id, emotion.label, req.message
+        )
         tracker.reset_exercise(session.id)
 
     # ── Maitri Response ───────────────────────────────────────────────────────

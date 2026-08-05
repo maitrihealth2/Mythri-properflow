@@ -1,5 +1,6 @@
 import time
 import asyncio
+import threading
 from datetime import datetime
 
 from rich.console import Console
@@ -12,6 +13,7 @@ console = Console()
 
 class _CommandCenter:
     def __init__(self):
+        self._lock = threading.Lock()
         # System Health State
         self.health_status = {
             "Brain": "Initializing",
@@ -37,11 +39,13 @@ class _CommandCenter:
         return datetime.now().strftime("%H:%M:%S")
 
     def set_health(self, component: str, status: str):
-        if component in self.health_status:
-            self.health_status[component] = status
+        with self._lock:
+            if component in self.health_status:
+                self.health_status[component] = status
             
     def increment_active_requests(self, amount=1):
-        self.perf_stats["Active Requests"] += amount
+        with self._lock:
+            self.perf_stats["Active Requests"] += amount
 
     def start_dashboard(self):
         """Prints the initial header banner."""
@@ -59,33 +63,37 @@ class _CommandCenter:
         table.add_column("System Health", style="cyan")
         table.add_column("Performance Metrics", style="green")
         
-        health_text = []
-        for comp, status in self.health_status.items():
-            color = "green" if status == "Healthy" else "yellow" if status == "Warning" else "red" if status == "Failed" else "blue"
-            health_text.append(f"{comp}: [{color}]{status}[/{color}]")
+        with self._lock:
+            health_text = []
+            for comp, status in self.health_status.items():
+                color = "green" if status == "Healthy" else "yellow" if status == "Warning" else "red" if status == "Failed" else "blue"
+                health_text.append(f"{comp}: [{color}]{status}[/{color}]")
+                
+            perf_text = []
+            for k, v in self.perf_stats.items():
+                val = f"{v:.1f}" if isinstance(v, float) else str(v)
+                perf_text.append(f"{k}: [bold]{val}[/bold]")
             
-        perf_text = []
-        for k, v in self.perf_stats.items():
-            val = f"{v:.1f}" if isinstance(v, float) else str(v)
-            perf_text.append(f"{k}: [bold]{val}[/bold]")
+            table.add_row("\n".join(health_text), "\n".join(perf_text))
+            self._last_snapshot_time = time.time()
             
-        table.add_row("\n".join(health_text), "\n".join(perf_text))
         console.print(Panel(table, title="[b]Live Snapshot", border_style="magenta"))
-        self._last_snapshot_time = time.time()
 
     def _check_snapshot(self):
         """Prints a snapshot every 60 seconds automatically."""
+        # Check without lock first for performance, then lock in _print_snapshot
         if time.time() - self._last_snapshot_time > 60:
             self._print_snapshot()
 
     def log_api(self, method: str, endpoint: str, status: int, duration_ms: float):
         try:
             self._check_snapshot()
-            self.perf_stats["Total Requests"] += 1
-            self._total_response_time += duration_ms
-            self.perf_stats["Avg Response (ms)"] = self._total_response_time / self.perf_stats["Total Requests"]
-            if "/api/consultation/message" in endpoint:
-                self.perf_stats["Last Chat Latency (ms)"] = duration_ms
+            with self._lock:
+                self.perf_stats["Total Requests"] += 1
+                self._total_response_time += duration_ms
+                self.perf_stats["Avg Response (ms)"] = self._total_response_time / self.perf_stats["Total Requests"]
+                if "/api/consultation/message" in endpoint:
+                    self.perf_stats["Last Chat Latency (ms)"] = duration_ms
             
             color = "green" if status < 400 else "red"
             text = Text()
@@ -102,7 +110,8 @@ class _CommandCenter:
     def log_db(self, action: str, query: str):
         try:
             self._check_snapshot()
-            self.perf_stats["Total DB Queries"] += 1
+            with self._lock:
+                self.perf_stats["Total DB Queries"] += 1
             
             text = Text()
             text.append(f"[{self._ts()}] ", style="dim")
