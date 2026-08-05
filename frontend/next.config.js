@@ -5,7 +5,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
-  allowedDevOrigins: ['guitars-levels-architecture-sunshine.trycloudflare.com'],
+  allowedDevOrigins: ['leader-totals-reduction-principles.trycloudflare.com'],
   async rewrites() {
     return [
       {

@@ -14,7 +14,6 @@ from pydantic import BaseModel
 from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, RiskLog, User
 from providers.sarvam.voice_client import synthesize_speech, get_language_prompt, get_supported_languages
 from modules.voice.stt_batcher import batch_transcribe_audio
-from providers.sarvam.sarvam_client import chat_with_maitri
 from rag.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
 from rag.brain.analyst import should_skip_assessor, assess_turn
 from modules.voice.vocal_engine import optimize_pitch
@@ -121,165 +120,14 @@ async def handle_voice_turn(
         
     await broadcast_event("STT_DONE", f"Transcribed text", {"text": transcript})
 
-    # ── Crisis check ──────────────────────────────────────────────────────────
-    print(f"[VOICE] Crisis check...")
-    crisis = check_for_crisis(transcript)
-    if crisis.is_crisis:
-        print(f"[VOICE] CRISIS detected: {crisis.trigger_phrase}")
-        db.add(RiskLog(
-            session_id=session.id, user_id=current_user.id,
-            trigger_phrase=crisis.trigger_phrase or transcript[:200],
-            system_response="AI intervened with extreme comfort.", helpline_shown=True,
-        ))
-        session.is_crisis_flagged = True
-        db.commit()
-
-    await broadcast_event("ROUTING", "STT Text -> AI Brain Cluster")
-
-    # ── RAG (lightweight for voice: n=2 to reduce latency) ──────────────────
-    rag_context = ""
-    if RAG_AVAILABLE:
-        try:
-            rag_context = retrieve_context(transcript, n_results=2)
-        except Exception:
-            rag_context = ""
-
-    # Append voice brevity instructions to lang_prompt
-    lang_prompt = get_language_prompt(language)
-    lang_prompt += " Keep your response conversational and natural, as this is a real-time voice call."
-
-    # Fetch last 30 messages for this specific session
-    past = db.query(Message).filter(
-        Message.session_id == session.id
-    ).order_by(Message.created_at.desc()).limit(30).all()
-    past.reverse()
+    # ── Delegate to Existing Consultation Pipeline ────────────────────────────
+    print(f"[VOICE] Routing text through centralized consultation pipeline...")
+    from modules.consultation.api import send_message, ChatRequest
+    chat_req = ChatRequest(session_id=session_id, message=transcript, language=language)
+    chat_resp = await send_message(req=chat_req, current_user=current_user, db=db)
     
-    history = [{"role": m.role, "content": m.content} for m in past]
-    history.append({"role": "user", "content": transcript})
-    
-    # ── Emotion Detection ─────────────────────────────────────────────────────
-    try:
-        emotion = await asyncio.wait_for(detect_emotion(transcript), timeout=2.0)
-        print(f"[VOICE] DL Emotion: {emotion.label} ({emotion.score:.2f})")
-    except Exception:
-        print(f"[VOICE] DL Emotion timeout/error, falling back to heuristic")
-        emotion = detect_emotion_heuristic(transcript)
-
-    await broadcast_event("EMOTION_DETECTED", f"Detected: {emotion.label}", {"emotion": emotion.label, "score": emotion.score})
-
-    # Update State Tracker
-    tracker.update_emotion(session.id, emotion.label)
-    if crisis.is_crisis:
-        tracker.set_crisis_risk(session.id, "High")
-    state_summary = tracker.get_summary(session.id)
-
-    # ── Unified Cognitive Context + CRSE ─────────────────────────────────────
-    # SYNCHRONIZED with text consultation pipeline — one cognitive pipeline for both modes
-    memory_context = ""
-    memory_usage_mode = "SILENT_BACKGROUND"
-    try:
-        from modules.memory.unified_context import UnifiedCognitiveContextEngine
-        from modules.memory.conversation_intent import ConversationSpeechActEngine
-        from modules.memory.context_relevance import ContextRelevanceSelector
-
-        unified_engine = UnifiedCognitiveContextEngine()
-        speech_engine = ConversationSpeechActEngine()
-        crse = ContextRelevanceSelector()
-
-        unified_profile = unified_engine.build_context(
-            db, user_id=current_user.id, session_id=session.id, query=transcript
-        )
-
-        # Extract known entities from companion memories & onboarding
-        known_ents = set()
-        if unified_profile.preferred_name:
-            known_ents.add(unified_profile.preferred_name)
-        for r in unified_profile.relationships:
-            for word in r.split():
-                clean_word = word.strip(".,;:!?\"'")
-                if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
-                    known_ents.add(clean_word)
-
-        # Analyze speech act & select relevant context
-        intent_analysis = speech_engine.analyze(transcript, known_entities=list(known_ents))
-        selection = crse.select(
-            message=transcript,
-            intent=intent_analysis,
-            profile=unified_profile,
-            known_entities=list(known_ents),
-        )
-        memory_context = selection.to_prompt_block()
-        memory_usage_mode = selection.selection_mode
-        print(f"[VOICE] CRSE: {selection.telemetry_summary()}")
-    except Exception as e:
-        print(f"[VOICE] Memory/CRSE (non-fatal): {e}")
-        memory_context = ""
-        memory_usage_mode = "SILENT_BACKGROUND"
-
-    # ── MAITRI AGENT LOOP v2: Assessor Phase ─────────────────────────────────
-    case_file = tracker.get_case_file(session.id)
-    if should_skip_assessor(transcript, case_file):
-        await broadcast_event("LLM_START", "Assessor Skipped (Trivial Input)")
-        print(f"[VOICE] Assessor skipped via fast-path filter")
-        case_file["runtime_state"]["decision"] = "RESPOND"
-    else:
-        await broadcast_event("LLM_START", "Assessor Evaluating...")
-        case_file = await assess_turn(
-            messages=history,
-            case_file=case_file,
-            user_message=transcript,
-            emotion_label=emotion.label,
-            rag_context=rag_context,
-            pattern_block="",
-            persona_summary=state_summary,
-            memory_context=memory_context,
-        )
-        tracker.update_case_file(session.id, case_file)
-        print(f"[VOICE] Assessor Decision: {case_file.get('runtime_state', {}).get('decision')}")
-
-    # ── Maitri LLM Response ───────────────────────────────────────────────────
-    await broadcast_event("LLM_START", "Maitri Generation...")
-    
-    try:
-        ai_response = await asyncio.to_thread(
-            chat_with_maitri,
-            messages=history,
-            language=language,
-            rag_context=rag_context,
-            case_file=case_file,
-            language_prompt=lang_prompt,
-            is_crisis=crisis.is_crisis,
-            memory_context=memory_context,
-            memory_usage_mode=memory_usage_mode,
-            max_tokens=1500,
-        )
-        await broadcast_event("LLM_DONE", "Response generated", {"response": ai_response})
-        print(f"[VOICE] LLM response: '{ai_response[:80]}...'")
-    except Exception as e:
-        print(f"[VOICE] LLM call failed: {type(e).__name__} - {e}")
-        raise HTTPException(status_code=500, detail={"message": f"LLM pipeline failed: {str(e)}"})
-
-    # ── Save to DB ────────────────────────────────────────────────────────────
-    try:
-        user_msg = Message(session_id=session.id, role="user", content=transcript, language=language)
-        db.add(user_msg)
-        db.flush()
-
-        if emotion and emotion.label:
-            db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
-
-        ai_msg = Message(session_id=session.id, role="assistant", content=ai_response, language=language)
-        db.add(ai_msg)
-        db.commit()
-    except Exception as e:
-        print(f"[VOICE] DB save failed (continuing): {type(e).__name__} - {e}")
-
-    # ── Async Memory Write (same as text pipeline) ────────────────────────────
-    asyncio.create_task(_process_voice_memory_write_async(
-        user_id=current_user.id,
-        user_message=transcript,
-        session_id=session.id,
-    ))
+    ai_response = chat_resp.response
+    emotion_label = chat_resp.emotion
 
     # ── TTS ───────────────────────────────────────────────────────────────────
     print(f"[VOICE] Calling TTS...")
@@ -291,11 +139,11 @@ async def handle_voice_turn(
         response_audio = await synthesize_speech(
             ai_response, 
             language, 
-            emotion=emotion.label
+            emotion=emotion_label
         )
         # 6. Prosody & Pitch Optimization
         await broadcast_event("TTS_OPTIMIZE", "Optimizing vocal pitch and prosody...")
-        response_audio = await asyncio.to_thread(optimize_pitch, response_audio, emotion.label)
+        response_audio = await asyncio.to_thread(optimize_pitch, response_audio, emotion_label)
         
         audio_b64 = base64.b64encode(response_audio).decode()
         await broadcast_event("TTS_DONE", "Audio ready")
@@ -308,12 +156,12 @@ async def handle_voice_turn(
         "transcript": transcript,
         "response": ai_response,
         "audio_b64": audio_b64,
-        "is_crisis": crisis.is_crisis,
-        "helplines": crisis.helplines if crisis.is_crisis else [],
-        "emotion": emotion.label,
-        "emotion_emoji": emotion.emoji,
-        "emotion_score": emotion.score,
-        "rag_used": bool(rag_context),
+        "is_crisis": chat_resp.is_crisis,
+        "helplines": chat_resp.helplines,
+        "emotion": chat_resp.emotion,
+        "emotion_emoji": chat_resp.emotion_emoji,
+        "emotion_score": chat_resp.emotion_score,
+        "rag_used": chat_resp.rag_used,
     }
 
 
