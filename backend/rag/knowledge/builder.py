@@ -158,6 +158,37 @@ def load_documents() -> list[dict]:
     return documents
 
 
+import requests
+import time
+from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
+
+class RequestsHuggingFaceEmbeddingFunction(EmbeddingFunction[Documents]):
+    def __init__(self, api_key: str, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+        self.api_key = api_key
+        self.model_name = model_name
+        self._api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
+        self._session = requests.Session()
+        self._session.headers.update({"Authorization": f"Bearer {self.api_key}"})
+
+    def __call__(self, input: Documents) -> Embeddings:
+        print(f"[RAG-HTTP] Requesting embeddings for {len(input)} chunks from {self._api_url}...")
+        for attempt in range(5):
+            response = self._session.post(
+                self._api_url,
+                json={"inputs": input, "options": {"wait_for_model": True}},
+                timeout=45.0
+            )
+            if response.status_code in (503, 502):
+                print(f"[RAG-HTTP] Model loading or gateway error (HTTP {response.status_code}). Retrying in 10s (attempt {attempt+1}/5)...")
+                time.sleep(10)
+                continue
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, dict) and "error" in data:
+                raise ValueError(f"Hugging Face API Error: {data['error']}")
+            return data
+        raise RuntimeError("Hugging Face Inference API timed out waiting for model to load.")
+
 def build_knowledge_base():
     print("\n[RAG] Building MindBridge Knowledge Base (Multi-Format)...")
     documents = load_documents()
@@ -176,7 +207,8 @@ def build_knowledge_base():
         return None
 
     try:
-        embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
+        print("[RAG] Initializing custom RequestsHuggingFaceEmbeddingFunction...")
+        embedding_fn = RequestsHuggingFaceEmbeddingFunction(
             api_key=hf_token,
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
@@ -325,7 +357,10 @@ def ensure_knowledge_base_built(force: bool = False):
     try:
         collection = build_knowledge_base()
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
         print(f"[RAG] ✗ Knowledge Base build failed: {e}")
+        print(f"[RAG] ✗ Diagnostic Traceback:\n{error_trace}")
     finally:
         # Always release lock
         try:
