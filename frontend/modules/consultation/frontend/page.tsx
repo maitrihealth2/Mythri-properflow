@@ -240,11 +240,12 @@ export default function ConsultationPage() {
   )
 
   return (
-    <div 
-      className="relative flex flex-col min-h-[100dvh] w-full bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ backgroundImage: "url('/assets/mythri-chat-scenery.png')" }}
-    >
-      <div className="absolute inset-0 bg-white/10 md:bg-white/5 pointer-events-none z-0"></div>
+    <div className="relative flex flex-col min-h-[100dvh] w-full">
+      <div 
+        className="fixed inset-0 w-full h-[100dvh] bg-cover bg-center bg-no-repeat z-0"
+        style={{ backgroundImage: "url('/assets/mythri-chat-scenery.png')" }}
+      ></div>
+      <div className="fixed inset-0 w-full h-[100dvh] bg-white/10 md:bg-white/5 pointer-events-none z-0"></div>
       <ExerciseOverlay exerciseMode={exerciseMode} onClose={() => setExerciseMode(null)} />
 
       <style dangerouslySetInnerHTML={{ __html: `
