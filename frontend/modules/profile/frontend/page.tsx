@@ -590,7 +590,7 @@ export default function ProfilePage() {
                 </Link>
                 <Link href="/history" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 px-5 py-1">
                     <span className="material-symbols-outlined text-[24px]">auto_stories</span>
-                    <span className="text-[10px] font-label-md mt-1">Sessions</span>
+                    <span className="text-[10px] font-label-md mt-1">History</span>
                 </Link>
                 <Link href="/text-chat" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 px-5 py-1">
                     <span className="material-symbols-outlined text-[24px]">health_and_safety</span>

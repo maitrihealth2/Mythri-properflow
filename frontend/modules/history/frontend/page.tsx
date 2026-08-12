@@ -255,7 +255,7 @@ export default function HistoryPage() {
           <div className="bg-primary text-white p-2.5 rounded-full shadow-lg transform -translate-y-3 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95">
             <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
           </div>
-          <span className="text-[10px] font-label-md font-bold -mt-2">Sessions</span>
+          <span className="text-[10px] font-label-md font-bold -mt-2">History</span>
         </Link>
         <Link href="/text-chat" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 hover:text-primary transition-colors">
           <span className="material-symbols-outlined text-[24px]">health_and_safety</span>
