@@ -12,8 +12,16 @@ engine = create_engine(DATABASE_URL)
 
 try:
     with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE user_onboarding ADD COLUMN raw_responses JSON;"))
+        conn.execute(text("ALTER TABLE user_profiles ADD COLUMN full_name VARCHAR(100);"))
         conn.commit()
-    print("Successfully added raw_responses JSON column to user_onboarding table.")
+    print("Successfully added full_name to user_profiles table.")
 except Exception as e:
-    print(f"Note/Error: {e}")
+    print(f"Note/Error adding full_name: {e}")
+
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE user_profiles ADD COLUMN profession VARCHAR(100);"))
+        conn.commit()
+    print("Successfully added profession to user_profiles table.")
+except Exception as e:
+    print(f"Note/Error adding profession: {e}")

@@ -25,9 +25,16 @@ const processQueue = (error: any, token: string | null = null) => {
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('mb_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    if (config.url?.startsWith('/api/admin/') && !config.url?.includes('/api/admin/login')) {
+      const adminToken = sessionStorage.getItem('mb_admin_token')
+      if (adminToken) {
+        config.headers.Authorization = `Bearer ${adminToken}`
+      }
+    } else {
+      const token = localStorage.getItem('mb_token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
   }
   return config
@@ -196,4 +203,39 @@ export const getAdminConsents = async () => {
 export const getAdminFeedback = async () => {
   const response = await api.get('/api/admin/feedback')
   return response.data
+}
+export const getAdminUsers = async (search = '', skip = 0, limit = 50) => {
+  const response = await api.get('/api/admin/users', { params: { search, skip, limit } })
+  return response.data
+}
+export const getAdminUserDetail = async (userId: number) => {
+  const response = await api.get(`/api/admin/users/${userId}`)
+  return response.data
+}
+export const getAdminUserSessions = async (userId: number) => {
+  const response = await api.get(`/api/admin/users/${userId}/sessions`)
+  return response.data
+}
+export const getAdminSessionMessages = async (sessionId: number) => {
+  const response = await api.get(`/api/admin/sessions/${sessionId}`)
+  return response.data
+}
+export const exportAdminUserData = async (userId: number) => {
+  const response = await api.get(`/api/admin/users/${userId}/export`, {
+    responseType: 'blob'
+  })
+  return response
+}
+
+// ==========================================
+// Profile
+// ==========================================
+export async function getProfile() {
+  const res = await api.get('/api/user/profile')
+  return res.data
+}
+
+export async function updateProfile(data: any) {
+  const res = await api.put('/api/user/profile', data)
+  return res.data
 }

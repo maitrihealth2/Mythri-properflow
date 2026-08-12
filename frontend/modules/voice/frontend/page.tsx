@@ -642,7 +642,7 @@ export default function VoiceModePage() {
         <footer className="w-full pb-12 md:pb-16 pt-4 flex flex-col items-center z-20 fixed bottom-0 bg-gradient-to-t from-[#fff8f5] via-[#fff8f5]/90 to-transparent transition-transform duration-600">
           <div className="flex items-center gap-8 md:gap-16 justify-center">
             <button onClick={toggleMute} disabled={isPaused} className="group flex flex-col items-center gap-2 disabled:opacity-50">
-              <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full border flex items-center justify-center transition-all active:scale-95 shadow-sm backdrop-blur-md ${isMuted ? 'border-error text-error bg-error/10' : 'border-outline/30 text-on-surface-variant group-hover:bg-white/60 group-hover:border-outline/50'}`}>
+              <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full border flex items-center justify-center transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm backdrop-blur-md ${isMuted ? 'border-error text-error bg-error/10' : 'border-outline/30 text-on-surface-variant group-hover:bg-white/60 group-hover:border-outline/50'}`}>
                 <span className="material-symbols-outlined text-[22px] md:text-[26px]" style={{ fontVariationSettings: isMuted ? "'FILL' 1" : "'FILL' 0" }}>
                   {isMuted ? 'mic_off' : 'mic'}
                 </span>
@@ -651,7 +651,7 @@ export default function VoiceModePage() {
 
             <button onClick={togglePause} className="group relative flex items-center justify-center mx-2 md:mx-0">
               <div className="absolute inset-0 bg-primary opacity-5 rounded-full scale-125 md:scale-150 blur-xl transition-all group-hover:scale-150 md:group-hover:scale-[1.7]"></div>
-              <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-300 active:scale-95 shadow-lg relative z-10 ${isPaused ? 'bg-transparent text-primary border-2 border-primary/50' : 'bg-primary text-on-primary hover:bg-primary/90 shadow-primary/20'}`}>
+              <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-lg relative z-10 ${isPaused ? 'bg-transparent text-primary border-2 border-primary/50' : 'bg-primary text-on-primary hover:bg-primary/90 shadow-primary/20'}`}>
                 <span className="material-symbols-outlined text-[28px] md:text-[36px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                   {isPaused ? 'play_arrow' : 'pause'}
                 </span>
@@ -659,7 +659,7 @@ export default function VoiceModePage() {
             </button>
 
             <button onClick={handleStopConversation} className="group flex flex-col items-center gap-2">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-error/10 border border-error/20 flex items-center justify-center text-error hover:bg-error hover:text-on-error transition-all active:scale-95 shadow-sm backdrop-blur-md">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-error/10 border border-error/20 flex items-center justify-center text-error hover:bg-error hover:text-on-error transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm backdrop-blur-md">
                 <span className="material-symbols-outlined text-[22px] md:text-[26px]" style={{ fontVariationSettings: "'FILL' 1" }}>call_end</span>
               </div>
             </button>

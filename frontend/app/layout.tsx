@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${literata.variable} font-body-md antialiased bg-immersive min-h-[100dvh] flex flex-col text-on-background relative md:h-[100dvh] md:overflow-hidden`}>
+      <body className={`${literata.variable} font-body-md antialiased bg-immersive min-h-[100dvh] flex flex-col text-on-background relative`}>
         {/* Google Analytics */}
         <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=G-DBD64NEBF5" />
         <Script id="google-analytics" strategy="afterInteractive">

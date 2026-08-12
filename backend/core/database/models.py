@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, JSON
+from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
@@ -15,17 +16,21 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mindbridge.db")
 
 engine_kwargs = {
     "pool_pre_ping": True,
-    "pool_recycle": 300,
     "pool_reset_on_return": "rollback",
-    "pool_timeout": 30,  # Increased timeout for high concurrency
 }
 
 if "sqlite" in DATABASE_URL:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 else:
-    # Production PostgreSQL pooling
-    engine_kwargs["pool_size"] = 100
-    engine_kwargs["max_overflow"] = 50
+    # Production PostgreSQL pooling (Neon PgBouncer recommended setup)
+    engine_kwargs["poolclass"] = NullPool
+    engine_kwargs["connect_args"] = {
+        "connect_timeout": 60,
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5
+    }
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -79,6 +84,8 @@ class UserProfile(Base):
     bio = Column(Text, nullable=True, comment="User-provided biographical context")
     age = Column(Integer, nullable=True)
     preferred_name = Column(String(50), nullable=True, comment="Name the AI should use to address the user")
+    full_name = Column(String(100), nullable=True, comment="User's full real name")
+    profession = Column(String(100), nullable=True, comment="User's profession or occupation")
     therapy_focus = Column(String(100), nullable=True, comment="Main focus area (e.g. anxiety, relationships)")
     created_at = Column(DateTime(timezone=True), default=func.now())
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())

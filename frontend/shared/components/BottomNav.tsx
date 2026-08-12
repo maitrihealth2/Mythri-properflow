@@ -24,7 +24,7 @@ export default function BottomNav() {
           <Link
             key={href}
             href={href}
-            className={`flex flex-col items-center justify-center w-16 gap-0.5 transition-all duration-200 active:scale-90 ${
+            className={`flex flex-col items-center justify-center w-16 gap-0.5 transition-transform duration-150 hover:scale-[1.01] active:scale-[0.98] ${
               isActive ? 'text-primary' : 'text-on-surface-variant/60 hover:text-primary'
             }`}
           >

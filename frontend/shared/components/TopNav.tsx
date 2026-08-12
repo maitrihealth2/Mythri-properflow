@@ -80,7 +80,7 @@ export default function TopNav() {
         {mounted && (
           <button 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container border border-outline-variant hover:bg-surface-container-highest transition-colors"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container border border-outline-variant hover:bg-surface-container-highest transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
             title="Toggle Theme"
           >
             <span className="material-symbols-outlined text-[20px]">
@@ -96,7 +96,7 @@ export default function TopNav() {
              router.push('/text-chat');
              window.dispatchEvent(new Event('mb_new_chat'));
           }}
-          className="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-sm ml-1"
+          className="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary hover:bg-primary/90 shadow-sm ml-1 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
           title="New Chat"
         >
           <span className="material-symbols-outlined text-[20px]">add</span>
@@ -105,7 +105,7 @@ export default function TopNav() {
         {/* Main Circular Menu Button */}
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="nav-circle-btn"
+          className="nav-circle-btn transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
           title="Menu"
         >
           <span className="material-symbols-outlined text-[24px]">

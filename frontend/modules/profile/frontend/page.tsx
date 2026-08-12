@@ -4,10 +4,29 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+import { getProfile, updateProfile } from '@/core/api'
+
 export default function ProfilePage() {
     const router = useRouter()
     const [mainMenuOpen, setMainMenuOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState<string | null>(null)
+    const [error, setError] = useState<string | null>(null)
+    
+    // Profile Data
+    const [profile, setProfile] = useState({
+        username: '',
+        email: '',
+        full_name: '',
+        preferred_name: '',
+        age: '',
+        profession: '',
+        preferred_language: 'en-IN',
+        setup_percentage: 0,
+        member_since: ''
+    })
+    const [form, setForm] = useState(profile)
     
     // Edit Modes for different sections
     const [editMode, setEditMode] = useState<Record<string, boolean>>({
@@ -24,7 +43,29 @@ export default function ProfilePage() {
         const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
         if (!token) {
             router.replace('/login')
+            return
         }
+        
+        getProfile().then(data => {
+            const mapped = {
+                username: data.username || '',
+                email: data.email || '',
+                full_name: data.full_name || '',
+                preferred_name: data.preferred_name || '',
+                age: data.age?.toString() || '',
+                profession: data.profession || '',
+                preferred_language: data.preferred_language || 'en-IN',
+                setup_percentage: data.setup_percentage || 0,
+                member_since: data.member_since ? new Date(data.member_since).getFullYear().toString() : '2024'
+            }
+            setProfile(mapped)
+            setForm(mapped)
+        }).catch(err => {
+            console.error("Failed to load profile", err)
+            setError("Failed to load profile. Please refresh.")
+        }).finally(() => {
+            setLoading(false)
+        })
     }, [router])
 
     const handleLogout = (e: React.MouseEvent) => {
@@ -34,7 +75,47 @@ export default function ProfilePage() {
     }
 
     const toggleEdit = (section: string) => {
+        if (editMode[section]) {
+            // Cancel edit - revert form to saved profile
+            setForm(profile)
+        }
         setEditMode(prev => ({ ...prev, [section]: !prev[section] }))
+        setError(null)
+    }
+
+    const handleSave = async (section: string) => {
+        setSaving(section)
+        setError(null)
+        try {
+            const updatePayload = {
+                full_name: form.full_name || null,
+                preferred_name: form.preferred_name || null,
+                age: form.age ? parseInt(form.age) : null,
+                profession: form.profession || null,
+                preferred_language: form.preferred_language
+            }
+            
+            const data = await updateProfile(updatePayload)
+            const mapped = {
+                username: data.username || '',
+                email: data.email || '',
+                full_name: data.full_name || '',
+                preferred_name: data.preferred_name || '',
+                age: data.age?.toString() || '',
+                profession: data.profession || '',
+                preferred_language: data.preferred_language || 'en-IN',
+                setup_percentage: data.setup_percentage || 0,
+                member_since: data.member_since ? new Date(data.member_since).getFullYear().toString() : '2024'
+            }
+            setProfile(mapped)
+            setForm(mapped)
+            setEditMode(prev => ({ ...prev, [section]: false }))
+        } catch (err) {
+            console.error("Save failed", err)
+            setError("Failed to save changes. Please try again.")
+        } finally {
+            setSaving(null)
+        }
     }
 
     const scrollToSection = (id: string) => {
@@ -48,7 +129,7 @@ export default function ProfilePage() {
     if (!mounted) return null;
 
     return (
-        <div className="bg-immersive min-h-screen flex flex-col font-body-md text-on-background relative overflow-hidden" style={{ zoom: 0.90 }}>
+        <div className="flex-1 w-full h-full min-h-[100dvh] flex flex-col font-body-md text-on-background relative overflow-hidden">
             {/* Custom Animations & Micro-interactions */}
             <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes float-slow {
@@ -111,13 +192,13 @@ export default function ProfilePage() {
             {/* TopAppBar */}
             <header className="fixed top-0 z-40 flex justify-between items-center w-full px-5 md:px-8 py-4 pointer-events-none transition-all duration-500 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-4 pointer-events-auto">
-                    <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all hover:bg-white/80 active:scale-95 shadow-sm">home</Link>
+                    <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-transform duration-150 hover:bg-white/80 hover:scale-[1.02] active:scale-[0.98] shadow-sm">home</Link>
                     <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
                 </div>
                 <div className="flex items-center gap-4 relative pointer-events-auto">
                     <button 
                         onClick={() => setMainMenuOpen(!mainMenuOpen)}
-                        className="hidden md:flex w-12 h-12 items-center justify-center rounded-full glass-panel-premium text-primary transition-all active:scale-95 z-50"
+                        className="hidden md:flex w-12 h-12 items-center justify-center rounded-full glass-panel-premium text-primary transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98] z-50"
                     >
                         <span className="material-symbols-outlined text-[24px]">grid_view</span>
                     </button>
@@ -148,10 +229,10 @@ export default function ProfilePage() {
             </header>
 
             {/* Main Content Area */}
-            <main className="relative z-10 w-full max-w-[1400px] mx-auto px-4 lg:px-8 pt-24 pb-28 md:pb-12 flex flex-col md:flex-row gap-6 lg:gap-10 md:h-[100dvh] overflow-hidden hide-scrollbar animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <main className="relative z-10 w-full max-w-[1400px] mx-auto px-4 lg:px-8 pt-24 pb-28 md:pb-12 flex flex-col md:flex-row gap-6 lg:gap-10 min-h-[100dvh] animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 
                 {/* Left Sidebar: Profile Overview & Navigation */}
-                <aside className="w-full md:w-[320px] lg:w-[360px] flex flex-col gap-6 shrink-0 md:h-full md:overflow-y-auto hide-scrollbar pb-8 md:pb-0">
+                <aside className="w-full md:w-[320px] lg:w-[360px] flex flex-col gap-6 shrink-0 pb-8 md:pb-0">
                     
                     {/* Premium User Card */}
                     <div className="w-full glass-panel-premium rounded-[2rem] p-8 flex flex-col items-center relative overflow-hidden group">
@@ -172,22 +253,26 @@ export default function ProfilePage() {
                         </div>
                         
                         <div className="text-center space-y-1 mb-6 relative z-10">
-                            <h1 className="text-headline-md lg:text-headline-lg font-headline-md text-primary tracking-tight">John Doe</h1>
-                            <p className="text-body-md font-body-md text-primary/60 italic tracking-wide">Explorer of the Mind</p>
+                            <h1 className="text-headline-md lg:text-headline-lg font-headline-md text-primary tracking-tight">
+                                {profile.preferred_name || profile.username || 'Traveler'}
+                            </h1>
+                            <p className="text-body-md font-body-md text-primary/60 italic tracking-wide">
+                                {profile.profession ? profile.profession : 'Explorer of the Mind'}
+                            </p>
                         </div>
 
                         {/* Meaningful Metrics */}
                         <div className="w-full space-y-4 relative z-10">
                             <div className="flex justify-between items-center text-xs text-on-surface-variant px-1">
                                 <span className="font-label-md uppercase tracking-widest opacity-70">Sanctuary Setup</span>
-                                <span className="font-medium text-primary">85%</span>
+                                <span className="font-medium text-primary">{profile.setup_percentage}%</span>
                             </div>
                             <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-1000 ease-out w-[85%]"></div>
+                                <div className="h-full bg-gradient-to-r from-primary/60 to-primary rounded-full transition-all duration-1000 ease-out" style={{ width: `${profile.setup_percentage}%` }}></div>
                             </div>
                             <div className="flex items-center justify-center gap-2 pt-2 text-xs text-on-surface-variant/70 font-medium">
                                 <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                                Member since 2024
+                                Member since {profile.member_since}
                             </div>
                         </div>
                     </div>
@@ -196,7 +281,7 @@ export default function ProfilePage() {
                     <nav className="flex flex-col gap-2 w-full relative z-10">
                         <button 
                             onClick={() => scrollToSection('personal')}
-                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-300 group
+                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-150 group
                                 ${activeSection === 'personal' 
                                     ? 'glass-panel-premium text-primary shadow-md scale-[1.02]' 
                                     : 'hover:bg-white/40 text-on-surface-variant hover:text-primary hover:scale-[1.01]'}`}
@@ -212,7 +297,7 @@ export default function ProfilePage() {
 
                         <button 
                             onClick={() => scrollToSection('contact')}
-                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-300 group
+                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-150 group
                                 ${activeSection === 'contact' 
                                     ? 'glass-panel-premium text-primary shadow-md scale-[1.02]' 
                                     : 'hover:bg-white/40 text-on-surface-variant hover:text-primary hover:scale-[1.01]'}`}
@@ -228,7 +313,7 @@ export default function ProfilePage() {
 
                         <button 
                             onClick={() => scrollToSection('regional')}
-                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-300 group
+                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-150 group
                                 ${activeSection === 'regional' 
                                     ? 'glass-panel-premium text-primary shadow-md scale-[1.02]' 
                                     : 'hover:bg-white/40 text-on-surface-variant hover:text-primary hover:scale-[1.01]'}`}
@@ -244,7 +329,7 @@ export default function ProfilePage() {
 
                         <button 
                             onClick={() => scrollToSection('privacy')}
-                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-300 group
+                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-150 group
                                 ${activeSection === 'privacy' 
                                     ? 'glass-panel-premium text-primary shadow-md scale-[1.02]' 
                                     : 'hover:bg-white/40 text-on-surface-variant hover:text-primary hover:scale-[1.01]'}`}
@@ -261,16 +346,29 @@ export default function ProfilePage() {
                 </aside>
 
                 {/* Right Content Area: Sections */}
-                <section className="flex-1 md:h-full md:overflow-y-auto hide-scrollbar space-y-6 md:space-y-8 pb-32 md:pb-12 scroll-smooth">
+                <section className="flex-1 space-y-6 md:space-y-8 pb-32 md:pb-12 scroll-smooth">
                     
                     {/* Page Header */}
                     <div className="px-2 mb-8 hidden md:block">
                         <h2 className="text-display-sm font-headline-md text-primary tracking-tight mb-2">Your Profile</h2>
                         <p className="text-body-lg text-on-surface-variant/80">Manage your personal sanctuary and preferences.</p>
+                        {error && (
+                            <div className="mt-4 py-2 px-4 bg-error-container/80 text-on-error-container rounded-xl text-sm font-medium animate-fade-in-up">
+                                {error}
+                            </div>
+                        )}
                     </div>
+                    
+                    {loading && (
+                        <div className="w-full flex items-center justify-center py-12">
+                            <span className="material-symbols-outlined animate-spin text-primary text-3xl">refresh</span>
+                        </div>
+                    )}
 
+                    {!loading && (
+                        <>
                     {/* Personal Information Panel */}
-                    <div id="personal" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 group relative overflow-hidden">
+                    <div id="personal" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-300 hover:shadow-xl hover:-translate-y-[1px] hover:shadow-primary/5 group relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100"></div>
                         
                         <div className="flex justify-between items-center mb-8 relative z-10">
@@ -291,46 +389,48 @@ export default function ProfilePage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Full Name</label>
                                 {editMode.personal ? (
-                                    <input type="text" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all" defaultValue="John Doe" />
+                                    <input type="text" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all animate-fade-in" value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} placeholder="Not provided" />
                                 ) : (
-                                    <p className="text-lg font-headline-md text-primary px-1">John Doe</p>
+                                    <p className={`text-lg font-headline-md px-1 animate-fade-in ${profile.full_name ? 'text-primary' : 'text-on-surface-variant/50 italic'}`}>{profile.full_name || 'Not provided'}</p>
                                 )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Preferred Name / Alias</label>
                                 {editMode.personal ? (
-                                    <input type="text" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all" defaultValue="Explorer" />
+                                    <input type="text" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all animate-fade-in" value={form.preferred_name} onChange={e => setForm({...form, preferred_name: e.target.value})} placeholder="Not provided" />
                                 ) : (
-                                    <p className="text-lg font-headline-md text-primary px-1">Explorer</p>
+                                    <p className={`text-lg font-headline-md px-1 animate-fade-in ${profile.preferred_name ? 'text-primary' : 'text-on-surface-variant/50 italic'}`}>{profile.preferred_name || 'Not provided'}</p>
                                 )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Age</label>
                                 {editMode.personal ? (
-                                    <input type="number" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all appearance-none" defaultValue="28" />
+                                    <input type="number" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all appearance-none animate-fade-in" value={form.age} onChange={e => setForm({...form, age: e.target.value})} placeholder="Not provided" />
                                 ) : (
-                                    <p className="text-lg font-headline-md text-primary px-1">28</p>
+                                    <p className={`text-lg font-headline-md px-1 animate-fade-in ${profile.age ? 'text-primary' : 'text-on-surface-variant/50 italic'}`}>{profile.age || 'Not provided'}</p>
                                 )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Profession</label>
                                 {editMode.personal ? (
-                                    <input type="text" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all" defaultValue="Designer" />
+                                    <input type="text" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all animate-fade-in" value={form.profession} onChange={e => setForm({...form, profession: e.target.value})} placeholder="Not provided" />
                                 ) : (
-                                    <p className="text-lg font-headline-md text-primary px-1">Designer</p>
+                                    <p className={`text-lg font-headline-md px-1 animate-fade-in ${profile.profession ? 'text-primary' : 'text-on-surface-variant/50 italic'}`}>{profile.profession || 'Not provided'}</p>
                                 )}
                             </div>
                         </div>
                         
                         {editMode.personal && (
                             <div className="mt-8 flex justify-end animate-fade-in-up">
-                                <button className="px-8 py-3 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-label-md shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all" onClick={() => toggleEdit('personal')}>Save Personal Info</button>
+                                <button className="px-8 py-3 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-label-md shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 disabled:opacity-50 flex items-center justify-center min-w-[160px]" onClick={() => handleSave('personal')} disabled={saving === 'personal'}>
+                                    {saving === 'personal' ? <span className="material-symbols-outlined animate-spin text-[20px]">refresh</span> : 'Save Personal Info'}
+                                </button>
                             </div>
                         )}
                     </div>
 
                     {/* Contact Information Panel */}
-                    <div id="contact" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 group relative overflow-hidden">
+                    <div id="contact" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-300 hover:shadow-xl hover:-translate-y-[1px] hover:shadow-primary/5 group relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-secondary/5 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none transition-opacity duration-700 opacity-50 group-hover:opacity-100"></div>
                         
                         <div className="flex justify-between items-center mb-8 relative z-10">
@@ -353,31 +453,13 @@ export default function ProfilePage() {
                                     <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Email Address</label>
                                     <span className="flex items-center gap-1 text-[10px] font-label-md text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"><span className="material-symbols-outlined text-[12px]">verified</span> Verified</span>
                                 </div>
-                                {editMode.contact ? (
-                                    <input type="email" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all" defaultValue="john.doe@sanctuary.com" />
-                                ) : (
-                                    <p className="text-lg font-headline-md text-primary px-1">john.doe@sanctuary.com</p>
-                                )}
-                            </div>
-                            <div className="space-y-2 col-span-1 md:col-span-2">
-                                <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Phone Number (Optional)</label>
-                                {editMode.contact ? (
-                                    <input type="tel" className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all" placeholder="+1 (555) 000-0000" />
-                                ) : (
-                                    <p className="text-lg font-headline-md text-on-surface-variant/50 italic px-1">Not provided</p>
-                                )}
+                                <p className="text-lg font-headline-md text-primary px-1 opacity-70 cursor-not-allowed" title="Email cannot be changed">{profile.email}</p>
                             </div>
                         </div>
-
-                        {editMode.contact && (
-                            <div className="mt-8 flex justify-end animate-fade-in-up">
-                                <button className="px-8 py-3 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-label-md shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all" onClick={() => toggleEdit('contact')}>Save Contact Info</button>
-                            </div>
-                        )}
                     </div>
 
                     {/* Regional & Language Panel */}
-                    <div id="regional" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 group relative overflow-hidden">
+                    <div id="regional" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-300 hover:shadow-xl hover:-translate-y-[1px] hover:shadow-primary/5 group relative overflow-hidden">
                         <div className="flex justify-between items-center mb-8 relative z-10">
                             <div>
                                 <h3 className="text-headline-sm font-headline-md text-primary">Regional & Language</h3>
@@ -396,51 +478,46 @@ export default function ProfilePage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Primary Language</label>
                                 {editMode.regional ? (
-                                    <div className="relative">
-                                        <select className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all appearance-none pr-10 cursor-pointer">
-                                            <option>English</option>
-                                            <option>Hindi</option>
-                                            <option>Telugu</option>
-                                            <option>Tamil</option>
+                                    <div className="relative animate-fade-in">
+                                        <select className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all appearance-none pr-10 cursor-pointer" value={form.preferred_language} onChange={e => setForm({...form, preferred_language: e.target.value})}>
+                                            <option value="en-IN">English</option>
+                                            <option value="hi-IN">Hindi</option>
+                                            <option value="te-IN">Telugu</option>
+                                            <option value="ta-IN">Tamil</option>
                                         </select>
                                         <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-primary/50">expand_more</span>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-3 px-1">
-                                        <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">EN</span>
-                                        <p className="text-lg font-headline-md text-primary">English</p>
+                                    <div className="flex items-center gap-3 px-1 animate-fade-in">
+                                        <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">{profile.preferred_language.split('-')[0].toUpperCase()}</span>
+                                        <p className="text-lg font-headline-md text-primary">
+                                            {profile.preferred_language === 'en-IN' ? 'English' : 
+                                             profile.preferred_language === 'hi-IN' ? 'Hindi' :
+                                             profile.preferred_language === 'te-IN' ? 'Telugu' : 'Tamil'}
+                                        </p>
                                     </div>
                                 )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1">Timezone</label>
-                                {editMode.regional ? (
-                                    <div className="relative">
-                                        <select className="w-full px-4 py-3 rounded-xl glass-input text-base text-primary font-medium outline-none transition-all appearance-none pr-10 cursor-pointer">
-                                            <option>IST (UTC+05:30)</option>
-                                            <option>GMT (UTC+00:00)</option>
-                                            <option>EST (UTC-05:00)</option>
-                                        </select>
-                                        <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-primary/50">expand_more</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-3 px-1">
-                                        <span className="material-symbols-outlined text-primary/60">schedule</span>
-                                        <p className="text-lg font-headline-md text-primary">IST (UTC+05:30)</p>
-                                    </div>
-                                )}
+                                <div className="flex items-center gap-3 px-1 opacity-70">
+                                    <span className="material-symbols-outlined text-primary/60">schedule</span>
+                                    <p className="text-lg font-headline-md text-primary">IST (UTC+05:30) (System Default)</p>
+                                </div>
                             </div>
                         </div>
 
                         {editMode.regional && (
                             <div className="mt-8 flex justify-end animate-fade-in-up">
-                                <button className="px-8 py-3 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-label-md shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all" onClick={() => toggleEdit('regional')}>Save Preferences</button>
+                                <button className="px-8 py-3 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-label-md shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 disabled:opacity-50 flex items-center justify-center min-w-[160px]" onClick={() => handleSave('regional')} disabled={saving === 'regional'}>
+                                    {saving === 'regional' ? <span className="material-symbols-outlined animate-spin text-[20px]">refresh</span> : 'Save Preferences'}
+                                </button>
                             </div>
                         )}
                     </div>
 
                     {/* Privacy & Security Panel (Visual Mock) */}
-                    <div id="privacy" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 group relative overflow-hidden">
+                    <div id="privacy" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-300 hover:shadow-xl hover:-translate-y-[1px] hover:shadow-primary/5 group relative overflow-hidden">
                         <div className="flex justify-between items-center mb-8 relative z-10">
                             <div>
                                 <h3 className="text-headline-sm font-headline-md text-primary">Privacy & Security</h3>
@@ -500,6 +577,8 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     </div>
+                        </>
+                    )}
                 </section>
             </main>
 

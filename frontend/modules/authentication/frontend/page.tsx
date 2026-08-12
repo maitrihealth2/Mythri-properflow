@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [authPhase, setAuthPhase] = useState<'idle' | 'merging' | 'verifying' | 'success' | 'transitioning'>('idle')
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null;
@@ -27,6 +28,11 @@ export default function LoginPage() {
       setError('')
       const result = await signInWithPopup(auth, googleProvider)
       const idToken = await result.user.getIdToken()
+      
+      setAuthPhase('merging')
+      await new Promise(r => setTimeout(r, 600))
+      setAuthPhase('verifying')
+      
       const data = await googleLogin(idToken)
       localStorage.setItem('mb_token', data.access_token)
       localStorage.setItem('mb_username', data.username)
@@ -36,6 +42,13 @@ export default function LoginPage() {
       if (typeof window !== 'undefined' && (window as any).gtag) {
         (window as any).gtag('event', 'login', { method: 'Google' })
       }
+      
+      setAuthPhase('success')
+      await new Promise(r => setTimeout(r, 800))
+      
+      setAuthPhase('transitioning')
+      await new Promise(r => setTimeout(r, 400))
+      
       if (data.needs_onboarding) {
         window.location.href = '/onboarding'
       } else {
@@ -44,6 +57,7 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error("Google Auth Error:", err)
       setError(err?.response?.data?.detail || err.message || "Google Sign-In failed.")
+      setAuthPhase('idle')
       setLoading(false)
     }
   }
@@ -61,6 +75,14 @@ export default function LoginPage() {
     
     setError('')
     setLoading(true)
+    
+    // Stage 2: Fields Combine
+    setAuthPhase('merging')
+    await new Promise(r => setTimeout(r, 600))
+    
+    // Stage 3: Verification Container
+    setAuthPhase('verifying')
+
     try {
       const data = mode === 'signin'
         ? await login(form.email, form.password)
@@ -71,6 +93,15 @@ export default function LoginPage() {
       localStorage.setItem('mb_language', 'en-IN')
       document.cookie = `mb_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`
       sessionStorage.removeItem('mb_session_id')
+      
+      // Stage 4: Successful Verification
+      setAuthPhase('success')
+      await new Promise(r => setTimeout(r, 800))
+      
+      // Stage 5: Transition to Home
+      setAuthPhase('transitioning')
+      await new Promise(r => setTimeout(r, 400))
+
       if (data.needs_onboarding) {
         window.location.href = '/onboarding'
       } else {
@@ -79,13 +110,20 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error("API Error:", err)
       setError(err?.response?.data?.detail || err.message || "Something didn't quite work. Please check your details.")
-    } finally {
+      // Reverse Gracefully
+      setAuthPhase('idle')
       setLoading(false)
     }
   }
 
   return (
     <div className="flex-1 w-full flex items-center justify-center relative overflow-hidden">
+      <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes drawCheck {
+              to { stroke-dashoffset: 0; }
+          }
+      `}} suppressHydrationWarning />
+      
       {/* Video Backgrounds */}
       <video autoPlay loop muted playsInline className="hidden md:block fixed inset-0 w-full h-full object-cover z-0 pointer-events-none">
           <source src="/desktop_bg.webm" type="video/webm" />
@@ -98,29 +136,32 @@ export default function LoginPage() {
       <div className="fixed inset-0 bg-plum-high-contrast/10 backdrop-blur-[2px] z-0 pointer-events-none"></div>
       
       {/* Main Authentication Container */}
-      <main className="relative z-10 w-full max-w-[440px] m-auto px-margin-mobile animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <div className="frosted-card rounded-3xl px-8 py-6 md:px-10 md:py-8 flex flex-col items-center space-y-5">
+      <main className={`relative z-10 w-full max-w-[440px] m-auto px-margin-mobile animate-fade-in-up transition-opacity duration-500 ${authPhase === 'transitioning' ? 'opacity-0' : 'opacity-100'}`} style={{ animationDelay: '0.1s' }}>
+          <div className="frosted-card rounded-3xl px-8 py-6 md:px-10 md:py-8 flex flex-col items-center space-y-5 relative overflow-hidden">
               
+              {/* The absolute overlay is removed because the verification UI is now inside the merged credential container */}
+
               {/* Brand Identity */}
-              <div className="text-center">
+              <div className={`text-center transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 -translate-y-4 blur-sm pointer-events-none' : 'opacity-100 translate-y-0 blur-none'}`}>
                   <h1 className="text-plum-high-contrast font-display-lg text-4xl md:text-5xl mb-1">Mythri</h1>
                   <p className="text-on-surface-variant font-body-md text-sm md:text-base italic opacity-90">A digital sanctuary for the mind.</p>
               </div>
 
               {/* Step 1: Auth Container */}
-              <div id="authStep" className="w-full space-y-5 transition-all duration-500">
+              <div id="authStep" className="w-full space-y-5 relative">
+                  
                   {/* Tab Switcher */}
-                  <div className="relative w-full flex border-b border-outline-variant/30">
+                  <div className={`relative w-full flex border-b border-outline-variant/30 transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden border-transparent' : 'opacity-100 h-12'}`}>
                       <button
-                          className={`flex-1 py-3 text-center font-label-md text-sm transition-colors ${mode === 'signin' ? 'text-plum-high-contrast' : 'text-on-surface-variant/70 hover:text-plum-high-contrast'}`}
+                          className={`flex-1 text-center font-label-md text-sm transition-colors ${mode === 'signin' ? 'text-plum-high-contrast' : 'text-on-surface-variant/70 hover:text-plum-high-contrast'}`}
                           onClick={() => { setMode('signin'); setError(''); }}
-                          type="button">
+                          type="button" disabled={authPhase !== 'idle'}>
                           Sign in
                       </button>
                       <button
-                          className={`flex-1 py-3 text-center font-label-md text-sm transition-colors ${mode === 'create' ? 'text-plum-high-contrast' : 'text-on-surface-variant/70 hover:text-plum-high-contrast'}`}
+                          className={`flex-1 text-center font-label-md text-sm transition-colors ${mode === 'create' ? 'text-plum-high-contrast' : 'text-on-surface-variant/70 hover:text-plum-high-contrast'}`}
                           onClick={() => { setMode('create'); setError(''); }}
-                          type="button">
+                          type="button" disabled={authPhase !== 'idle'}>
                           Create account
                       </button>
                       {/* Active Underline */}
@@ -129,9 +170,10 @@ export default function LoginPage() {
                   </div>
 
                   {/* Auth Form */}
-                  <form className="w-full space-y-4" onSubmit={handleSubmit}>
+                  <form className="w-full space-y-4 relative" onSubmit={handleSubmit}>
+                      
                       {/* Welcome Message (Dynamic) */}
-                      <div className="mb-2 text-center space-y-1">
+                      <div className={`text-center transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 scale-95 h-0 overflow-hidden mb-0' : 'opacity-100 scale-100 h-[60px] mb-2 space-y-1'}`}>
                           <h2 className="text-plum-high-contrast font-headline-md text-2xl">
                               {mode === 'signin' ? 'Welcome back' : 'Join our sanctuary'}
                           </h2>
@@ -142,99 +184,156 @@ export default function LoginPage() {
 
                       {/* Name Field (Hidden for Sign In) */}
                       {mode === 'create' && (
-                          <div className="space-y-1.5 animate-fade-up">
+                          <div className={`transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-[72px] space-y-1.5'} animate-fade-up`}>
                               <label className="block font-label-md text-sm text-plum-high-contrast ml-1" htmlFor="name">Full name</label>
                               <input
                                   className="w-full h-12 px-5 rounded-2xl border border-outline-variant/30 bg-white/40 font-body-md placeholder:text-outline/40 focus:bg-white/80 transition-all outline-none"
                                   id="name" placeholder="John Doe" type="text"
                                   value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                                   required
+                                  disabled={authPhase !== 'idle'}
                               />
                           </div>
                       )}
 
-                      {/* Email Field */}
-                      <div className="space-y-1.5">
-                          <label className="block font-label-md text-sm text-plum-high-contrast ml-1" htmlFor="email">Email address</label>
-                          <input
-                              className="w-full h-12 px-5 rounded-2xl border border-outline-variant/30 bg-white/40 font-body-md placeholder:text-outline/40 focus:bg-white/80 transition-all outline-none"
-                              id="email" placeholder="name@example.com" required type="email"
-                              value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                          />
-                      </div>
-
-                      <div className="flex gap-4 w-full">
-                          {/* Password Field */}
-                          <div className="space-y-1.5 relative flex-1">
-                              <div className="flex justify-between items-center px-1">
-                                  <label className="font-label-md text-sm text-plum-high-contrast" htmlFor="password">Password</label>
-                                  {mode === 'signin' && (
-                                      <a className="font-label-md text-primary/70 hover:text-plum-high-contrast transition-colors text-xs" href="#">Forgot?</a>
+                      {/* Credentials Merge Container */}
+                      <div className={`relative flex flex-col transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden z-20 ${
+                          authPhase !== 'idle' 
+                          ? 'gap-0 p-4 md:p-6 rounded-[2rem] bg-white/60 border border-primary/30 shadow-xl shadow-primary/5 scale-[1.02]'
+                          : 'gap-4 p-0 bg-transparent border border-transparent rounded-2xl scale-100'
+                      }`}>
+                          
+                          {/* Inside Verification UI (Only visible when merging/verifying/success) */}
+                          <div className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out z-30 ${
+                              authPhase === 'verifying' || authPhase === 'success' || authPhase === 'transitioning'
+                              ? 'opacity-100 pointer-events-auto delay-100'
+                              : 'opacity-0 pointer-events-none'
+                          }`}>
+                              <div className={`w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-700 ${
+                                  authPhase === 'success' 
+                                  ? 'scale-100 bg-white/80 border border-primary/40 shadow-lg shadow-primary/20' 
+                                  : 'scale-90 bg-white/40 border border-white/50'
+                              }`}>
+                                  {(authPhase === 'merging' || authPhase === 'verifying') && (
+                                      <div className="w-8 h-8 relative flex items-center justify-center">
+                                          <div className="absolute inset-0 border-2 border-primary/20 rounded-full"></div>
+                                          <div className="absolute inset-0 border-2 border-primary border-t-transparent rounded-full animate-spin" style={{ animationDuration: '2s' }}></div>
+                                          <div className="absolute inset-0 border-2 border-primary/40 border-b-transparent rounded-full animate-spin" style={{ animationDuration: '3s', animationDirection: 'reverse' }}></div>
+                                      </div>
+                                  )}
+                                  {authPhase === 'success' && (
+                                      <svg className="w-8 h-8 text-primary drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" strokeDasharray="50" strokeDashoffset="50" style={{ animation: 'drawCheck 0.6s ease-out forwards' }} />
+                                      </svg>
                                   )}
                               </div>
-                              <div className="relative">
-                                  <input
-                                      className="w-full h-12 px-5 rounded-2xl border border-outline-variant/30 bg-white/40 font-body-md placeholder:text-outline/40 focus:bg-white/80 transition-all outline-none"
-                                      id="password" placeholder="••••••••" required type={showPassword ? 'text' : 'password'}
-                                      value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                                  />
-                                  <button
-                                      className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-plum-high-contrast transition-colors flex items-center"
-                                      onClick={() => setShowPassword(!showPassword)} type="button">
-                                      <span className="material-symbols-outlined text-[18px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                                  </button>
-                              </div>
+                              <p className={`mt-3 font-label-md text-primary tracking-[0.2em] uppercase text-[10px] transition-all duration-500 ${authPhase === 'success' ? 'opacity-100' : 'opacity-70 animate-pulse'}`}>
+                                  {authPhase === 'success' ? 'Identity Confirmed' : 'Verifying...'}
+                              </p>
                           </div>
 
-                          {/* Confirm Password Field (Hidden for Sign In) */}
-                          {mode === 'create' && (
-                              <div className="space-y-1.5 relative flex-1 animate-fade-up">
-                                  <div className="flex justify-between items-center px-1">
-                                      <label className="font-label-md text-sm text-plum-high-contrast" htmlFor="confirmPassword">Confirm</label>
+                          {/* Email Input wrapper */}
+                          <div className={`flex flex-col justify-center transition-all duration-700 ease-in-out ${
+                              authPhase !== 'idle' ? 'h-10 opacity-0 pointer-events-none' : 'h-[72px] opacity-100'
+                          }`}>
+                              <label className={`block font-label-md text-sm text-plum-high-contrast ml-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`} htmlFor="email">Email address</label>
+                              <input
+                                  className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-outline/40 transition-all duration-700 outline-none ${
+                                      authPhase !== 'idle' 
+                                      ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
+                                      : 'bg-white/40 border border-outline-variant/30 focus:bg-white/80 text-on-surface'
+                                  }`}
+                                  id="email" placeholder="name@example.com" required type="email"
+                                  value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                                  disabled={authPhase !== 'idle'}
+                              />
+                          </div>
+
+                          {/* Password Input wrapper */}
+                          <div className={`flex gap-4 w-full transition-all duration-700 ease-in-out ${
+                              authPhase !== 'idle' ? 'h-10 opacity-0 pointer-events-none' : 'h-[72px] opacity-100'
+                          }`}>
+                              <div className="flex flex-col justify-center relative flex-1 h-full">
+                                  <div className={`flex justify-between items-center px-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`}>
+                                      <label className="font-label-md text-sm text-plum-high-contrast" htmlFor="password">Password</label>
+                                      {mode === 'signin' && (
+                                          <a className="font-label-md text-primary/70 hover:text-plum-high-contrast transition-colors text-xs" href="#">Forgot?</a>
+                                      )}
                                   </div>
-                                  <div className="relative">
+                                  <div className="relative h-12">
                                       <input
-                                          className="w-full h-12 px-5 rounded-2xl border border-outline-variant/30 bg-white/40 font-body-md placeholder:text-outline/40 focus:bg-white/80 transition-all outline-none"
-                                          id="confirmPassword" placeholder="••••••••" required type={showConfirmPassword ? 'text' : 'password'}
-                                          value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
+                                          className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-outline/40 transition-all duration-700 outline-none ${
+                                              authPhase !== 'idle' 
+                                              ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
+                                              : 'bg-white/40 border border-outline-variant/30 focus:bg-white/80 text-on-surface'
+                                          }`}
+                                          id="password" placeholder="••••••••" required type={showPassword ? 'text' : 'password'}
+                                          value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                                          disabled={authPhase !== 'idle'}
                                       />
                                       <button
-                                          className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-plum-high-contrast transition-colors flex items-center"
-                                          onClick={() => setShowConfirmPassword(!showConfirmPassword)} type="button">
-                                          <span className="material-symbols-outlined text-[18px]">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
+                                          className={`absolute right-4 top-1/2 -translate-y-1/2 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'text-on-surface-variant/50 hover:text-plum-high-contrast flex items-center'}`}
+                                          onClick={() => setShowPassword(!showPassword)} type="button" disabled={authPhase !== 'idle'}>
+                                          <span className="material-symbols-outlined text-[18px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                       </button>
                                   </div>
                               </div>
-                          )}
+
+                              {/* Confirm Password Field (Hidden for Sign In) */}
+                              {mode === 'create' && (
+                                  <div className={`flex flex-col justify-center relative flex-1 h-full transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`}>
+                                      <div className="flex justify-between items-center px-1 mb-1.5">
+                                          <label className="font-label-md text-sm text-plum-high-contrast" htmlFor="confirmPassword">Confirm</label>
+                                      </div>
+                                      <div className="relative h-12">
+                                          <input
+                                              className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-outline/40 transition-all duration-700 outline-none ${
+                                                  authPhase !== 'idle' 
+                                                  ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
+                                                  : 'bg-white/40 border border-outline-variant/30 focus:bg-white/80 text-on-surface'
+                                              }`}
+                                              id="confirmPassword" placeholder="••••••••" required type={showConfirmPassword ? 'text' : 'password'}
+                                              value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
+                                              disabled={authPhase !== 'idle'}
+                                          />
+                                          <button
+                                              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-plum-high-contrast transition-colors flex items-center"
+                                              onClick={() => setShowConfirmPassword(!showConfirmPassword)} type="button" disabled={authPhase !== 'idle'}>
+                                              <span className="material-symbols-outlined text-[18px]">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
+                                          </button>
+                                      </div>
+                                  </div>
+                              )}
+                          </div>
                       </div>
 
                       {/* Error Message */}
-                      {error && (
+                      <div className={`transition-all duration-300 overflow-hidden ${error ? 'max-h-20 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'}`}>
                           <div className="py-3 px-4 bg-error-container/80 backdrop-blur-sm text-on-error-container rounded-xl font-body-sm text-sm flex items-center gap-3">
                               <span className="material-symbols-outlined text-[18px]">info</span>
                               <span>{error}</span>
                           </div>
-                      )}
+                      </div>
 
                       {/* Submit Button */}
                       <button
-                          className="w-full h-12 bg-plum-high-contrast text-white font-label-md text-sm rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all flex justify-center items-center gap-2 shadow-xl shadow-plum-high-contrast/20 disabled:opacity-50"
-                          type="submit" disabled={loading}>
-                          <span>{loading ? 'Processing...' : (mode === 'signin' ? 'Continue to Sanctuary' : 'Create Account')}</span>
-                          {!loading && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
+                          className={`w-full bg-plum-high-contrast text-white font-label-md text-sm rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all duration-500 flex justify-center items-center gap-2 shadow-xl shadow-plum-high-contrast/20 disabled:opacity-50 mt-2 ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden p-0 border-0 mt-0' : 'h-12 opacity-100'}`}
+                          type="submit" disabled={authPhase !== 'idle'}>
+                          <span>{mode === 'signin' ? 'Continue to Sanctuary' : 'Create Account'}</span>
+                          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                       </button>
                   </form>
 
                   {/* Social/Other Methods */}
-                  <div className="w-full animate-fade-up">
+                  <div className={`w-full transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-24'} animate-fade-up`}>
                       <div className="flex items-center gap-4 mb-3">
                           <div className="h-[1px] flex-1 bg-outline-variant/20"></div>
                           <span className="font-label-md text-[10px] text-outline/50 uppercase tracking-widest">or</span>
                           <div className="h-[1px] flex-1 bg-outline-variant/20"></div>
                       </div>
                       <button
-                          className="w-full h-12 border border-outline-variant/30 bg-white/20 text-plum-high-contrast font-label-md text-sm rounded-2xl hover:bg-white/40 transition-colors flex justify-center items-center gap-3"
-                          type="button" onClick={handleGoogleLogin}>
+                          className="w-full h-12 border border-outline-variant/30 bg-white/20 text-plum-high-contrast font-label-md text-sm rounded-2xl hover:bg-white/40 transition-colors flex justify-center items-center gap-3 disabled:opacity-50"
+                          type="button" onClick={handleGoogleLogin} disabled={authPhase !== 'idle'}>
                           <svg className="w-5 h-5" viewBox="0 0 24 24">
                               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
                               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>

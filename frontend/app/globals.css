@@ -108,6 +108,13 @@
 }
 
 @layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+
   html {
     font-size: 14px;
   }
@@ -139,12 +146,20 @@
   ::-webkit-scrollbar-thumb:hover { background: #d4c2c7; }
 
   @keyframes fade-in-up {
-      0% { opacity: 0; transform: translateY(20px); }
+      0% { opacity: 0; transform: translateY(8px); }
       100% { opacity: 1; transform: translateY(0); }
   }
   .animate-fade-in-up {
-      animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: fade-in-up 0.5s cubic-bezier(0.2, 0, 0, 1) forwards;
       opacity: 0;
+  }
+
+  @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+  }
+  .animate-fade-in {
+      animation: fade-in 0.2s ease-out forwards;
   }
 
   .bg-immersive {
@@ -158,41 +173,49 @@
       opacity: 0.03;
       pointer-events: none;
       z-index: 0;
+      /* GPU acceleration hint */
+      transform: translateZ(0);
   }
 
   .frosted-card {
       background: rgba(255, 248, 245, 0.45);
-      backdrop-filter: blur(20px) saturate(130%);
-      -webkit-backdrop-filter: blur(20px) saturate(130%);
+      backdrop-filter: blur(12px) saturate(130%);
+      -webkit-backdrop-filter: blur(12px) saturate(130%);
       border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 8px 32px 0 rgba(60, 31, 51, 0.05);
+      box-shadow: 0 4px 16px 0 rgba(60, 31, 51, 0.03);
+      transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .frosted-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px 0 rgba(60, 31, 51, 0.06);
   }
 
   .frosted-plum {
       background: rgba(122, 74, 95, 0.85); /* primary-container */
-      backdrop-filter: blur(20px) saturate(130%);
-      -webkit-backdrop-filter: blur(20px) saturate(130%);
+      backdrop-filter: blur(12px) saturate(130%);
+      -webkit-backdrop-filter: blur(12px) saturate(130%);
       border: 1px solid rgba(255, 216, 230, 0.3); /* primary-fixed */
-      box-shadow: 0 4px 20px 0 rgba(60, 31, 51, 0.15);
+      box-shadow: 0 4px 12px 0 rgba(60, 31, 51, 0.1);
       color: #ffffff;
   }
 
   .frosted-blush {
       background: rgba(255, 216, 230, 0.6); /* primary-fixed */
-      backdrop-filter: blur(20px) saturate(130%);
-      -webkit-backdrop-filter: blur(20px) saturate(130%);
+      backdrop-filter: blur(12px) saturate(130%);
+      -webkit-backdrop-filter: blur(12px) saturate(130%);
       border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 8px 32px 0 rgba(60, 31, 51, 0.05);
+      box-shadow: 0 4px 12px 0 rgba(60, 31, 51, 0.03);
       color: #330e21; /* on-primary-fixed */
   }
 
   @keyframes message-fade-up {
-      from { opacity: 0; transform: translateY(12px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
   }
 
   .animate-msg {
-      animation: message-fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: message-fade-up 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
       opacity: 0;
   }
 
@@ -210,16 +233,31 @@
   .dot-3 { animation-delay: 0.4s; }
 
   .session-card {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
+  }
+  
+  .session-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px 0 rgba(60, 31, 51, 0.06);
   }
 
   .session-card:active {
-      transform: scale(0.98);
+      transform: scale(0.99);
   }
 
   /* Safe area padding for bottom nav (notch/home indicator) */
   .pb-safe {
       padding-bottom: env(safe-area-inset-bottom, 12px);
+  }
+
+  /* Reduced Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+      }
   }
 }
 

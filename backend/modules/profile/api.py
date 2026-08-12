@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
-from core.database.models import get_db, User, UserOnboarding, UserPersonaProfile, func
+from core.database.models import get_db, User, UserOnboarding, UserPersonaProfile, UserProfile, func
 from security.authentication.api import get_current_user
+from .schemas import ProfileResponse, ProfileUpdate
 
 router = APIRouter(prefix="/api/user", tags=["user"])
 
@@ -83,3 +84,67 @@ def get_onboarding_status(
     return {
         "completed": completed
     }
+
+@router.get("/profile", response_model=ProfileResponse)
+def get_user_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    
+    # Calculate setup percentage (e.g. out of 4 core fields)
+    core_fields = [
+        profile.full_name if profile else None,
+        profile.age if profile else None,
+        profile.profession if profile else None,
+        profile.preferred_name if profile else None
+    ]
+    completed_fields = sum(1 for f in core_fields if f)
+    setup_percentage = int((completed_fields / len(core_fields)) * 100) if len(core_fields) > 0 else 0
+
+    return ProfileResponse(
+        username=current_user.username,
+        email=current_user.email,
+        full_name=profile.full_name if profile else None,
+        preferred_name=profile.preferred_name if profile else None,
+        age=profile.age if profile else None,
+        profession=profile.profession if profile else None,
+        preferred_language=current_user.preferred_language or "en-IN",
+        is_email_verified=True, # Stub
+        member_since=current_user.created_at,
+        setup_percentage=setup_percentage
+    )
+
+@router.put("/profile", response_model=ProfileResponse)
+def update_user_profile(
+    data: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        # Update User level fields
+        if data.preferred_language is not None:
+            current_user.preferred_language = data.preferred_language
+            
+        # Update Profile level fields
+        profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+        if not profile:
+            profile = UserProfile(user_id=current_user.id)
+            db.add(profile)
+            
+        if data.full_name is not None:
+            profile.full_name = data.full_name
+        if data.preferred_name is not None:
+            profile.preferred_name = data.preferred_name
+        if data.age is not None:
+            profile.age = data.age
+        if data.profession is not None:
+            profile.profession = data.profession
+            
+        db.commit()
+        
+        return get_user_profile(current_user=current_user, db=db)
+    except Exception as e:
+        db.rollback()
+        print(f"[PROFILE_ERROR] Update failed for User {current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
