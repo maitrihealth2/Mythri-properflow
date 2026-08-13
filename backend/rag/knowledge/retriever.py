@@ -5,9 +5,15 @@ from ChromaDB and returns them as context for the LLM.
 """
 
 import os
+import pathlib as _pl
+from dotenv import load_dotenv
+
+_BASE = _pl.Path(__file__).resolve().parent.parent.parent
+load_dotenv(_BASE / ".env")
+load_dotenv(_BASE / ".env.local", override=True)
 
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
-COLLECTION_NAME = "therapy_knowledge"
+COLLECTION_NAME = "therapy_knowledge_v2"
 
 _client = None
 _collection = None
@@ -24,16 +30,9 @@ def get_collection():
                 path=CHROMA_DIR,
                 settings=Settings(anonymized_telemetry=False)
             )
-            from chromadb.utils import embedding_functions
-            hf_token = os.getenv("HF_TOKEN")
-            if not hf_token:
-                print("[RAG] Warning: HF_TOKEN missing. RAG is disabled.")
-                return None
-                
-            embedding_fn = embedding_functions.HuggingFaceEmbeddingFunction(
-                api_key=hf_token,
-                model_name="sentence-transformers/all-MiniLM-L6-v2"
-            )
+            from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+            embedding_fn = DefaultEmbeddingFunction()
+            
             _collection = _client.get_collection(
                 name=COLLECTION_NAME,
                 embedding_function=embedding_fn,

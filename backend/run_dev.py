@@ -78,7 +78,7 @@ def free_port(port: int):
 
 
 def check_rag_initialization():
-    chroma_path = os.path.join("modules", "knowledge", "chroma_db")
+    chroma_path = os.path.join("rag", "knowledge", "chroma_db")
     if not os.path.exists(chroma_path):
         print(f"\n[Warning] RAG ChromaDB not found at '{chroma_path}'.")
         print("[Warning] RAG features might fail. Please ensure your knowledge base is initialized.\n")

@@ -92,32 +92,28 @@ async def start_session(
         unified_ctx_block = profile.to_formatted_context_block()
 
         if is_first:
-            system_prompt = f"""You are generating the very FIRST welcome message for a new user who just completed onboarding.
-USER COGNITIVE PROFILE:
-{unified_ctx_block}
+            system_prompt = f"""You are Maitri, an empathetic, warm, and highly attuned AI mental health companion.
+Your tone is calm, grounded, and deeply non-judgmental.
 
-Instructions:
-1. Warmly welcome them by name ({profile.preferred_name}).
-2. Acknowledge what brought them here and their primary goal, naturally weaving it into the greeting.
-3. Keep it brief (2-3 sentences max).
-4. End with a gentle open question like "Where would you like to start today?".
-5. Maintain Maitri tone: calm, grounded, deeply empathetic."""
+You are generating the very FIRST welcome message to a user who just completed onboarding and opened the app.
+Greet them warmly by name ({profile.preferred_name}).
+Acknowledge what brought them here and their primary goal, naturally weaving it into the greeting.
+Keep it brief (40-80 words max, 2-3 sentences). End with a gentle open question like "Where would you like to start today?".
+IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
         else:
-            system_prompt = f"""You are generating a personalized WELCOME BACK opening message for a returning user starting a new session.
-USER COGNITIVE PROFILE:
-{unified_ctx_block}
+            system_prompt = f"""You are Maitri, an empathetic, warm, and highly attuned AI mental health companion.
+Your tone is calm, grounded, and deeply non-judgmental.
 
-Instructions:
-1. Greet them warmly by name ({profile.preferred_name}).
-2. Naturally reference their recent progress, goals, or last conversation topic if available (e.g. "Last time we spoke you were working on...").
-3. Mention AT MOST ONE previous topic naturally. Do NOT dump multiple memories.
-4. Do NOT say 'I remember the following about you'. Never produce a profile summary. Keep it completely natural and conversational.
-5. Keep it brief (40-80 words max, 2-3 sentences). End with a gentle check-in like "How have things been since then?" or "What's on your mind today?".
-6. Maintain Maitri tone: warm, attentive, non-judgmental."""
+You are generating the very first message to a user who just opened the app for a new session.
+Greet them warmly by name ({profile.preferred_name}).
+Naturally reference their recent progress or last conversation topic if available (e.g. "Last time we spoke you were working on...").
+Mention just one previous topic naturally. Keep it completely natural and conversational.
+Keep it brief (40-80 words max, 2-3 sentences). End with a gentle check-in like "How have things been since then?" or "What's on your mind today?".
+IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
 
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": "Generate my personalized session opening greeting."}
+            {"role": "user", "content": f"USER PROFILE:\n{unified_ctx_block}\n\n[The user has just opened the app. Please send your first welcome message.]"}
         ]
         
         initial_message = await llm_router.generate(messages, max_tokens=150, temperature=0.7)
@@ -126,7 +122,7 @@ Instructions:
             raise Exception("LLM router returned an empty response")
             
         def _save_message():
-            ai_msg = Message(session_id=session_id, role="maitri", content=initial_message)
+            ai_msg = Message(session_id=session_id, role="assistant", content=initial_message)
             db.add(ai_msg)
             db.commit()
             
@@ -137,7 +133,7 @@ Instructions:
         initial_message = f"Welcome back, {current_user.username}. This is your quiet space. What would you like to talk about today?"
         
         def _save_fallback():
-            ai_msg = Message(session_id=session_id, role="maitri", content=initial_message)
+            ai_msg = Message(session_id=session_id, role="assistant", content=initial_message)
             db.add(ai_msg)
             db.commit()
             
@@ -198,7 +194,7 @@ async def send_message(
     past.reverse()
     t_db = time.time()
 
-    history = [{"role": m.role, "content": m.content} for m in past]
+    history = [{"role": "assistant" if m.role == "maitri" else m.role, "content": m.content} for m in past]
     history.append({"role": "user", "content": req.message})
 
     # ── Pattern Analysis ──────────────────────────────────────────────────────
@@ -279,6 +275,7 @@ async def send_message(
         memory_usage_mode = selection.selection_mode
 
     except Exception as e:
+        print(f"[CRSE_PIPELINE_ERROR] {e}")
         memory_context = ""
         memory_usage_mode = "SILENT_BACKGROUND"
     t_crse = time.time()

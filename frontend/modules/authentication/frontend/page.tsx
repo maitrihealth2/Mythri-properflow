@@ -3,13 +3,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { login, register, googleLogin } from '@/core/api'
 import { auth, googleProvider } from '@/core/firebase'
-import { signInWithPopup } from 'firebase/auth'
+import { signInWithPopup, sendPasswordResetEmail } from 'firebase/auth'
 
 export default function LoginPage() {
   const router = useRouter()
   const [mode, setMode] = useState<'signin' | 'create'>('signin')
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -26,6 +27,7 @@ export default function LoginPage() {
     try {
       setLoading(true)
       setError('')
+      setSuccessMessage('')
       const result = await signInWithPopup(auth, googleProvider)
       const idToken = await result.user.getIdToken()
       
@@ -62,6 +64,32 @@ export default function LoginPage() {
     }
   }
 
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!form.email.trim()) {
+      setError('Please enter your email address to reset your password.');
+      setSuccessMessage('');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError('');
+      setSuccessMessage('');
+      await sendPasswordResetEmail(auth, form.email);
+      setSuccessMessage('Password reset email sent! Please check your inbox.');
+    } catch (err: any) {
+      console.error("Password reset error:", err);
+      let errMsg = err?.message || "Failed to send reset email.";
+      if (errMsg.includes('user-not-found') || errMsg.includes('EMAIL_NOT_FOUND')) {
+        errMsg = "No account found with this email address.";
+      }
+      setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!form.email.trim() || !form.password.trim() || (mode === 'create' && !form.name.trim())) {
@@ -74,6 +102,7 @@ export default function LoginPage() {
     }
     
     setError('')
+    setSuccessMessage('')
     setLoading(true)
     
     // Stage 2: Fields Combine
@@ -109,7 +138,20 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("API Error:", err)
-      setError(err?.response?.data?.detail || err.message || "Something didn't quite work. Please check your details.")
+      let errorMessage = err?.response?.data?.detail || err.message || "Something didn't quite work. Please check your details."
+      
+      if (typeof errorMessage === 'string') {
+        const lowerError = errorMessage.toLowerCase();
+        if (lowerError.includes('invalid_login_credentials') || lowerError.includes('invalid-credential') || lowerError.includes('wrong-password') || lowerError.includes('user-not-found')) {
+          errorMessage = "Invalid credentials. Please check your email and password.";
+        } else if (lowerError.includes('email-already-in-use') || lowerError.includes('email_exists')) {
+          errorMessage = "An account with this email already exists.";
+        } else if (lowerError.includes('weak-password')) {
+          errorMessage = "Password should be at least 6 characters.";
+        }
+      }
+      
+      setError(errorMessage)
       // Reverse Gracefully
       setAuthPhase('idle')
       setLoading(false)
@@ -257,7 +299,7 @@ export default function LoginPage() {
                                   <div className={`flex justify-between items-center px-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`}>
                                       <label className="font-label-md text-sm text-plum-high-contrast" htmlFor="password">Password</label>
                                       {mode === 'signin' && (
-                                          <a className="font-label-md text-primary/70 hover:text-plum-high-contrast transition-colors text-xs" href="#">Forgot?</a>
+                                          <button className="font-label-md text-primary/70 hover:text-plum-high-contrast transition-colors text-xs" onClick={handleForgotPassword} type="button" disabled={authPhase !== 'idle'}>Forgot?</button>
                                       )}
                                   </div>
                                   <div className="relative h-12">
@@ -312,6 +354,14 @@ export default function LoginPage() {
                           <div className="py-3 px-4 bg-error-container/80 backdrop-blur-sm text-on-error-container rounded-xl font-body-sm text-sm flex items-center gap-3">
                               <span className="material-symbols-outlined text-[18px]">info</span>
                               <span>{error}</span>
+                          </div>
+                      </div>
+
+                      {/* Success Message */}
+                      <div className={`transition-all duration-300 overflow-hidden ${successMessage ? 'max-h-20 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'}`}>
+                          <div className="py-3 px-4 bg-primary/20 backdrop-blur-sm text-primary rounded-xl font-body-sm text-sm flex items-center gap-3">
+                              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                              <span>{successMessage}</span>
                           </div>
                       </div>
 

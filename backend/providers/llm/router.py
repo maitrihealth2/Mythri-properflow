@@ -58,8 +58,13 @@ class LLMRouter:
     """
 
     def __init__(self) -> None:
-        self._primary = OpenRouterProvider()
-        self._secondary = HuggingFaceProvider()
+        from providers.llm.sarvam import SarvamProvider
+        # Temporarily pause Qwen providers for Sarvam 105B validation test
+        # self._primary = OpenRouterProvider()
+        # self._secondary = HuggingFaceProvider()
+        
+        self._primary = SarvamProvider()
+        self._secondary = None
         self._lock = asyncio.Lock()
 
     async def generate(
@@ -103,6 +108,10 @@ class LLMRouter:
 
             # ── Failover to secondary ──────────────────────────────────────
             provider = self._secondary
+            if provider is None:
+                _log(f"LLM_FAILOVER_SUCCESS=False SECONDARY_ERROR=SecondaryProviderDisabled")
+                return None
+                
             t1 = time.perf_counter()
             try:
                 result = await provider.generate(api_messages, max_tokens, temperature)
@@ -130,8 +139,10 @@ class LLMRouter:
 
     async def close(self) -> None:
         """Release all open HTTP connections for both providers."""
-        await self._primary.close()
-        await self._secondary.close()
+        if self._primary:
+            await self._primary.close()
+        if self._secondary:
+            await self._secondary.close()
 
 
 def _classify_reason(exc: ProviderError) -> str:

@@ -8,6 +8,12 @@ import os
 import sys
 import json
 import shutil
+import pathlib as _pl
+from dotenv import load_dotenv
+
+_BASE = _pl.Path(__file__).resolve().parent.parent.parent
+load_dotenv(_BASE / ".env")
+load_dotenv(_BASE / ".env.local", override=True)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -32,7 +38,7 @@ except ImportError:
 
 DOCS_DIR = os.path.join(os.path.dirname(__file__), "docs")
 CHROMA_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
-COLLECTION_NAME = "therapy_knowledge"
+COLLECTION_NAME = "therapy_knowledge_v2"
 
 
 def extract_text_from_pdf(filepath: str) -> str:
@@ -162,32 +168,7 @@ import requests
 import time
 from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 
-class RequestsHuggingFaceEmbeddingFunction(EmbeddingFunction[Documents]):
-    def __init__(self, api_key: str, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        self.api_key = api_key
-        self.model_name = model_name
-        self._api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
-        self._session = requests.Session()
-        self._session.headers.update({"Authorization": f"Bearer {self.api_key}"})
-
-    def __call__(self, input: Documents) -> Embeddings:
-        print(f"[RAG-HTTP] Requesting embeddings for {len(input)} chunks from {self._api_url}...")
-        for attempt in range(5):
-            response = self._session.post(
-                self._api_url,
-                json={"inputs": input, "options": {"wait_for_model": True}},
-                timeout=45.0
-            )
-            if response.status_code in (503, 502):
-                print(f"[RAG-HTTP] Model loading or gateway error (HTTP {response.status_code}). Retrying in 10s (attempt {attempt+1}/5)...")
-                time.sleep(10)
-                continue
-            response.raise_for_status()
-            data = response.json()
-            if isinstance(data, dict) and "error" in data:
-                raise ValueError(f"Hugging Face API Error: {data['error']}")
-            return data
-        raise RuntimeError("Hugging Face Inference API timed out waiting for model to load.")
+# Removed custom RequestsHuggingFaceEmbeddingFunction to avoid ChromaDB signature conflicts
 
 def build_knowledge_base():
     print("\n[RAG] Building MindBridge Knowledge Base (Multi-Format)...")
@@ -207,11 +188,8 @@ def build_knowledge_base():
         return None
 
     try:
-        print("[RAG] Initializing custom RequestsHuggingFaceEmbeddingFunction...")
-        embedding_fn = RequestsHuggingFaceEmbeddingFunction(
-            api_key=hf_token,
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
+        print("[RAG] Initializing local ONNX DefaultEmbeddingFunction...")
+        embedding_fn = chromadb.utils.embedding_functions.DefaultEmbeddingFunction()
     except Exception as e:
         print(f"[WARNING] Could not initialize HuggingFaceEmbeddingFunction: {e}")
         print("[WARNING] Skipping RAG build.")
@@ -261,11 +239,28 @@ def build_knowledge_base():
     batch_size = 50
     for i in range(0, len(documents), batch_size):
         batch = documents[i:i + batch_size]
-        collection.add(
-            ids=[d["id"] for d in batch],
-            documents=[d["text"] for d in batch],
-            metadatas=[{"source": d["source"], "concept": d["concept"], "technique": d["technique"]} for d in batch],
-        )
+        
+        # Add retry logic for Hugging Face API
+        for attempt in range(5):
+            try:
+                collection.add(
+                    ids=[d["id"] for d in batch],
+                    documents=[d["text"] for d in batch],
+                    metadatas=[{"source": d["source"], "concept": d["concept"], "technique": d["technique"]} for d in batch],
+                )
+                print(f"[RAG] Processed batch {i//batch_size + 1}")
+                break
+            except Exception as e:
+                err_str = str(e).lower()
+                if "503" in err_str or "502" in err_str or "timeout" in err_str or "loading" in err_str or "getaddrinfo" in err_str or "connecterror" in err_str:
+                    print(f"[RAG] Model loading or network error ({e}). Retrying in 10s (attempt {attempt+1}/5)...")
+                    import time
+                    time.sleep(10)
+                else:
+                    raise e
+        else:
+            print("[ERROR] Failed to add batch after 5 attempts.")
+            return None
 
     print(f"[RAG] Knowledge base built: {collection.count()} chunks stored")
     
