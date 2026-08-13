@@ -14,6 +14,15 @@ SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
 MODEL = "sarvam-105b"
 
+try:
+    _safety_policy_path = _BASE / "config" / "rules" / "ai_safety_policy.md"
+    if _safety_policy_path.exists():
+        MAITRI_SAFETY_POLICY = _safety_policy_path.read_text(encoding="utf-8")
+    else:
+        MAITRI_SAFETY_POLICY = ""
+except Exception:
+    MAITRI_SAFETY_POLICY = ""
+
 THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and deeply attentive friend. Not a formal counsellor or robotic database, but a real friend who listens, understands, and responds to what is happening right now.
 
 CONVERSATION-FIRST REASONING HIERARCHY (CRITICAL RULE):
@@ -232,6 +241,9 @@ async def chat_with_maitri(
     Generate Maitri's conversational response.
     """
     system_parts = [THERAPY_SYSTEM_PROMPT]
+    
+    if MAITRI_SAFETY_POLICY:
+        system_parts.append(MAITRI_SAFETY_POLICY)
 
     # Force disable reasoning/think tags
     system_parts.append(

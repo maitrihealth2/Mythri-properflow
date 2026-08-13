@@ -89,7 +89,7 @@ async def start_session(
             return unified_engine.build_context(db, user_id=current_user.id)
             
         profile = await asyncio.to_thread(_get_profile)
-        unified_ctx_block = profile.to_formatted_context_block()
+        unified_ctx_block = profile.to_formatted_context_block(is_greeting=True)
 
         if is_first:
             system_prompt = f"""You are Maitri, an empathetic, warm, and highly attuned AI mental health companion.

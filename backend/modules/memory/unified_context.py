@@ -74,7 +74,7 @@ class UnifiedCognitiveProfile:
     # Engine Telemetry
     assembly_duration_ms: float = 0.0
 
-    def to_formatted_context_block(self, max_tokens: int = 500) -> str:
+    def to_formatted_context_block(self, max_tokens: int = 500, is_greeting: bool = False) -> str:
         """
         Formats the unified profile into a structured markdown block for AI prompts.
         Guarantees token efficiency by deduplicating facts and capping line count.
@@ -124,14 +124,15 @@ class UnifiedCognitiveProfile:
         if persona_items:
             sections.append(f"[CLINICAL PROFILE & COPING]\n• " + "\n• ".join(persona_items))
 
-        # 5. RECENT CLINICAL SUMMARY & EMOTIONAL TREND
-        hist_items = []
-        hist_items.append(f"Total Sessions: {self.total_sessions_count} | Recent Emotion: {self.recent_emotional_trend}")
-        if self.recent_session_summaries:
-            hist_items.append(f"Recent Summary: {self.recent_session_summaries[0]}")
-        if self.journal_highlights:
-            hist_items.append(f"Journal Notes: {self.journal_highlights[0]}")
-        sections.append(f"[RECENT SUMMARY & EMOTIONAL TREND]\n• " + "\n• ".join(hist_items))
+        # 5. RECENT CLINICAL SUMMARY & EMOTIONAL TREND (Only for greetings to prevent mid-conversation repetition)
+        if is_greeting:
+            hist_items = []
+            hist_items.append(f"Total Sessions: {self.total_sessions_count} | Recent Emotion: {self.recent_emotional_trend}")
+            if self.recent_session_summaries:
+                hist_items.append(f"Recent Summary: {self.recent_session_summaries[0]}")
+            if self.journal_highlights:
+                hist_items.append(f"Journal Notes: {self.journal_highlights[0]}")
+            sections.append(f"[RECENT SUMMARY & EMOTIONAL TREND]\n• " + "\n• ".join(hist_items))
 
         full_block = "\n\n".join(sections)
 
@@ -204,9 +205,10 @@ class UnifiedCognitiveContextEngine:
                     profile.risk_level = persona.risk_level
 
             # 4. Query Companion Memories (Filtered by user_id)
+            # HARD LIMIT to top 5 to prevent overwhelming the prompt with 30 facts
             memories = db.query(CompanionMemory).filter(
                 CompanionMemory.user_id == user_id,
-            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(30).all()
+            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(5).all()
 
             seen_facts: Set[str] = set()
             for m in memories:
