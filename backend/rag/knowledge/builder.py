@@ -195,7 +195,7 @@ def build_knowledge_base():
                 res = requests.post(
                     "https://integrate.api.nvidia.com/v1/embeddings",
                     headers={"Authorization": f"Bearer {nv_key}", "Content-Type": "application/json"},
-                    json={"model": "nvidia/nv-embedqa-e5-v5", "input": input, "input_type": "passage", "encoding_format": "float"}
+                    json={"model": "nvidia/nv-embedqa-e5-v5", "input": input, "input_type": "passage", "encoding_format": "float", "truncate": "END"}
                 )
                 res.raise_for_status()
                 return [x["embedding"] for x in res.json()["data"]]
