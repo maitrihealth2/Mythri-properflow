@@ -30,13 +30,14 @@ def get_collection():
                 path=CHROMA_DIR,
                 settings=Settings(anonymized_telemetry=False)
             )
-            from chromadb.utils.embedding_functions import HuggingFaceEmbeddingFunction
-            hf_token = os.getenv("HF_TOKEN")
-            if not hf_token:
-                raise ValueError("HF_TOKEN is missing for embeddings")
-            embedding_fn = HuggingFaceEmbeddingFunction(
-                api_key=hf_token,
-                model_name="sentence-transformers/all-MiniLM-L6-v2"
+            from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+            or_key = os.getenv("MAITRI_OPENROUTER_API_KEY")
+            if not or_key:
+                raise ValueError("MAITRI_OPENROUTER_API_KEY is missing for embeddings")
+            embedding_fn = OpenAIEmbeddingFunction(
+                api_key=or_key,
+                api_base="https://openrouter.ai/api/v1",
+                model_name="text-embedding-3-small"
             )
             
             _collection = _client.get_collection(

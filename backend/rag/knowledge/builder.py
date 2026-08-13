@@ -182,16 +182,17 @@ def build_knowledge_base():
         except Exception as e:
             print(f"[RAG] Directory reset note: {e}")
 
-    hf_token = os.getenv("HF_TOKEN")
-    if not hf_token:
-        print("[WARNING] HF_TOKEN not found in environment. Skipping RAG build during Docker build.")
+    or_key = os.getenv("MAITRI_OPENROUTER_API_KEY")
+    if not or_key:
+        print("[WARNING] MAITRI_OPENROUTER_API_KEY not found in environment. Skipping RAG build during Docker build.")
         return None
 
     try:
-        print("[RAG] Initializing remote HuggingFaceEmbeddingFunction...")
-        embedding_fn = chromadb.utils.embedding_functions.HuggingFaceEmbeddingFunction(
-            api_key=hf_token,
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        print("[RAG] Initializing remote OpenRouter EmbeddingFunction...")
+        embedding_fn = chromadb.utils.embedding_functions.OpenAIEmbeddingFunction(
+            api_key=or_key,
+            api_base="https://openrouter.ai/api/v1",
+            model_name="text-embedding-3-small"
         )
     except Exception as e:
         print(f"[WARNING] Could not initialize HuggingFaceEmbeddingFunction: {e}")
@@ -373,9 +374,9 @@ def ensure_knowledge_base_built(force: bool = False):
         except Exception as e:
             print(f"[RAG] ✗ Knowledge Base validation failed: {e}")
     else:
-        hf_token = os.getenv("HF_TOKEN")
-        if not hf_token:
-            print("[RAG] ✗ Knowledge Base NOT built — HF_TOKEN is missing. RAG will be disabled until token is provided.")
+        or_key = os.getenv("MAITRI_OPENROUTER_API_KEY")
+        if not or_key:
+            print("[RAG] ✗ Knowledge Base NOT built — MAITRI_OPENROUTER_API_KEY is missing. RAG will be disabled until token is provided.")
         else:
             print("[RAG] ✗ Knowledge Base build returned no collection. Check logs above for errors.")
 
