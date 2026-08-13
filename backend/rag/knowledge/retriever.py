@@ -30,15 +30,22 @@ def get_collection():
                 path=CHROMA_DIR,
                 settings=Settings(anonymized_telemetry=False)
             )
-            from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
-            or_key = os.getenv("MAITRI_OPENROUTER_API_KEY")
-            if not or_key:
-                raise ValueError("MAITRI_OPENROUTER_API_KEY is missing for embeddings")
-            embedding_fn = OpenAIEmbeddingFunction(
-                api_key=or_key,
-                api_base="https://openrouter.ai/api/v1",
-                model_name="text-embedding-3-small"
-            )
+            nv_key = os.getenv("NVIDIA_API_KEY")
+            if not nv_key:
+                raise ValueError("NVIDIA_API_KEY is missing for embeddings")
+                
+            class NvidiaEmbeddingFunction(chromadb.utils.embedding_functions.EmbeddingFunction):
+                def __call__(self, input):
+                    import requests
+                    res = requests.post(
+                        "https://integrate.api.nvidia.com/v1/embeddings",
+                        headers={"Authorization": f"Bearer {nv_key}", "Content-Type": "application/json"},
+                        json={"model": "nvidia/nv-embedqa-e5-v5", "input": input, "input_type": "query", "encoding_format": "float"}
+                    )
+                    res.raise_for_status()
+                    return [x["embedding"] for x in res.json()["data"]]
+                    
+            embedding_fn = NvidiaEmbeddingFunction()
             
             _collection = _client.get_collection(
                 name=COLLECTION_NAME,

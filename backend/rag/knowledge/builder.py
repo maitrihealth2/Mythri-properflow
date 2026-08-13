@@ -182,18 +182,25 @@ def build_knowledge_base():
         except Exception as e:
             print(f"[RAG] Directory reset note: {e}")
 
-    or_key = os.getenv("MAITRI_OPENROUTER_API_KEY")
-    if not or_key:
-        print("[WARNING] MAITRI_OPENROUTER_API_KEY not found in environment. Skipping RAG build during Docker build.")
+    nv_key = os.getenv("NVIDIA_API_KEY")
+    if not nv_key:
+        print("[WARNING] NVIDIA_API_KEY not found in environment. Skipping RAG build during Docker build.")
         return None
 
     try:
-        print("[RAG] Initializing remote OpenRouter EmbeddingFunction...")
-        embedding_fn = chromadb.utils.embedding_functions.OpenAIEmbeddingFunction(
-            api_key=or_key,
-            api_base="https://openrouter.ai/api/v1",
-            model_name="text-embedding-3-small"
-        )
+        print("[RAG] Initializing custom NVIDIA EmbeddingFunction...")
+        class NvidiaEmbeddingFunction(chromadb.utils.embedding_functions.EmbeddingFunction):
+            def __call__(self, input):
+                import requests
+                res = requests.post(
+                    "https://integrate.api.nvidia.com/v1/embeddings",
+                    headers={"Authorization": f"Bearer {nv_key}", "Content-Type": "application/json"},
+                    json={"model": "nvidia/nv-embedqa-e5-v5", "input": input, "input_type": "passage", "encoding_format": "float"}
+                )
+                res.raise_for_status()
+                return [x["embedding"] for x in res.json()["data"]]
+                
+        embedding_fn = NvidiaEmbeddingFunction()
     except Exception as e:
         print(f"[WARNING] Could not initialize HuggingFaceEmbeddingFunction: {e}")
         print("[WARNING] Skipping RAG build.")
@@ -374,9 +381,9 @@ def ensure_knowledge_base_built(force: bool = False):
         except Exception as e:
             print(f"[RAG] ✗ Knowledge Base validation failed: {e}")
     else:
-        or_key = os.getenv("MAITRI_OPENROUTER_API_KEY")
-        if not or_key:
-            print("[RAG] ✗ Knowledge Base NOT built — MAITRI_OPENROUTER_API_KEY is missing. RAG will be disabled until token is provided.")
+        nv_key = os.getenv("NVIDIA_API_KEY")
+        if not nv_key:
+            print("[RAG] ✗ Knowledge Base NOT built — NVIDIA_API_KEY is missing. RAG will be disabled until token is provided.")
         else:
             print("[RAG] ✗ Knowledge Base build returned no collection. Check logs above for errors.")
 
