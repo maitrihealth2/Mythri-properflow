@@ -188,8 +188,11 @@ def build_knowledge_base():
         return None
 
     try:
-        print("[RAG] Initializing local ONNX DefaultEmbeddingFunction...")
-        embedding_fn = chromadb.utils.embedding_functions.DefaultEmbeddingFunction()
+        print("[RAG] Initializing remote HuggingFaceEmbeddingFunction...")
+        embedding_fn = chromadb.utils.embedding_functions.HuggingFaceEmbeddingFunction(
+            api_key=hf_token,
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
     except Exception as e:
         print(f"[WARNING] Could not initialize HuggingFaceEmbeddingFunction: {e}")
         print("[WARNING] Skipping RAG build.")

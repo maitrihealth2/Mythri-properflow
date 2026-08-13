@@ -30,8 +30,14 @@ def get_collection():
                 path=CHROMA_DIR,
                 settings=Settings(anonymized_telemetry=False)
             )
-            from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
-            embedding_fn = DefaultEmbeddingFunction()
+            from chromadb.utils.embedding_functions import HuggingFaceEmbeddingFunction
+            hf_token = os.getenv("HF_TOKEN")
+            if not hf_token:
+                raise ValueError("HF_TOKEN is missing for embeddings")
+            embedding_fn = HuggingFaceEmbeddingFunction(
+                api_key=hf_token,
+                model_name="sentence-transformers/all-MiniLM-L6-v2"
+            )
             
             _collection = _client.get_collection(
                 name=COLLECTION_NAME,
