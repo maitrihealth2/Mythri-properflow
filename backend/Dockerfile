@@ -16,10 +16,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip
 
-# Install CPU-only torch to minimize Docker image size (~150MB vs ~2GB CUDA image)
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-
-# Install remaining Python dependencies
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
