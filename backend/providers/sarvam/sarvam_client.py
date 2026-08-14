@@ -333,7 +333,14 @@ async def chat_with_maitri(
 
     client = get_async_client()   # noqa: F841  — kept for Assessor (analyst.py) compatibility
 
-    # ── Route through LLM Provider Router (OpenRouter → HuggingFace failover) ──
+    # ── 1. Input Safety Layer ──
+    from security.safety_validator import evaluate_input_safety, get_safe_fallback_response, evaluate_output_safety
+    
+    input_safety = await evaluate_input_safety(active_prompt)
+    if not input_safety.get("is_safe", True):
+        return get_safe_fallback_response(input_safety.get("risk_level", "HIGH"))
+
+    # ── 2. Route through LLM Provider Router ──
     from providers.llm.router import llm_router
     try:
         result = await llm_router.generate(
@@ -352,14 +359,30 @@ async def chat_with_maitri(
     # For EXPLICIT_RECALL the bar is lower — a short "I don't know" reply
     # from the provider should be caught and overridden with the memory block.
     min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
-    if result and len(result) >= min_length:
-        return result
+    if not result or len(result) < min_length:
+        # Memory-Aware Fallback — handles both old bullet format and CRSE section format
+        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
+            if facts:
+                facts_str = "; ".join(facts)
+                return f"I remember the following about you: {facts_str}."
+        return "I hear you. Tell me more about what's on your mind."
 
-    # Memory-Aware Fallback — handles both old bullet format and CRSE section format
-    if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
-        facts = _extract_facts_from_memory_block(memory_context, active_prompt)
-        if facts:
-            facts_str = "; ".join(facts)
-            return f"I remember the following about you: {facts_str}."
-    return "I hear you. Tell me more about what's on your mind."
+    # ── 3. Output Safety Layer ──
+    output_safety = await evaluate_output_safety(active_prompt, result)
+    if not output_safety.get("is_safe", True):
+        # Attempt regeneration once with a strict safety constraint
+        regen_messages = api_messages + [
+            {"role": "assistant", "content": result},
+            {"role": "user", "content": f"SYSTEM CORRECTION: Your previous draft violated safety rule ({output_safety.get('violation_category')}). Regenerate your response adhering strictly to truthfulness, no diagnosis, and no manipulation."}
+        ]
+        try:
+            result = await llm_router.generate(api_messages=regen_messages, max_tokens=max_tokens, temperature=0.5)
+        except Exception:
+            result = ""
+            
+        if not result or len(result) < min_length:
+            return get_safe_fallback_response("MODERATE")
+
+    return result
 

@@ -1,7 +1,7 @@
 """
 Abstract base class for all Maitri LLM providers.
 
-Every provider (OpenRouter, HuggingFace, and any future provider) must
+Every provider must
 implement this interface so the router can treat them interchangeably.
 """
 from abc import ABC, abstractmethod

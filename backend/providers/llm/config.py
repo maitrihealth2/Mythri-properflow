@@ -2,8 +2,6 @@
 Centralized credential and model configuration for Maitri LLM providers.
 
 Reads ONLY from MAITRI_* environment variables.
-Never touches HF_TOKEN, OPENROUTER_API_KEY, SARVAM_API_KEY, or any other
-existing project variable.
 """
 import os
 import pathlib
@@ -26,25 +24,6 @@ def _require(key: str) -> str:
 
 def _optional(key: str, default: str = "") -> str:
     return os.getenv(key, default)
-
-
-# ---------------------------------------------------------------------------
-# Provider credentials — loaded exclusively from MAITRI_* keys
-# ---------------------------------------------------------------------------
-OPENROUTER_API_KEY: str = _require("MAITRI_OPENROUTER_API_KEY")
-HF_API_KEY: str = _require("MAITRI_HF_API_KEY")
-
-# ---------------------------------------------------------------------------
-# Model names — use provider-canonical IDs
-# ---------------------------------------------------------------------------
-PRIMARY_MODEL: str = _optional("MAITRI_PRIMARY_MODEL", "qwen/qwen3-32b")  # OpenRouter format
-SECONDARY_MODEL: str = _optional("MAITRI_SECONDARY_MODEL", "Qwen/Qwen3-32B")  # HF format
-
-# ---------------------------------------------------------------------------
-# Provider endpoints
-# ---------------------------------------------------------------------------
-OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-HF_BASE_URL: str = "https://router.huggingface.co/v1"
 
 # ---------------------------------------------------------------------------
 # Timeouts (seconds)

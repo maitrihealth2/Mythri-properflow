@@ -113,7 +113,7 @@ npm run dev
 ## 🎯 Next Steps & Roadmap
 
 1. **Initialize the Knowledge Base (RAG):** Ingest clinical documents into the ChromaDB vector store so Maitri can fetch grounded therapeutic advice.
-2. **Supervised Fine-Tuning (SFT):** Curate conversational datasets in `training/datasets/finetuning_datasets/` to eventually run LoRA tuning on `sarvam-30b` or `qwen3`.
+2. **Supervised Fine-Tuning (SFT):** Curate conversational datasets in `training/datasets/finetuning_datasets/` to eventually run LoRA tuning on `sarvam-30b`.
 3. **End-to-End Voice Validation:** Test the full WebSocket pipeline from the React Three Fiber Avatar to the Sarvam endpoints.
 
 ---
