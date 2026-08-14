@@ -1,6 +1,6 @@
 """
 Memory Types & Data Models
-Defines core data structures and enums for the Maitri Memory System.
+Defines core data structures and enums for the Mythri Memory System.
 """
 from dataclasses import dataclass, field
 from datetime import datetime

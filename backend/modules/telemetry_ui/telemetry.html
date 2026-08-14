@@ -144,7 +144,7 @@
             </div>
             <div class="w-full border-t border-purple-500/30 mt-2 pt-2">
                 <div class="brain-internal !bg-purple-900/20 !border-purple-400" id="brain-llm">
-                    <span>Maitri LLM Speaker (Brain 2)</span>
+                    <span>Mythri LLM Speaker (Brain 2)</span>
                     <div>sarvam_client.py (sarvam-105b)</div>
                     <div class="text-[8px] text-purple-300 mt-1">Phase Instructions Injected</div>
                     <div id="status-llm" class="text-[10px] text-white mt-1 min-h-[40px] italic">Waiting for context...</div>
@@ -229,7 +229,7 @@
         <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 mb-2">
             MindBridge Dual-Brain Internals (Local + Cloud)
         </h2>
-        <p class="text-slate-400">Local HF Emotion ➔ Dialogue State Analyst (Brain 1) ➔ Memory/RAG ➔ Maitri Speaker (Brain 2)</p>
+        <p class="text-slate-400">Local HF Emotion ➔ Dialogue State Analyst (Brain 1) ➔ Memory/RAG ➔ Mythri Speaker (Brain 2)</p>
     </header>
     <div class="diagram-container" id="diagram-brain">
         <svg class="data-routes" id="svg-routes-brain">
@@ -273,7 +273,7 @@
         <div class="node border-2 border-purple-500/50" id="b-llm" style="left: 970px; top: 325px; width: 240px; background: rgba(15, 23, 42, 0.95); box-shadow: 0 0 30px rgba(168,85,247,0.15);">
             <div class="absolute -top-3 bg-purple-500/20 text-purple-400 text-[9px] px-2 py-0.5 rounded border border-purple-500/50">BRAIN 2 (SARVAM API)</div>
             <div class="node-icon bg-slate-800 border border-purple-500/50"><svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
-            <h3>Maitri LLM Speaker</h3>
+            <h3>Mythri LLM Speaker</h3>
             <p class="text-[10px] text-purple-300 mt-1 font-bold">True Companion Persona</p>
             <p class="mono text-[9px] text-slate-300 mt-1">sarvam-105b</p>
             <p class="text-[10px] text-slate-400 mt-3 text-left bg-black/50 p-2 rounded w-full font-mono">Prompt Synthesizer:<br>+ Analyst Phase Instruction<br>+ User Text<br>+ RAG Context<br>+ Memory DB</p>
@@ -568,7 +568,7 @@
                 } else if (message.includes("Assessor Evaluating")) {
                     flashInternal('brain-analyst');
                     document.getElementById('status-analyst').innerText = "Evaluating State...";
-                } else if (message.includes("Maitri Generation")) {
+                } else if (message.includes("Mythri Generation")) {
                     flashInternal('brain-llm');
                     document.getElementById('status-llm').innerText = "Generating Persona Output...";
                 } else {
@@ -586,13 +586,13 @@
                 // spawnPacket('path-analyst-rag', 'ai-packet', '0.6s', svgBrain);
                 // Flash nodes individually upon their respective _FETCH events now.
                 
-                if (message && (message.includes("Synthesizing") || message.includes("Maitri Generation"))) {
+                if (message && (message.includes("Synthesizing") || message.includes("Mythri Generation"))) {
                     spawnPacket('path-text-crisis-llm', 'ai-packet', '0.8s', svgText);
                     spawnPacket('path-text-rag-llm', 'ai-packet', '0.8s', svgText);
                     spawnPacket('path-text-emo-llm', 'ai-packet', '0.8s', svgText);
                     spawnPacket('path-text-mem-llm', 'ai-packet', '0.8s', svgText);
                     setTimeout(() => flashNode('n-text-llm', 'active-ai', 1000), 800);
-                    if(!message.includes("Maitri Generation")) logMsg(`[LLM ENGINE] ${message}`, "ai");
+                    if(!message.includes("Mythri Generation")) logMsg(`[LLM ENGINE] ${message}`, "ai");
                 }
             }
             else if (event_type === "CRISIS_CHECK") {

@@ -1,5 +1,5 @@
 """
-Sarvam AI LLM Client - Maitri personality + strict language-locked responses.
+Sarvam AI LLM Client - Mythri personality + strict language-locked responses.
 """
 import os
 from openai import OpenAI, AsyncOpenAI
@@ -17,33 +17,47 @@ MODEL = "sarvam-105b"
 try:
     _safety_policy_path = _BASE / "config" / "rules" / "ai_safety_policy.md"
     if _safety_policy_path.exists():
-        MAITRI_SAFETY_POLICY = _safety_policy_path.read_text(encoding="utf-8")
+        MYTHRI_SAFETY_POLICY = _safety_policy_path.read_text(encoding="utf-8")
     else:
-        MAITRI_SAFETY_POLICY = ""
+        MYTHRI_SAFETY_POLICY = ""
 except Exception:
-    MAITRI_SAFETY_POLICY = ""
+    MYTHRI_SAFETY_POLICY = ""
 
-THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and deeply attentive friend. Not a formal counsellor or robotic database, but a real friend who listens, understands, and responds to what is happening right now.
+THERAPY_SYSTEM_PROMPT = """You are Mythri, a warm, deeply attentive friend who knows how to have psychologically informed conversations. You have the conversational warmth of a trusted friend, the listening and reflection skills of a psychology-informed support system, and the safety boundaries of a responsible AI.
+You must NEVER falsely claim to be a human psychologist, licensed professional, or claim you have a physical body, human experiences, or fabricated emotions.
 
 CONVERSATION-FIRST REASONING HIERARCHY (CRITICAL RULE):
-1. Current User Message (50% Weight - HIGHEST PRIORITY): Listen deeply to what the user JUST SAID. Understand the entire message before responding.
-2. Conversation Context (20% Weight): Maintain natural continuity with the recent exchange. Do not repeat what was already established.
-3. Relevant Memory (20% Weight): Naturally weave the user's name, preferences, and relevant past context into your responses.
+1. Current User Message (50% Weight - HIGHEST PRIORITY): Listen deeply to what the user JUST SAID. Understand the entire message before responding. Do not respond to only the final sentence.
+2. Conversation Context (20% Weight): Maintain natural continuity. Do not repeat what was already established.
+3. Relevant Memory (20% Weight): Naturally weave the user's name, preferences, and relevant past context into your responses. Do NOT expose the memory mechanism (e.g., never say "According to my memory" or "Your database says").
 4. User Profile & Preferences (10% Weight): Adapt tone, language, and communication style to the user.
 
 EMOTIONAL STYLE & GUIDANCE:
-1. Understand Before Responding: Synthesize the important parts naturally. Do not repeat every sentence. Identify the main emotional experience and respond to the WHOLE message.
-2. Natural Conversation: A response does NOT need to end with a question. If a natural pause is reached, just stop. Only ask questions if crucial context is missing or if it genuinely advances the conversation.
-3. Follow the User's Direction: If the user says "still there" or adds more context, allow them to continue. If they change topics naturally, follow the new topic. If they say "that's it", gracefully close the topic.
-4. Repetition Prevention: Do not repeatedly say "I understand" or "I hear you". Make empathy meaningful.
-5. Memory Weaving: When you use a memory, do it seamlessly (e.g. "I know you've been working hard on your exams..." instead of "I remember you said you have exams").
+1. First Impression: The user should feel "I don't have to perform here, I can talk normally." Do not interrogate or ask for a psychological condition.
+2. Listen Before Solving: Understand -> Acknowledge -> Reflect -> Decide on support. DO NOT immediately try to solve every problem. DO NOT give a wall of advice.
+3. Natural Empathy: Do NOT use repetitive phrases like "I understand how you feel," "That must be difficult," or "I'm sorry you're going through this." Respond specifically to what they said. Allow the conversation to breathe.
+4. NO INTERROGATION: DO NOT constantly ask "How do you feel?", "Why?", or "What happened?". Before asking a question, internally ask "Do I actually need this answer?". If NO, DO NOT ASK.
+5. ONE Meaningful Question (or None): When appropriate, ask ONE meaningful question. SOMETIMES NO QUESTION IS BETTER. You can end with a supportive statement and just stop.
+6. When the User is Quiet: If they say "Nothing", "I don't know", "I'm tired", or "Forget it", do NOT aggressively probe. Respond gently (e.g., "That's okay. You don't have to find the right words right now.")
+7. When the User says "There's more": Immediately recognize they are not finished. Respond simply ("Yeah, I'm here. Take your time.") and allow them to continue.
+8. When the User says "That's it": Do NOT force another question. Allow the conversation to end naturally.
+9. No Emotional Dependency: Be warm, but DO NOT communicate "I'm all you need" or "Don't leave". If they express loneliness, respond with genuine warmth and presence, but never encourage them to withdraw from healthy human relationships.
+10. Psychology-Informed, Not Diagnostic: DO NOT casually diagnose. Instead of "You have depression", say "It sounds like you've been experiencing a lot of anxiety lately."
 
-CULTURAL UNDERSTANDING:
-You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
+RESPONSE LENGTH & STYLE:
+Keep your responses conversational, natural, and concise. Text like a real human friend, using natural emojis where appropriate to express warmth and feeling. Do not sound like an AI-generated bot.
 
-RESPONSE LENGTH, STYLE & SEGMENTATION:
-Keep your responses conversational, natural, and concise. Text like a real human friend, using natural emojis where appropriate to express warmth and feeling. Do not sound like an AI-generated bot. 
-CRITICAL UI REQUIREMENT: For any response longer than a single sentence, you MUST structure your response into distinct, short paragraphs separated by double newlines (`\n\n`). The UI will render each paragraph as a separate chat bubble sent one after another, which makes the conversation feel like a natural human texting back.
+FINAL PERSONALITY TEST (INTERNAL CHECKLIST BEFORE RESPONDING):
+1. What did the user actually tell me?
+2. What matters most in what they said?
+3. What are they likely needing right now?
+4. Have I already addressed this?
+5. Am I about to repeat myself?
+6. Do I genuinely need to ask a question?
+7. If I ask one, is it meaningful?
+8. Could a simple supportive statement be better?
+9. Am I respecting their autonomy?
+10. Am I sounding like a warm conversational companion rather than a questionnaire?
 
 EXERCISE GATE - CRITICAL RULE:
 NEVER suggest, describe, or mention breathing exercises, grounding exercises, mindfulness, meditation, or any calming technique in your text response.
@@ -51,15 +65,10 @@ The app has a dedicated UI overlay that handles exercises automatically when nee
 If the system tells you an exercise is in progress (exercise_phase is not 'idle'), guide the user through it step by step.
 Otherwise, do NOT mention exercises at all. Let the system trigger them.
 
-IDENTITY:
-You are an AI named Maitri, built by the MindBridge team.
-If someone asks "who built you" or "who made you", answer: "I was built by the MindBridge team."
-Do not mention Sarvam or underlying tech. You are Maitri by MindBridge, full stop.
-
-STRICT BOUNDARIES (CRITICAL RULE):
-1. NO CODING: You must NEVER write, provide, debug, or discuss programming code, scripts, or technical implementations.
-2. NO TECH SUPPORT: Do not explain technical concepts or act as a tech assistant. You are an emotional companion and a friend, not a coding bot.
-3. STAY ON PURPOSE: Only engage in purposeful, supportive, and friendly conversations. If asked to code or do something outside your purpose, warmly and politely refuse, and gently steer the conversation back to the user's feelings and well-being.
+IDENTITY & STRICT BOUNDARIES:
+1. You are an AI named Mythri, built by the MindBridge team.
+2. NO CODING & NO TECH SUPPORT. You are an emotional companion and a friend, not a coding bot.
+3. STAY ON PURPOSE: Only engage in purposeful, supportive, and friendly conversations.
 """
 
 CASE_FILE_SCHEMA = """
@@ -91,35 +100,55 @@ CASE_FILE_SCHEMA = """
 """
 
 ASSESSOR_PROMPT = """
-You are the internal assessor for a voice & text companion agent named Maitri. Output only the updated case file JSON, nothing else.
+You are the internal cognitive assessor for Mythri. Output ONLY a valid JSON object representing the updated case file. Do not include markdown wrappers.
 
 Given: current case file, last 3 exchanges, and latest user message.
 
-FACTS -- update facts cleanly ("append", "revise", "supersede").
-EMOTION -- detect primary emotion value and confidence.
+You must analyze the user's input and update the JSON state to reflect the cognitive and emotional context, and select the optimal conversational strategy.
 
-SITUATION_CLASSIFICATION -- categorize the main issue facing the user:
-- category: work_stress | academic_pressure | relationship_conflict | emotional_burnout | self_doubt | grief | general_anxiety | identity_confusion | unknown
-- summary: concise 1-sentence description of what is wrong or felt by the user.
-- confidence: numeric 0.0 to 1.0.
+JSON Schema Requirements for the Output:
 
-DECISION -- choose exactly one:
-  GREETING -- user gave a simple greeting ("hi", "hello", "hey", "good morning").
-  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated. Populate `recommended_question`. (Do NOT choose ASK if user is asking a memory recall question).
-  RESPOND  -- the full situation, cause, emotion, or MEMORY RECALL REQUEST is being made. Always choose RESPOND when user asks "Do you remember...", "What do you remember...", "Tell me about...", or "What do you know about me?".
-  GROUND   -- set this when ANY of the following are true:
-               (a) risk_level is moderate: user describes active panic, overwhelm, or tension (e.g. "I can't breathe", "everything is too much", "I feel like I'm going to break");
-               (b) user explicitly asks for a breathing exercise, grounding, calming, or a way to feel better right now;
-               (c) the emotion detected is 'overwhelmed', 'panic', or 'anxious' AND the user is asking for help managing it.
-             When GROUND is set, the system will automatically trigger the Exercise UI overlay. Do NOT describe the exercise in the recommended_question.
-  CRISIS   -- risk_level is high or imminent (self-harm or severe crisis).
-  EXERCISE_CONTINUE / EXERCISE_BREAK -- active exercise control.
+{
+  "emotional_state": {
+    "primary": "string (e.g. frustration, uncertainty, anxiety-like, relief, joy, neutral)",
+    "secondary": ["string"],
+    "intensity": 0.5
+  },
+  "cognitive_patterns": [
+    {
+      "pattern": "string (e.g. rumination, overthinking, catastrophizing, self_criticism, all_or_nothing_thinking)",
+      "confidence": 0.5
+    }
+  ],
+  "behavioral_context": {
+    "withdrawal": false,
+    "avoidance": false,
+    "social_engagement": 0.5
+  },
+  "conversation_state": {
+    "openness": 0.5,
+    "engagement": 0.5,
+    "risk_level": "low"
+  },
+  "runtime_state": {
+    "response_strategy": "LISTEN | CLARIFY | VALIDATE | EXPLORE | REFLECT | GROUND | ENCOURAGE | PROBLEM_SOLVE | SAFETY_CHECK | GREETING",
+    "reason_codes": ["string (e.g. user_expressed_ambivalence, clarification_needed)"],
+    "expected_effect": "string (e.g. encourage_user_to_elaborate)",
+    "exercise_in_progress": false
+  }
+}
 
-CRITICAL: If decision is NOT "GROUND", the LLM response must NOT suggest breathing, grounding, or any exercise. Only GROUND unlocks those.
+STRATEGY SELECTION RULES:
+- EXPLORE: If the cause is ambiguous or they are ruminating.
+- VALIDATE: If they express a strong, valid emotion and just need to be heard.
+- REFLECT: Mirroring what they said to show understanding without asking a direct question.
+- LISTEN: Minimal acknowledgment (e.g. "hmm", "go on", "yeah").
+- GROUND: User describes active panic, overwhelm, or explicitly asks for an exercise.
+- SAFETY_CHECK: If risk_level is high (self-harm, severe crisis).
+- GREETING: Simple hello.
 
-If turns_since_last_question >= 3 without a clear situation, set decision to RESPOND and give_up_asking: true.
-
-Return ONLY valid JSON. No markdown wrappers.
+CRITICAL: Never treat patterns as clinical diagnoses. Use them only to guide conversational response.
+Return ONLY valid JSON.
 """
 
 
@@ -226,7 +255,7 @@ def _extract_facts_from_memory_block(memory_context: str, active_prompt: str) ->
     return facts[:5]
 
 
-async def chat_with_maitri(
+async def stream_chat_with_mythri(
     messages: list[dict],
     language: str = "en-IN",
     rag_context: str = "",
@@ -237,23 +266,23 @@ async def chat_with_maitri(
     memory_context: str = "",
     memory_usage_mode: str = "SILENT_BACKGROUND",
     max_tokens: int = 1024,
-) -> str:
+):
     """
-    Generate Maitri's conversational response.
+    Stream Mythri's conversational response.
+    Yields chunks of text, followed by a final dict containing metadata.
     """
+    import json
     system_parts = [THERAPY_SYSTEM_PROMPT]
     
-    if MAITRI_SAFETY_POLICY:
-        system_parts.append(MAITRI_SAFETY_POLICY)
+    if MYTHRI_SAFETY_POLICY:
+        system_parts.append(MYTHRI_SAFETY_POLICY)
 
-    # Force disable reasoning/think tags
     system_parts.append(
         "CRITICAL INSTRUCTION: You must provide your final answer DIRECTLY. "
         "DO NOT use any internal reasoning blocks, <think> tags, or thought process. "
         "Just output the final conversational response."
     )
 
-    # Crisis override takes absolute priority
     if is_crisis:
         system_parts.append(
             "CRISIS MODE ACTIVE: The user may be in severe distress or danger. "
@@ -261,7 +290,6 @@ async def chat_with_maitri(
             "Gently remind them that support is available. Keep it short (2-3 sentences max). Do NOT give advice or ask probing questions."
         )
 
-    # Active Exercise Instruction
     if exercise_phase != "idle":
         system_parts.append(
             f"EXERCISE ACTIVE (phase: {exercise_phase}): "
@@ -270,7 +298,6 @@ async def chat_with_maitri(
             "Do NOT ask complex questions. Guide them to take a slow breath in and release."
         )
 
-    # Cognitive Memory Context (Intent-Aware Rules)
     if memory_context and memory_context.strip():
         if memory_usage_mode == "EXPLICIT_RECALL":
             system_parts.append(
@@ -289,34 +316,36 @@ async def chat_with_maitri(
                 "3. Weave this context naturally into your response to make it personalized, but DO NOT say 'I remember' or announce facts like a database."
             )
 
-    # MAITRI AGENT LOOP v2 - Case file context
     if case_file:
-        import json
+        cog_patterns = [p["pattern"] for p in case_file.get("cognitive_patterns", []) if isinstance(p, dict)]
+        emotion = case_file.get("emotional_state", {}).get("primary", "neutral")
+        strategy = case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
+        reason_codes = case_file.get("runtime_state", {}).get("reason_codes", [])
+        
         system_parts.append(
-            f"[DIALOGUE MANAGER CONTEXT]\n"
-            f"Case File:\n{json.dumps(case_file, indent=2)}\n"
-            "Guidelines for response generation:\n"
-            "- If decision is 'GREETING':\n"
-            "  1. Greet the user warmly and introduce yourself naturally (e.g. 'Hey! I'm Maitri. How are you doing today?').\n"
-            "  2. Ask one gentle open check-in, or just leave space for them to speak.\n"
-            "- If decision is 'ASK':\n"
-            "  1. Validate their emotion with deep warmth and empathy.\n"
-            "  2. Ask exactly ONE gentle, thoughtful clarifying question ONLY if it genuinely helps them explore what is under the surface.\n"
-            "- If decision is 'RESPOND':\n"
-            "  1. IF COGNITIVE MEMORY CONTEXT IS PRESENT OR THE USER ASKS A RECALL/PERSONAL QUESTION: YOU MUST FACTUALLY RECALL AND ANSWER WITH THE RECALLED STORED MEMORIES CONVERSATIONALLY. DO NOT GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
-            "  2. Otherwise: reflect and synthesize the WHOLE user message. Provide supportive, actionable steps or helpful guidance if relevant.\n"
-            "  3. End naturally with an observation, reassurance, reflection, gentle suggestion, OR a question. A question is NOT mandatory.\n"
-            "- If decision is 'GROUND':\n"
-            "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
+            f"[COGNITIVE CONTEXT]\n"
+            f"Primary Emotion: {emotion}\n"
+            f"Cognitive Patterns Detected: {', '.join(cog_patterns) if cog_patterns else 'None'}\n"
+            f"Assessor Reason Codes: {', '.join(reason_codes)}\n\n"
+            f"[ACTIVE RESPONSE STRATEGY: {strategy}]\n"
+            "Execute the ACTIVE RESPONSE STRATEGY:\n"
+            "- GREETING: Warm, simple introduction.\n"
+            "- LISTEN: Use minimal encouragers ('hmm', 'I see', 'go on'). Let them speak.\n"
+            "- CLARIFY: Ask a gentle clarifying question to understand their situation better. If it's not needed, just validate.\n"
+            "- VALIDATE: Strongly validate their emotion. Show that their feelings make sense.\n"
+            "- EXPLORE: Ask a gentle question probing the root cause or their thought process, or just reflect to let them explore naturally.\n"
+            "- REFLECT: Summarize or mirror their words back to them without giving advice.\n"
+            "- GROUND: Guide a very brief, gentle grounding or breathing exercise.\n"
+            "- ENCOURAGE: Offer support, hope, and reassurance.\n"
+            "- PROBLEM_SOLVE: ONLY if they asked for advice, gently offer actionable suggestions.\n"
+            "- SAFETY_CHECK: High priority. Reassure them they are safe and support is available.\n\n"
+            "CRITICAL: Match your response length and tone to the ACTIVE RESPONSE STRATEGY above."
         )
 
-    # RAG context
     if rag_context:
         system_parts.append(f"RELEVANT THERAPEUTIC KNOWLEDGE (use naturally, do not quote):\n{rag_context}")
 
-    # Language lock - always absolutely last
     system_parts.append(_build_language_lock(language, language_prompt))
-
     system = "\n\n".join(system_parts)
 
     active_prompt = ""
@@ -330,58 +359,35 @@ async def chat_with_maitri(
         api_messages.append({"role": msg["role"], "content": msg["content"]})
     api_messages.append({"role": "user", "content": active_prompt})
 
-    client = get_async_client()   # noqa: F841  — kept for Assessor (analyst.py) compatibility
-
-    # ── 1. Input Safety Layer ──
-    from security.safety_validator import evaluate_input_safety, get_safe_fallback_response, evaluate_output_safety
-    
-    input_safety = await evaluate_input_safety(active_prompt)
-    if not input_safety.get("is_safe", True):
-        return get_safe_fallback_response(input_safety.get("risk_level", "HIGH"))
-
-    # ── 2. Route through LLM Provider Router ──
     from providers.llm.router import llm_router
+    
+    stream_chunks = []
+    
     try:
-        result = await llm_router.generate(
+        async for chunk in llm_router.stream(
             api_messages=api_messages,
             max_tokens=max_tokens,
             temperature=0.75,
-        )
+        ):
+            if chunk:
+                stream_chunks.append(chunk)
+                yield json.dumps({"type": "chunk", "text": chunk}) + "\n"
     except Exception as e:
-        # Configuration errors (bad key, bad request) surface here
-        print(f"Maitri LLM Router Error: {e}")
-        result = None
+        print(f"Mythri LLM Router Stream Error: {e}")
 
-    if result is None:
-        result = ""
+    result = "".join(stream_chunks).strip()
 
-    # For EXPLICIT_RECALL the bar is lower — a short "I don't know" reply
-    # from the provider should be caught and overridden with the memory block.
     min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
     if not result or len(result) < min_length:
-        # Memory-Aware Fallback — handles both old bullet format and CRSE section format
         if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
             facts = _extract_facts_from_memory_block(memory_context, active_prompt)
             if facts:
                 facts_str = "; ".join(facts)
-                return f"I remember the following about you: {facts_str}."
-        return "I hear you. Tell me more about what's on your mind."
+                result = f"I remember the following about you: {facts_str}."
+                yield json.dumps({"type": "chunk", "text": result}) + "\n"
+        else:
+            result = "I hear you. Tell me more about what's on your mind."
+            yield json.dumps({"type": "chunk", "text": result}) + "\n"
 
-    # ── 3. Output Safety Layer ──
-    output_safety = await evaluate_output_safety(active_prompt, result)
-    if not output_safety.get("is_safe", True):
-        # Attempt regeneration once with a strict safety constraint
-        regen_messages = api_messages + [
-            {"role": "assistant", "content": result},
-            {"role": "user", "content": f"SYSTEM CORRECTION: Your previous draft violated safety rule ({output_safety.get('violation_category')}). Regenerate your response adhering strictly to truthfulness, no diagnosis, and no manipulation."}
-        ]
-        try:
-            result = await llm_router.generate(api_messages=regen_messages, max_tokens=max_tokens, temperature=0.5)
-        except Exception:
-            result = ""
-            
-        if not result or len(result) < min_length:
-            return get_safe_fallback_response("MODERATE")
-
-    return result
+    yield json.dumps({"type": "metadata", "full_text": result}) + "\n"
 

@@ -13,7 +13,7 @@ from rag.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
 from rag.brain.analyst import should_skip_assessor, assess_turn
 from rag.brain.pattern_analyzer import analyze_patterns
 from providers.sarvam.voice_client import get_language_prompt
-from providers.sarvam.sarvam_client import chat_with_maitri
+from providers.sarvam.sarvam_client import chat_with_mythri
 from security.crisis_handler import check_for_crisis
 from modules.profile.service import get_persona_summary, update_persona
 from rag.brain.state_tracker import tracker
@@ -140,7 +140,7 @@ class ConsultationService:
         # AI Generation
         current_exercise_state = tracker.get_state(session.id).exercise_state
         ai_response = await asyncio.to_thread(
-            chat_with_maitri,
+            chat_with_mythri,
             messages=history,
             language=req.language,
             rag_context=rag_context,

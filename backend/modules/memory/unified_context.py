@@ -67,12 +67,14 @@ class UnifiedCognitiveProfile:
     total_sessions_count: int = 0
     last_session_time: Optional[str] = None
     recent_session_summaries: List[str] = field(default_factory=list)
-    recent_emotional_trend: str = "Calm"
+    recent_emotional_trend: Optional[str] = None
     recent_user_utterances: List[str] = field(default_factory=list)
     journal_highlights: List[str] = field(default_factory=list)
 
     # Engine Telemetry
     assembly_duration_ms: float = 0.0
+    db_acquire_ms: float = 0.0
+    query_total_ms: float = 0.0
 
     def to_formatted_context_block(self, max_tokens: int = 500, is_greeting: bool = False) -> str:
         """
@@ -164,114 +166,116 @@ class UnifiedCognitiveContextEngine:
         start_time = time.time()
         profile = UnifiedCognitiveProfile(user_id=user_id)
 
+        from sqlalchemy import text
         try:
-            # 1. Query User & Base Identity
-            user_obj = db.query(User).filter(User.id == user_id).first()
-            if user_obj:
-                profile.language = user_obj.preferred_language or "en-IN"
-
-            # 2. Query Onboarding Data
-            onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == user_id).first()
-            if onboarding:
-                if onboarding.preferred_name:
-                    profile.preferred_name = onboarding.preferred_name
-                if onboarding.language:
-                    profile.language = onboarding.language
-                if onboarding.conversation_style:
-                    profile.conversation_style = onboarding.conversation_style
-                if onboarding.communication_mode:
-                    profile.communication_mode = onboarding.communication_mode
-                if onboarding.primary_goal:
-                    profile.primary_goal = onboarding.primary_goal
-                if onboarding.goals and isinstance(onboarding.goals, list):
-                    profile.goals = onboarding.goals
-                if onboarding.reasons and isinstance(onboarding.reasons, list):
-                    profile.reasons_for_joining = onboarding.reasons
-
-            # 3. Query Persona Profile
-            persona = db.query(UserPersonaProfile).filter(UserPersonaProfile.user_id == user_id).first()
-            if persona:
-                if getattr(persona, 'initial_presenting_topic', None):
-                    profile.presenting_problem = persona.initial_presenting_topic
-                elif getattr(persona, 'initial_presenting_problem', None):
-                    profile.presenting_problem = persona.initial_presenting_problem
-                if getattr(persona, 'coping_mechanisms', None):
-                    profile.coping_mechanisms = str(persona.coping_mechanisms)
-                if getattr(persona, 'perceived_support_system', None):
-                    profile.support_system = str(persona.perceived_support_system)
-                if getattr(persona, 'personality_traits', None):
-                    profile.personality_traits = str(persona.personality_traits)
-                if getattr(persona, 'risk_level', None):
-                    profile.risk_level = persona.risk_level
-
-            # 4. Query Companion Memories (Filtered by user_id)
-            # HARD LIMIT to top 5 to prevent overwhelming the prompt with 30 facts
-            memories = db.query(CompanionMemory).filter(
-                CompanionMemory.user_id == user_id,
-            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(5).all()
-
-            seen_facts: Set[str] = set()
-            for m in memories:
-                content_clean = m.content.strip()
-                norm_content = content_clean.lower()
-                if norm_content in seen_facts:
-                    continue
-                seen_facts.add(norm_content)
-
-                mtype = (m.memory_type or "").lower()
-                if "relationship" in mtype:
-                    profile.relationships.append(content_clean)
-                elif "preference" in mtype:
-                    profile.long_term_preferences.append(content_clean)
-                elif "goal" in mtype:
-                    profile.active_goals.append(content_clean)
-                elif "habit" in mtype:
-                    profile.habits_and_routines.append(content_clean)
-                elif "trigger" in mtype:
-                    profile.emotional_triggers.append(content_clean)
-                else:
-                    profile.personal_facts.append(content_clean)
-
-            # 5. Query Consultation Notes (Session Summaries)
-            notes = db.query(ConsultationNote).join(DBSession).filter(
-                DBSession.user_id == user_id
-            ).order_by(ConsultationNote.created_at.desc()).limit(3).all()
-
-            for n in notes:
-                if n.summary:
-                    profile.recent_session_summaries.append(n.summary[:200])
-
-            # 6. Query Session Stats & Emotional Trends
-            total_sessions = db.query(func.count(DBSession.id)).filter(DBSession.user_id == user_id).scalar() or 0
-            profile.total_sessions_count = total_sessions
-
-            last_emotion = db.query(MessageEmotion).join(MessageEmotion.message).join(Message.session).filter(
-                DBSession.user_id == user_id,
-                Message.role == "user"
-            ).order_by(MessageEmotion.created_at.desc()).first()
-
-            if last_emotion and last_emotion.emotion_label:
-                profile.recent_emotional_trend = last_emotion.emotion_label.capitalize()
-
-            # 7. Query User Goals table
-            user_goals_rows = db.query(UserGoal).filter(
-                UserGoal.user_id == user_id,
-                UserGoal.status == "in_progress"
-            ).all()
-            for ug in user_goals_rows:
-                if ug.title and ug.title not in profile.goals:
-                    profile.goals.append(ug.title)
-
-            # 8. Query User Journal Highlights
-            journals = db.query(UserJournal).filter(
-                UserJournal.user_id == user_id
-            ).order_by(UserJournal.created_at.desc()).limit(2).all()
-            for j in journals:
-                j_title = j.title or j.content[:50]
-                profile.journal_highlights.append(f"{j_title} (Mood: {j.mood or 'Neutral'})")
-
+            sql = text("""
+                SELECT 
+                  (SELECT preferred_language FROM users WHERE id = u.id) AS language,
+                  (SELECT row_to_json(o) FROM user_onboarding o WHERE o.user_id = u.id) AS onboarding,
+                  (SELECT row_to_json(p) FROM user_persona_profiles p WHERE p.user_id = u.id) AS persona,
+                  (SELECT json_agg(m) FROM (SELECT * FROM companion_memories WHERE user_id = u.id ORDER BY importance_score DESC, created_at DESC LIMIT 5) m) AS memories,
+                  (SELECT json_agg(n) FROM (SELECT n.* FROM consultation_notes n JOIN sessions s ON n.session_id = s.id WHERE s.user_id = u.id ORDER BY n.created_at DESC LIMIT 3) n) AS notes,
+                  (SELECT count(id) FROM sessions WHERE user_id = u.id) AS sessions_count,
+                  (SELECT json_agg(g) FROM (SELECT * FROM user_goals WHERE user_id = u.id AND status = 'in_progress') g) AS goals,
+                  (SELECT json_agg(j) FROM (SELECT * FROM user_journals WHERE user_id = u.id ORDER BY created_at DESC LIMIT 2) j) AS journals,
+                  (SELECT row_to_json(e) FROM (SELECT e.* FROM message_emotions e JOIN messages m ON e.message_id = m.id JOIN sessions s ON m.session_id = s.id WHERE s.user_id = u.id AND m.role = 'user' ORDER BY e.created_at DESC LIMIT 1) e) AS last_emotion
+                FROM users u
+                WHERE u.id = :user_id;
+            """)
+            
+            result = db.execute(sql, {"user_id": user_id}).mappings().first()
+            if result:
+                profile.language = result["language"] or "en-IN"
+                
+                onboarding = result["onboarding"]
+                if onboarding:
+                    if onboarding.get("preferred_name"): profile.preferred_name = onboarding.get("preferred_name")
+                    if onboarding.get("language"): profile.language = onboarding.get("language")
+                    if onboarding.get("conversation_style"): profile.conversation_style = onboarding.get("conversation_style")
+                    if onboarding.get("communication_mode"): profile.communication_mode = onboarding.get("communication_mode")
+                    if onboarding.get("primary_goal"): profile.primary_goal = onboarding.get("primary_goal")
+                    if onboarding.get("goals") and isinstance(onboarding.get("goals"), list): profile.goals = onboarding.get("goals")
+                    if onboarding.get("reasons") and isinstance(onboarding.get("reasons"), list): profile.reasons_for_joining = onboarding.get("reasons")
+                
+                persona = result["persona"]
+                if persona:
+                    if persona.get("initial_presenting_topic"): profile.presenting_problem = persona.get("initial_presenting_topic")
+                    elif persona.get("initial_presenting_problem"): profile.presenting_problem = persona.get("initial_presenting_problem")
+                    if persona.get("coping_mechanisms"): profile.coping_mechanisms = str(persona.get("coping_mechanisms"))
+                    if persona.get("perceived_support_system"): profile.support_system = str(persona.get("perceived_support_system"))
+                    if persona.get("personality_traits"): profile.personality_traits = str(persona.get("personality_traits"))
+                    if persona.get("risk_level"): profile.risk_level = persona.get("risk_level")
+                    
+                memories = result["memories"] or []
+                seen_facts: Set[str] = set()
+                for m in memories:
+                    content_clean = m.get("content", "").strip()
+                    if not content_clean: continue
+                    norm_content = content_clean.lower()
+                    if norm_content in seen_facts: continue
+                    seen_facts.add(norm_content)
+                    
+                    mtype = (m.get("memory_type") or "").lower()
+                    if "relationship" in mtype: profile.relationships.append(content_clean)
+                    elif "preference" in mtype: profile.long_term_preferences.append(content_clean)
+                    elif "goal" in mtype: profile.active_goals.append(content_clean)
+                    elif "habit" in mtype: profile.habits_and_routines.append(content_clean)
+                    elif "trigger" in mtype: profile.emotional_triggers.append(content_clean)
+                    else: profile.personal_facts.append(content_clean)
+                    
+                notes = result["notes"] or []
+                for n in notes:
+                    if n.get("summary"):
+                        profile.recent_session_summaries.append(n.get("summary")[:200])
+                        
+                profile.total_sessions_count = result["sessions_count"] or 0
+                
+                last_emotion = result["last_emotion"]
+                if last_emotion and last_emotion.get("emotion_label"):
+                    profile.recent_emotional_trend = last_emotion.get("emotion_label").capitalize()
+                    
+                goals = result["goals"] or []
+                for ug in goals:
+                    if ug.get("title") and ug.get("title") not in profile.goals:
+                        profile.goals.append(ug.get("title"))
+                        
+                journals = result["journals"] or []
+                for j in journals:
+                    j_title = j.get("title") or (j.get("content", "")[:50])
+                    profile.journal_highlights.append(f"{j_title} (Mood: {j.get('mood') or 'Neutral'})")
+                    
         except Exception as e:
             print(f"[UnifiedCognitiveContextEngine] Error building profile: {e}")
 
+        profile.assembly_duration_ms = round((time.time() - start_time) * 1000, 2)
+        return profile
+
+    async def build_context_async(
+        self,
+        user_id: int,
+        session_id: Optional[int] = None,
+        query: str = "",
+        user_language: Optional[str] = None
+    ) -> UnifiedCognitiveProfile:
+        import asyncio
+        start_time = time.time()
+        
+        from core.database.models import SessionLocal
+        
+        def _build_sync():
+            t0 = time.time()
+            with SessionLocal() as db:
+                t_acquire = time.time() - t0
+                t1 = time.time()
+                prof = self.build_context(db, user_id, session_id, query)
+                t_query = time.time() - t1
+                prof.db_acquire_ms = round(t_acquire * 1000, 2)
+                prof.query_total_ms = round(t_query * 1000, 2)
+                return prof
+                
+        profile = await asyncio.to_thread(_build_sync)
+        if user_language:
+            profile.language = user_language
+            
         profile.assembly_duration_ms = round((time.time() - start_time) * 1000, 2)
         return profile

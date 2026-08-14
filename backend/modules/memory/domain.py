@@ -1,6 +1,6 @@
 """
 Memory Domain Model
-Canonical representation of Memory within the Maitri System.
+Canonical representation of Memory within the Mythri System.
 Defines entity representations, enums, metadata structures, and conversion utilities.
 """
 from dataclasses import dataclass, field

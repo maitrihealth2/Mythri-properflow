@@ -1,5 +1,5 @@
 ---
-name: Maitri V2 Minimal
+name: Mythri V2 Minimal
 colors:
   surface: '#f5f5dc'
   surface-dim: '#e6e6cc'

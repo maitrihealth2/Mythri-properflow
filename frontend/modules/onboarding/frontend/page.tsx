@@ -114,10 +114,10 @@ export default function OnboardingPage() {
           <div className="flex flex-col space-y-4 animate-fade-in-up w-full text-left bg-surface p-6 rounded-2xl shadow-sm border border-outline-variant/30 max-h-[80vh] overflow-y-auto">
             <h1 className="text-plum-high-contrast font-headline-md text-2xl text-center">MIND BRIDGE</h1>
             <h2 className="text-on-surface font-headline-sm text-center">Participant Consent & Data Use Agreement</h2>
-            <p className="text-on-surface-variant font-body-sm text-center italic">Maitri — AI Psychological Companion Pilot</p>
+            <p className="text-on-surface-variant font-body-sm text-center italic">Mythri — AI Psychological Companion Pilot</p>
             
             <p className="text-on-surface-variant font-body-sm mt-4">
-              This screen governs your participation as a test user of Maitri/Mythri. Please read each section before agreeing.
+              This screen governs your participation as a test user of Mythri/Mythri. Please read each section before agreeing.
             </p>
 
             <div className="space-y-4 mt-4 text-on-surface font-body-sm">
@@ -131,14 +131,14 @@ export default function OnboardingPage() {
 
               <div className="space-y-2">
                 <h3 className="font-label-lg font-bold">2. Nature of the Product</h3>
-                <p>Maitri/Mythri is an artificial intelligence system, not a licensed therapist, doctor, or mental health professional. It listens, responds supportively, and helps you reflect — it does not diagnose or treat conditions and does not replace professional mental health care.</p>
+                <p>Mythri/Mythri is an artificial intelligence system, not a licensed therapist, doctor, or mental health professional. It listens, responds supportively, and helps you reflect — it does not diagnose or treat conditions and does not replace professional mental health care.</p>
               </div>
 
               <div className="space-y-2">
                 <h3 className="font-label-lg font-bold">3. Data We Collect</h3>
                 <label className="flex items-start space-x-3 cursor-pointer">
                   <input type="checkbox" className="mt-1" checked={data.consent?.collect_text || false} onChange={(e) => setData({...data, consent: {...data.consent, collect_text: e.target.checked} as any})} />
-                  <span>I agree that Mind Bridge may collect the text and/or voice content of my conversations with Maitri/Mythri.</span>
+                  <span>I agree that Mind Bridge may collect the text and/or voice content of my conversations with Mythri/Mythri.</span>
                 </label>
                 <label className="flex items-start space-x-3 cursor-pointer">
                   <input type="checkbox" className="mt-1" checked={data.consent?.collect_usage || false} onChange={(e) => setData({...data, consent: {...data.consent, collect_usage: e.target.checked} as any})} />
@@ -155,7 +155,7 @@ export default function OnboardingPage() {
                 <h3 className="font-label-lg font-bold">4. Use of Data for Model Training</h3>
                 <label className="flex items-start space-x-3 cursor-pointer">
                   <input type="checkbox" className="mt-1" checked={data.consent?.model_training || false} onChange={(e) => setData({...data, consent: {...data.consent, model_training: e.target.checked} as any})} />
-                  <span>I agree that my conversation data, after full anonymization (removal of my name, contact details, and other identifying information), may be used to train, fine-tune, and improve the Maitri/Mythri AI model.</span>
+                  <span>I agree that my conversation data, after full anonymization (removal of my name, contact details, and other identifying information), may be used to train, fine-tune, and improve the Mythri/Mythri AI model.</span>
                 </label>
                 <p className="text-xs text-on-surface-variant">Anonymization occurs before training. Anonymized data may be reused across multiple training cycles and cannot be fully withdrawn once incorporated into a trained model.</p>
               </div>
@@ -171,8 +171,8 @@ export default function OnboardingPage() {
 
               <div className="space-y-2">
                 <h3 className="font-label-lg font-bold">6. Crisis Situations and Limits of the AI System</h3>
-                <p>Maitri/Mythri includes safety measures intended to recognize signs of crisis or self-harm risk. These safety measures are still under active development and cannot be guaranteed to catch or respond appropriately to every crisis situation.</p>
-                <p className="font-bold">If you are experiencing thoughts of self-harm, suicide, or a mental health emergency, please contact a licensed mental health professional, a trusted person, or a crisis helpline immediately. Do not rely on Maitri/Mythri as your sole means of support in a crisis.</p>
+                <p>Mythri/Mythri includes safety measures intended to recognize signs of crisis or self-harm risk. These safety measures are still under active development and cannot be guaranteed to catch or respond appropriately to every crisis situation.</p>
+                <p className="font-bold">If you are experiencing thoughts of self-harm, suicide, or a mental health emergency, please contact a licensed mental health professional, a trusted person, or a crisis helpline immediately. Do not rely on Mythri/Mythri as your sole means of support in a crisis.</p>
               </div>
 
               <div className="space-y-2">
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
 
               <div className="space-y-2">
                 <h3 className="font-label-lg font-bold">8. Voluntary Participation</h3>
-                <p>Your participation is entirely voluntary. You may stop using Maitri/Mythri and withdraw at any time without penalty.</p>
+                <p>Your participation is entirely voluntary. You may stop using Mythri/Mythri and withdraw at any time without penalty.</p>
               </div>
             </div>
 

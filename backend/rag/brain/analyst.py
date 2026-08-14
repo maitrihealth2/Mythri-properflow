@@ -1,6 +1,6 @@
 """
 Neural Assessor — The 'Psychologically Neutral' Mental Model.
-Performs clinical-style context analysis (hidden from the user) to inform Maitri's responses.
+Performs clinical-style context analysis (hidden from the user) to inform Mythri's responses.
 (Supersedes the old Phase Analyst)
 """
 import os
@@ -116,27 +116,23 @@ async def assess_turn(
         clean_content = clean_content.strip()
             
         if not clean_content:
-            print("Assessor warning: LLM returned empty content. Defaulting to RESPOND.")
-            case_file["runtime_state"]["decision"] = "RESPOND"
+            print("Assessor warning: LLM returned empty content. Defaulting to LISTEN.")
+            if "runtime_state" not in case_file: case_file["runtime_state"] = {}
+            case_file["runtime_state"]["response_strategy"] = "LISTEN"
             return case_file
 
         updated_case_file = json.loads(clean_content)
         if isinstance(updated_case_file, dict):
             # Ensure critical keys exist
             if "runtime_state" not in updated_case_file:
-                updated_case_file["runtime_state"] = case_file.get("runtime_state", {"decision": "RESPOND"})
+                updated_case_file["runtime_state"] = case_file.get("runtime_state", {"response_strategy": "LISTEN"})
             if "conversation_state" not in updated_case_file:
                 updated_case_file["conversation_state"] = case_file.get("conversation_state", {})
-            
-            cs = updated_case_file["conversation_state"]
-            if "hypotheses" not in cs:
-                cs["hypotheses"] = case_file.get("conversation_state", {}).get("hypotheses", {"Unknown": 100.0})
-            if "phase" not in cs:
-                cs["phase"] = case_file.get("conversation_state", {}).get("phase", "Listen")
             return updated_case_file
         return case_file
     except Exception as e:
         print(f"Assessor JSON Error: {e}")
         print(f"Raw Output was: {content if 'content' in locals() else 'None'}")
-        case_file["runtime_state"]["decision"] = "RESPOND"
+        if "runtime_state" not in case_file: case_file["runtime_state"] = {}
+        case_file["runtime_state"]["response_strategy"] = "LISTEN"
         return case_file

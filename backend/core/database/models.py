@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, JSON
-from sqlalchemy.pool import NullPool
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.pool import QueuePool
 from sqlalchemy.sql import func
 import os
 from dotenv import load_dotenv
@@ -23,7 +23,11 @@ if "sqlite" in DATABASE_URL:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 else:
     # Production PostgreSQL pooling (Neon PgBouncer recommended setup)
-    engine_kwargs["poolclass"] = NullPool
+    engine_kwargs["poolclass"] = QueuePool
+    engine_kwargs["pool_size"] = 10
+    engine_kwargs["max_overflow"] = 5
+    engine_kwargs["pool_timeout"] = 30
+    engine_kwargs["pool_recycle"] = 300
     engine_kwargs["connect_args"] = {
         "connect_timeout": 60,
         "keepalives": 1,
@@ -171,6 +175,24 @@ class Session(Base):
     ended_at = Column(DateTime(timezone=True), nullable=True)
     channel = Column(String(20), default="web", comment="Interface used: web, voice, mobile")
     is_crisis_flagged = Column(Boolean, default=False, comment="True if any message in this session triggered crisis detection")
+    
+    # Cognitive Tracking
+    summary = Column(Text, nullable=True)
+    emotional_summary = Column(Text, nullable=True)
+    cognitive_summary = Column(Text, nullable=True)
+    behavioral_summary = Column(Text, nullable=True)
+    dominant_emotion = Column(String(50), nullable=True)
+    risk_level = Column(String(20), default="low")
+    risk_score = Column(Float, default=0.0)
+    conversation_goal = Column(String(50), nullable=True)
+    engagement_score = Column(Float, nullable=True)
+    trust_score = Column(Float, nullable=True)
+    openness_score = Column(Float, nullable=True)
+    message_count = Column(Integer, default=0)
+    assistant_message_count = Column(Integer, default=0)
+    user_message_count = Column(Integer, default=0)
+    session_status = Column(String(20), default="active")
+
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     # Relationships
@@ -179,6 +201,7 @@ class Session(Base):
     note = relationship("ConsultationNote", back_populates="session", uselist=False, cascade="all, delete-orphan")
     feedback = relationship("SessionFeedback", back_populates="session", uselist=False, cascade="all, delete-orphan")
     risk_logs = relationship("RiskLog", back_populates="session", cascade="all, delete-orphan")
+    session_summary = relationship("SessionSummary", back_populates="session", uselist=False, cascade="all, delete-orphan")
 
 
 class Message(Base):
@@ -197,7 +220,8 @@ class Message(Base):
     # Relationships
     session = relationship("Session", back_populates="messages")
     emotion = relationship("MessageEmotion", back_populates="message", uselist=False, cascade="all, delete-orphan")
-    reasoning = relationship("MessageReasoning", back_populates="message", uselist=False, cascade="all, delete-orphan")
+    analysis = relationship("MessageAnalysis", back_populates="message", uselist=False, cascade="all, delete-orphan")
+    response_metadata = relationship("ResponseMetadata", back_populates="message", uselist=False, cascade="all, delete-orphan")
 
 
 class MessageEmotion(Base):
@@ -214,18 +238,65 @@ class MessageEmotion(Base):
     message = relationship("Message", back_populates="emotion")
 
 
-class MessageReasoning(Base):
-    __tablename__ = "message_reasonings"
-    __table_args__ = {'comment': 'Tracks the Dialogue Manager case file context and why an AI response was generated'}
+class MessageAnalysis(Base):
+    __tablename__ = "message_analysis"
+    __table_args__ = {'comment': 'Cognitive analysis per message'}
     
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), unique=True, nullable=False)
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), index=True, nullable=False)
-    decision = Column(String(50), nullable=True, comment="The high-level action decided (e.g. ASK, RESPOND)")
-    reasoning_context = Column(JSON, nullable=True, comment="The full case file or structural context used by the AI")
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True)
+    speaker = Column(String(20), nullable=False)
+    emotion = Column(String(50), nullable=True)
+    emotion_intensity = Column(Float, nullable=True)
+    cognitive_signals = Column(JSON, nullable=True)
+    conversation_intent = Column(String(50), nullable=True)
+    risk_level = Column(String(20), nullable=True)
+    risk_score = Column(Float, nullable=True)
+    engagement_score = Column(Float, nullable=True)
+    response_strategy = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), default=func.now())
 
-    message = relationship("Message", back_populates="reasoning")
+    message = relationship("Message", back_populates="analysis")
+
+
+class ResponseMetadata(Base):
+    __tablename__ = "response_metadata"
+    __table_args__ = {'comment': 'Structured rationale for AI responses'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), unique=True, nullable=False)
+    response_strategy = Column(String(50), nullable=True)
+    conversation_goal = Column(String(50), nullable=True)
+    emotional_alignment = Column(String(50), nullable=True)
+    context_used = Column(JSON, nullable=True)
+    reason_codes = Column(JSON, nullable=True)
+    expected_effect = Column(Text, nullable=True)
+    improvement_targets = Column(JSON, nullable=True)
+    quality_score = Column(Float, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=func.now())
+
+    message = relationship("Message", back_populates="response_metadata")
+
+
+class SessionSummary(Base):
+    __tablename__ = "session_summaries"
+    __table_args__ = {'comment': 'End of session persistent summary'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    main_topics = Column(JSON, nullable=True)
+    emotional_progression = Column(JSON, nullable=True)
+    important_context = Column(Text, nullable=True)
+    unresolved_topics = Column(JSON, nullable=True)
+    conversation_patterns = Column(JSON, nullable=True)
+    risk_summary = Column(Text, nullable=True)
+    user_preferences = Column(JSON, nullable=True)
+    follow_up_candidates = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=func.now())
+    
+    session = relationship("Session", back_populates="session_summary")
 
 
 class CompanionMemory(Base):

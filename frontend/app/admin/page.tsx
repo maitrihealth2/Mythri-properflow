@@ -404,7 +404,7 @@ export default function AdminDashboard() {
 
       <div className="min-h-screen bg-surface flex flex-col">
         <header className="border-b border-outline-variant/30 bg-white px-8 py-4 flex justify-between items-center flex-shrink-0">
-          <h1 className="text-plum-high-contrast font-headline-lg text-2xl">Maitri Admin</h1>
+          <h1 className="text-plum-high-contrast font-headline-lg text-2xl">Mythri Admin</h1>
           <button onClick={handleLogout} className="px-4 py-2 text-on-surface-variant font-label-md border rounded-full hover:bg-surface transition-colors">
             Log Out
           </button>

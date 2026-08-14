@@ -9,7 +9,7 @@ import pathlib
 _BASE = pathlib.Path(__file__).resolve().parent.parent
 sys.path.append(str(_BASE))
 
-from providers.sarvam.sarvam_client import chat_with_maitri
+from providers.sarvam.sarvam_client import chat_with_mythri
 from rag.brain.state_tracker import empty_case_file
 from rag.brain.analyst import assess_turn
 
@@ -67,8 +67,8 @@ async def run_evaluations():
         # 3. Generate Response (with Reflection Engine)
         print("\n[*] Generating Response (Reflection Engine & Assumption Filter)...")
         
-        # NOTE: chat_with_maitri is blocking (synchronous) so we don't await it here.
-        ai_response = chat_with_maitri(
+        # NOTE: chat_with_mythri is blocking (synchronous) so we don't await it here.
+        ai_response = chat_with_mythri(
             messages=history,
             case_file=updated_case_file,
             language="English",

@@ -1,5 +1,5 @@
 """
-LLM Router — Maitri's provider-agnostic inference orchestrator.
+LLM Router — Mythri's provider-agnostic inference orchestrator.
 
 Routing flow:
     router.generate(...)
@@ -75,6 +75,27 @@ class LLMRouter:
             _log(f"LLM_FAILOVER_SUCCESS=False SECONDARY_ERROR={type(exc).__name__}: {exc} REASON={reason}")
             # Return None — caller applies its own fallback text
             return None
+
+    async def stream(
+        self,
+        api_messages: list[dict],
+        max_tokens: int = 512,
+        temperature: float = 0.75,
+    ):
+        """
+        Stream response dynamically from the primary provider.
+        """
+        provider = self._primary
+        try:
+            async for chunk in provider.stream(api_messages, max_tokens, temperature):
+                yield chunk
+        except ProviderConfigurationError:
+            raise
+        except ProviderError as exc:
+            reason = _classify_reason(exc)
+            _log(f"LLM_FAILOVER_SUCCESS=False SECONDARY_ERROR={type(exc).__name__}: {exc} REASON={reason}")
+            # Fallback text can be yielded if needed
+            return
 
     async def close(self) -> None:
         """Release all open HTTP connections."""

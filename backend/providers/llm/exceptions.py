@@ -1,5 +1,5 @@
 """
-Typed exception hierarchy for Maitri LLM providers.
+Typed exception hierarchy for Mythri LLM providers.
 
 Exceptions are classified into two categories:
   - Failover exceptions: trigger automatic switch to secondary provider.
@@ -8,7 +8,7 @@ Exceptions are classified into two categories:
 
 
 class ProviderError(Exception):
-    """Base class for all Maitri LLM provider errors."""
+    """Base class for all Mythri LLM provider errors."""
     pass
 
 

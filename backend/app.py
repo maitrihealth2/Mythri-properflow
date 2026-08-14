@@ -1,6 +1,7 @@
 import os
 import pathlib
 from dotenv import load_dotenv
+# Trigger reload
 
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
@@ -83,6 +84,12 @@ async def lifespan(app: FastAPI):
             await asyncio.to_thread(ensure_knowledge_base_built)
         except Exception as e:
             CommandCenter.log_error(f"RAG Knowledge Base Startup Check Note: {e}")
+
+        # Phase 2: Eager load Emotion Model to prevent lazy-load latency on first request
+        try:
+            await asyncio.to_thread(preload_models)
+        except Exception as e:
+            CommandCenter.log_error(f"Emotion Model Preload Error: {e}")
 
         # Models are lazy-loaded on first request to conserve RAM on Render Free (512 MB)
         CommandCenter.set_health("Firebase", "Healthy")

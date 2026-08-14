@@ -1,6 +1,6 @@
 """
 Short-Term Memory Engine Subsystem
-Represents Maitri's session-scoped working memory.
+Represents Mythri's session-scoped working memory.
 Maintains turn facts, active emotional state, in-session topics, user corrections, temporary preferences,
 and unresolved questions for the active conversation session.
 Completely independent from Long-Term Memory and Episodic Memory.

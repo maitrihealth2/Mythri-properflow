@@ -26,7 +26,7 @@ from modules.memory.types import (
 
 class MemoryManager:
     """
-    Orchestration service for the Maitri Memory System.
+    Orchestration service for the Mythri Memory System.
     Consumes PipelineResult from MemoryPipeline and executes decisions via MemoryRepository.
     Delegates all stage decisions to Decision Engine and persistence to MemoryRepository.
     """

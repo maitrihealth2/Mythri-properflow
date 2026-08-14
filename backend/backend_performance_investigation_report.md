@@ -5,7 +5,7 @@
 ## 1. EXECUTIVE SUMMARY
 
 ### Overall Backend Health: **FAIR TO GOOD (Functional with Bottlenecks)**
-The Maitri V5 backend demonstrates high architectural modularity, clean domain-driven design, and robust failure isolation across its Memory and RAG subsystems. However, the application suffers from **severe startup latency (30.2+ seconds)** and **high memory footprint (~1.2 GB RAM)** due to eager model loading and synchronous remote database schema reflection.
+The Mythri V5 backend demonstrates high architectural modularity, clean domain-driven design, and robust failure isolation across its Memory and RAG subsystems. However, the application suffers from **severe startup latency (30.2+ seconds)** and **high memory footprint (~1.2 GB RAM)** due to eager model loading and synchronous remote database schema reflection.
 
 ### Overall Architecture Quality: **8.5 / 10**
 - **Strengths**: Clean separation of concerns (DDD), robust error shields, isolated memory pipelines, multi-factor ranking, fast read path latency (<1ms).
@@ -64,7 +64,7 @@ Client HTTP Request
      │                └─► External HTTPS call to Sarvam 105B LLM API
      │                └─► Duration: ~800 - 1500 ms (LLM Dependent)
      │
-     ├── [1504.0 ms] Sarvam Empathic Generation (chat_with_maitri)
+     ├── [1504.0 ms] Sarvam Empathic Generation (chat_with_mythri)
      │                └─► External Streaming HTTPS call to Sarvam 105B LLM API
      │                └─► Duration: ~1200 - 2500 ms (LLM Streaming)
      │
@@ -95,25 +95,25 @@ Client HTTP Request
 ## 5. ROOT CAUSE ANALYSIS
 
 ### Bottleneck 1: Eager Deep Learning Model Preloading
-- **Exact File**: `d:\Maitri New\backend\rag\brain\emotion_detector.py`
+- **Exact File**: `d:\Mythri New\backend\rag\brain\emotion_detector.py`
 - **Exact Function**: `preload_models()` / `get_emotion_pipeline()`
 - **Why it Happens**: `preload_models()` is explicitly called during FastAPI `lifespan` startup (`app.py` line 71). It invokes HuggingFace `pipeline("text-classification", model="SamLowe/roberta-base-go_emotions")`, which loads PyTorch tensor kernels, downloads/loads 500MB+ model weights from disk, and initializes tokenizers.
 - **Impact**: Blocks the web server startup for **15.66 seconds**.
 - **Note**: Keyword heuristic emotion detection (`detect_emotion_heuristic`) runs in `< 0.1 ms` without PyTorch.
 
 ### Bottleneck 2: Remote PostgreSQL Schema Reflection
-- **Exact File**: `d:\Maitri New\backend\core\database\models.py`
+- **Exact File**: `d:\Mythri New\backend\core\database\models.py`
 - **Exact Function**: `init_db()`
 - **Why it Happens**: `init_db()` executes `Base.metadata.create_all(bind=engine)` during lifespan startup. Because `DATABASE_URL` connects to a remote PostgreSQL database over SSL, SQLAlchemy sends 18+ sequential synchronous `SELECT pg_catalog.pg_class...` network queries over TCP to verify table existence.
 - **Impact**: Network roundtrip latency delays startup by **11.042 seconds**.
 
 ### Bottleneck 3: Heavy ML Stack Top-Level Imports
-- **Exact File**: `d:\Maitri New\backend\rag\brain\emotion_detector.py` and `rag\knowledge\retriever.py`
+- **Exact File**: `d:\Mythri New\backend\rag\brain\emotion_detector.py` and `rag\knowledge\retriever.py`
 - **Why it Happens**: Top-level imports of `transformers`, `torch`, `sentence_transformers`, and `chromadb` force Python to load hundreds of C-extension DLLs before FastAPI initializes.
 - **Impact**: Adds **3.409 seconds** to initial module load.
 
 ### Bottleneck 4: Dev Watcher ChromaDB Path Mismatch
-- **Exact File**: `d:\Maitri New\backend\run_dev.py`
+- **Exact File**: `d:\Mythri New\backend\run_dev.py`
 - **Exact Function**: `check_rag_initialization()`
 - **Why it Happens**: `run_dev.py` checks `modules/knowledge/chroma_db`, but the actual ChromaDB directory resides at `rag/knowledge/chroma_db`.
 - **Impact**: Outputs misleading console warning `[Warning] RAG ChromaDB not found at 'modules\knowledge\chroma_db'`.
@@ -146,7 +146,7 @@ Client HTTP Request
 
 ## 8. RAG SUBSYSTEM ANALYSIS
 
-- **ChromaDB Location**: Resides at `d:\Maitri New\backend\rag\knowledge\chroma_db`.
+- **ChromaDB Location**: Resides at `d:\Mythri New\backend\rag\knowledge\chroma_db`.
 - **Embedding Model**: `SentenceTransformerEmbeddingFunction("all-MiniLM-L6-v2")`.
 - **Initialization**: Lazy-loaded upon first RAG query via `get_collection()`.
 - **Path Bug in Dev Watcher**: `run_dev.py` searches `modules/knowledge/chroma_db` instead of `rag/knowledge/chroma_db`.
@@ -191,7 +191,7 @@ sequenceDiagram
     API->>RAG: retrieve_context() [3.0ms]
     API->>Memory: fetch_analyst_context() [0.9ms]
     API->>Assessor: assess_turn() [~1200ms]
-    API->>LLM: chat_with_maitri() [~1800ms]
+    API->>LLM: chat_with_mythri() [~1800ms]
     API-->>Client: ChatResponse JSON [~3000ms Total]
     API-)AsyncMem: asyncio.to_thread(_process_memory_write_path_async)
 ```

@@ -185,7 +185,7 @@ export default function VoiceModePage() {
       startVisualizer()
     } catch (err) {
       console.error(err)
-      alert('Maitri needs microphone access to hear you.')
+      alert('Mythri needs microphone access to hear you.')
     }
   }
 

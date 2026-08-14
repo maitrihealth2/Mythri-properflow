@@ -1,6 +1,6 @@
 """
 Attention & Context Optimization Engine Subsystem
-Simulates Maitri's cognitive attention system.
+Simulates Mythri's cognitive attention system.
 Selects assembled context items from MemoryContext, calculates explicit attention scores,
 structurally deduplicates content, and partitions working context into Foreground, Supporting,
 Background, and Deferred tiers within configurable TokenBudgets.

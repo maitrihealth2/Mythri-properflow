@@ -46,7 +46,7 @@ Loading weights: 100%|##########| 201/201 [00:00<00:00, 4199.26it/s]
   Connecting to Database...    ----------------------------------- 100% 0:00:11
   Validating Providers...      ----------------------------------- 100% 0:00:20
 +-----------------------------------------------------------------------------+
-|            MAITRI V5 - DEVELOPER COMMAND CENTER (STREAMING MODE)            |
+|            MYTHRI V5 - DEVELOPER COMMAND CENTER (STREAMING MODE)            |
 +-----------------------------------------------------------------------------+
 +------------------------------- Live Snapshot -------------------------------+
 | +-------------------------------------------------------------------------+ |
@@ -73,8 +73,8 @@ Loading weights: 100%|##########| 201/201 [00:00<00:00, 4199.26it/s]
 `init_db()` inside `app.py` lifespan context manager, followed immediately by `preload_models()`.
 
 ### Blocking File:
-1. `d:\Maitri New\backend\core\database\models.py`
-2. `d:\Maitri New\backend\rag\brain\emotion_detector.py`
+1. `d:\Mythri New\backend\core\database\models.py`
+2. `d:\Mythri New\backend\rag\brain\emotion_detector.py`
 
 ### Blocking Line Numbers:
 1. **`core/database/models.py` Line 401**: `Base.metadata.create_all(bind=engine)`
@@ -123,7 +123,7 @@ Loading weights: 100%|##########| 201/201 [00:00<00:00, 4199.26it/s]
 
 ## 7. RAG SUBSYSTEM AUDIT
 
-- **ChromaDB Folder Exists?**: **YES**, at `d:\Maitri New\backend\rag\knowledge\chroma_db`.
+- **ChromaDB Folder Exists?**: **YES**, at `d:\Mythri New\backend\rag\knowledge\chroma_db`.
 - **Collection Loads?**: Yes (`therapy_knowledge` collection loads cleanly).
 - **Embedding Model Loads**: Yes (`all-MiniLM-L6-v2` via `sentence-transformers`).
 - **Explanation of Warning**:

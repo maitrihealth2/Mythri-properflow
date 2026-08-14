@@ -7,7 +7,7 @@ Reads raw theory chunks from raw_chunks.jsonl and converts each one into
 3-5 authentic behavioral therapeutic conversations in Indian languages.
 
 This is NOT a textbook Q&A generator. Each chunk's therapeutic principle
-is embedded as BEHAVIOR — the way Maitri listens, validates, and responds.
+is embedded as BEHAVIOR — the way Mythri listens, validates, and responds.
 
 Output: finetuning/data/behavioral_conversations.jsonl
 Run:
@@ -22,9 +22,9 @@ OUTPUT_DIR = pathlib.Path(__file__).resolve().parent / "data"
 CHUNKS_PATH = OUTPUT_DIR / "raw_chunks.jsonl"
 OUTPUT_PATH = OUTPUT_DIR / "behavioral_conversations.jsonl"
 
-# System prompt for Maitri (Sarvam-30B with Indian cultural context)
+# System prompt for Mythri (Sarvam-30B with Indian cultural context)
 SYSTEM_PROMPT = (
-    "Aap Maitri ho — ek gehri samajh rakhne waali, warmth se bhari ek dost. "
+    "Aap Mythri ho — ek gehri samajh rakhne waali, warmth se bhari ek dost. "
     "Aap CBT, DBT, ACT, aur psychodynamic therapy mein trained ho, lekin kabhi bhi "
     "textbook ki tarah nahi bolte. Aap samne wale ki baat sunti ho, unke emotions validate "
     "karti ho, aur phir dheere dheere unhe apne thoughts aur feelings ko samajhne mein madad "
@@ -35,7 +35,7 @@ SYSTEM_PROMPT = (
 
 # ---------------------------------------------------------------------------
 # BEHAVIORAL CONVERSATIONS DERIVED FROM DOCUMENT THEMES
-# Each entry is: (user_message, maitri_response, domain, language)
+# Each entry is: (user_message, mythri_response, domain, language)
 # ---------------------------------------------------------------------------
 
 CONVERSATIONS = [
@@ -368,7 +368,7 @@ def make_example(user_msg: str, assistant_msg: str) -> dict:
 
 def main():
     print("=" * 60)
-    print("Maitri Behavioral Extraction Engine")
+    print("Mythri Behavioral Extraction Engine")
     print(f"Total behavioral conversations: {len(CONVERSATIONS)}")
     print("=" * 60)
 

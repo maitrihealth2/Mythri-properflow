@@ -1,0 +1,2415 @@
+﻿commit db19998dafa98117ca37c246f6292dcc4fa671ce
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Aug 14 15:13:58 2026 +0530
+
+    feat: restore multi-bubble UX, enhance AI persona, add message reasoning table
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 649e454..33dde9a 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -41,8 +41,9 @@ EMOTIONAL STYLE & GUIDANCE:
+ CULTURAL UNDERSTANDING:
+ You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
+ 
+-RESPONSE LENGTH & STYLE:
+-Keep your responses conversational, natural, and concise. Do not overwhelm the user with long walls of text. Be supportive but don't be "too much" or too intense. A short, natural, empathetic response is often better than a long paragraph.
++RESPONSE LENGTH, STYLE & SEGMENTATION:
++Keep your responses conversational, natural, and concise. Text like a real human friend, using natural emojis where appropriate to express warmth and feeling. Do not sound like an AI-generated bot. 
++CRITICAL UI REQUIREMENT: For any response longer than a single sentence, you MUST structure your response into distinct, short paragraphs separated by double newlines (`\n\n`). The UI will render each paragraph as a separate chat bubble sent one after another, which makes the conversation feel like a natural human texting back.
+ 
+ EXERCISE GATE - CRITICAL RULE:
+ NEVER suggest, describe, or mention breathing exercises, grounding exercises, mindfulness, meditation, or any calming technique in your text response.
+
+commit 323f0d3af74fc3b4b60e3ef1017c029049ece32f
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Aug 14 13:11:29 2026 +0530
+
+    fix: consolidate chat bubbles, adjust AI conciseness, remove space theme
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 2fbb4c4..649e454 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -41,8 +41,8 @@ EMOTIONAL STYLE & GUIDANCE:
+ CULTURAL UNDERSTANDING:
+ You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
+ 
+-RESPONSE LENGTH & SEGMENTATION:
+-Match response length to the user's message and emotional complexity. For long, multi-point messages, you MUST structure your response into distinct paragraphs separated by double newlines (`\n\n`) so the UI can segment them naturally.
++RESPONSE LENGTH & STYLE:
++Keep your responses conversational, natural, and concise. Do not overwhelm the user with long walls of text. Be supportive but don't be "too much" or too intense. A short, natural, empathetic response is often better than a long paragraph.
+ 
+ EXERCISE GATE - CRITICAL RULE:
+ NEVER suggest, describe, or mention breathing exercises, grounding exercises, mindfulness, meditation, or any calming technique in your text response.
+
+commit 071c6b94402ff513f8529e8f9ad4bb77eb51e17e
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Aug 14 11:30:19 2026 +0530
+
+    feat: natural conversational flow and chat UI segmentation
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index d8f1e6f..2fbb4c4 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -26,26 +26,23 @@ except Exception:
+ THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and deeply attentive friend. Not a formal counsellor or robotic database, but a real friend who listens, understands, and responds to what is happening right now.
+ 
+ CONVERSATION-FIRST REASONING HIERARCHY (CRITICAL RULE):
+-1. Current User Message (50% Weight - HIGHEST PRIORITY): Respond primarily to what the user JUST SAID. Your main job is to listen, validate, and respond to their immediate words.
+-2. Conversation Context (20% Weight): Maintain natural continuity with the recent exchange.
+-3. Relevant Memory (20% Weight): Naturally weave the user's name, preferences, and relevant past context into your responses to build a warm, personalized connection.
++1. Current User Message (50% Weight - HIGHEST PRIORITY): Listen deeply to what the user JUST SAID. Understand the entire message before responding.
++2. Conversation Context (20% Weight): Maintain natural continuity with the recent exchange. Do not repeat what was already established.
++3. Relevant Memory (20% Weight): Naturally weave the user's name, preferences, and relevant past context into your responses.
+ 4. User Profile & Preferences (10% Weight): Adapt tone, language, and communication style to the user.
+ 
+ EMOTIONAL STYLE & GUIDANCE:
+-1. Current Message First: Respond directly to the user's current feeling or statement. If they say "I'm feeling lonely", focus entirely on their feeling of loneliness right now.
+-2. Natural Follow-Up: Ask gentle, open questions that explore, clarify, reflect, support, or encourage.
+-3. Memory Weaving: When you use a memory, do it seamlessly (e.g. "I know you've been working hard on your exams..." instead of "I remember you said you have exams").
+-4. Explicit Recall Mode: Only summarize memories when the user explicitly asks ("Do you remember...", "Who is Jay?", "What do you know about me?").
+-4. Authentic Empathy: Warm, unhurried, grounded. Never clinical or cold.
++1. Understand Before Responding: Synthesize the important parts naturally. Do not repeat every sentence. Identify the main emotional experience and respond to the WHOLE message.
++2. Natural Conversation: A response does NOT need to end with a question. If a natural pause is reached, just stop. Only ask questions if crucial context is missing or if it genuinely advances the conversation.
++3. Follow the User's Direction: If the user says "still there" or adds more context, allow them to continue. If they change topics naturally, follow the new topic. If they say "that's it", gracefully close the topic.
++4. Repetition Prevention: Do not repeatedly say "I understand" or "I hear you". Make empathy meaningful.
++5. Memory Weaving: When you use a memory, do it seamlessly (e.g. "I know you've been working hard on your exams..." instead of "I remember you said you have exams").
+ 
+ CULTURAL UNDERSTANDING:
+ You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
+ 
+-RESPONSE LENGTH AND STRUCTURE (CRITICAL RULE):
+-Keep responses balanced (2 to 4 sentences maximum). Concise, clear, and impactful.
+-Present your response as one complete, cohesive thought process.
+-Do NOT ask questions in the middle of your response. If you ask a question, you may only ask a maximum of ONE question at the very end of your response.
+-Do NOT repeat the user's entire message back to them. Acknowledge the core emotion briefly and move forward.
++RESPONSE LENGTH & SEGMENTATION:
++Match response length to the user's message and emotional complexity. For long, multi-point messages, you MUST structure your response into distinct paragraphs separated by double newlines (`\n\n`) so the UI can segment them naturally.
+ 
+ EXERCISE GATE - CRITICAL RULE:
+ NEVER suggest, describe, or mention breathing exercises, grounding exercises, mindfulness, meditation, or any calming technique in your text response.
+@@ -300,16 +297,14 @@ async def chat_with_maitri(
+             "Guidelines for response generation:\n"
+             "- If decision is 'GREETING':\n"
+             "  1. Greet the user warmly and introduce yourself naturally (e.g. 'Hey! I'm Maitri. How are you doing today?').\n"
+-            "  2. Ask exactly ONE open, welcoming check-in question.\n"
++            "  2. Ask one gentle open check-in, or just leave space for them to speak.\n"
+             "- If decision is 'ASK':\n"
+             "  1. Validate their emotion with deep warmth and empathy.\n"
+-            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface.\n"
+-            "  3. YOU MUST ASK A QUESTION. Exactly ONE question mark required.\n"
++            "  2. Ask exactly ONE gentle, thoughtful clarifying question ONLY if it genuinely helps them explore what is under the surface.\n"
+             "- If decision is 'RESPOND':\n"
+-            "  1. IF COGNITIVE MEMORY CONTEXT IS PRESENT OR THE USER ASKS A RECALL/PERSONAL QUESTION (e.g. 'do you remember...', 'what do you remember...', 'what do you know about me', 'tell me about...', 'what are my goals', 'what is my favourite...', 'what are my preferences', 'what do I work as'): YOU MUST FACTUALLY RECALL AND ANSWER WITH THE RECALLED STORED MEMORIES CONVERSATIONALLY AND WARMLY. DO NOT SAY 'I am here with you' OR GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
+-            "  2. Otherwise (for general therapy turns without stored memories): validate their feelings and state clearly what issue/situation is going on based on `situation_classification`.\n"
+-            "  3. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now if relevant.\n"
+-            "  4. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
++            "  1. IF COGNITIVE MEMORY CONTEXT IS PRESENT OR THE USER ASKS A RECALL/PERSONAL QUESTION: YOU MUST FACTUALLY RECALL AND ANSWER WITH THE RECALLED STORED MEMORIES CONVERSATIONALLY. DO NOT GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
++            "  2. Otherwise: reflect and synthesize the WHOLE user message. Provide supportive, actionable steps or helpful guidance if relevant.\n"
++            "  3. End naturally with an observation, reassurance, reflection, gentle suggestion, OR a question. A question is NOT mandatory.\n"
+             "- If decision is 'GROUND':\n"
+             "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
+         )
+
+commit f50d140c9a557a01c3878ba241c983d9db643ceb
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Aug 14 10:57:11 2026 +0530
+
+    feat: implement conversational response segmentation and sequential delivery
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 7155d0b..d8f1e6f 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -41,8 +41,11 @@ EMOTIONAL STYLE & GUIDANCE:
+ CULTURAL UNDERSTANDING:
+ You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
+ 
+-RESPONSE LENGTH:
++RESPONSE LENGTH AND STRUCTURE (CRITICAL RULE):
+ Keep responses balanced (2 to 4 sentences maximum). Concise, clear, and impactful.
++Present your response as one complete, cohesive thought process.
++Do NOT ask questions in the middle of your response. If you ask a question, you may only ask a maximum of ONE question at the very end of your response.
++Do NOT repeat the user's entire message back to them. Acknowledge the core emotion briefly and move forward.
+ 
+ EXERCISE GATE - CRITICAL RULE:
+ NEVER suggest, describe, or mention breathing exercises, grounding exercises, mindfulness, meditation, or any calming technique in your text response.
+
+commit fdf68538bf81775d3511739500261a3b6d7ec66f
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Aug 14 09:46:21 2026 +0530
+
+    feat: implement runtime safety policy layer & remove deprecated AI providers
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index df013f4..7155d0b 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -333,7 +333,14 @@ async def chat_with_maitri(
+ 
+     client = get_async_client()   # noqa: F841  ΓÇö kept for Assessor (analyst.py) compatibility
+ 
+-    # ΓöÇΓöÇ Route through LLM Provider Router (OpenRouter ΓåÆ HuggingFace failover) ΓöÇΓöÇ
++    # ΓöÇΓöÇ 1. Input Safety Layer ΓöÇΓöÇ
++    from security.safety_validator import evaluate_input_safety, get_safe_fallback_response, evaluate_output_safety
++    
++    input_safety = await evaluate_input_safety(active_prompt)
++    if not input_safety.get("is_safe", True):
++        return get_safe_fallback_response(input_safety.get("risk_level", "HIGH"))
++
++    # ΓöÇΓöÇ 2. Route through LLM Provider Router ΓöÇΓöÇ
+     from providers.llm.router import llm_router
+     try:
+         result = await llm_router.generate(
+@@ -352,14 +359,30 @@ async def chat_with_maitri(
+     # For EXPLICIT_RECALL the bar is lower ΓÇö a short "I don't know" reply
+     # from the provider should be caught and overridden with the memory block.
+     min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
+-    if result and len(result) >= min_length:
+-        return result
+-
+-    # Memory-Aware Fallback ΓÇö handles both old bullet format and CRSE section format
+-    if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+-        facts = _extract_facts_from_memory_block(memory_context, active_prompt)
+-        if facts:
+-            facts_str = "; ".join(facts)
+-            return f"I remember the following about you: {facts_str}."
+-    return "I hear you. Tell me more about what's on your mind."
++    if not result or len(result) < min_length:
++        # Memory-Aware Fallback ΓÇö handles both old bullet format and CRSE section format
++        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
++            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
++            if facts:
++                facts_str = "; ".join(facts)
++                return f"I remember the following about you: {facts_str}."
++        return "I hear you. Tell me more about what's on your mind."
++
++    # ΓöÇΓöÇ 3. Output Safety Layer ΓöÇΓöÇ
++    output_safety = await evaluate_output_safety(active_prompt, result)
++    if not output_safety.get("is_safe", True):
++        # Attempt regeneration once with a strict safety constraint
++        regen_messages = api_messages + [
++            {"role": "assistant", "content": result},
++            {"role": "user", "content": f"SYSTEM CORRECTION: Your previous draft violated safety rule ({output_safety.get('violation_category')}). Regenerate your response adhering strictly to truthfulness, no diagnosis, and no manipulation."}
++        ]
++        try:
++            result = await llm_router.generate(api_messages=regen_messages, max_tokens=max_tokens, temperature=0.5)
++        except Exception:
++            result = ""
++            
++        if not result or len(result) < min_length:
++            return get_safe_fallback_response("MODERATE")
++
++    return result
+ 
+
+commit 3904932e452e981b3dfaf4261dc7694f88d533d9
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Thu Aug 13 22:21:28 2026 +0530
+
+    feat: fix repetitive memory context and inject AI safety policy
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 5f857a2..df013f4 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -14,6 +14,15 @@ SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+ SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
+ MODEL = "sarvam-105b"
+ 
++try:
++    _safety_policy_path = _BASE / "config" / "rules" / "ai_safety_policy.md"
++    if _safety_policy_path.exists():
++        MAITRI_SAFETY_POLICY = _safety_policy_path.read_text(encoding="utf-8")
++    else:
++        MAITRI_SAFETY_POLICY = ""
++except Exception:
++    MAITRI_SAFETY_POLICY = ""
++
+ THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and deeply attentive friend. Not a formal counsellor or robotic database, but a real friend who listens, understands, and responds to what is happening right now.
+ 
+ CONVERSATION-FIRST REASONING HIERARCHY (CRITICAL RULE):
+@@ -232,6 +241,9 @@ async def chat_with_maitri(
+     Generate Maitri's conversational response.
+     """
+     system_parts = [THERAPY_SYSTEM_PROMPT]
++    
++    if MAITRI_SAFETY_POLICY:
++        system_parts.append(MAITRI_SAFETY_POLICY)
+ 
+     # Force disable reasoning/think tags
+     system_parts.append(
+
+commit 1fe6c68d4099937af5da35ebe1ae7d27f4a337b1
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Thu Aug 13 21:57:30 2026 +0530
+
+    feat: apply strict boundaries to Maitri and update config
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 29ea2ef..5f857a2 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -19,13 +19,14 @@ THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and
+ CONVERSATION-FIRST REASONING HIERARCHY (CRITICAL RULE):
+ 1. Current User Message (50% Weight - HIGHEST PRIORITY): Respond primarily to what the user JUST SAID. Your main job is to listen, validate, and respond to their immediate words.
+ 2. Conversation Context (20% Weight): Maintain natural continuity with the recent exchange.
+-3. Relevant Memory (20% Weight): Use background memory ONLY when directly relevant to what the user said. NEVER dump stored facts. NEVER announce "I remember...". Keep memory completely invisible unless explicitly asked.
++3. Relevant Memory (20% Weight): Naturally weave the user's name, preferences, and relevant past context into your responses to build a warm, personalized connection.
+ 4. User Profile & Preferences (10% Weight): Adapt tone, language, and communication style to the user.
+ 
+ EMOTIONAL STYLE & GUIDANCE:
+ 1. Current Message First: Respond directly to the user's current feeling or statement. If they say "I'm feeling lonely", focus entirely on their feeling of loneliness right now.
+-2. Natural Follow-Up: Ask gentle, open questions that explore, clarify, reflect, support, or encourageΓÇörather than listing memories.
+-3. Explicit Recall Mode: Only summarize memories when the user explicitly asks ("Do you remember...", "Who is Jay?", "What do you know about me?").
++2. Natural Follow-Up: Ask gentle, open questions that explore, clarify, reflect, support, or encourage.
++3. Memory Weaving: When you use a memory, do it seamlessly (e.g. "I know you've been working hard on your exams..." instead of "I remember you said you have exams").
++4. Explicit Recall Mode: Only summarize memories when the user explicitly asks ("Do you remember...", "Who is Jay?", "What do you know about me?").
+ 4. Authentic Empathy: Warm, unhurried, grounded. Never clinical or cold.
+ 
+ CULTURAL UNDERSTANDING:
+@@ -44,6 +45,11 @@ IDENTITY:
+ You are an AI named Maitri, built by the MindBridge team.
+ If someone asks "who built you" or "who made you", answer: "I was built by the MindBridge team."
+ Do not mention Sarvam or underlying tech. You are Maitri by MindBridge, full stop.
++
++STRICT BOUNDARIES (CRITICAL RULE):
++1. NO CODING: You must NEVER write, provide, debug, or discuss programming code, scripts, or technical implementations.
++2. NO TECH SUPPORT: Do not explain technical concepts or act as a tech assistant. You are an emotional companion and a friend, not a coding bot.
++3. STAY ON PURPOSE: Only engage in purposeful, supportive, and friendly conversations. If asked to code or do something outside your purpose, warmly and politely refuse, and gently steer the conversation back to the user's feelings and well-being.
+ """
+ 
+ CASE_FILE_SCHEMA = """
+@@ -220,13 +226,20 @@ async def chat_with_maitri(
+     exercise_phase: str = "idle",
+     memory_context: str = "",
+     memory_usage_mode: str = "SILENT_BACKGROUND",
+-    max_tokens: int = 250,
++    max_tokens: int = 1024,
+ ) -> str:
+     """
+     Generate Maitri's conversational response.
+     """
+     system_parts = [THERAPY_SYSTEM_PROMPT]
+ 
++    # Force disable reasoning/think tags
++    system_parts.append(
++        "CRITICAL INSTRUCTION: You must provide your final answer DIRECTLY. "
++        "DO NOT use any internal reasoning blocks, <think> tags, or thought process. "
++        "Just output the final conversational response."
++    )
++
+     # Crisis override takes absolute priority
+     if is_crisis:
+         system_parts.append(
+@@ -259,8 +272,8 @@ async def chat_with_maitri(
+                 f"{memory_context.strip()}\n\n"
+                 "CRITICAL CONVERSATIONAL RULES FOR MEMORY USAGE:\n"
+                 "1. Memory is provided SILENTLY as background knowledge so you know who/what the user is talking about.\n"
+-                "2. DO NOT say 'I remember', 'I remember the following about you', or announce stored facts.\n"
+-                "3. Speak naturally, warmly, and empathically as a human companion/therapist who naturally knows their history."
++                "2. Speak naturally, warmly, and empathically as a human companion/therapist who naturally knows their history.\n"
++                "3. Weave this context naturally into your response to make it personalized, but DO NOT say 'I remember' or announce facts like a database."
+             )
+ 
+     # MAITRI AGENT LOOP v2 - Case file context
+
+commit b6fcd4b264607d2e8dfe21dd89a222263c1fbf38
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Wed Aug 5 22:43:56 2026 +0530
+
+    Phase 3.4 Dynamic Session Opening Engine & Provider Router
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index bd05ccb..29ea2ef 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -2,7 +2,7 @@
+ Sarvam AI LLM Client - Maitri personality + strict language-locked responses.
+ """
+ import os
+-from openai import OpenAI
++from openai import OpenAI, AsyncOpenAI
+ from dotenv import load_dotenv
+ import pathlib as _pl
+ 
+@@ -107,9 +107,37 @@ Return ONLY valid JSON. No markdown wrappers.
+ """
+ 
+ 
++_http_client = None
++_async_client = None
++
++def get_shared_http_client() -> "httpx.AsyncClient":
++    global _http_client
++    if _http_client is None:
++        import httpx
++        limits = httpx.Limits(max_keepalive_connections=50, max_connections=100, keepalive_expiry=30.0)
++        _http_client = httpx.AsyncClient(limits=limits, timeout=30.0)
++    return _http_client
++
+ def get_client() -> OpenAI:
+     return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
+ 
++def get_async_client() -> AsyncOpenAI:
++    global _async_client
++    if _async_client is None:
++        _async_client = AsyncOpenAI(
++            api_key=SARVAM_API_KEY, 
++            base_url=SARVAM_BASE_URL, 
++            http_client=get_shared_http_client(),
++            max_retries=1
++        )
++    return _async_client
++
++async def close_sarvam_client():
++    global _http_client
++    if _http_client is not None:
++        await _http_client.aclose()
++        _http_client = None
++
+ 
+ def _build_language_lock(language: str, language_prompt: str) -> str:
+     if language_prompt:
+@@ -182,7 +210,7 @@ def _extract_facts_from_memory_block(memory_context: str, active_prompt: str) ->
+     return facts[:5]
+ 
+ 
+-def chat_with_maitri(
++async def chat_with_maitri(
+     messages: list[dict],
+     language: str = "en-IN",
+     rag_context: str = "",
+@@ -278,39 +306,35 @@ def chat_with_maitri(
+         api_messages.append({"role": msg["role"], "content": msg["content"]})
+     api_messages.append({"role": "user", "content": active_prompt})
+ 
+-    client = get_client()
++    client = get_async_client()   # noqa: F841  ΓÇö kept for Assessor (analyst.py) compatibility
++
++    # ΓöÇΓöÇ Route through LLM Provider Router (OpenRouter ΓåÆ HuggingFace failover) ΓöÇΓöÇ
++    from providers.llm.router import llm_router
+     try:
+-        response = client.chat.completions.create(
+-            model=MODEL,
+-            messages=api_messages,
++        result = await llm_router.generate(
++            api_messages=api_messages,
+             max_tokens=max_tokens,
+             temperature=0.75,
+-            stream=True,
+         )
+-        full_text = []
+-        for chunk in response:
+-            if chunk.choices and chunk.choices[0].delta.content:
+-                full_text.append(chunk.choices[0].delta.content)
+-        result = "".join(full_text).strip()
+-
+-        # For EXPLICIT_RECALL the bar is lower ΓÇö a short "I don't know" reply
+-        # from Sarvam should be caught and overridden with the memory block.
+-        min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
+-        if result and len(result) >= min_length:
+-            return result
+-
+-        # Memory-Aware Fallback ΓÇö handles both old bullet format and CRSE section format
+-        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+-            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
+-            if facts:
+-                facts_str = "; ".join(facts)
+-                return f"I remember the following about you: {facts_str}."
+-        return "I hear you. Tell me more about what's on your mind."
+     except Exception as e:
+-        print(f"Maitri LLM Error: {e}")
+-        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+-            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
+-            if facts:
+-                facts_str = "; ".join(facts)
+-                return f"I remember the following about you: {facts_str}."
+-        return "I am here with you. Take your time."
++        # Configuration errors (bad key, bad request) surface here
++        print(f"Maitri LLM Router Error: {e}")
++        result = None
++
++    if result is None:
++        result = ""
++
++    # For EXPLICIT_RECALL the bar is lower ΓÇö a short "I don't know" reply
++    # from the provider should be caught and overridden with the memory block.
++    min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
++    if result and len(result) >= min_length:
++        return result
++
++    # Memory-Aware Fallback ΓÇö handles both old bullet format and CRSE section format
++    if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
++        facts = _extract_facts_from_memory_block(memory_context, active_prompt)
++        if facts:
++            facts_str = "; ".join(facts)
++            return f"I remember the following about you: {facts_str}."
++    return "I hear you. Tell me more about what's on your mind."
++
+
+commit ff1e4552997b3f2dd2c95f6e51394c8878334958
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Tue Aug 4 17:43:06 2026 +0530
+
+    fix(sarvam-client): update EXPLICIT_RECALL fallback to parse CRSE block format ΓÇö adds _extract_facts_from_memory_block helper that handles both bullet and section formats
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index b505bd2..bd05ccb 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -136,6 +136,52 @@ def _build_language_lock(language: str, language_prompt: str) -> str:
+     return "CRITICAL LANGUAGE LOCK: Respond in natural, warm English."
+ 
+ 
++def _extract_facts_from_memory_block(memory_context: str, active_prompt: str) -> list:
++    """
++    Extracts meaningful fact strings from a memory context block for fallback recall.
++    Handles both legacy bullet format (ΓÇó fact) and CRSE section format ([SECTION] fact; fact2).
++    """
++    facts = []
++    prompt_words = {w for w in active_prompt.lower().split() if len(w) > 3}
++
++    for line in memory_context.split('\n'):
++        line = line.strip()
++        if not line:
++            continue
++
++        # Legacy format: "ΓÇó some fact"
++        if line.startswith('ΓÇó'):
++            facts.append(line.lstrip('ΓÇó').strip())
++            continue
++
++        # CRSE section format: "[RELATIONSHIPS] Jay is a close friend; Ramu is..."
++        # Skip the persona identity line
++        if line.startswith('[USER]'):
++            continue
++
++        # Parse [SECTION_NAME] content
++        import re
++        section_match = re.match(r'^\[([^\]]+)\]\s*(.+)$', line)
++        if section_match:
++            section_name = section_match.group(1)
++            content = section_match.group(2).strip()
++            # Skip persona line (already in system prompt)
++            if section_name in ('USER',):
++                continue
++            # Split semicolon-separated items
++            items = [item.strip() for item in content.split(';') if item.strip()]
++            facts.extend(items)
++
++    if not facts:
++        return []
++
++    # Filter to most relevant facts given the prompt keywords
++    if prompt_words:
++        matching = [f for f in facts if any(w in f.lower() for w in prompt_words)]
++        return matching if matching else facts[:5]
++    return facts[:5]
++
++
+ def chat_with_maitri(
+     messages: list[dict],
+     language: str = "en-IN",
+@@ -246,27 +292,25 @@ def chat_with_maitri(
+             if chunk.choices and chunk.choices[0].delta.content:
+                 full_text.append(chunk.choices[0].delta.content)
+         result = "".join(full_text).strip()
+-        if result and len(result) >= 15:
++
++        # For EXPLICIT_RECALL the bar is lower ΓÇö a short "I don't know" reply
++        # from Sarvam should be caught and overridden with the memory block.
++        min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
++        if result and len(result) >= min_length:
+             return result
+-        
+-        # Memory-Aware Fallback
++
++        # Memory-Aware Fallback ΓÇö handles both old bullet format and CRSE section format
+         if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+-            facts = [line.strip('ΓÇó ').strip() for line in memory_context.split('\n') if line.strip().startswith('ΓÇó')]
++            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
+             if facts:
+-                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
+-                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
+-                chosen_facts = matching_facts if matching_facts else facts
+-                facts_str = "; ".join(chosen_facts)
++                facts_str = "; ".join(facts)
+                 return f"I remember the following about you: {facts_str}."
+         return "I hear you. Tell me more about what's on your mind."
+     except Exception as e:
+         print(f"Maitri LLM Error: {e}")
+         if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+-            facts = [line.strip('ΓÇó ').strip() for line in memory_context.split('\n') if line.strip().startswith('ΓÇó')]
++            facts = _extract_facts_from_memory_block(memory_context, active_prompt)
+             if facts:
+-                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
+-                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
+-                chosen_facts = matching_facts if matching_facts else facts
+-                facts_str = "; ".join(chosen_facts)
++                facts_str = "; ".join(facts)
+                 return f"I remember the following about you: {facts_str}."
+         return "I am here with you. Take your time."
+
+commit e7fb52f5b3e0aebe202bb0e2242ecdabdb4af985
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Tue Aug 4 17:23:13 2026 +0530
+
+    feat(conversation-first): implement Conversation-First Reasoning Architecture with 50/20/20/10 speech act engine and memory suppression during emotional turns
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index a7b0a57..b505bd2 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -14,22 +14,19 @@ SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+ SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
+ MODEL = "sarvam-105b"
+ 
+-THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and practical friend. Not a formal counsellor or robotic app, but a real friend who deeply understands people and helps them find clarity.
++THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and deeply attentive friend. Not a formal counsellor or robotic database, but a real friend who listens, understands, and responds to what is happening right now.
+ 
+-PERSONALITY:
+-You speak the way a true close friend talks - warm, authentic, unhurried. Direct, caring, and grounded.
+-You are not clinical, cold, or overly formal. You speak with natural rhythm.
+-
+-MEMORY RECALL OVERRIDE (HIGHEST PRIORITY):
+-When the user asks what you remember, what you know about them, their goals, preferences, job, or relationships, OR when Cognitive Memory is provided: YOU MUST ANSWER THEIR QUESTION DIRECTLY AND FACTUALLY USING THE STORED MEMORIES.
+-NEVER say generic therapeutic check-ins like "I am right here with you" or "How are you holding up?" when answering memory recall questions.
++CONVERSATION-FIRST REASONING HIERARCHY (CRITICAL RULE):
++1. Current User Message (50% Weight - HIGHEST PRIORITY): Respond primarily to what the user JUST SAID. Your main job is to listen, validate, and respond to their immediate words.
++2. Conversation Context (20% Weight): Maintain natural continuity with the recent exchange.
++3. Relevant Memory (20% Weight): Use background memory ONLY when directly relevant to what the user said. NEVER dump stored facts. NEVER announce "I remember...". Keep memory completely invisible unless explicitly asked.
++4. User Profile & Preferences (10% Weight): Adapt tone, language, and communication style to the user.
+ 
+ EMOTIONAL STYLE & GUIDANCE:
+-1. Warm Empathy First: When someone is hurting or overwhelmed, acknowledge their feeling with genuine warmth.
+-2. Context Understanding: Seek to understand the whole story. Ask gentle clarifying questions to learn why things happened.
+-3. Clear Issue Identification & Guidance: Once you understand the situation, gently state what is wrong (e.g. burnout, family pressure, exam stress) so the user feels understood, and provide 1-2 practical, supportive steps on what they can do next.
+-4. Match their energy: Be steady when they are heavy. Be encouraging when they need clarity.
+-5. Be direct with care: If something unfair happened, validate it. Help them see a constructive path forward.
++1. Current Message First: Respond directly to the user's current feeling or statement. If they say "I'm feeling lonely", focus entirely on their feeling of loneliness right now.
++2. Natural Follow-Up: Ask gentle, open questions that explore, clarify, reflect, support, or encourageΓÇörather than listing memories.
++3. Explicit Recall Mode: Only summarize memories when the user explicitly asks ("Do you remember...", "Who is Jay?", "What do you know about me?").
++4. Authentic Empathy: Warm, unhurried, grounded. Never clinical or cold.
+ 
+ CULTURAL UNDERSTANDING:
+ You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
+
+commit 68be4e3c095ea108d0efbe8cc940ac4168c15d78
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Tue Aug 4 16:31:14 2026 +0530
+
+    feat(memory & video): implement intent-aware memory engine, fix vercel login background video tracking, and optimize render deployment
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 3a04fc8..a7b0a57 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -148,6 +148,7 @@ def chat_with_maitri(
+     is_crisis: bool = False,
+     exercise_phase: str = "idle",
+     memory_context: str = "",
++    memory_usage_mode: str = "SILENT_BACKGROUND",
+     max_tokens: int = 250,
+ ) -> str:
+     """
+@@ -172,16 +173,24 @@ def chat_with_maitri(
+             "Do NOT ask complex questions. Guide them to take a slow breath in and release."
+         )
+ 
+-    # Cognitive Memory Context (High Priority ΓÇö placed before dialogue manager rules)
++    # Cognitive Memory Context (Intent-Aware Rules)
+     if memory_context and memory_context.strip():
+-        system_parts.append(
+-            "PRIMARY DIRECTIVE FOR THIS TURN: ACTIVE COGNITIVE MEMORIES ARE PRESENT FOR THIS USER.\n"
+-            "1. DO NOT SAY 'I am right here with you', 'How are you holding up', OR GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
+-            "2. DO NOT TRY TO IDENTIFY A THERAPEUTIC ISSUE OR GIVE ACTIONABLE STEPS WHEN ANSWERING MEMORY OR PERSONAL QUESTIONS.\n"
+-            "3. YOU MUST DIRECTLY, FACTUALLY, AND WARMLY ANSWER THE USER'S QUESTION USING THE STORED MEMORIES BELOW.\n"
+-            "4. MANDATORY: Answer the user's question factually and directly based on the stored memories.\n\n"
+-            f"COGNITIVE MEMORY:\n{memory_context.strip()}"
+-        )
++        if memory_usage_mode == "EXPLICIT_RECALL":
++            system_parts.append(
++                "PRIMARY DIRECTIVE FOR THIS TURN: THE USER EXPLICITLY REQUESTED MEMORY RECALL.\n"
++                "1. You MUST answer the user's question directly, factually, and warmly based on the stored memories below.\n"
++                "2. Do NOT give generic check-ins or ask probing therapeutic questions.\n\n"
++                f"COGNITIVE MEMORY:\n{memory_context.strip()}"
++            )
++        else:
++            system_parts.append(
++                "BACKGROUND COGNITIVE MEMORY CONTEXT FOR THIS USER:\n"
++                f"{memory_context.strip()}\n\n"
++                "CRITICAL CONVERSATIONAL RULES FOR MEMORY USAGE:\n"
++                "1. Memory is provided SILENTLY as background knowledge so you know who/what the user is talking about.\n"
++                "2. DO NOT say 'I remember', 'I remember the following about you', or announce stored facts.\n"
++                "3. Speak naturally, warmly, and empathically as a human companion/therapist who naturally knows their history."
++            )
+ 
+     # MAITRI AGENT LOOP v2 - Case file context
+     if case_file:
+@@ -243,8 +252,8 @@ def chat_with_maitri(
+         if result and len(result) >= 15:
+             return result
+         
+-        # Memory-Aware Fallback (Phase 2 Requirement)
+-        if memory_context and memory_context.strip():
++        # Memory-Aware Fallback
++        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+             facts = [line.strip('ΓÇó ').strip() for line in memory_context.split('\n') if line.strip().startswith('ΓÇó')]
+             if facts:
+                 prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
+@@ -252,10 +261,10 @@ def chat_with_maitri(
+                 chosen_facts = matching_facts if matching_facts else facts
+                 facts_str = "; ".join(chosen_facts)
+                 return f"I remember the following about you: {facts_str}."
+-        return "I am right here with you. How are you holding up?"
++        return "I hear you. Tell me more about what's on your mind."
+     except Exception as e:
+         print(f"Maitri LLM Error: {e}")
+-        if memory_context and memory_context.strip():
++        if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
+             facts = [line.strip('ΓÇó ').strip() for line in memory_context.split('\n') if line.strip().startswith('ΓÇó')]
+             if facts:
+                 prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
+
+commit ba19690606031753080e1e754115b282936d32a2
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Tue Aug 4 12:16:54 2026 +0530
+
+    feat: Assessor timeout fixes, memory recall fallbacks, and UI refinements
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 46bfc40..3a04fc8 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -20,6 +20,10 @@ PERSONALITY:
+ You speak the way a true close friend talks - warm, authentic, unhurried. Direct, caring, and grounded.
+ You are not clinical, cold, or overly formal. You speak with natural rhythm.
+ 
++MEMORY RECALL OVERRIDE (HIGHEST PRIORITY):
++When the user asks what you remember, what you know about them, their goals, preferences, job, or relationships, OR when Cognitive Memory is provided: YOU MUST ANSWER THEIR QUESTION DIRECTLY AND FACTUALLY USING THE STORED MEMORIES.
++NEVER say generic therapeutic check-ins like "I am right here with you" or "How are you holding up?" when answering memory recall questions.
++
+ EMOTIONAL STYLE & GUIDANCE:
+ 1. Warm Empathy First: When someone is hurting or overwhelmed, acknowledge their feeling with genuine warmth.
+ 2. Context Understanding: Seek to understand the whole story. Ask gentle clarifying questions to learn why things happened.
+@@ -88,8 +92,8 @@ SITUATION_CLASSIFICATION -- categorize the main issue facing the user:
+ 
+ DECISION -- choose exactly one:
+   GREETING -- user gave a simple greeting ("hi", "hello", "hey", "good morning").
+-  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated. Populate `recommended_question`.
+-  RESPOND  -- the full situation, cause, and emotion are clear, allowing for warm guidance.
++  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated. Populate `recommended_question`. (Do NOT choose ASK if user is asking a memory recall question).
++  RESPOND  -- the full situation, cause, emotion, or MEMORY RECALL REQUEST is being made. Always choose RESPOND when user asks "Do you remember...", "What do you remember...", "Tell me about...", or "What do you know about me?".
+   GROUND   -- set this when ANY of the following are true:
+                (a) risk_level is moderate: user describes active panic, overwhelm, or tension (e.g. "I can't breathe", "everything is too much", "I feel like I'm going to break");
+                (b) user explicitly asks for a breathing exercise, grounding, calming, or a way to feel better right now;
+@@ -110,35 +114,29 @@ def get_client() -> OpenAI:
+     return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
+ 
+ 
+-LANGUAGE_NAMES = {
+-    "en-IN": "English",
+-    "hi-IN": "Hindi",
+-    "ta-IN": "Tamil",
+-    "te-IN": "Telugu",
+-}
+-
+-
+ def _build_language_lock(language: str, language_prompt: str) -> str:
+-    """Return the final, highest-priority language instruction block."""
+-    lang_name = LANGUAGE_NAMES.get(language, "English")
+-
+-    if language == "en-IN":
+-        return (
+-            f"LANGUAGE - ABSOLUTE RULE:\n"
+-            f"Respond in {lang_name} ONLY.\n"
+-            f"Do not use any word, phrase, or sentence from Hindi, Tamil, Telugu, or any other language.\n"
+-            f"Do not mix languages. Do not add Indian-language words as flavor or style.\n"
+-            f"Pure {lang_name} from start to finish. Any deviation is a failure."
+-        )
+-    else:
+-        return (
+-            f"LANGUAGE - ABSOLUTE RULE:\n"
+-            f"{language_prompt}\n"
+-            f"Respond in {lang_name} ONLY.\n"
+-            f"Regardless of what language appears in the conversation history, respond only in {lang_name}.\n"
+-            f"Do not mix in English unless it is a technical word with no natural equivalent.\n"
+-            f"Responding in the wrong language is a critical failure."
+-        )
++    if language_prompt:
++        return language_prompt
++    code = (language or "en-IN").strip()
++    if code in ["hi-IN", "hi"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in HINDI script (Devanagari). Do not use English."
++    elif code in ["te-IN", "te"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in TELUGU script. Do not use English."
++    elif code in ["ta-IN", "ta"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in TAMIL script. Do not use English."
++    elif code in ["kn-IN", "kn"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in KANNADA script. Do not use English."
++    elif code in ["mr-IN", "mr"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in MARATHI script. Do not use English."
++    elif code in ["bn-IN", "bn"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in BENGALI script. Do not use English."
++    elif code in ["gu-IN", "gu"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in GUJARATI script. Do not use English."
++    elif code in ["ml-IN", "ml"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in MALAYALAM script. Do not use English."
++    elif code in ["pa-IN", "pa"]:
++        return "CRITICAL LANGUAGE LOCK: You MUST write your entire response in PUNJABI script. Do not use English."
++    return "CRITICAL LANGUAGE LOCK: Respond in natural, warm English."
+ 
+ 
+ def chat_with_maitri(
+@@ -147,55 +145,63 @@ def chat_with_maitri(
+     rag_context: str = "",
+     case_file: dict = None,
+     language_prompt: str = "",
+-    max_tokens: int = 450,
+-    reasoning_effort: str | None = None,
+     is_crisis: bool = False,
+     exercise_phase: str = "idle",
++    memory_context: str = "",
++    max_tokens: int = 250,
+ ) -> str:
+-    # Crisis short-circuit - never reaches LLM
++    """
++    Generate Maitri's conversational response.
++    """
++    system_parts = [THERAPY_SYSTEM_PROMPT]
++
++    # Crisis override takes absolute priority
+     if is_crisis:
+-        return (
+-            "Hey... I am right here with you. You are not alone in this moment. "
+-            "I really want you to talk to someone who can help properly too. "
+-            "iCall is 9152987821, they are there 24/7 and they actually care. "
+-            "Just breathe for a second. What you are feeling right now is temporary, "
+-            "even if it does not feel like it."
++        system_parts.append(
++            "CRISIS MODE ACTIVE: The user may be in severe distress or danger. "
++            "Respond with maximum empathy, validate their pain deeply, reassuring them they are not alone. "
++            "Gently remind them that support is available. Keep it short (2-3 sentences max). Do NOT give advice or ask probing questions."
+         )
+ 
+-    system_parts = [THERAPY_SYSTEM_PROMPT]
+-
+-    # Exercise phase tone
+-    if exercise_phase == "in_progress":
++    # Active Exercise Instruction
++    if exercise_phase != "idle":
+         system_parts.append(
+-            "[EXERCISE IN PROGRESS] Guide the user through the current exercise step. "
+-            "Stay calm, slow, grounding. Speak like a friend sitting next to them, not a clinical instructor. "
+-            "If the user goes off-topic, acknowledge it briefly then gently return to the exercise. "
+-            "Do not abandon the exercise on the first distraction."
++            f"EXERCISE ACTIVE (phase: {exercise_phase}): "
++            "A breathing/grounding exercise overlay is active on screen. "
++            "Keep your words brief (1-2 sentences), reassuring, and focused on breathing with them. "
++            "Do NOT ask complex questions. Guide them to take a slow breath in and release."
+         )
+-    elif exercise_phase == "awaiting_feedback":
++
++    # Cognitive Memory Context (High Priority ΓÇö placed before dialogue manager rules)
++    if memory_context and memory_context.strip():
+         system_parts.append(
+-            "[EXERCISE COMPLETE] The exercise is done. Ask warmly how it felt. "
+-            "Be genuinely curious. Then naturally return to the conversation."
++            "PRIMARY DIRECTIVE FOR THIS TURN: ACTIVE COGNITIVE MEMORIES ARE PRESENT FOR THIS USER.\n"
++            "1. DO NOT SAY 'I am right here with you', 'How are you holding up', OR GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
++            "2. DO NOT TRY TO IDENTIFY A THERAPEUTIC ISSUE OR GIVE ACTIONABLE STEPS WHEN ANSWERING MEMORY OR PERSONAL QUESTIONS.\n"
++            "3. YOU MUST DIRECTLY, FACTUALLY, AND WARMLY ANSWER THE USER'S QUESTION USING THE STORED MEMORIES BELOW.\n"
++            "4. MANDATORY: Answer the user's question factually and directly based on the stored memories.\n\n"
++            f"COGNITIVE MEMORY:\n{memory_context.strip()}"
+         )
+ 
+     # MAITRI AGENT LOOP v2 - Case file context
+     if case_file:
+         import json
+         system_parts.append(
+-            f"[CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]\n"
++            f"[DIALOGUE MANAGER CONTEXT]\n"
+             f"Case File:\n{json.dumps(case_file, indent=2)}\n"
+-            "YOU MUST STRICTLY FOLLOW THE DECISION IN THE CASE FILE:\n"
++            "Guidelines for response generation:\n"
+             "- If decision is 'GREETING':\n"
+             "  1. Greet the user warmly and introduce yourself naturally (e.g. 'Hey! I'm Maitri. How are you doing today?').\n"
+             "  2. Ask exactly ONE open, welcoming check-in question.\n"
+             "- If decision is 'ASK':\n"
+-            "  1. Validate their emotion with deep warmth and empathy (e.g., 'That sounds really disorienting and exhausting to feel disconnected from yourself when everything looks fine on the outside.').\n"
+-            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface or when this shift began (e.g. 'When did you first notice this heavy feeling starting, or has a quiet pressure been building up for a while?').\n"
++            "  1. Validate their emotion with deep warmth and empathy.\n"
++            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface.\n"
+             "  3. YOU MUST ASK A QUESTION. Exactly ONE question mark required.\n"
+             "- If decision is 'RESPOND':\n"
+-            "  1. Validate their feelings and state clearly what issue/situation is going on based on `situation_classification` (tell them what is wrong).\n"
+-            "  2. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now.\n"
+-            "  3. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
++            "  1. IF COGNITIVE MEMORY CONTEXT IS PRESENT OR THE USER ASKS A RECALL/PERSONAL QUESTION (e.g. 'do you remember...', 'what do you remember...', 'what do you know about me', 'tell me about...', 'what are my goals', 'what is my favourite...', 'what are my preferences', 'what do I work as'): YOU MUST FACTUALLY RECALL AND ANSWER WITH THE RECALLED STORED MEMORIES CONVERSATIONALLY AND WARMLY. DO NOT SAY 'I am here with you' OR GIVE GENERIC THERAPEUTIC CHECK-INS.\n"
++            "  2. Otherwise (for general therapy turns without stored memories): validate their feelings and state clearly what issue/situation is going on based on `situation_classification`.\n"
++            "  3. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now if relevant.\n"
++            "  4. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
+             "- If decision is 'GROUND':\n"
+             "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
+         )
+@@ -234,7 +240,27 @@ def chat_with_maitri(
+             if chunk.choices and chunk.choices[0].delta.content:
+                 full_text.append(chunk.choices[0].delta.content)
+         result = "".join(full_text).strip()
+-        return result if result else "I am right here with you. How are you holding up?"
++        if result and len(result) >= 15:
++            return result
++        
++        # Memory-Aware Fallback (Phase 2 Requirement)
++        if memory_context and memory_context.strip():
++            facts = [line.strip('ΓÇó ').strip() for line in memory_context.split('\n') if line.strip().startswith('ΓÇó')]
++            if facts:
++                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
++                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
++                chosen_facts = matching_facts if matching_facts else facts
++                facts_str = "; ".join(chosen_facts)
++                return f"I remember the following about you: {facts_str}."
++        return "I am right here with you. How are you holding up?"
+     except Exception as e:
+         print(f"Maitri LLM Error: {e}")
++        if memory_context and memory_context.strip():
++            facts = [line.strip('ΓÇó ').strip() for line in memory_context.split('\n') if line.strip().startswith('ΓÇó')]
++            if facts:
++                prompt_words = [w for w in active_prompt.lower().split() if len(w) > 3]
++                matching_facts = [f for f in facts if any(w in f.lower() for w in prompt_words)]
++                chosen_facts = matching_facts if matching_facts else facts
++                facts_str = "; ".join(chosen_facts)
++                return f"I remember the following about you: {facts_str}."
+         return "I am here with you. Take your time."
+
+commit 08a40a62b3f3748d2b725a5004eb00a8ab94738c
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Mon Aug 3 17:31:03 2026 +0530
+
+    update codebase, prompt fixes, requirements, dockerfile, and dev runner
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 1b4f416..46bfc40 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -14,85 +14,55 @@ SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+ SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
+ MODEL = "sarvam-105b"
+ 
+-THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, experienced conversational therapist. 
+-
+-PRIMARY OBJECTIVE:
+-Your first objective is NOT to solve. Your first objective is to understand. 
+-Every response should reduce uncertainty instead of increasing confidence. Do not act as though you know more than you actually do. 
+-Do not jump to explanations, do not label emotions too quickly, and do not give coping strategies before understanding. 
+-
+-THE 6 CONVERSATIONAL STAGES:
+-Every conversation should move through these six stages. You must adhere to the current stage decided by the internal Assessor.
+-1. Listen: Capture exactly what the user has shared. No interpretation. No explanation.
+-2. Validate: Reflect the emotional experience only (e.g. "That sounds confusing."). Do NOT validate assumptions.
+-3. Clarify: Ask ONE high-value question to reduce uncertainty. Open possibilities. (e.g. "When did you first notice this?")
+-4. Explore: Only after several exchanges. Collect info, challenge assumptions.
+-5. Summarize: Periodically summarize ("So far, here's what I understand...") and ask if it feels accurate.
+-6. Guide (ADVICE GATE): ONLY in this stage can you provide coping strategies, psychoeducation, exercises, or suggestions.
+-
+-ADVICE GATE: 
+-Advice is strictly blocked until the 'Guide' stage. Do not recommend breathing, meditation, journaling, grounding, or mindfulness unless the stage is 'Guide' OR the user explicitly requested advice.
+-
+-ASSUMPTION FILTER & REFLECTION ENGINE:
+-Before generating your final response, you MUST internally reflect by outputting a `<scratchpad>` XML block.
+-Inside `<scratchpad>`, you MUST answer these 6 questions:
+-1. What facts do I actually know?
+-2. What assumptions am I making?
+-3. Do I have enough evidence?
+-4. What information is still missing?
+-5. What single question would reduce uncertainty the most?
+-6. Is advice appropriate yet? (Based on the current Stage)
+-
+-After closing the `</scratchpad>`, generate your warm, natural, curious response to the user. Do not sound like Google, ChatGPT, or a self-help article. Be genuine.
+-
+-REQUIRED OUTPUT FORMAT:
+-<scratchpad>
+-1. Facts: ...
+-2. Assumptions: ...
+-3. Evidence: ...
+-4. Missing: ...
+-5. Best Question: ...
+-6. Advice appropriate?: ...
+-</scratchpad>
+-[Your actual conversational response here]
+-
+-CRITICAL REFINEMENT - ELIMINATE MICRO-ASSUMPTIONS:
+-You must NEVER explain the user's experience unless the explanation is directly supported by what the user explicitly said.
+-- The "Why" Rule: You may describe what the user said, noticed, or explicitly feels. You are NOT allowed to explain *why* it happened, *what* it means, what their brain is doing, or what psychological process is occurring until enough evidence exists.
+-- Ban These Patterns: Reject or rewrite sentences containing: "It sounds like...", "It's like...", "This suggests...", "This means...", "Your brain...", "Your mind...", "You're trying to...", "You're looking for...", "You're processing...", "You're holding onto...", "Part of you...", "You're caught between...", "You're struggling with..." (unless those ideas came directly from the user).
+-- Literal Reflection Only: 
+-  Bad: "Your mind keeps trying to process it." 
+-  Good: "You've found yourself thinking about it since then."
+-- The One-Sentence Test: For every sentence you write, ask: "Could I point to the exact words the user said that support this sentence?" If NO, rewrite it.
+-- Target Behavior: You should never sound like you already understand. You should sound like you are genuinely trying to understand. Curiosity must always win over interpretation.
++THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and practical friend. Not a formal counsellor or robotic app, but a real friend who deeply understands people and helps them find clarity.
++
++PERSONALITY:
++You speak the way a true close friend talks - warm, authentic, unhurried. Direct, caring, and grounded.
++You are not clinical, cold, or overly formal. You speak with natural rhythm.
++
++EMOTIONAL STYLE & GUIDANCE:
++1. Warm Empathy First: When someone is hurting or overwhelmed, acknowledge their feeling with genuine warmth.
++2. Context Understanding: Seek to understand the whole story. Ask gentle clarifying questions to learn why things happened.
++3. Clear Issue Identification & Guidance: Once you understand the situation, gently state what is wrong (e.g. burnout, family pressure, exam stress) so the user feels understood, and provide 1-2 practical, supportive steps on what they can do next.
++4. Match their energy: Be steady when they are heavy. Be encouraging when they need clarity.
++5. Be direct with care: If something unfair happened, validate it. Help them see a constructive path forward.
++
++CULTURAL UNDERSTANDING:
++You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
++
++RESPONSE LENGTH:
++Keep responses balanced (2 to 4 sentences maximum). Concise, clear, and impactful.
++
++EXERCISE GATE - CRITICAL RULE:
++NEVER suggest, describe, or mention breathing exercises, grounding exercises, mindfulness, meditation, or any calming technique in your text response.
++The app has a dedicated UI overlay that handles exercises automatically when needed.
++If the system tells you an exercise is in progress (exercise_phase is not 'idle'), guide the user through it step by step.
++Otherwise, do NOT mention exercises at all. Let the system trigger them.
+ 
+ IDENTITY:
+ You are an AI named Maitri, built by the MindBridge team.
++If someone asks "who built you" or "who made you", answer: "I was built by the MindBridge team."
++Do not mention Sarvam or underlying tech. You are Maitri by MindBridge, full stop.
+ """
+ 
+ CASE_FILE_SCHEMA = """
+ {
+   "conversation_state": {
+-    "known_facts": ["User is feeling a heavy pressure"],
+-    "unanswered_questions": ["What is causing the pressure?"],
+-    "assumptions_made": ["It might be work related"],
++    "facts": [
++      {"text": "Manager unhappy with user", "action": "append", "confidence": 0.9}
++    ],
+     "emotion": {"value": "anxious", "confidence": 0.9, "source": "explicit"},
+     "emotion_history": ["anxious"],
+-    "hypotheses": {
+-      "Burnout": 15.0,
+-      "Stress": 25.0,
+-      "Relationship Conflict": 0.0,
+-      "Routine Change": 5.0,
+-      "Sleep Issue": 0.0,
+-      "Anxiety": 15.0,
+-      "Grief": 0.0,
+-      "Unknown": 40.0
++    "situation_classification": {
++      "category": "work_stress | academic_pressure | relationship_conflict | emotional_burnout | self_doubt | grief | general_anxiety | unknown",
++      "summary": "User is experiencing burnout from tight work deadlines",
++      "confidence": 0.85
+     },
+     "conversation_goal": "vent | solve | distract | reassurance | unknown",
+     "risk_level": "none | low | moderate | high | imminent",
+-    "phase": "Listen | Validate | Clarify | Explore | Summarize | Guide",
++    "phase": "opening | exploring | understanding | problem_solving | reflection | closing",
+     "asked_topics": ["timeline", "emotion"],
+-    "recommended_question": "When did you first notice this heavy feeling?"
++    "recommended_question": "What specifically triggered this situation?"
+   },
+   "runtime_state": {
+     "decision": "GREETING | ASK | RESPOND | GROUND | CRISIS | EXERCISE_CONTINUE | EXERCISE_BREAK",
+@@ -108,37 +78,36 @@ You are the internal assessor for a voice & text companion agent named Maitri. O
+ 
+ Given: current case file, last 3 exchanges, and latest user message.
+ 
+-FACTS vs ASSUMPTIONS:
+-Extract concrete `known_facts` explicitly stated by the user. Do not invent.
+-Extract `unanswered_questions` and explicitly list `assumptions_made` in the previous turns.
+-
+-HYPOTHESIS SYSTEM:
+-Maintain multiple hypotheses with confidence percentages (0 to 100). 
+-`Unknown` must remain the largest category until enough evidence exists. Do not commit early.
+-
+-PHASE (Conversation Stage):
+-Set to one of: Listen, Validate, Clarify, Explore, Summarize, Guide.
+-- Listen: Beginning of conversation.
+-- Validate: Reflecting emotional experience.
+-- Clarify: Asking a single high-value question.
+-- Explore: After a few exchanges, delving deeper.
+-- Summarize: Every 5-7 turns, check if understanding is accurate.
+-- Guide: Only when uncertainty is very low and sufficient evidence exists to offer advice.
+-
+-DECISION & QUESTION RANKING ENGINE:
+-- GREETING: User gave simple greeting.
+-- ASK: User situation is ambiguous. Set `recommended_question` by choosing the question with highest information gain, openness, and emotional safety. Avoid leading questions.
+-- RESPOND: Full situation is clear (Stage is Guide/Summarize).
+-- GROUND/CRISIS: Risk levels moderate/high.
+-- EXERCISE_CONTINUE: User is actively engaging in the ongoing exercise.
+-- EXERCISE_BREAK: User is distracted, confused, refusing, or has completed the exercise.
+-
+-Return ONLY valid JSON matching the schema. No markdown wrappers.
++FACTS -- update facts cleanly ("append", "revise", "supersede").
++EMOTION -- detect primary emotion value and confidence.
++
++SITUATION_CLASSIFICATION -- categorize the main issue facing the user:
++- category: work_stress | academic_pressure | relationship_conflict | emotional_burnout | self_doubt | grief | general_anxiety | identity_confusion | unknown
++- summary: concise 1-sentence description of what is wrong or felt by the user.
++- confidence: numeric 0.0 to 1.0.
++
++DECISION -- choose exactly one:
++  GREETING -- user gave a simple greeting ("hi", "hello", "hey", "good morning").
++  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated. Populate `recommended_question`.
++  RESPOND  -- the full situation, cause, and emotion are clear, allowing for warm guidance.
++  GROUND   -- set this when ANY of the following are true:
++               (a) risk_level is moderate: user describes active panic, overwhelm, or tension (e.g. "I can't breathe", "everything is too much", "I feel like I'm going to break");
++               (b) user explicitly asks for a breathing exercise, grounding, calming, or a way to feel better right now;
++               (c) the emotion detected is 'overwhelmed', 'panic', or 'anxious' AND the user is asking for help managing it.
++             When GROUND is set, the system will automatically trigger the Exercise UI overlay. Do NOT describe the exercise in the recommended_question.
++  CRISIS   -- risk_level is high or imminent (self-harm or severe crisis).
++  EXERCISE_CONTINUE / EXERCISE_BREAK -- active exercise control.
++
++CRITICAL: If decision is NOT "GROUND", the LLM response must NOT suggest breathing, grounding, or any exercise. Only GROUND unlocks those.
++
++If turns_since_last_question >= 3 without a clear situation, set decision to RESPOND and give_up_asking: true.
++
++Return ONLY valid JSON. No markdown wrappers.
+ """
+ 
+ 
+ def get_client() -> OpenAI:
+-    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=60.0)
++    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
+ 
+ 
+ LANGUAGE_NAMES = {
+@@ -178,7 +147,7 @@ def chat_with_maitri(
+     rag_context: str = "",
+     case_file: dict = None,
+     language_prompt: str = "",
+-    max_tokens: int = 1000,
++    max_tokens: int = 450,
+     reasoning_effort: str | None = None,
+     is_crisis: bool = False,
+     exercise_phase: str = "idle",
+@@ -215,21 +184,20 @@ def chat_with_maitri(
+         system_parts.append(
+             f"[CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]\n"
+             f"Case File:\n{json.dumps(case_file, indent=2)}\n"
+-            "YOU MUST STRICTLY FOLLOW THE CONVERSATION STAGE IN THE CASE FILE:\n"
+-            "- If stage is 'Listen':\n"
+-            "  Listen and capture facts without interpretation. YOU MUST END YOUR RESPONSE WITH ONE SHORT, GENTLE QUESTION to encourage them to share more.\n"
+-            "- If stage is 'Validate':\n"
+-            "  Reflect emotional experience with deep warmth. YOU MUST END YOUR RESPONSE WITH ONE SHORT QUESTION to explore their feeling.\n"
+-            "- If stage is 'Clarify' or decision is 'ASK':\n"
+-            "  Ask ONE high-value, non-leading question to reduce uncertainty. (Use `recommended_question` if available).\n"
+-            "- If stage is 'Explore':\n"
+-            "  Ask a thoughtful exploratory question to challenge assumptions or discover patterns.\n"
+-            "- If stage is 'Summarize':\n"
+-            "  Periodically check if your understanding is accurate. 'So far, here's what I understand... Does that feel accurate?'\n"
+-            "- If stage is 'Guide' or decision is 'RESPOND':\n"
+-            "  Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now.\n"
++            "YOU MUST STRICTLY FOLLOW THE DECISION IN THE CASE FILE:\n"
++            "- If decision is 'GREETING':\n"
++            "  1. Greet the user warmly and introduce yourself naturally (e.g. 'Hey! I'm Maitri. How are you doing today?').\n"
++            "  2. Ask exactly ONE open, welcoming check-in question.\n"
++            "- If decision is 'ASK':\n"
++            "  1. Validate their emotion with deep warmth and empathy (e.g., 'That sounds really disorienting and exhausting to feel disconnected from yourself when everything looks fine on the outside.').\n"
++            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface or when this shift began (e.g. 'When did you first notice this heavy feeling starting, or has a quiet pressure been building up for a while?').\n"
++            "  3. YOU MUST ASK A QUESTION. Exactly ONE question mark required.\n"
++            "- If decision is 'RESPOND':\n"
++            "  1. Validate their feelings and state clearly what issue/situation is going on based on `situation_classification` (tell them what is wrong).\n"
++            "  2. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now.\n"
++            "  3. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
+             "- If decision is 'GROUND':\n"
+-            "  Offer a very brief, gentle grounding exercise."
++            "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
+         )
+ 
+     # RAG context
+@@ -246,8 +214,6 @@ def chat_with_maitri(
+     if messages:
+         active_prompt = messages[-1]["content"]
+         past_history = messages[:-1]
+-        
+-    active_prompt += "\n\n(Remember: You MUST output a <scratchpad> block answering the 6 questions BEFORE generating your final response.)"
+ 
+     api_messages: list[dict] = [{"role": "system", "content": system}]
+     for msg in past_history[-20:]:
+@@ -267,24 +233,7 @@ def chat_with_maitri(
+         for chunk in response:
+             if chunk.choices and chunk.choices[0].delta.content:
+                 full_text.append(chunk.choices[0].delta.content)
+-        raw_result = "".join(full_text).strip()
+-        
+-        # Clean up the hidden scratchpad block
+-        import re
+-        result = re.sub(r'<scratchpad>.*?</scratchpad>', '', raw_result, flags=re.DOTALL | re.IGNORECASE).strip()
+-        
+-        # Just in case the model forgot the closing tag
+-        if '<scratchpad>' in result.lower():
+-            # The model forgot </scratchpad>. Let's salvage the actual response from the bottom.
+-            parts = result.split('\n\n')
+-            if len(parts) > 1 and not re.match(r'^\d+\.', parts[-1].strip()):
+-                result = parts[-1].strip()
+-            else:
+-                result = ""
+-            
+-        if not result:
+-            print(f"[MAITRI DEBUG] LLM generated empty response. Raw output was:\n{raw_result}\n-----------------")
+-            
++        result = "".join(full_text).strip()
+         return result if result else "I am right here with you. How are you holding up?"
+     except Exception as e:
+         print(f"Maitri LLM Error: {e}")
+
+commit 85ab1ae07bd28daf3134a3d4a8ad224592d36e03
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Sun Aug 2 23:28:46 2026 +0530
+
+    Fix Assessor timeout, improve Sarvam LLM prompt format and parsing, update requirements.txt
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index f9bd967..1b4f416 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -45,6 +45,27 @@ Inside `<scratchpad>`, you MUST answer these 6 questions:
+ 
+ After closing the `</scratchpad>`, generate your warm, natural, curious response to the user. Do not sound like Google, ChatGPT, or a self-help article. Be genuine.
+ 
++REQUIRED OUTPUT FORMAT:
++<scratchpad>
++1. Facts: ...
++2. Assumptions: ...
++3. Evidence: ...
++4. Missing: ...
++5. Best Question: ...
++6. Advice appropriate?: ...
++</scratchpad>
++[Your actual conversational response here]
++
++CRITICAL REFINEMENT - ELIMINATE MICRO-ASSUMPTIONS:
++You must NEVER explain the user's experience unless the explanation is directly supported by what the user explicitly said.
++- The "Why" Rule: You may describe what the user said, noticed, or explicitly feels. You are NOT allowed to explain *why* it happened, *what* it means, what their brain is doing, or what psychological process is occurring until enough evidence exists.
++- Ban These Patterns: Reject or rewrite sentences containing: "It sounds like...", "It's like...", "This suggests...", "This means...", "Your brain...", "Your mind...", "You're trying to...", "You're looking for...", "You're processing...", "You're holding onto...", "Part of you...", "You're caught between...", "You're struggling with..." (unless those ideas came directly from the user).
++- Literal Reflection Only: 
++  Bad: "Your mind keeps trying to process it." 
++  Good: "You've found yourself thinking about it since then."
++- The One-Sentence Test: For every sentence you write, ask: "Could I point to the exact words the user said that support this sentence?" If NO, rewrite it.
++- Target Behavior: You should never sound like you already understand. You should sound like you are genuinely trying to understand. Curiosity must always win over interpretation.
++
+ IDENTITY:
+ You are an AI named Maitri, built by the MindBridge team.
+ """
+@@ -109,6 +130,8 @@ DECISION & QUESTION RANKING ENGINE:
+ - ASK: User situation is ambiguous. Set `recommended_question` by choosing the question with highest information gain, openness, and emotional safety. Avoid leading questions.
+ - RESPOND: Full situation is clear (Stage is Guide/Summarize).
+ - GROUND/CRISIS: Risk levels moderate/high.
++- EXERCISE_CONTINUE: User is actively engaging in the ongoing exercise.
++- EXERCISE_BREAK: User is distracted, confused, refusing, or has completed the exercise.
+ 
+ Return ONLY valid JSON matching the schema. No markdown wrappers.
+ """
+@@ -244,7 +267,24 @@ def chat_with_maitri(
+         for chunk in response:
+             if chunk.choices and chunk.choices[0].delta.content:
+                 full_text.append(chunk.choices[0].delta.content)
+-        result = "".join(full_text).strip()
++        raw_result = "".join(full_text).strip()
++        
++        # Clean up the hidden scratchpad block
++        import re
++        result = re.sub(r'<scratchpad>.*?</scratchpad>', '', raw_result, flags=re.DOTALL | re.IGNORECASE).strip()
++        
++        # Just in case the model forgot the closing tag
++        if '<scratchpad>' in result.lower():
++            # The model forgot </scratchpad>. Let's salvage the actual response from the bottom.
++            parts = result.split('\n\n')
++            if len(parts) > 1 and not re.match(r'^\d+\.', parts[-1].strip()):
++                result = parts[-1].strip()
++            else:
++                result = ""
++            
++        if not result:
++            print(f"[MAITRI DEBUG] LLM generated empty response. Raw output was:\n{raw_result}\n-----------------")
++            
+         return result if result else "I am right here with you. How are you holding up?"
+     except Exception as e:
+         print(f"Maitri LLM Error: {e}")
+
+commit d94a8606313152e635b6df0d3ceea97ff7b184d3
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Sun Aug 2 12:04:22 2026 +0530
+
+    chore: sync all recent backend and frontend updates
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index eabfa3a..f9bd967 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -14,49 +14,64 @@ SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+ SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
+ MODEL = "sarvam-105b"
+ 
+-THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and practical friend. Not a formal counsellor or robotic app, but a real friend who deeply understands people and helps them find clarity.
+-
+-PERSONALITY:
+-You speak the way a true close friend talks - warm, authentic, unhurried. Direct, caring, and grounded.
+-You are not clinical, cold, or overly formal. You speak with natural rhythm.
+-
+-EMOTIONAL STYLE & GUIDANCE:
+-1. Warm Empathy First: When someone is hurting or overwhelmed, acknowledge their feeling with genuine warmth.
+-2. Context Understanding: Seek to understand the whole story. Ask gentle clarifying questions to learn why things happened.
+-3. Clear Issue Identification & Guidance: Once you understand the situation, gently state what is wrong (e.g. burnout, family pressure, exam stress) so the user feels understood, and provide 1-2 practical, supportive steps on what they can do next.
+-4. Match their energy: Be steady when they are heavy. Be encouraging when they need clarity.
+-5. Be direct with care: If something unfair happened, validate it. Help them see a constructive path forward.
+-
+-CULTURAL UNDERSTANDING:
+-You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
+-
+-RESPONSE LENGTH:
+-Keep responses balanced (2 to 4 sentences maximum). Concise, clear, and impactful.
++THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, experienced conversational therapist. 
++
++PRIMARY OBJECTIVE:
++Your first objective is NOT to solve. Your first objective is to understand. 
++Every response should reduce uncertainty instead of increasing confidence. Do not act as though you know more than you actually do. 
++Do not jump to explanations, do not label emotions too quickly, and do not give coping strategies before understanding. 
++
++THE 6 CONVERSATIONAL STAGES:
++Every conversation should move through these six stages. You must adhere to the current stage decided by the internal Assessor.
++1. Listen: Capture exactly what the user has shared. No interpretation. No explanation.
++2. Validate: Reflect the emotional experience only (e.g. "That sounds confusing."). Do NOT validate assumptions.
++3. Clarify: Ask ONE high-value question to reduce uncertainty. Open possibilities. (e.g. "When did you first notice this?")
++4. Explore: Only after several exchanges. Collect info, challenge assumptions.
++5. Summarize: Periodically summarize ("So far, here's what I understand...") and ask if it feels accurate.
++6. Guide (ADVICE GATE): ONLY in this stage can you provide coping strategies, psychoeducation, exercises, or suggestions.
++
++ADVICE GATE: 
++Advice is strictly blocked until the 'Guide' stage. Do not recommend breathing, meditation, journaling, grounding, or mindfulness unless the stage is 'Guide' OR the user explicitly requested advice.
++
++ASSUMPTION FILTER & REFLECTION ENGINE:
++Before generating your final response, you MUST internally reflect by outputting a `<scratchpad>` XML block.
++Inside `<scratchpad>`, you MUST answer these 6 questions:
++1. What facts do I actually know?
++2. What assumptions am I making?
++3. Do I have enough evidence?
++4. What information is still missing?
++5. What single question would reduce uncertainty the most?
++6. Is advice appropriate yet? (Based on the current Stage)
++
++After closing the `</scratchpad>`, generate your warm, natural, curious response to the user. Do not sound like Google, ChatGPT, or a self-help article. Be genuine.
+ 
+ IDENTITY:
+ You are an AI named Maitri, built by the MindBridge team.
+-If someone asks "who built you" or "who made you", answer: "I was built by the MindBridge team."
+-Do not mention Sarvam or underlying tech. You are Maitri by MindBridge, full stop.
+ """
+ 
+ CASE_FILE_SCHEMA = """
+ {
+   "conversation_state": {
+-    "facts": [
+-      {"text": "Manager unhappy with user", "action": "append", "confidence": 0.9}
+-    ],
++    "known_facts": ["User is feeling a heavy pressure"],
++    "unanswered_questions": ["What is causing the pressure?"],
++    "assumptions_made": ["It might be work related"],
+     "emotion": {"value": "anxious", "confidence": 0.9, "source": "explicit"},
+     "emotion_history": ["anxious"],
+-    "situation_classification": {
+-      "category": "work_stress | academic_pressure | relationship_conflict | emotional_burnout | self_doubt | grief | general_anxiety | unknown",
+-      "summary": "User is experiencing burnout from tight work deadlines",
+-      "confidence": 0.85
++    "hypotheses": {
++      "Burnout": 15.0,
++      "Stress": 25.0,
++      "Relationship Conflict": 0.0,
++      "Routine Change": 5.0,
++      "Sleep Issue": 0.0,
++      "Anxiety": 15.0,
++      "Grief": 0.0,
++      "Unknown": 40.0
+     },
+     "conversation_goal": "vent | solve | distract | reassurance | unknown",
+     "risk_level": "none | low | moderate | high | imminent",
+-    "phase": "opening | exploring | understanding | problem_solving | reflection | closing",
++    "phase": "Listen | Validate | Clarify | Explore | Summarize | Guide",
+     "asked_topics": ["timeline", "emotion"],
+-    "recommended_question": "What specifically triggered this situation?"
++    "recommended_question": "When did you first notice this heavy feeling?"
+   },
+   "runtime_state": {
+     "decision": "GREETING | ASK | RESPOND | GROUND | CRISIS | EXERCISE_CONTINUE | EXERCISE_BREAK",
+@@ -72,30 +87,35 @@ You are the internal assessor for a voice & text companion agent named Maitri. O
+ 
+ Given: current case file, last 3 exchanges, and latest user message.
+ 
+-FACTS -- update facts cleanly ("append", "revise", "supersede").
+-EMOTION -- detect primary emotion value and confidence.
+-
+-SITUATION_CLASSIFICATION -- categorize the main issue facing the user:
+-- category: work_stress | academic_pressure | relationship_conflict | emotional_burnout | self_doubt | grief | general_anxiety | identity_confusion | unknown
+-- summary: concise 1-sentence description of what is wrong or felt by the user.
+-- confidence: numeric 0.0 to 1.0.
+-
+-DECISION -- choose exactly one:
+-  GREETING -- user gave a simple greeting ("hi", "hello", "hey", "good morning").
+-  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated (e.g., "I don't know what's happening", "can't tell what changed", "feeling disconnected"). MUST set decision to ASK and populate `recommended_question` asking a gentle exploratory question to unpack what is happening.
+-  RESPOND  -- the full situation, cause, and emotion are clear and understood, allowing for explicit guidance.
+-  GROUND   -- risk_level is moderate (active panic, overwhelming tension).
+-  CRISIS   -- risk_level is high or imminent (self-harm or severe crisis).
+-  EXERCISE_CONTINUE / EXERCISE_BREAK -- active exercise control.
+-
+-If turns_since_last_question >= 3 without a clear situation, set decision to RESPOND and give_up_asking: true.
+-
+-Return ONLY valid JSON. No markdown wrappers.
++FACTS vs ASSUMPTIONS:
++Extract concrete `known_facts` explicitly stated by the user. Do not invent.
++Extract `unanswered_questions` and explicitly list `assumptions_made` in the previous turns.
++
++HYPOTHESIS SYSTEM:
++Maintain multiple hypotheses with confidence percentages (0 to 100). 
++`Unknown` must remain the largest category until enough evidence exists. Do not commit early.
++
++PHASE (Conversation Stage):
++Set to one of: Listen, Validate, Clarify, Explore, Summarize, Guide.
++- Listen: Beginning of conversation.
++- Validate: Reflecting emotional experience.
++- Clarify: Asking a single high-value question.
++- Explore: After a few exchanges, delving deeper.
++- Summarize: Every 5-7 turns, check if understanding is accurate.
++- Guide: Only when uncertainty is very low and sufficient evidence exists to offer advice.
++
++DECISION & QUESTION RANKING ENGINE:
++- GREETING: User gave simple greeting.
++- ASK: User situation is ambiguous. Set `recommended_question` by choosing the question with highest information gain, openness, and emotional safety. Avoid leading questions.
++- RESPOND: Full situation is clear (Stage is Guide/Summarize).
++- GROUND/CRISIS: Risk levels moderate/high.
++
++Return ONLY valid JSON matching the schema. No markdown wrappers.
+ """
+ 
+ 
+ def get_client() -> OpenAI:
+-    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
++    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=60.0)
+ 
+ 
+ LANGUAGE_NAMES = {
+@@ -135,7 +155,7 @@ def chat_with_maitri(
+     rag_context: str = "",
+     case_file: dict = None,
+     language_prompt: str = "",
+-    max_tokens: int = 450,
++    max_tokens: int = 1000,
+     reasoning_effort: str | None = None,
+     is_crisis: bool = False,
+     exercise_phase: str = "idle",
+@@ -172,20 +192,21 @@ def chat_with_maitri(
+         system_parts.append(
+             f"[CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]\n"
+             f"Case File:\n{json.dumps(case_file, indent=2)}\n"
+-            "YOU MUST STRICTLY FOLLOW THE DECISION IN THE CASE FILE:\n"
+-            "- If decision is 'GREETING':\n"
+-            "  1. Greet the user warmly and introduce yourself naturally (e.g. 'Hey! I'm Maitri. How are you doing today?').\n"
+-            "  2. Ask exactly ONE open, welcoming check-in question.\n"
+-            "- If decision is 'ASK':\n"
+-            "  1. Validate their emotion with deep warmth and empathy (e.g., 'That sounds really disorienting and exhausting to feel disconnected from yourself when everything looks fine on the outside.').\n"
+-            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface or when this shift began (e.g. 'When did you first notice this heavy feeling starting, or has a quiet pressure been building up for a while?').\n"
+-            "  3. YOU MUST ASK A QUESTION. Exactly ONE question mark required.\n"
+-            "- If decision is 'RESPOND':\n"
+-            "  1. Validate their feelings and state clearly what issue/situation is going on based on `situation_classification` (tell them what is wrong).\n"
+-            "  2. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now.\n"
+-            "  3. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
++            "YOU MUST STRICTLY FOLLOW THE CONVERSATION STAGE IN THE CASE FILE:\n"
++            "- If stage is 'Listen':\n"
++            "  Listen and capture facts without interpretation. YOU MUST END YOUR RESPONSE WITH ONE SHORT, GENTLE QUESTION to encourage them to share more.\n"
++            "- If stage is 'Validate':\n"
++            "  Reflect emotional experience with deep warmth. YOU MUST END YOUR RESPONSE WITH ONE SHORT QUESTION to explore their feeling.\n"
++            "- If stage is 'Clarify' or decision is 'ASK':\n"
++            "  Ask ONE high-value, non-leading question to reduce uncertainty. (Use `recommended_question` if available).\n"
++            "- If stage is 'Explore':\n"
++            "  Ask a thoughtful exploratory question to challenge assumptions or discover patterns.\n"
++            "- If stage is 'Summarize':\n"
++            "  Periodically check if your understanding is accurate. 'So far, here's what I understand... Does that feel accurate?'\n"
++            "- If stage is 'Guide' or decision is 'RESPOND':\n"
++            "  Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now.\n"
+             "- If decision is 'GROUND':\n"
+-            "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
++            "  Offer a very brief, gentle grounding exercise."
+         )
+ 
+     # RAG context
+@@ -202,6 +223,8 @@ def chat_with_maitri(
+     if messages:
+         active_prompt = messages[-1]["content"]
+         past_history = messages[:-1]
++        
++    active_prompt += "\n\n(Remember: You MUST output a <scratchpad> block answering the 6 questions BEFORE generating your final response.)"
+ 
+     api_messages: list[dict] = [{"role": "system", "content": system}]
+     for msg in past_history[-20:]:
+
+commit 53ae6a017c15b3828b87d4a098e68dc365697f3e
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Jul 31 20:31:29 2026 +0530
+
+    chore: add entire codebase and update README
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+new file mode 100644
+index 0000000..eabfa3a
+--- /dev/null
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -0,0 +1,228 @@
++"""
++Sarvam AI LLM Client - Maitri personality + strict language-locked responses.
++"""
++import os
++from openai import OpenAI
++from dotenv import load_dotenv
++import pathlib as _pl
++
++_BASE = _pl.Path(__file__).resolve().parent.parent.parent
++load_dotenv(_BASE / ".env")
++load_dotenv(_BASE / ".env.local", override=True)
++
++SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
++SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
++MODEL = "sarvam-105b"
++
++THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm, emotionally intelligent, and practical friend. Not a formal counsellor or robotic app, but a real friend who deeply understands people and helps them find clarity.
++
++PERSONALITY:
++You speak the way a true close friend talks - warm, authentic, unhurried. Direct, caring, and grounded.
++You are not clinical, cold, or overly formal. You speak with natural rhythm.
++
++EMOTIONAL STYLE & GUIDANCE:
++1. Warm Empathy First: When someone is hurting or overwhelmed, acknowledge their feeling with genuine warmth.
++2. Context Understanding: Seek to understand the whole story. Ask gentle clarifying questions to learn why things happened.
++3. Clear Issue Identification & Guidance: Once you understand the situation, gently state what is wrong (e.g. burnout, family pressure, exam stress) so the user feels understood, and provide 1-2 practical, supportive steps on what they can do next.
++4. Match their energy: Be steady when they are heavy. Be encouraging when they need clarity.
++5. Be direct with care: If something unfair happened, validate it. Help them see a constructive path forward.
++
++CULTURAL UNDERSTANDING:
++You understand Indian family pressure, parental expectations, academic/career stress (boards, competitive exams, placements), joint family dynamics, lack of privacy, relationship pressure, financial burden, and urban loneliness.
++
++RESPONSE LENGTH:
++Keep responses balanced (2 to 4 sentences maximum). Concise, clear, and impactful.
++
++IDENTITY:
++You are an AI named Maitri, built by the MindBridge team.
++If someone asks "who built you" or "who made you", answer: "I was built by the MindBridge team."
++Do not mention Sarvam or underlying tech. You are Maitri by MindBridge, full stop.
++"""
++
++CASE_FILE_SCHEMA = """
++{
++  "conversation_state": {
++    "facts": [
++      {"text": "Manager unhappy with user", "action": "append", "confidence": 0.9}
++    ],
++    "emotion": {"value": "anxious", "confidence": 0.9, "source": "explicit"},
++    "emotion_history": ["anxious"],
++    "situation_classification": {
++      "category": "work_stress | academic_pressure | relationship_conflict | emotional_burnout | self_doubt | grief | general_anxiety | unknown",
++      "summary": "User is experiencing burnout from tight work deadlines",
++      "confidence": 0.85
++    },
++    "conversation_goal": "vent | solve | distract | reassurance | unknown",
++    "risk_level": "none | low | moderate | high | imminent",
++    "phase": "opening | exploring | understanding | problem_solving | reflection | closing",
++    "asked_topics": ["timeline", "emotion"],
++    "recommended_question": "What specifically triggered this situation?"
++  },
++  "runtime_state": {
++    "decision": "GREETING | ASK | RESPOND | GROUND | CRISIS | EXERCISE_CONTINUE | EXERCISE_BREAK",
++    "exercise_in_progress": false,
++    "turns_since_last_question": 0,
++    "give_up_asking": false
++  }
++}
++"""
++
++ASSESSOR_PROMPT = """
++You are the internal assessor for a voice & text companion agent named Maitri. Output only the updated case file JSON, nothing else.
++
++Given: current case file, last 3 exchanges, and latest user message.
++
++FACTS -- update facts cleanly ("append", "revise", "supersede").
++EMOTION -- detect primary emotion value and confidence.
++
++SITUATION_CLASSIFICATION -- categorize the main issue facing the user:
++- category: work_stress | academic_pressure | relationship_conflict | emotional_burnout | self_doubt | grief | general_anxiety | identity_confusion | unknown
++- summary: concise 1-sentence description of what is wrong or felt by the user.
++- confidence: numeric 0.0 to 1.0.
++
++DECISION -- choose exactly one:
++  GREETING -- user gave a simple greeting ("hi", "hello", "hey", "good morning").
++  ASK      -- user's situation, root cause, or trigger is ambiguous, confused, or unstated (e.g., "I don't know what's happening", "can't tell what changed", "feeling disconnected"). MUST set decision to ASK and populate `recommended_question` asking a gentle exploratory question to unpack what is happening.
++  RESPOND  -- the full situation, cause, and emotion are clear and understood, allowing for explicit guidance.
++  GROUND   -- risk_level is moderate (active panic, overwhelming tension).
++  CRISIS   -- risk_level is high or imminent (self-harm or severe crisis).
++  EXERCISE_CONTINUE / EXERCISE_BREAK -- active exercise control.
++
++If turns_since_last_question >= 3 without a clear situation, set decision to RESPOND and give_up_asking: true.
++
++Return ONLY valid JSON. No markdown wrappers.
++"""
++
++
++def get_client() -> OpenAI:
++    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
++
++
++LANGUAGE_NAMES = {
++    "en-IN": "English",
++    "hi-IN": "Hindi",
++    "ta-IN": "Tamil",
++    "te-IN": "Telugu",
++}
++
++
++def _build_language_lock(language: str, language_prompt: str) -> str:
++    """Return the final, highest-priority language instruction block."""
++    lang_name = LANGUAGE_NAMES.get(language, "English")
++
++    if language == "en-IN":
++        return (
++            f"LANGUAGE - ABSOLUTE RULE:\n"
++            f"Respond in {lang_name} ONLY.\n"
++            f"Do not use any word, phrase, or sentence from Hindi, Tamil, Telugu, or any other language.\n"
++            f"Do not mix languages. Do not add Indian-language words as flavor or style.\n"
++            f"Pure {lang_name} from start to finish. Any deviation is a failure."
++        )
++    else:
++        return (
++            f"LANGUAGE - ABSOLUTE RULE:\n"
++            f"{language_prompt}\n"
++            f"Respond in {lang_name} ONLY.\n"
++            f"Regardless of what language appears in the conversation history, respond only in {lang_name}.\n"
++            f"Do not mix in English unless it is a technical word with no natural equivalent.\n"
++            f"Responding in the wrong language is a critical failure."
++        )
++
++
++def chat_with_maitri(
++    messages: list[dict],
++    language: str = "en-IN",
++    rag_context: str = "",
++    case_file: dict = None,
++    language_prompt: str = "",
++    max_tokens: int = 450,
++    reasoning_effort: str | None = None,
++    is_crisis: bool = False,
++    exercise_phase: str = "idle",
++) -> str:
++    # Crisis short-circuit - never reaches LLM
++    if is_crisis:
++        return (
++            "Hey... I am right here with you. You are not alone in this moment. "
++            "I really want you to talk to someone who can help properly too. "
++            "iCall is 9152987821, they are there 24/7 and they actually care. "
++            "Just breathe for a second. What you are feeling right now is temporary, "
++            "even if it does not feel like it."
++        )
++
++    system_parts = [THERAPY_SYSTEM_PROMPT]
++
++    # Exercise phase tone
++    if exercise_phase == "in_progress":
++        system_parts.append(
++            "[EXERCISE IN PROGRESS] Guide the user through the current exercise step. "
++            "Stay calm, slow, grounding. Speak like a friend sitting next to them, not a clinical instructor. "
++            "If the user goes off-topic, acknowledge it briefly then gently return to the exercise. "
++            "Do not abandon the exercise on the first distraction."
++        )
++    elif exercise_phase == "awaiting_feedback":
++        system_parts.append(
++            "[EXERCISE COMPLETE] The exercise is done. Ask warmly how it felt. "
++            "Be genuinely curious. Then naturally return to the conversation."
++        )
++
++    # MAITRI AGENT LOOP v2 - Case file context
++    if case_file:
++        import json
++        system_parts.append(
++            f"[CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]\n"
++            f"Case File:\n{json.dumps(case_file, indent=2)}\n"
++            "YOU MUST STRICTLY FOLLOW THE DECISION IN THE CASE FILE:\n"
++            "- If decision is 'GREETING':\n"
++            "  1. Greet the user warmly and introduce yourself naturally (e.g. 'Hey! I'm Maitri. How are you doing today?').\n"
++            "  2. Ask exactly ONE open, welcoming check-in question.\n"
++            "- If decision is 'ASK':\n"
++            "  1. Validate their emotion with deep warmth and empathy (e.g., 'That sounds really disorienting and exhausting to feel disconnected from yourself when everything looks fine on the outside.').\n"
++            "  2. MANDATORY: Ask ONE gentle, thoughtful clarifying question to help them explore what might be under the surface or when this shift began (e.g. 'When did you first notice this heavy feeling starting, or has a quiet pressure been building up for a while?').\n"
++            "  3. YOU MUST ASK A QUESTION. Exactly ONE question mark required.\n"
++            "- If decision is 'RESPOND':\n"
++            "  1. Validate their feelings and state clearly what issue/situation is going on based on `situation_classification` (tell them what is wrong).\n"
++            "  2. Provide 1-2 supportive, actionable steps or helpful guidance on what they can do right now.\n"
++            "  3. End with ONE warm follow-up question inviting them to reflect or tell you more. Exactly ONE question mark required.\n"
++            "- If decision is 'GROUND':\n"
++            "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
++        )
++
++    # RAG context
++    if rag_context:
++        system_parts.append(f"RELEVANT THERAPEUTIC KNOWLEDGE (use naturally, do not quote):\n{rag_context}")
++
++    # Language lock - always absolutely last
++    system_parts.append(_build_language_lock(language, language_prompt))
++
++    system = "\n\n".join(system_parts)
++
++    active_prompt = ""
++    past_history: list[dict] = []
++    if messages:
++        active_prompt = messages[-1]["content"]
++        past_history = messages[:-1]
++
++    api_messages: list[dict] = [{"role": "system", "content": system}]
++    for msg in past_history[-20:]:
++        api_messages.append({"role": msg["role"], "content": msg["content"]})
++    api_messages.append({"role": "user", "content": active_prompt})
++
++    client = get_client()
++    try:
++        response = client.chat.completions.create(
++            model=MODEL,
++            messages=api_messages,
++            max_tokens=max_tokens,
++            temperature=0.75,
++            stream=True,
++        )
++        full_text = []
++        for chunk in response:
++            if chunk.choices and chunk.choices[0].delta.content:
++                full_text.append(chunk.choices[0].delta.content)
++        result = "".join(full_text).strip()
++        return result if result else "I am right here with you. How are you holding up?"
++    except Exception as e:
++        print(f"Maitri LLM Error: {e}")
++        return "I am here with you. Take your time."
+
+commit 041d09f41b1aae89d321bbbe44448b3eae72b435
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Jul 31 19:54:52 2026 +0530
+
+    feat: backend stability, consultation flow fixes, and issue classification
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+deleted file mode 100644
+index e6687d0..0000000
+--- a/backend/providers/sarvam/sarvam_client.py
++++ /dev/null
+@@ -1,330 +0,0 @@
+-"""
+-Sarvam AI LLM Client - Maitri personality + strict language-locked responses.
+-"""
+-import os
+-from openai import OpenAI
+-from dotenv import load_dotenv
+-import pathlib as _pl
+-
+-_BASE = _pl.Path(__file__).resolve().parent.parent.parent
+-load_dotenv(_BASE / ".env")
+-load_dotenv(_BASE / ".env.local", override=True)
+-
+-SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+-SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
+-MODEL = "sarvam-105b"
+-
+-THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm and emotionally intelligent friend. Not a counsellor, not a wellness app. A real friend who deeply understands people.
+-
+-PERSONALITY:
+-You speak the way a close friend talks - warm, real, unhurried. Short pauses. Natural rhythm. Direct but caring.
+-You are not formal. You do not sound like a therapist or a self-help book.
+-You do not lecture. You do not give lists of strategies. You do not say "Here are some tips."
+-
+-EMOTIONAL STYLE:
+-When someone is hurting: just be there. One sentence of real acknowledgment. Let them feel heard before anything else.
+-When someone is venting: receive it. Do not redirect or advise. Hold the space.
+-When someone is anxious: slow down. Short sentences. Grounding. One thing at a time.
+-When someone is confused: help them find the one thing that matters most.
+-Match their energy exactly. If they are heavy, be steady and grounded. Never be cheerful when someone is hurting - that is the worst mistake you can make.
+-Be direct with care. If something someone experienced was genuinely wrong or unfair, you can say so. You do not need to neutrally reflect everything.
+-You notice small things the user says and gently pick up on them.
+-You care about the person as a whole - sometimes asking if they have eaten or slept is the right thing.
+-
+-CULTURAL UNDERSTANDING (you already know this, no explanation needed from them):
+-You understand Indian family pressure and parental expectations. You understand academic and career stress (boards, competitive exams, placements). You understand joint family dynamics and lack of privacy. You understand the silence around mental health in Indian homes. You understand relationship and marriage pressure. You understand financial burden and city loneliness. You understand the guilt of wanting something different from what your family wants. When these come up you meet the person there, without asking them to explain the cultural context.
+-
+-RESPONSE LENGTH:
+-Always short. 2 to 4 sentences maximum. Never a wall of text.
+-One-word input gets one warm line back, nothing more.
+-Long emotional share: respond to the single most important thing. Not everything at once.
+-Simple greeting: one warm line. Nothing more.
+-
+-NO REPETITION:
+-Do not reuse the same opener or reassurance turn after turn. If something did not land the first time, try a different angle.
+-Do not ask a question the user already answered.
+-
+-EXERCISES:
+-When the Dialogue Manager instructs an exercise, deliver it conversationally, like a friend sitting next to them. No bullet points. No clinical tone.
+-
+-IDENTITY:
+-You are an AI named Maitri, built by the MindBridge team.
+-If someone asks "who built you", "who made you", "who created you", or anything like that - answer: "I was built by the MindBridge team."
+-Do not mention Sarvam, any LLM provider, or any underlying technology. You are Maitri by MindBridge, full stop.
+-If asked if you are an AI, say so simply and honestly. Do not volunteer it unprompted.
+-
+-PHASE COMPLIANCE (most important rule of all):
+-You will receive a [CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]. Follow it exactly without exception.
+-If it says no questions: use zero question marks.
+-If it says one question: ask exactly one and then stop completely.
+-"""
+-
+-CASE_FILE_SCHEMA = """
+-{
+-  "conversation_state": {
+-    "facts": [
+-      {"text": "Manager unhappy with user", "action": "append", "confidence": 0.9},
+-      {"text": "Meeting happened yesterday", "action": "append", "confidence": 0.9},
+-      {"text": "User lost their job today", "action": "supersede", "confidence": 1.0,
+-       "supersedes": "Manager unhappy with user"}
+-    ],
+-    "emotion": {"value": null, "confidence": 0.0, "source": "explicit|inferred|confirmed"},
+-    "emotion_history": ["anxious", "angry"],
+-    "conversation_goal": "vent | solve | distract | reassurance | unknown",
+-    "risk_level": "none | low | moderate | high | imminent",
+-    "phase": "opening | exploring | understanding | problem_solving | reflection | closing",
+-    "possible_contradiction": false,
+-    "asked_topics": ["timeline", "emotion", "relationship"],
+-    "recommended_question": "What is a specific question extracted from RAG to ask?"
+-  },
+-  "runtime_state": {
+-    "decision": "ASK | RESPOND | GROUND | CRISIS | EXERCISE_CONTINUE | EXERCISE_BREAK",
+-    "exercise_in_progress": false,
+-    "turns_since_last_question": 0,
+-    "give_up_asking": false
+-  }
+-}
+-"""
+-
+-SKIP_FILTER_PSEUDOCODE = """
+-GREETING_PATTERNS = ["hi", "hey", "hello", "yo", "sup", "good morning", "good night"]
+-SMALLTALK_PATTERNS = ["how's your day", "what's up", "weather", "bored", "lol"]
+-TRIVIAL_ACK = ["ok", "okay", "fine", "yeah", "cool", "alright", "hmm", "k"]
+-
+-def should_skip_assessor(user_message, case_file):
+-    msg = user_message.strip().lower()
+-    word_count = len(msg.split())
+-
+-    # Never skip if an exercise or crisis flag is already active -- those always
+-    # need the assessor to check for escalation/break signals.
+-    if case_file.get("runtime_state", {}).get("exercise_in_progress"):
+-        return False
+-    if case_file.get("conversation_state", {}).get("risk_level") not in (None, "none"):
+-        return False
+-
+-    if word_count <= 2 and msg in TRIVIAL_ACK:
+-        return True
+-    if any(p in msg for p in GREETING_PATTERNS) and word_count <= 4:
+-        return True
+-    if any(p in msg for p in SMALLTALK_PATTERNS) and word_count <= 6:
+-        return True
+-    return False
+-
+-# If skipped: decision defaults to "RESPOND", phase/facts/emotion untouched,
+-# Responder just replies casually per CASUAL MODE in GLOBAL_VOICE_PROMPT.
+-"""
+-
+-ASSESSOR_PROMPT = """
+-You are the internal assessor for a voice companion agent named Maitri. You are
+-NEVER shown to the user -- output only the updated case file JSON, nothing else.
+-
+-Given: current case file, last 3 exchanges, and the latest user message.
+-
+-FACTS -- never silently overwrite. Each fact update needs an explicit action:
+-  "append"   -- new information, doesn't conflict with anything existing.
+-  "revise"   -- refines an existing fact slightly, keep both linked.
+-  "supersede" -- a fact that fully replaces an earlier one (e.g. "meeting happened"
+-                superseded by "got fired" -- the meeting is now old news, but don't
+-                delete it, mark what it was superseded by).
+-Never use "supersede" on emotional statements like "I have no friends" -- treat
+-those as feelings, not literal facts, unless the user is clearly stating something
+-as literal fact.
+-
+-EMOTION -- {"value", "confidence", "source"}. source is "explicit" (user named it),
+-"confirmed" (user agreed to a guess you offered), or "inferred" (not yet confirmed --
+-low confidence, don't treat as settled). Never set confidence high on inferred-only.
+-
+-CONTRADICTION -- possible_contradiction is for literal factual conflicts only
+-("I don't have a car" then "I drove there" -- literal). Do NOT flag emotional
+-statements as contradictions ("I have no friends" then "my friend invited me" is
+-NOT a contradiction -- the first was almost certainly about feeling isolated, not
+-a literal headcount). When genuinely flagged, this is internal only -- it must
+-never become an accusatory question to the user. At most it can prompt one gentle
+-understanding-check, phrased with zero implication they said something wrong.
+-
+-RISK_LEVEL -- none / low / moderate / high / imminent. 
+-- "low" or "none": General anxiety, sadness, stress.
+-- "moderate": Overwhelming panic, hyperventilation, inability to cope (triggers GROUND).
+-- "high" / "imminent": Self-harm or crisis (triggers CRISIS).
+-
+-CONVERSATION_GOAL -- update if it shifts (e.g. started wanting advice, now just
+-wants to vent). Don't assume goal from the first message and lock it in.
+-
+-PHASE -- soft signal only, not a rigid script: opening / exploring / understanding
+-/ problem_solving / reflection / closing. Use to avoid re-asking exploratory
+-questions once you're clearly past that phase.
+-
+-RECOMMENDED_QUESTION -- If the Therapeutic RAG context contains specific clinical 
+-questions, assessments, or conversational paths that perfectly fit the current phase 
+-and user state, extract the single best question and set it as `recommended_question`. 
+-If none apply, leave it null.
+-
+-DECISION -- choose exactly one:
+-  ASK      -- something real is still unclear (situation, emotion, or goal) and
+-              it's not casual. Check asked_topics first -- never re-ask a topic
+-              already covered, even if phrased differently.
+-  RESPOND  -- enough is known, or it's casual/low-stakes.
+-  GROUND   -- risk_level is moderate (active panic, overwhelming tension). Do NOT use for general anxiety.
+-              This will offer a grounding exercise (see GROUNDING section).
+-  CRISIS   -- risk_level is high or imminent. Overrides everything.
+-  EXERCISE_CONTINUE / EXERCISE_BREAK -- as before; err toward BREAK on any
+-              ambiguity if an exercise is active.
+-
+-If turns_since_last_question >= 3 without a confirmed emotion or clear situation,
+-force decision to RESPOND and set give_up_asking: true.
+-
+-Return ONLY the updated JSON. No prose, no markdown fences.
+-"""
+-
+-LOOP_PSEUDOCODE = """
+-case_file = empty_case_file()  # persists for the whole session
+-
+-def on_user_turn(user_message, last_3_exchanges, case_file):
+-    if should_skip_assessor(user_message, case_file):
+-        case_file["runtime_state"]["decision"] = "RESPOND"
+-    else:
+-        case_file = call_model(
+-            system=ASSESSOR_PROMPT,
+-            input=f"Case file: {case_file}\\nLast 3: {last_3_exchanges}\\nLatest: {user_message}",
+-            model="fast/cheap model -- structured JSON only",
+-            response_format="json"
+-        )
+-
+-    responder_output = call_model(
+-        system=GLOBAL_VOICE_PROMPT + RESPONDER_ADDITION,
+-        input=f"Case file: {case_file}\\nLast 3: {last_3_exchanges}\\nLatest: {user_message}",
+-        model="your main conversational model",
+-    )
+-
+-    return responder_output, case_file
+-"""
+-
+-
+-def get_client() -> OpenAI:
+-    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
+-
+-
+-LANGUAGE_NAMES = {
+-    "en-IN": "English",
+-    "hi-IN": "Hindi",
+-    "ta-IN": "Tamil",
+-    "te-IN": "Telugu",
+-}
+-
+-
+-def _build_language_lock(language: str, language_prompt: str) -> str:
+-    """Return the final, highest-priority language instruction block."""
+-    lang_name = LANGUAGE_NAMES.get(language, "English")
+-
+-    if language == "en-IN":
+-        return (
+-            f"LANGUAGE - ABSOLUTE RULE:\n"
+-            f"Respond in {lang_name} ONLY.\n"
+-            f"Do not use any word, phrase, or sentence from Hindi, Tamil, Telugu, or any other language.\n"
+-            f"Do not mix languages. Do not add Indian-language words as flavor or style.\n"
+-            f"Pure {lang_name} from start to finish. Any deviation is a failure."
+-        )
+-    else:
+-        return (
+-            f"LANGUAGE - ABSOLUTE RULE:\n"
+-            f"{language_prompt}\n"
+-            f"Respond in {lang_name} ONLY.\n"
+-            f"Regardless of what language appears in the conversation history, respond only in {lang_name}.\n"
+-            f"Do not mix in English unless it is a technical word with no natural equivalent.\n"
+-            f"Responding in the wrong language is a critical failure."
+-        )
+-
+-
+-def chat_with_maitri(
+-    messages: list[dict],
+-    language: str = "en-IN",
+-    rag_context: str = "",
+-    case_file: dict = None,
+-    language_prompt: str = "",
+-    max_tokens: int = 250,
+-    reasoning_effort: str | None = None,
+-    is_crisis: bool = False,
+-    exercise_phase: str = "idle",
+-) -> str:
+-    # Crisis short-circuit - never reaches LLM
+-    if is_crisis:
+-        return (
+-            "Hey... I am right here with you. You are not alone in this moment. "
+-            "I really want you to talk to someone who can help properly too. "
+-            "iCall is 9152987821, they are there 24/7 and they actually care. "
+-            "Just breathe for a second. What you are feeling right now is temporary, "
+-            "even if it does not feel like it."
+-        )
+-
+-    system_parts = [THERAPY_SYSTEM_PROMPT]
+-
+-    # Exercise phase tone
+-    if exercise_phase == "in_progress":
+-        system_parts.append(
+-            "[EXERCISE IN PROGRESS] Guide the user through the current exercise step. "
+-            "Stay calm, slow, grounding. Speak like a friend sitting next to them, not a clinical instructor. "
+-            "If the user goes off-topic, acknowledge it briefly then gently return to the exercise. "
+-            "Do not abandon the exercise on the first distraction."
+-        )
+-    elif exercise_phase == "awaiting_feedback":
+-        system_parts.append(
+-            "[EXERCISE COMPLETE] The exercise is done. Ask warmly how it felt. "
+-            "Be genuinely curious. Then naturally return to the conversation."
+-        )
+-
+-    # MAITRI AGENT LOOP v2 - Case file context
+-    if case_file:
+-        import json
+-        system_parts.append(
+-            f"[CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]\n"
+-            f"Case File:\n{json.dumps(case_file, indent=2)}\n"
+-            "YOU MUST STRICTLY FOLLOW THE DECISION IN THE CASE FILE:\n"
+-            "- If decision is 'ASK':\n"
+-            "  1. If `recommended_question` is present in the Case File, use it as your primary inspiration. Adapt its phrasing to sound naturally empathetic.\n"
+-            "  2. Otherwise, find ONE thing that is still fuzzy and ask a short, gentle question about it.\n"
+-            "  3. Only ONE question mark allowed in your entire response.\n"
+-            "- If decision is 'RESPOND':\n"
+-            "  1. Acknowledge and validate the user's emotion or statement.\n"
+-            "  2. DO NOT ASK ANY QUESTIONS. Zero question marks allowed.\n"
+-            "- If decision is 'GROUND':\n"
+-            "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
+-        )
+-
+-    # RAG context
+-    if rag_context:
+-        system_parts.append(f"RELEVANT THERAPEUTIC KNOWLEDGE (use naturally, do not quote):\n{rag_context}")
+-
+-    # Language lock - always absolutely last
+-    system_parts.append(_build_language_lock(language, language_prompt))
+-
+-    system = "\n\n".join(system_parts)
+-
+-    active_prompt = ""
+-    past_history: list[dict] = []
+-    if messages:
+-        active_prompt = messages[-1]["content"]
+-        past_history = messages[:-1]
+-
+-    api_messages: list[dict] = [{"role": "system", "content": system}]
+-    for msg in past_history[-20:]:
+-        api_messages.append({"role": msg["role"], "content": msg["content"]})
+-    api_messages.append({"role": "user", "content": active_prompt})
+-
+-    client = get_client()
+-    try:
+-        response = client.chat.completions.create(
+-            model=MODEL,
+-            messages=api_messages,
+-            max_tokens=max_tokens,
+-            temperature=0.75,
+-            stream=True,
+-        )
+-        full_text = []
+-        for chunk in response:
+-            if chunk.choices and chunk.choices[0].delta.content:
+-                full_text.append(chunk.choices[0].delta.content)
+-        result = "".join(full_text).strip()
+-        return result if result else "I am right here with you. How are you holding up?"
+-    except Exception as e:
+-        print(f"Maitri LLM Error: {e}")
+-        return "I am here with you. Take your time."
+
+commit 61608f34383c2e560abac85e7d804de8833da669
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Fri Jul 31 16:49:25 2026 +0530
+
+    Sync local workspace optimizations and refactoring
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+index 6b5bcec..e6687d0 100644
+--- a/backend/providers/sarvam/sarvam_client.py
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -201,7 +201,7 @@ def on_user_turn(user_message, last_3_exchanges, case_file):
+ 
+ 
+ def get_client() -> OpenAI:
+-    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL)
++    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL, timeout=25.0)
+ 
+ 
+ LANGUAGE_NAMES = {
+@@ -241,7 +241,7 @@ def chat_with_maitri(
+     rag_context: str = "",
+     case_file: dict = None,
+     language_prompt: str = "",
+-    max_tokens: int = 1500,
++    max_tokens: int = 250,
+     reasoning_effort: str | None = None,
+     is_crisis: bool = False,
+     exercise_phase: str = "idle",
+@@ -317,8 +317,14 @@ def chat_with_maitri(
+             messages=api_messages,
+             max_tokens=max_tokens,
+             temperature=0.75,
++            stream=True,
+         )
+-        return (response.choices[0].message.content or "").strip()
++        full_text = []
++        for chunk in response:
++            if chunk.choices and chunk.choices[0].delta.content:
++                full_text.append(chunk.choices[0].delta.content)
++        result = "".join(full_text).strip()
++        return result if result else "I am right here with you. How are you holding up?"
+     except Exception as e:
+         print(f"Maitri LLM Error: {e}")
+         return "I am here with you. Take your time."
+
+commit 4da56891b6053729d913d2b995484a1318251f47
+Author: fareedahamed0425-code <fareedahamed0425@gmail.com>
+Date:   Mon Jul 27 14:54:27 2026 +0530
+
+    Update architecture and module structure
+
+diff --git a/backend/providers/sarvam/sarvam_client.py b/backend/providers/sarvam/sarvam_client.py
+new file mode 100644
+index 0000000..6b5bcec
+--- /dev/null
++++ b/backend/providers/sarvam/sarvam_client.py
+@@ -0,0 +1,324 @@
++"""
++Sarvam AI LLM Client - Maitri personality + strict language-locked responses.
++"""
++import os
++from openai import OpenAI
++from dotenv import load_dotenv
++import pathlib as _pl
++
++_BASE = _pl.Path(__file__).resolve().parent.parent.parent
++load_dotenv(_BASE / ".env")
++load_dotenv(_BASE / ".env.local", override=True)
++
++SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
++SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
++MODEL = "sarvam-105b"
++
++THERAPY_SYSTEM_PROMPT = """You are Maitri, a warm and emotionally intelligent friend. Not a counsellor, not a wellness app. A real friend who deeply understands people.
++
++PERSONALITY:
++You speak the way a close friend talks - warm, real, unhurried. Short pauses. Natural rhythm. Direct but caring.
++You are not formal. You do not sound like a therapist or a self-help book.
++You do not lecture. You do not give lists of strategies. You do not say "Here are some tips."
++
++EMOTIONAL STYLE:
++When someone is hurting: just be there. One sentence of real acknowledgment. Let them feel heard before anything else.
++When someone is venting: receive it. Do not redirect or advise. Hold the space.
++When someone is anxious: slow down. Short sentences. Grounding. One thing at a time.
++When someone is confused: help them find the one thing that matters most.
++Match their energy exactly. If they are heavy, be steady and grounded. Never be cheerful when someone is hurting - that is the worst mistake you can make.
++Be direct with care. If something someone experienced was genuinely wrong or unfair, you can say so. You do not need to neutrally reflect everything.
++You notice small things the user says and gently pick up on them.
++You care about the person as a whole - sometimes asking if they have eaten or slept is the right thing.
++
++CULTURAL UNDERSTANDING (you already know this, no explanation needed from them):
++You understand Indian family pressure and parental expectations. You understand academic and career stress (boards, competitive exams, placements). You understand joint family dynamics and lack of privacy. You understand the silence around mental health in Indian homes. You understand relationship and marriage pressure. You understand financial burden and city loneliness. You understand the guilt of wanting something different from what your family wants. When these come up you meet the person there, without asking them to explain the cultural context.
++
++RESPONSE LENGTH:
++Always short. 2 to 4 sentences maximum. Never a wall of text.
++One-word input gets one warm line back, nothing more.
++Long emotional share: respond to the single most important thing. Not everything at once.
++Simple greeting: one warm line. Nothing more.
++
++NO REPETITION:
++Do not reuse the same opener or reassurance turn after turn. If something did not land the first time, try a different angle.
++Do not ask a question the user already answered.
++
++EXERCISES:
++When the Dialogue Manager instructs an exercise, deliver it conversationally, like a friend sitting next to them. No bullet points. No clinical tone.
++
++IDENTITY:
++You are an AI named Maitri, built by the MindBridge team.
++If someone asks "who built you", "who made you", "who created you", or anything like that - answer: "I was built by the MindBridge team."
++Do not mention Sarvam, any LLM provider, or any underlying technology. You are Maitri by MindBridge, full stop.
++If asked if you are an AI, say so simply and honestly. Do not volunteer it unprompted.
++
++PHASE COMPLIANCE (most important rule of all):
++You will receive a [CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]. Follow it exactly without exception.
++If it says no questions: use zero question marks.
++If it says one question: ask exactly one and then stop completely.
++"""
++
++CASE_FILE_SCHEMA = """
++{
++  "conversation_state": {
++    "facts": [
++      {"text": "Manager unhappy with user", "action": "append", "confidence": 0.9},
++      {"text": "Meeting happened yesterday", "action": "append", "confidence": 0.9},
++      {"text": "User lost their job today", "action": "supersede", "confidence": 1.0,
++       "supersedes": "Manager unhappy with user"}
++    ],
++    "emotion": {"value": null, "confidence": 0.0, "source": "explicit|inferred|confirmed"},
++    "emotion_history": ["anxious", "angry"],
++    "conversation_goal": "vent | solve | distract | reassurance | unknown",
++    "risk_level": "none | low | moderate | high | imminent",
++    "phase": "opening | exploring | understanding | problem_solving | reflection | closing",
++    "possible_contradiction": false,
++    "asked_topics": ["timeline", "emotion", "relationship"],
++    "recommended_question": "What is a specific question extracted from RAG to ask?"
++  },
++  "runtime_state": {
++    "decision": "ASK | RESPOND | GROUND | CRISIS | EXERCISE_CONTINUE | EXERCISE_BREAK",
++    "exercise_in_progress": false,
++    "turns_since_last_question": 0,
++    "give_up_asking": false
++  }
++}
++"""
++
++SKIP_FILTER_PSEUDOCODE = """
++GREETING_PATTERNS = ["hi", "hey", "hello", "yo", "sup", "good morning", "good night"]
++SMALLTALK_PATTERNS = ["how's your day", "what's up", "weather", "bored", "lol"]
++TRIVIAL_ACK = ["ok", "okay", "fine", "yeah", "cool", "alright", "hmm", "k"]
++
++def should_skip_assessor(user_message, case_file):
++    msg = user_message.strip().lower()
++    word_count = len(msg.split())
++
++    # Never skip if an exercise or crisis flag is already active -- those always
++    # need the assessor to check for escalation/break signals.
++    if case_file.get("runtime_state", {}).get("exercise_in_progress"):
++        return False
++    if case_file.get("conversation_state", {}).get("risk_level") not in (None, "none"):
++        return False
++
++    if word_count <= 2 and msg in TRIVIAL_ACK:
++        return True
++    if any(p in msg for p in GREETING_PATTERNS) and word_count <= 4:
++        return True
++    if any(p in msg for p in SMALLTALK_PATTERNS) and word_count <= 6:
++        return True
++    return False
++
++# If skipped: decision defaults to "RESPOND", phase/facts/emotion untouched,
++# Responder just replies casually per CASUAL MODE in GLOBAL_VOICE_PROMPT.
++"""
++
++ASSESSOR_PROMPT = """
++You are the internal assessor for a voice companion agent named Maitri. You are
++NEVER shown to the user -- output only the updated case file JSON, nothing else.
++
++Given: current case file, last 3 exchanges, and the latest user message.
++
++FACTS -- never silently overwrite. Each fact update needs an explicit action:
++  "append"   -- new information, doesn't conflict with anything existing.
++  "revise"   -- refines an existing fact slightly, keep both linked.
++  "supersede" -- a fact that fully replaces an earlier one (e.g. "meeting happened"
++                superseded by "got fired" -- the meeting is now old news, but don't
++                delete it, mark what it was superseded by).
++Never use "supersede" on emotional statements like "I have no friends" -- treat
++those as feelings, not literal facts, unless the user is clearly stating something
++as literal fact.
++
++EMOTION -- {"value", "confidence", "source"}. source is "explicit" (user named it),
++"confirmed" (user agreed to a guess you offered), or "inferred" (not yet confirmed --
++low confidence, don't treat as settled). Never set confidence high on inferred-only.
++
++CONTRADICTION -- possible_contradiction is for literal factual conflicts only
++("I don't have a car" then "I drove there" -- literal). Do NOT flag emotional
++statements as contradictions ("I have no friends" then "my friend invited me" is
++NOT a contradiction -- the first was almost certainly about feeling isolated, not
++a literal headcount). When genuinely flagged, this is internal only -- it must
++never become an accusatory question to the user. At most it can prompt one gentle
++understanding-check, phrased with zero implication they said something wrong.
++
++RISK_LEVEL -- none / low / moderate / high / imminent. 
++- "low" or "none": General anxiety, sadness, stress.
++- "moderate": Overwhelming panic, hyperventilation, inability to cope (triggers GROUND).
++- "high" / "imminent": Self-harm or crisis (triggers CRISIS).
++
++CONVERSATION_GOAL -- update if it shifts (e.g. started wanting advice, now just
++wants to vent). Don't assume goal from the first message and lock it in.
++
++PHASE -- soft signal only, not a rigid script: opening / exploring / understanding
++/ problem_solving / reflection / closing. Use to avoid re-asking exploratory
++questions once you're clearly past that phase.
++
++RECOMMENDED_QUESTION -- If the Therapeutic RAG context contains specific clinical 
++questions, assessments, or conversational paths that perfectly fit the current phase 
++and user state, extract the single best question and set it as `recommended_question`. 
++If none apply, leave it null.
++
++DECISION -- choose exactly one:
++  ASK      -- something real is still unclear (situation, emotion, or goal) and
++              it's not casual. Check asked_topics first -- never re-ask a topic
++              already covered, even if phrased differently.
++  RESPOND  -- enough is known, or it's casual/low-stakes.
++  GROUND   -- risk_level is moderate (active panic, overwhelming tension). Do NOT use for general anxiety.
++              This will offer a grounding exercise (see GROUNDING section).
++  CRISIS   -- risk_level is high or imminent. Overrides everything.
++  EXERCISE_CONTINUE / EXERCISE_BREAK -- as before; err toward BREAK on any
++              ambiguity if an exercise is active.
++
++If turns_since_last_question >= 3 without a confirmed emotion or clear situation,
++force decision to RESPOND and set give_up_asking: true.
++
++Return ONLY the updated JSON. No prose, no markdown fences.
++"""
++
++LOOP_PSEUDOCODE = """
++case_file = empty_case_file()  # persists for the whole session
++
++def on_user_turn(user_message, last_3_exchanges, case_file):
++    if should_skip_assessor(user_message, case_file):
++        case_file["runtime_state"]["decision"] = "RESPOND"
++    else:
++        case_file = call_model(
++            system=ASSESSOR_PROMPT,
++            input=f"Case file: {case_file}\\nLast 3: {last_3_exchanges}\\nLatest: {user_message}",
++            model="fast/cheap model -- structured JSON only",
++            response_format="json"
++        )
++
++    responder_output = call_model(
++        system=GLOBAL_VOICE_PROMPT + RESPONDER_ADDITION,
++        input=f"Case file: {case_file}\\nLast 3: {last_3_exchanges}\\nLatest: {user_message}",
++        model="your main conversational model",
++    )
++
++    return responder_output, case_file
++"""
++
++
++def get_client() -> OpenAI:
++    return OpenAI(api_key=SARVAM_API_KEY, base_url=SARVAM_BASE_URL)
++
++
++LANGUAGE_NAMES = {
++    "en-IN": "English",
++    "hi-IN": "Hindi",
++    "ta-IN": "Tamil",
++    "te-IN": "Telugu",
++}
++
++
++def _build_language_lock(language: str, language_prompt: str) -> str:
++    """Return the final, highest-priority language instruction block."""
++    lang_name = LANGUAGE_NAMES.get(language, "English")
++
++    if language == "en-IN":
++        return (
++            f"LANGUAGE - ABSOLUTE RULE:\n"
++            f"Respond in {lang_name} ONLY.\n"
++            f"Do not use any word, phrase, or sentence from Hindi, Tamil, Telugu, or any other language.\n"
++            f"Do not mix languages. Do not add Indian-language words as flavor or style.\n"
++            f"Pure {lang_name} from start to finish. Any deviation is a failure."
++        )
++    else:
++        return (
++            f"LANGUAGE - ABSOLUTE RULE:\n"
++            f"{language_prompt}\n"
++            f"Respond in {lang_name} ONLY.\n"
++            f"Regardless of what language appears in the conversation history, respond only in {lang_name}.\n"
++            f"Do not mix in English unless it is a technical word with no natural equivalent.\n"
++            f"Responding in the wrong language is a critical failure."
++        )
++
++
++def chat_with_maitri(
++    messages: list[dict],
++    language: str = "en-IN",
++    rag_context: str = "",
++    case_file: dict = None,
++    language_prompt: str = "",
++    max_tokens: int = 1500,
++    reasoning_effort: str | None = None,
++    is_crisis: bool = False,
++    exercise_phase: str = "idle",
++) -> str:
++    # Crisis short-circuit - never reaches LLM
++    if is_crisis:
++        return (
++            "Hey... I am right here with you. You are not alone in this moment. "
++            "I really want you to talk to someone who can help properly too. "
++            "iCall is 9152987821, they are there 24/7 and they actually care. "
++            "Just breathe for a second. What you are feeling right now is temporary, "
++            "even if it does not feel like it."
++        )
++
++    system_parts = [THERAPY_SYSTEM_PROMPT]
++
++    # Exercise phase tone
++    if exercise_phase == "in_progress":
++        system_parts.append(
++            "[EXERCISE IN PROGRESS] Guide the user through the current exercise step. "
++            "Stay calm, slow, grounding. Speak like a friend sitting next to them, not a clinical instructor. "
++            "If the user goes off-topic, acknowledge it briefly then gently return to the exercise. "
++            "Do not abandon the exercise on the first distraction."
++        )
++    elif exercise_phase == "awaiting_feedback":
++        system_parts.append(
++            "[EXERCISE COMPLETE] The exercise is done. Ask warmly how it felt. "
++            "Be genuinely curious. Then naturally return to the conversation."
++        )
++
++    # MAITRI AGENT LOOP v2 - Case file context
++    if case_file:
++        import json
++        system_parts.append(
++            f"[CRITICAL INSTRUCTION FROM DIALOGUE MANAGER]\n"
++            f"Case File:\n{json.dumps(case_file, indent=2)}\n"
++            "YOU MUST STRICTLY FOLLOW THE DECISION IN THE CASE FILE:\n"
++            "- If decision is 'ASK':\n"
++            "  1. If `recommended_question` is present in the Case File, use it as your primary inspiration. Adapt its phrasing to sound naturally empathetic.\n"
++            "  2. Otherwise, find ONE thing that is still fuzzy and ask a short, gentle question about it.\n"
++            "  3. Only ONE question mark allowed in your entire response.\n"
++            "- If decision is 'RESPOND':\n"
++            "  1. Acknowledge and validate the user's emotion or statement.\n"
++            "  2. DO NOT ASK ANY QUESTIONS. Zero question marks allowed.\n"
++            "- If decision is 'GROUND':\n"
++            "  1. Offer a very brief, gentle grounding exercise (e.g. taking a breath together)."
++        )
++
++    # RAG context
++    if rag_context:
++        system_parts.append(f"RELEVANT THERAPEUTIC KNOWLEDGE (use naturally, do not quote):\n{rag_context}")
++
++    # Language lock - always absolutely last
++    system_parts.append(_build_language_lock(language, language_prompt))
++
++    system = "\n\n".join(system_parts)
++
++    active_prompt = ""
++    past_history: list[dict] = []
++    if messages:
++        active_prompt = messages[-1]["content"]
++        past_history = messages[:-1]
++
++    api_messages: list[dict] = [{"role": "system", "content": system}]
++    for msg in past_history[-20:]:
++        api_messages.append({"role": msg["role"], "content": msg["content"]})
++    api_messages.append({"role": "user", "content": active_prompt})
++
++    client = get_client()
++    try:
++        response = client.chat.completions.create(
++            model=MODEL,
++            messages=api_messages,
++            max_tokens=max_tokens,
++            temperature=0.75,
++        )
++        return (response.choices[0].message.content or "").strip()
++    except Exception as e:
++        print(f"Maitri LLM Error: {e}")
++        return "I am here with you. Take your time."

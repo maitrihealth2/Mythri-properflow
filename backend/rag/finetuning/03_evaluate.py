@@ -1,7 +1,7 @@
 """
 03_evaluate.py
 ===============
-Post-training evaluation of the fine-tuned Maitri model.
+Post-training evaluation of the fine-tuned Mythri model.
 
 Metrics computed:
   - Perplexity        (language model quality)
@@ -31,7 +31,7 @@ if sys.platform == "win32":
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 DATA_DIR = SCRIPT_DIR / "data"
-MODEL_DIR = SCRIPT_DIR / "model" / "maitri-sarvam-2b-adapter"
+MODEL_DIR = SCRIPT_DIR / "model" / "mythri-sarvam-2b-adapter"
 RESULTS_DIR = SCRIPT_DIR / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
 BASE_MODEL = "sarvamai/sarvam-2b-v0.5"
@@ -120,7 +120,7 @@ def compute_knowledge_retention(generated_texts: list[str]) -> dict:
 
 def main():
     print("=" * 60)
-    print("Maitri Fine-Tuned Model Evaluation")
+    print("Mythri Fine-Tuned Model Evaluation")
     print("=" * 60)
 
     if not MODEL_DIR.exists():
@@ -172,7 +172,7 @@ def main():
     print(f"    Using {len(examples)} eval examples")
 
     system_prompt = (
-        "You are Maitri, a warm and emotionally intelligent friend trained in evidence-based "
+        "You are Mythri, a warm and emotionally intelligent friend trained in evidence-based "
         "therapeutic approaches including CBT, DBT, ACT, and psychodynamic therapy."
     )
 

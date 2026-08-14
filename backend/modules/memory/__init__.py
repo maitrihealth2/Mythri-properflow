@@ -1,5 +1,5 @@
 """
-Maitri Memory Submodule Package Initializer
+Mythri Memory Submodule Package Initializer
 Exposes core contracts, types, domain models, policies, extraction engine, decision engine, evolution engine, index engine, short-term working memory engine, consolidation engine, promotion engine, episodic memory engine, retrieval engine, ranking engine, context assembly engine, attention engine, read pipeline, prompt context engine, repository, and central MemoryManager instance.
 """
 from modules.memory.attention import (

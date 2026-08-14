@@ -22,7 +22,7 @@ class AppConfig(BaseSettings):
     # Security & Networking
     SECRET_KEY: str = Field(..., min_length=32, description="Must be at least 32 characters for AES-256 equivalent security.")
     ALGORITHM: str = Field(default="HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, gt=0)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=10080, gt=0) # 7 days
     CORS_ORIGINS: List[str] = Field(default=["*"], description="Comma-separated list of allowed origins.")
     
     # Database Configuration

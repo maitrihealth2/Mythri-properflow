@@ -1,6 +1,6 @@
 """
 Memory Conversation Adapter Subsystem
-Integrates the fully assembled Memory Subsystem into Maitri's conversation pipeline.
+Integrates the fully assembled Memory Subsystem into Mythri's conversation pipeline.
 Receives PromptContext and formats it cleanly for the Analyst and Sarvam LLM layers.
 Owns zero cognitive logic. Acts strictly as an integration facade with guaranteed failure isolation.
 """

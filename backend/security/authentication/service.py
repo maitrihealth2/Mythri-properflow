@@ -16,7 +16,7 @@ load_dotenv(_BASE / ".env.local", override=True)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "changethis_dev_secret")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 ISSUER = "mindbridge-auth"
 AUDIENCE = "mindbridge-users"

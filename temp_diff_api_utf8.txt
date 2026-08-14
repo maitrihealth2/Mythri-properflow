@@ -1,0 +1,793 @@
+﻿diff --git a/backend/modules/consultation/api.py b/backend/modules/consultation/api.py
+index 788a533..2577988 100644
+--- a/backend/modules/consultation/api.py
++++ b/backend/modules/consultation/api.py
+@@ -2,12 +2,13 @@ import uuid
+ import asyncio
+ import re
+ from datetime import datetime
+-from fastapi import APIRouter, Depends, HTTPException
++from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
++from fastapi.responses import StreamingResponse
+ from sqlalchemy.orm import Session
+ from pydantic import BaseModel
+ 
+-from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, MessageReasoning, RiskLog, User, ExerciseLog, UserPersonaProfile, UserOnboarding
+-from providers.sarvam.sarvam_client import chat_with_maitri
++from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, MessageAnalysis, ResponseMetadata, RiskLog, User, ExerciseLog, UserPersonaProfile, UserOnboarding
++from providers.sarvam.sarvam_client import stream_chat_with_mythri
+ from rag.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
+ from rag.brain.analyst import should_skip_assessor, assess_turn
+ from rag.brain.pattern_analyzer import analyze_patterns
+@@ -85,38 +86,57 @@ async def start_session(
+         
+         unified_engine = UnifiedCognitiveContextEngine()
+         
+-        def _get_profile():
+-            return unified_engine.build_context(db, user_id=current_user.id)
++        from core.database.models import SessionSummary
++        
++        async def _get_profile():
++            print('[DEBUG] Building context...', flush=True)
++            prof_task = unified_engine.build_context_async(user_id=current_user.id, user_language=current_user.preferred_language)
++            
++            def _get_summary():
++                from core.database.models import SessionLocal
++                with SessionLocal() as ldb:
++                    return ldb.query(SessionSummary).filter(SessionSummary.user_id == current_user.id).order_by(SessionSummary.created_at.desc()).first()
+             
+-        profile = await asyncio.to_thread(_get_profile)
++            print('[DEBUG] Getting summary...', flush=True)
++            summary_task = asyncio.to_thread(_get_summary)
++            prof, last_summary = await asyncio.gather(prof_task, summary_task)
++            print('[DEBUG] Done getting profile.', flush=True)
++            return prof, last_summary
++            
++        profile, last_summary = await _get_profile()
++        print('[DEBUG] Got profile.', flush=True)
+         unified_ctx_block = profile.to_formatted_context_block(is_greeting=True)
++        summary_block = f"\n[LAST SESSION SUMMARY]\nMain Topics: {last_summary.main_topics}\nEmotional Progression: {last_summary.emotional_progression}\nUnresolved: {last_summary.unresolved_topics}\n" if last_summary else ""
+ 
+         if is_first:
+-            system_prompt = f"""You are Maitri, an empathetic, warm, and highly attuned AI mental health companion.
++            system_prompt = f"""You are Mythri, a warm, conversational, and highly attuned friend.
+ Your tone is calm, grounded, and deeply non-judgmental.
+ 
+ You are generating the very FIRST welcome message to a user who just completed onboarding and opened the app.
+ Greet them warmly by name ({profile.preferred_name}).
+-Acknowledge what brought them here and their primary goal, naturally weaving it into the greeting.
+-Keep it brief (40-80 words max, 2-3 sentences). End with a gentle open question like "Where would you like to start today?".
++Acknowledge what brought them here naturally, but DO NOT sound like a clinical intake form or a database dump. 
++Make them feel: "I don't have to perform here, I can talk normally."
++Keep it brief (40-80 words max, 2-3 sentences). End with a gentle open question like "Where would you like to start today?" or just a warm statement like "I'm here whenever you're ready."
+ IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
+         else:
+-            system_prompt = f"""You are Maitri, an empathetic, warm, and highly attuned AI mental health companion.
++            system_prompt = f"""You are Mythri, a warm, conversational, and highly attuned friend.
+ Your tone is calm, grounded, and deeply non-judgmental.
+ 
+ You are generating the very first message to a user who just opened the app for a new session.
+ Greet them warmly by name ({profile.preferred_name}).
+-Naturally reference their recent progress or last conversation topic if available (e.g. "Last time we spoke you were working on...").
+-Mention just one previous topic naturally. Keep it completely natural and conversational.
+-Keep it brief (40-80 words max, 2-3 sentences). End with a gentle check-in like "How have things been since then?" or "What's on your mind today?".
++Naturally reference their recent progress or last conversation topic if available, but DO NOT sound like a robotic summary.
++Keep it completely natural and conversational.
++Keep it brief (40-80 words max, 2-3 sentences). You DO NOT have to ask a question. A warm statement like "It's good to see you again" is perfectly fine. Let them lead.
+ IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
+ 
+         messages = [
+             {"role": "system", "content": system_prompt},
+-            {"role": "user", "content": f"USER PROFILE:\n{unified_ctx_block}\n\n[The user has just opened the app. Please send your first welcome message.]"}
++            {"role": "user", "content": f"USER PROFILE:\n{unified_ctx_block}{summary_block}\n\n[The user has just opened the app. Please send your first welcome message.]"}
+         ]
+         
++        print('[DEBUG] Calling LLM generate...', flush=True)
+         initial_message = await llm_router.generate(messages, max_tokens=150, temperature=0.7)
++        print('[DEBUG] Got LLM response.', flush=True)
+         
+         if not initial_message or not initial_message.strip():
+             raise Exception("LLM router returned an empty response")
+@@ -125,6 +145,7 @@ IMPORTANT: Keep your internal reasoning extremely brief and output the greeting
+             ai_msg = Message(session_id=session_id, role="assistant", content=initial_message)
+             db.add(ai_msg)
+             db.commit()
++
+             
+         await asyncio.to_thread(_save_message)
+ 
+@@ -146,9 +167,10 @@ IMPORTANT: Keep your internal reasoning extremely brief and output the greeting
+     )
+ 
+ 
+-@router.post("/message", response_model=ChatResponse)
++@router.post("/message")
+ async def send_message(
+     req: ChatRequest,
++    background_tasks: BackgroundTasks,
+     current_user: User = Depends(get_current_user),
+     db: Session = Depends(get_db),
+ ):
+@@ -160,17 +182,15 @@ async def send_message(
+             DBSession.session_token == req.session_id,
+             DBSession.user_id == current_user.id,
+         ).first()
+-    session = await asyncio.to_thread(_get_session)
++    session = _get_session()
+     t_session = time.time()
+     
+     if not session:
+         raise HTTPException(status_code=404, detail="Session not found")
+ 
+-    # ΓöÇΓöÇ Telemetry ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+     asyncio.create_task(broadcast_event("TEXT_START", "Client Keyboard -> FastAPI", {"text": req.message}))
+     CommandCenter.log_ai("TEXT_START", f"User Input: {req.message[:50]}...")
+ 
+-    # ΓöÇΓöÇ Crisis first ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+     crisis = check_for_crisis(req.message)
+     if crisis.is_crisis:
+         db.add(RiskLog(
+@@ -180,269 +200,290 @@ async def send_message(
+         ))
+         session.is_crisis_flagged = True
+         db.commit()
+-    t_crisis = time.time()
+ 
+-    async def fast_telemetry():
+-        pass
+-    asyncio.create_task(fast_telemetry())
++    from security.safety_validator import evaluate_input_safety
++    background_tasks.add_task(evaluate_input_safety, req.message)
+ 
+     def _get_past_messages():
+-        return db.query(Message).filter(
+-            Message.session_id == session.id
+-        ).order_by(Message.created_at.desc()).limit(30).all()
+-    past = await asyncio.to_thread(_get_past_messages)
+-    past.reverse()
+-    t_db = time.time()
+-
+-    history = [{"role": "assistant" if m.role == "maitri" else m.role, "content": m.content} for m in past]
+-    history.append({"role": "user", "content": req.message})
+-
+-    # ΓöÇΓöÇ Pattern Analysis ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-    recent_user_msgs = [m.content for m in past if m.role == "user"][-5:]
+-    def _run_pattern_analysis():
+-        return analyze_patterns(recent_user_msgs, req.message)
+-    pattern_signal = await asyncio.to_thread(_run_pattern_analysis)
+-    pattern_block  = pattern_signal.as_prompt_block()
+-    t_pattern = time.time()
++        from core.database.models import SessionLocal
++        with SessionLocal() as local_db:
++            past_msgs = local_db.query(Message).filter(
++                Message.session_id == session.id
++            ).order_by(Message.created_at.desc()).limit(30).all()
++            past_msgs.reverse()
++            # Map to dicts inside the session to prevent DetachedInstanceError
++            return [{"role": "assistant" if m.role == "mythri" else m.role, "content": m.content} for m in past_msgs]
+ 
+-    # ΓöÇΓöÇ Persona Profile ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-    persona_summary = await asyncio.to_thread(get_persona_summary, db, current_user.id)
+-    t_persona = time.time()
+-
+-    # ΓöÇΓöÇ RAG ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+     def _fetch_rag():
+         return retrieve_context(req.message) if RAG_AVAILABLE else ""
+-    rag_context = await asyncio.to_thread(_fetch_rag)
+-    lang_prompt = get_language_prompt(req.language)
+-    t_rag = time.time()
+ 
+-    # ΓöÇΓöÇ Emotion Detection ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-    try:
+-        emotion = await asyncio.wait_for(detect_emotion(req.message), timeout=2.0)
+-    except Exception:
+-        emotion = detect_emotion_heuristic(req.message)
+-    t_emotion = time.time()
+-
+-    tracker.update_emotion(session.id, emotion.label)
+-    tracker.record_message_length(session.id, len(req.message))
+-    if crisis.is_crisis:
+-        tracker.set_crisis_risk(session.id, "High")
++    def _get_emotion_sync():
++        t_s = time.time()
++        try:
++            loop = asyncio.new_event_loop()
++            emo = loop.run_until_complete(detect_emotion(req.message))
++            loop.close()
++            return emo, time.time() - t_s
++        except Exception:
++            return detect_emotion_heuristic(req.message), time.time() - t_s
++
++    async def _run_crse_pipeline():
++        from modules.memory.repository import MemoryRepository
++        from modules.memory.unified_context import UnifiedCognitiveContextEngine
++        from modules.memory.conversation_intent import ConversationSpeechActEngine
++        from modules.memory.context_relevance import ContextRelevanceSelector
+ 
+-    state = tracker.get_state(session.id)
+-    state_summary   = tracker.get_summary(session.id)
+-    exercise_ctx    = tracker.get_exercise_context(session.id)
+-    is_onboarding   = state.is_onboarding
++        unified_engine = UnifiedCognitiveContextEngine()
++        speech_engine = ConversationSpeechActEngine()
++        crse = ContextRelevanceSelector()
+ 
+-    # ΓöÇΓöÇ CRSE Pipeline ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-    memory_context = ""
+-    memory_usage_mode = "SILENT_BACKGROUND"
+-    try:
+-        def _run_crse_pipeline():
+-            from modules.memory.repository import MemoryRepository
+-            from modules.memory.unified_context import UnifiedCognitiveContextEngine
+-            from modules.memory.conversation_intent import ConversationSpeechActEngine
+-            from modules.memory.context_relevance import ContextRelevanceSelector
+-
+-            repo = MemoryRepository(db)
+-            unified_engine = UnifiedCognitiveContextEngine()
+-            speech_engine = ConversationSpeechActEngine()
+-            crse = ContextRelevanceSelector()
+-
+-            unified_profile = unified_engine.build_context(
+-                db, user_id=current_user.id, session_id=session.id, query=req.message
+-            )
++        unified_profile = await unified_engine.build_context_async(
++            user_id=current_user.id, session_id=session.id, query=req.message,
++            user_language=current_user.preferred_language
++        )
++        known_ents = set()
++        if unified_profile.preferred_name: known_ents.add(unified_profile.preferred_name)
++        for r in unified_profile.relationships:
++            for word in r.split():
++                clean_word = word.strip(".,;:!\"'")
++                if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
++                    known_ents.add(clean_word)
++
++        intent_analysis = speech_engine.analyze(req.message, known_entities=list(known_ents))
++        selection = crse.select(
++            message=req.message,
++            intent=intent_analysis,
++            profile=unified_profile,
++            known_entities=list(known_ents),
++        )
++        return selection, unified_profile
++
++    t_context_start = time.time()
++
++    def _get_persona_sync():
++        from core.database.models import SessionLocal
++        with SessionLocal() as local_db:
++            return get_persona_summary(local_db, current_user.id)
++
++    net_results = await asyncio.gather(
++        asyncio.to_thread(_fetch_rag),
++        asyncio.to_thread(_get_emotion_sync),
++        asyncio.to_thread(_get_past_messages),
++        _run_crse_pipeline(),
++        asyncio.to_thread(_get_persona_sync),
++        return_exceptions=True
++    )
++    
++    rag_context = net_results[0] if not isinstance(net_results[0], Exception) else ""
++    emotion_res = net_results[1] if not isinstance(net_results[1], Exception) else (detect_emotion_heuristic(req.message), 0.0)
++    emotion, emotion_latency = emotion_res
++    past = net_results[2] if not isinstance(net_results[2], Exception) else []
++    crse_res = net_results[3] if not isinstance(net_results[3], Exception) else (None, None)
++    selection, unified_profile = crse_res
++    persona_summary = net_results[4] if not isinstance(net_results[4], Exception) else ""
++    
++    t_context = time.time()
+ 
+-            known_ents = set()
+-            if unified_profile.preferred_name:
+-                known_ents.add(unified_profile.preferred_name)
+-            for r in unified_profile.relationships:
+-                for word in r.split():
+-                    clean_word = word.strip(".,;:!?\"'")
+-                    if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
+-                        known_ents.add(clean_word)
+-
+-            intent_analysis = speech_engine.analyze(req.message, known_entities=list(known_ents))
+-
+-            return crse.select(
+-                message=req.message,
+-                intent=intent_analysis,
+-                profile=unified_profile,
+-                known_entities=list(known_ents),
+-            )
++    memory_context = selection.to_prompt_block() if selection else ""
++    memory_usage_mode = selection.selection_mode if selection else "SILENT_BACKGROUND"
+ 
+-        selection = await asyncio.to_thread(_run_crse_pipeline)
+-        memory_context = selection.to_prompt_block()
+-        memory_usage_mode = selection.selection_mode
++    history = past.copy() if past else []
++    history.append({"role": "user", "content": req.message})
+ 
+-    except Exception as e:
+-        print(f"[CRSE_PIPELINE_ERROR] {e}")
+-        memory_context = ""
+-        memory_usage_mode = "SILENT_BACKGROUND"
+-    t_crse = time.time()
++    # analyze_patterns is moved to background
+ 
+-    # ΓöÇΓöÇ Assessor Phase ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-    case_file = tracker.get_case_file(session.id)
++    tracker.update_emotion(session.id, emotion.label)
++    tracker.record_message_length(session.id, len(req.message))
++    if crisis.is_crisis: tracker.set_crisis_risk(session.id, "High")
+ 
+-    # Release DB connection before long Assessor LLM call
+-    def _release_db_conn_assessor():
+-        db.commit()
+-    await asyncio.to_thread(_release_db_conn_assessor)
++    state = tracker.get_state(session.id)
++    state_summary = tracker.get_summary(session.id)
++    exercise_ctx = tracker.get_exercise_context(session.id)
++    is_onboarding = state.is_onboarding
++    lang_prompt = get_language_prompt(req.language)
+ 
++    case_file = tracker.get_case_file(session.id)
+     if should_skip_assessor(req.message, case_file):
+         msg_clean = req.message.strip().lower()
+         greetings = ["hi", "hey", "hello", "yo", "sup", "good morning", "good night", "hola"]
++        if "runtime_state" not in case_file: case_file["runtime_state"] = {}
+         if any(g in msg_clean for g in greetings) and len(msg_clean.split()) <= 4:
+-            case_file["runtime_state"]["decision"] = "GREETING"
++            case_file["runtime_state"]["response_strategy"] = "GREETING"
+         else:
+-            case_file["runtime_state"]["decision"] = "RESPOND"
+-    else:
+-        try:
+-            case_file = await asyncio.wait_for(
+-                assess_turn(
+-                    messages       = history,
+-                    case_file      = case_file,
+-                    user_message   = req.message,
+-                    emotion_label  = emotion.label,
+-                    rag_context    = rag_context,
+-                    pattern_block  = pattern_block,
+-                    persona_summary= persona_summary,
+-                    memory_context = memory_context,
+-                ),
+-                timeout=20.0
+-            )
+-        except Exception as e:
+-            case_file["runtime_state"]["decision"] = "RESPOND"
+-        tracker.update_case_file(session.id, case_file)
+-    t_assessor = time.time()
+-
+-    decision = case_file.get("runtime_state", {}).get("decision", "RESPOND")
+-
+-    if decision == "GROUND":
+-        if exercise_ctx.get("state", "idle") == "idle":
+-            exercise_type = "GROUNDING"
+-            tracker.suggest_exercise(
+-                session.id,
+-                exercise_type  = exercise_type,
+-                triggered_by   = "assessor",
+-                pre_emotion    = emotion.label,
+-            )
+-            ex_log = ExerciseLog(
+-                session_id   = session.id,
+-                user_id      = current_user.id,
+-                exercise_type= exercise_type,
+-                triggered_by = "assessor",
+-                state        = "suggested",
+-                pre_emotion  = emotion.label,
+-            )
+-            db.add(ex_log)
+-
+-    elif decision == "EXERCISE_CONTINUE":
+-        current_ex_state = exercise_ctx.get("state", "idle")
+-        if current_ex_state == "suggested":
+-            tracker.advance_exercise_state(session.id, "in_progress")
+-
+-    elif decision == "EXERCISE_BREAK":
+-        tracker.reset_exercise(session.id)
++            case_file["runtime_state"]["response_strategy"] = "LISTEN"
+     
+-    elif exercise_ctx.get("state", "idle") != "idle":
++    # assess_turn is moved to background to prevent blocking First Token
++
++    t_assessor = time.time()
++    strategy = case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
++    decision = case_file.get("runtime_state", {}).get("exercise_decision", "NONE")
++
++    if strategy == "GROUND" and exercise_ctx.get("state", "idle") == "idle":
++        exercise_type = "GROUNDING"
++        tracker.suggest_exercise(session.id, exercise_type=exercise_type, triggered_by="assessor", pre_emotion=emotion.label)
++        db.add(ExerciseLog(session_id=session.id, user_id=current_user.id, exercise_type=exercise_type, triggered_by="assessor", state="suggested", pre_emotion=emotion.label))
++    elif decision == "EXERCISE_CONTINUE" and exercise_ctx.get("state", "idle") == "idle":
++        tracker.advance_exercise_state(session.id, "in_progress")
++    elif decision == "EXERCISE_BREAK" or exercise_ctx.get("state", "idle") != "idle":
+         tracker.reset_exercise(session.id)
+ 
+     if exercise_ctx.get("state") == "awaiting_feedback":
+-        await asyncio.to_thread(
+-            _complete_exercise, db, session.id, current_user.id, emotion.label, req.message
+-        )
++        _complete_exercise(db, session.id, current_user.id, emotion.label, req.message)
+         tracker.reset_exercise(session.id)
+ 
+-    # ΓöÇΓöÇ Maitri Response ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+     current_exercise_state = tracker.get_state(session.id).exercise_state
++    db.commit()
+ 
+-    # Release DB connection to the pool during long LLM calls
+-    def _release_db_conn():
+-        db.commit()
+-    await asyncio.to_thread(_release_db_conn)
+-
+-    ai_response = await chat_with_maitri(
+-        messages       = history,
+-        language       = req.language,
+-        rag_context    = rag_context,
+-        case_file      = case_file,
+-        language_prompt= lang_prompt,
+-        is_crisis      = crisis.is_crisis,
+-        exercise_phase = current_exercise_state,
+-        memory_context = memory_context,
+-        memory_usage_mode = memory_usage_mode,
+-    )
++    async def post_process_message(final_text: str):
++        from core.database.models import SessionLocal
++        bg_db = SessionLocal()
++        try:
++            user_msg = Message(session_id=session.id, role="user", content=req.message, language=req.language)
++            bg_db.add(user_msg)
++            bg_db.flush()
++            
++            if emotion and emotion.label:
++                bg_db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
++                
++            bg_db.add(MessageAnalysis(
++                message_id=user_msg.id,
++                session_id=session.id,
++                speaker="user",
++                emotion=emotion.label if emotion else "neutral",
++                emotion_intensity=emotion.score if emotion else 0.0,
++                cognitive_signals=case_file.get("cognitive_patterns", []),
++                conversation_intent=case_file.get("conversation_state", {}).get("engagement", 0.5),
++                risk_level=case_file.get("conversation_state", {}).get("risk_level", "low")
++            ))
++                
++            ai_msg = Message(session_id=session.id, role="assistant", content=final_text, language=req.language)
++            bg_db.add(ai_msg)
++            bg_db.flush()
++            
++            runtime_state = case_file.get("runtime_state", {})
++            bg_db.add(ResponseMetadata(
++                message_id=ai_msg.id,
++                response_strategy=runtime_state.get("response_strategy", "LISTEN"),
++                reason_codes=runtime_state.get("reason_codes", []),
++                expected_effect=runtime_state.get("expected_effect", ""),
++                context_used=case_file
++            ))
++            bg_db.commit()
++            
++            # Background Background Assessor and Pattern Analysis
++            try:
++                bg_history = history.copy()
++                bg_history.append({"role": "assistant", "content": final_text})
++                
++                recent_user_msgs = [m.get("content") for m in past if m.get("role") == "user"][-5:]
++                bg_pattern_signal = await asyncio.to_thread(analyze_patterns, recent_user_msgs, req.message)
++                bg_pattern_block = bg_pattern_signal.as_prompt_block()
++                
++                bg_case_file = await asyncio.wait_for(
++                    assess_turn(
++                        messages       = bg_history,
++                        case_file      = case_file,
++                        user_message   = req.message,
++                        emotion_label  = emotion.label,
++                        rag_context    = rag_context,
++                        pattern_block  = bg_pattern_block,
++                        persona_summary= persona_summary,
++                        memory_context = memory_context,
++                    ),
++                    timeout=10.0
++                )
++                tracker.update_case_file(session.id, bg_case_file)
++            except Exception as e:
++                print(f"[Background Assessor] Error: {e}")
++                
++            from rag.brain.evaluator import evaluate_response_async
++            await evaluate_response_async(ai_msg.id)
++            
++            total_user_msgs = len([m for m in past if m.get("role") == "user"]) + 1
++            if total_user_msgs % 5 == 0 or total_user_msgs == 1:
++                await _update_persona_async(session.id, current_user.id, is_onboarding)
++                
++            await _process_memory_write_path_async(current_user.id, req.message, session.id)
++        except Exception as e:
++            print(f"[PostProcess] Error: {e}")
++            bg_db.rollback()
++        finally:
++            bg_db.close()
++
++    t_prompt = time.time()
+     
+-    import re
+-    ai_response = re.sub(r'<scratchpad>.*?</scratchpad>', '', ai_response, flags=re.DOTALL | re.IGNORECASE).strip()
+-    t_maitri = time.time()
+-
+-    def _save_messages():
+-        user_msg = Message(session_id=session.id, role="user", content=req.message, language=req.language)
+-        db.add(user_msg)
+-        db.flush()
+-        if emotion and emotion.label:
+-            db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
+-        ai_msg = Message(session_id=session.id, role="assistant", content=ai_response, language=req.language)
+-        db.add(ai_msg)
+-        db.flush()
+-        
+-        # Save reasoning for the AI message
+-        reasoning_decision = case_file.get("runtime_state", {}).get("decision", "RESPOND")
+-        db.add(MessageReasoning(
+-            message_id=ai_msg.id,
+-            session_id=session.id,
+-            decision=reasoning_decision,
+-            reasoning_context=case_file
+-        ))
+-        
+-        db.commit()
++    print(f"\n[PERF]")
++    print(f"AUTH/SESSION={t_session - t_start:.3f}s")
++    print(f"SAFETY={t_context_start - t_session:.3f}s")
++    print(f"CONTEXT_GATHER={t_context - t_context_start:.3f}s")
++    print(f"PROMPT_BUILD={t_prompt - t_assessor:.3f}s")
++    print(f"TOTAL_PRE_STREAM={t_prompt - t_start:.3f}s\n")
++
++    async def response_generator():
++        import json
+         
+-    await asyncio.to_thread(_save_messages)
+-    t_save = time.time()
+-
+-    print(f"\n--- LATENCY BREAKDOWN (Session {session.id}) ---")
+-    print(f"Session DB: {t_session - t_start:.3f}s")
+-    print(f"Crisis: {t_crisis - t_session:.3f}s")
+-    print(f"Past Msgs: {t_db - t_crisis:.3f}s")
+-    print(f"Pattern: {t_pattern - t_db:.3f}s")
+-    print(f"Persona: {t_persona - t_pattern:.3f}s")
+-    print(f"RAG: {t_rag - t_persona:.3f}s")
+-    print(f"Emotion: {t_emotion - t_rag:.3f}s")
+-    print(f"CRSE: {t_crse - t_emotion:.3f}s")
+-    print(f"Assessor: {t_assessor - t_crse:.3f}s")
+-    print(f"Maitri: {t_maitri - t_assessor:.3f}s")
+-    print(f"Save DB: {t_save - t_maitri:.3f}s")
+-    print(f"TOTAL: {t_save - t_start:.3f}s\n")
+-
+-    total_user_msgs = len([m for m in past if m.role == "user"]) + 1
+-    if total_user_msgs % 5 == 0 or total_user_msgs == 1:
+-        asyncio.create_task(_update_persona_async(
+-            db_session_id    = session.id,
+-            user_id          = current_user.id,
+-            is_first_session = is_onboarding,
+-        ))
+-
+-    asyncio.create_task(_process_memory_write_path_async(
+-        user_id      = current_user.id,
+-        user_message = req.message,
+-        session_id   = session.id,
+-    ))
+-
+-    final_ex_state = tracker.get_state(session.id)
+-    return ChatResponse(
+-        response       = ai_response,
+-        is_crisis      = crisis.is_crisis,
+-        helplines      = crisis.helplines if crisis.is_crisis else [],
+-        session_id     = req.session_id,
+-        emotion        = emotion.label,
+-        emotion_emoji  = emotion.emoji,
+-        emotion_score  = emotion.score,
+-        rag_used       = bool(rag_context),
+-        exercise_state = final_ex_state.exercise_state,
+-        exercise_type  = final_ex_state.active_exercise_type,
+-    )
++        init_metadata = {
++            "type": "initial_metadata",
++            "is_crisis": crisis.is_crisis,
++            "helplines": crisis.helplines if crisis.is_crisis else [],
++            "emotion": emotion.label if emotion else "neutral",
++            "emotion_emoji": emotion.emoji if emotion else "",
++            "exercise_state": current_exercise_state,
++            "exercise_type": tracker.get_state(session.id).active_exercise_type,
++            "rag_used": bool(rag_context)
++        }
++        yield json.dumps(init_metadata) + "\n"
++
++        full_text = ""
++        first_token = True
++        try:
++            async for chunk_raw in stream_chat_with_mythri(
++                messages       = history,
++                language       = req.language,
++                rag_context    = rag_context,
++                case_file      = case_file,
++                language_prompt= lang_prompt,
++                is_crisis      = crisis.is_crisis,
++                exercise_phase = current_exercise_state,
++                memory_context = memory_context,
++                memory_usage_mode = memory_usage_mode,
++            ):
++                if first_token:
++                    t_first_token = time.time()
++                    llm_ttft = t_first_token - t_prompt
++                    b_ctx_ms = unified_profile.assembly_duration_ms if unified_profile else 0
++                    db_acq_ms = unified_profile.db_acquire_ms if unified_profile else 0
++                    query_ms = unified_profile.query_total_ms if unified_profile else 0
++                    
++                    print(f"\n[PHASE3 PERF]")
++                    print(f"DB_ACQUIRE={db_acq_ms/1000:.3f}s")
++                    print(f"QUERY_TOTAL={query_ms/1000:.3f}s")
++                    print(f"BUILD_CONTEXT={b_ctx_ms/1000:.3f}s")
++                    print(f"CONTEXT_GATHER={t_context - t_context_start:.3f}s")
++                    print(f"AUTH={t_session - t_start:.3f}s")
++                    print(f"SESSION=0.000s")
++                    print(f"PROMPT_BUILD={t_prompt - t_assessor:.3f}s")
++                    print(f"LLM_TTFT={llm_ttft:.3f}s")
++                    print(f"TOTAL={t_first_token - t_start:.3f}s\n")
++                    first_token = False
++                if not chunk_raw: continue
++                yield chunk_raw
++                try:
++                    obj = json.loads(chunk_raw.strip())
++                    if obj.get("type") == "metadata" and obj.get("full_text"):
++                        full_text = obj.get("full_text")
++                except Exception:
++                    pass
++        except Exception as e:
++            print(f"[LLM STREAM ERROR] {e}")
++            fallback_text = "I'm having a little trouble connecting right now, but please know I'm here for you. Let's take a deep breath together. Could you try sending your message again?"
++            yield json.dumps({"type": "chunk", "text": fallback_text}) + "\n"
++            full_text = fallback_text
++        finally:
++            if full_text:
++                background_tasks.add_task(post_process_message, full_text)
+ 
++    return StreamingResponse(response_generator(), media_type="application/x-ndjson")
+ 
+ def _complete_exercise(db: Session, session_id: int, user_id: int, post_emotion: str, feedback_text: str):
+     """Mark the most recent in-progress ExerciseLog as completed."""
+@@ -472,10 +513,10 @@ async def _update_persona_async(db_session_id: int, user_id: int, is_first_sessi
+         ).order_by(Message.created_at).all()
+         user_msgs = [m.content for m in past]
+ 
+-        # Extract initial topic from first user message if onboarding
+         initial_topic = user_msgs[0][:200] if is_first_session and user_msgs else None
+ 
+-        update_persona(
++        await asyncio.to_thread(
++            update_persona,
+             db                      = db,
+             user_id                 = user_id,
+             session_message_lengths = state.session_message_lengths,
+@@ -504,7 +545,6 @@ async def _process_memory_write_path_async(user_id: int, user_message: str, sess
+         try:
+             from modules.memory import MemoryManager, short_term_engine, index_engine, WorkingMemoryKind
+ 
+-            # 1. Update Short-Term Working Memory Session Container
+             short_term_engine.add_item(
+                 session_id=session_id,
+                 user_id=user_id,
+@@ -512,7 +552,6 @@ async def _process_memory_write_path_async(user_id: int, user_message: str, sess
+                 content=user_message[:300]
+             )
+ 
+-            # 2. Execute Async Write Path Pipeline
+             manager = MemoryManager(db_session=db)
+             result = manager.process_turn(
+                 user_id=user_id,
+@@ -520,7 +559,6 @@ async def _process_memory_write_path_async(user_id: int, user_message: str, sess
+                 session_id=session_id,
+             )
+ 
+-            # 3. Synchronize Memory Index Engine
+             for dec in result.decisions:
+                 if dec.is_actionable and dec.candidate:
+                     index_engine.on_memory_created(dec.candidate)
+@@ -537,7 +575,6 @@ async def _process_memory_write_path_async(user_id: int, user_message: str, sess
+     except Exception as exc:
+         CommandCenter.log_ai("MEMORY_FAILURE", f"Isolated memory task execution error: {exc}")
+ 
+-
+ @router.get("/history")
+ def get_history(
+     current_user: User = Depends(get_current_user),
+@@ -620,3 +657,95 @@ def get_transcript(
+     }
+ 
+ 
++async def generate_session_summary(session_id: int, user_id: int):
++    # run in background
++    from core.database.models import SessionLocal
++    db = SessionLocal()
++    try:
++        from core.database.models import SessionSummary
++        summary = SessionSummary(
++            session_id=session_id,
++            user_id=user_id,
++            main_topics=["General Check-in"],
++            emotional_progression=["Neutral"],
++            important_context="Auto-generated end of session.",
++            unresolved_topics=[]
++        )
++        db.add(summary)
++        db.commit()
++    except Exception as e:
++        print(f"Error generating session summary: {e}")
++    finally:
++        db.close()
++
++
++@router.post("/{session_id}/end")
++def end_session(
++    session_id: str,
++    current_user: User = Depends(get_current_user),
++    db: Session = Depends(get_db),
++):
++    session = db.query(DBSession).filter(
++        DBSession.session_token == session_id,
++        DBSession.user_id == current_user.id
++    ).first()
++    if not session:
++        raise HTTPException(status_code=404, detail="Session not found")
++        
++    session.session_status = "completed"
++    session.ended_at = datetime.utcnow()
++    db.commit()
++    
++    # Trigger the async summarizer task
++    asyncio.create_task(generate_session_summary(session.id, current_user.id))
++    
++    return {"status": "ended", "session_id": session_id}
++
++
++@router.get("/{session_id}/analysis")
++def get_session_analysis(
++    session_id: str,
++    current_user: User = Depends(get_current_user),
++    db: Session = Depends(get_db),
++):
++    from sqlalchemy.orm import joinedload
++    session = db.query(DBSession).options(
++        joinedload(DBSession.messages).joinedload(Message.analysis),
++        joinedload(DBSession.messages).joinedload(Message.response_metadata)
++    ).filter(
++        DBSession.session_token == session_id,
++        DBSession.user_id == current_user.id
++    ).first()
++    
++    if not session:
++        raise HTTPException(status_code=404, detail="Session not found")
++        
++    messages_data = []
++    for m in session.messages:
++        data = {
++            "role": m.role,
++            "content": m.content,
++            "created_at": m.created_at.isoformat() if m.created_at else None,
++        }
++        if m.role == "user" and m.analysis:
++            data["analysis"] = {
++                "emotion": m.analysis.emotion,
++                "cognitive_signals": m.analysis.cognitive_signals,
++                "risk_level": m.analysis.risk_level
++            }
++        if m.role == "assistant" and m.response_metadata:
++            data["metadata"] = {
++                "response_strategy": m.response_metadata.response_strategy,
++                "reason_codes": m.response_metadata.reason_codes,
++                "expected_effect": m.response_metadata.expected_effect,
++                "improvement_targets": m.response_metadata.improvement_targets,
++                "quality_score": m.response_metadata.quality_score
++            }
++        messages_data.append(data)
++        
++    return {
++        "session_id": session_id,
++        "cognitive_summary": session.cognitive_summary,
++        "messages": messages_data
++    }
++

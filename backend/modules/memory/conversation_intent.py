@@ -1,6 +1,6 @@
 """
 Conversation Speech Act & Intent Engine
-Redesigning Maitri's reasoning pipeline to be Conversation-First & Memory-Supported.
+Redesigning Mythri's reasoning pipeline to be Conversation-First & Memory-Supported.
 
 Priority Hierarchy:
 1. Current User Message (50% Weight) - Respond primarily to what the user JUST said.

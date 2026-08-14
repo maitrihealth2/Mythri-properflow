@@ -1,5 +1,5 @@
 """
-Abstract base class for all Maitri LLM providers.
+Abstract base class for all Mythri LLM providers.
 
 Every provider must
 implement this interface so the router can treat them interchangeably.
@@ -31,19 +31,18 @@ class LLMProviderBase(ABC):
     ) -> str:
         """
         Stream a completion from the provider and return the accumulated text.
+        """
+        ...
 
-        Args:
-            api_messages: Full message list including system prompt.
-            max_tokens: Maximum tokens to generate.
-            temperature: Sampling temperature.
-
-        Returns:
-            The full response text as a string.
-
-        Raises:
-            ProviderTimeoutError, ProviderRateLimitError, ProviderServerError,
-            ProviderNetworkError, ProviderStreamError, ProviderEmptyResponseError,
-            ProviderConfigurationError — see exceptions.py.
+    @abstractmethod
+    async def stream(
+        self,
+        api_messages: list[dict],
+        max_tokens: int,
+        temperature: float,
+    ):
+        """
+        Stream a completion from the provider, yielding text chunks dynamically.
         """
         ...
 

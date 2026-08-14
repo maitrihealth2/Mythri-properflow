@@ -50,7 +50,7 @@ class _CommandCenter:
     def start_dashboard(self):
         """Prints the initial header banner."""
         uptime = int(time.time() - self.startup_time)
-        header = Text(f"MAITRI V5 - DEVELOPER COMMAND CENTER (STREAMING MODE)", style="bold cyan", justify="center")
+        header = Text(f"MYTHRI V5 - DEVELOPER COMMAND CENTER (STREAMING MODE)", style="bold cyan", justify="center")
         console.print(Panel(header, style="cyan"))
         self._print_snapshot()
 

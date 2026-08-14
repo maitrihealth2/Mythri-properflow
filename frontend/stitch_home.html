@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mythri - Cosmic Sanctuary Dashboard</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#03c6b2",
+                    "primary-container": "#a78bfa",
+                    "on-secondary-fixed-variant": "#005047",
+                    "error-container": "#93000a",
+                    "primary": "#cebdff",
+                    "on-tertiary-container": "#312e5f",
+                    "on-surface-variant": "#cac4d4",
+                    "on-secondary": "#003731",
+                    "tertiary": "#c4c1fb",
+                    "error": "#ffb4ab",
+                    "on-primary": "#381385",
+                    "background": "#101415",
+                    "surface": "#101415",
+                    "outline-variant": "#494552",
+                    "on-tertiary-fixed": "#181445",
+                    "surface-container-lowest": "#0b0f10",
+                    "surface-variant": "#323537",
+                    "secondary-fixed": "#62fae3",
+                    "surface-dim": "#101415",
+                    "secondary": "#44e2cd",
+                    "tertiary-fixed-dim": "#c4c1fb",
+                    "on-primary-fixed-variant": "#4f319c",
+                    "primary-fixed-dim": "#cebdff",
+                    "on-background": "#e0e3e5",
+                    "tertiary-fixed": "#e3dfff",
+                    "surface-container-highest": "#323537",
+                    "primary-fixed": "#e8ddff",
+                    "surface-container-low": "#191c1e",
+                    "surface-tint": "#cebdff",
+                    "on-secondary-container": "#004d44",
+                    "on-tertiary": "#2d2a5b",
+                    "inverse-primary": "#674bb5",
+                    "outline": "#948e9d",
+                    "tertiary-container": "#9a97cf",
+                    "on-error-container": "#ffdad6",
+                    "on-error": "#690005",
+                    "on-secondary-fixed": "#00201c",
+                    "surface-container": "#1d2022",
+                    "inverse-surface": "#e0e3e5",
+                    "inverse-on-surface": "#2d3133",
+                    "on-tertiary-fixed-variant": "#444173",
+                    "secondary-fixed-dim": "#3cddc7",
+                    "on-surface": "#e0e3e5",
+                    "on-primary-fixed": "#21005e",
+                    "on-primary-container": "#3c1989",
+                    "surface-bright": "#363a3b",
+                    "surface-container-high": "#272a2c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "container-max": "1200px",
+                    "margin-mobile": "20px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Be Vietnam Pro"],
+                    "display-lg": ["Manrope"],
+                    "body-lg": ["Be Vietnam Pro"],
+                    "label-sm": ["Manrope"],
+                    "display-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Custom utilities that might not perfectly map to inline Tailwind without arbitrary values, keeping it minimal */
+        .glass-panel {
+            @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+        }
+        .glass-panel-active {
+            @apply bg-white/10 backdrop-blur-3xl border border-primary/30 rounded-xl shadow-[0_8px_32px_0_rgba(206,189,255,0.15)];
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen relative overflow-x-hidden selection:bg-primary/30 selection:text-primary-fixed">
+<!-- Fixed Full-Screen Background -->
+<div class="fixed inset-0 z-[-1]">
+<div class="w-full h-full bg-cover bg-center bg-no-repeat opacity-60" style="background-image: url('https://lh3.googleusercontent.com/aida/AP1WRLvmaX9a4Aj3sYh_Q-PqrrlgrEa4a5nWvbuzxbGGMYz87dCol3Im70AMMBUcOqfRggclKMzSkjeLcxhlI9GEXIuOoDc_kwtCYelWGvkCMzEctWGWHhlC9pkTkmB3sX-VAsHgpWKHyN3ltC48_ifQ9ivDSiKHECZCETHQ16igY7Y9DOflukKWPl5guYT4jKjUgAGph8b42KqSZ5Kc760XvJ9t5lsRVa05scmjI_OOk9pnK68mHhAYzrwfzl4')"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-surface/40 via-surface/80 to-surface"></div>
+</div>
+<!-- TopAppBar -->
+<nav class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full fixed top-0 z-50 bg-white/10 dark:bg-white/5 backdrop-blur-xl border-b border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all duration-500 hover:bg-white/10">
+<div class="font-display-lg text-display-lg-mobile tracking-tighter text-white drop-shadow-[0_0_15px_rgba(206,189,255,0.5)] md:font-display-lg md:text-display-lg">
+            Mythri
+        </div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant/70 dark:text-on-surface-variant/70 hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="pt-[100px] pb-[120px] px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto min-h-screen flex flex-col gap-[64px]">
+<!-- Welcome Header -->
+<header class="flex flex-col gap-2 mt-8 md:mt-16">
+<h1 class="font-display-lg text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary drop-shadow-[0_0_15px_rgba(206,189,255,0.5)]">
+                Welcome Back
+            </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant/80 max-w-2xl">
+                Your cosmic sanctuary awaits. Take a deep breath and reconnect with your center.
+            </p>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter auto-rows-min">
+<!-- Quick Start Card (Spans large area) -->
+<section class="md:col-span-8 glass-panel-active p-8 md:p-12 flex flex-col justify-between relative overflow-hidden group">
+<!-- Soft glow decoration -->
+<div class="absolute -top-32 -right-32 w-96 h-96 bg-primary/20 rounded-full blur-[100px] group-hover:bg-primary/30 transition-colors duration-700 pointer-events-none"></div>
+<div class="absolute -bottom-32 -left-32 w-96 h-96 bg-secondary/20 rounded-full blur-[100px] group-hover:bg-secondary/30 transition-colors duration-700 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-white mb-2">Deep Cosmos Meditation</h2>
+<p class="font-body-md text-body-md text-on-surface-variant/90 max-w-md">
+                            A guided 15-minute journey through starlit soundscapes to alleviate daily stress and restore inner peace.
+                        </p>
+</div>
+<div class="mt-8">
+<button class="inline-flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/40 text-primary font-label-sm text-label-sm px-8 py-4 rounded-full backdrop-blur-md transition-all duration-300 shadow-[0_0_15px_rgba(206,189,255,0.2)] hover:shadow-[0_0_25px_rgba(206,189,255,0.4)]">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+                            Begin Journey
+                        </button>
+</div>
+</div>
+</section>
+<!-- Daily Reflection Widget (Square-ish) -->
+<section class="md:col-span-4 glass-panel p-8 flex flex-col gap-6 relative overflow-hidden text-center justify-center items-center">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent pointer-events-none"></div>
+<h3 class="font-headline-md text-headline-md text-secondary drop-shadow-[0_0_8px_rgba(68,226,205,0.4)] relative z-10">
+                    Spirit Pulse
+                </h3>
+<div class="flex justify-center items-center w-full relative z-10 py-4">
+<!-- Progress Orb Simulation -->
+<div class="w-32 h-32 rounded-full border border-secondary/30 bg-secondary/5 backdrop-blur-sm flex items-center justify-center relative shadow-[0_0_20px_rgba(68,226,205,0.15)]">
+<div class="absolute inset-2 rounded-full bg-gradient-to-tr from-secondary/40 to-transparent blur-md animate-pulse"></div>
+<span class="material-symbols-outlined text-[48px] text-secondary" style="font-variation-settings: 'FILL' 1;">self_improvement</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant/80 relative z-10">
+                    You are radiating calm today.
+                </p>
+</section>
+<!-- Recent Journeys -->
+<section class="md:col-span-12 mt-8 flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-white">Recent Echoes</h3>
+<button class="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Journey Item 1 -->
+<div class="glass-panel p-6 flex flex-col gap-4 hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:shadow-[0_0_15px_rgba(206,189,255,0.3)] transition-all">
+<span class="material-symbols-outlined text-primary">nights_stay</span>
+</div>
+<div>
+<h4 class="font-body-lg text-body-lg text-white mb-1">Starlit Reflection</h4>
+<p class="font-body-md text-body-md text-on-surface-variant/60 text-sm">Yesterday • 10 min</p>
+</div>
+</div>
+<!-- Journey Item 2 -->
+<div class="glass-panel p-6 flex flex-col gap-4 hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center border border-secondary/20 group-hover:shadow-[0_0_15px_rgba(68,226,205,0.3)] transition-all">
+<span class="material-symbols-outlined text-secondary">wb_sunny</span>
+</div>
+<div>
+<h4 class="font-body-lg text-body-lg text-white mb-1">Morning Calm</h4>
+<p class="font-body-md text-body-md text-on-surface-variant/60 text-sm">Oct 24 • 20 min</p>
+</div>
+</div>
+<!-- Journey Item 3 -->
+<div class="glass-panel p-6 flex flex-col gap-4 hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center border border-tertiary/20 group-hover:shadow-[0_0_15px_rgba(196,193,251,0.3)] transition-all">
+<span class="material-symbols-outlined text-tertiary">water_drop</span>
+</div>
+<div>
+<h4 class="font-body-lg text-body-lg text-white mb-1">Oceanic Breathing</h4>
+<p class="font-body-md text-body-md text-on-surface-variant/60 text-sm">Oct 22 • 15 min</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile & Desktop App-like Nav) -->
+<!-- According to rules: On MOBILE, prohibit top-row text links and use BottomNavBar. On WEB, hide BottomNavBar. Wait, the rule says: "On WEB (hidden md:flex), hide the BottomNavBar and use the full nav cluster in the TopAppBar". But the JSON for TopAppBar doesn't provide links. I will hide BottomNav on MD and show on Mobile. -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-white/10 dark:bg-white/5 backdrop-blur-2xl border-t border-white/10 shadow-[0_-8px_32px_0_rgba(0,0,0,0.3)] rounded-t-3xl">
+<!-- Active Tab: Sanctuary -->
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed bg-white/10 rounded-xl p-2 drop-shadow-[0_0_8px_rgba(68,226,205,0.4)] scale-90 duration-200">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-sm text-label-sm">Sanctuary</span>
+</button>
+<!-- Inactive Tabs -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 dark:text-on-surface-variant/60 p-2 hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined mb-1">self_improvement</span>
+<span class="font-label-sm text-label-sm">Reflect</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 dark:text-on-surface-variant/60 p-2 hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined mb-1">explore</span>
+<span class="font-label-sm text-label-sm">Cosmos</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 dark:text-on-surface-variant/60 p-2 hover:text-white transition-colors duration-300">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+</body></html>

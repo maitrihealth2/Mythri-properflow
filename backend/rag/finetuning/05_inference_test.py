@@ -1,7 +1,7 @@
 """
 05_inference_test.py
 =====================
-Interactive before/after test of base vs fine-tuned Maitri model.
+Interactive before/after test of base vs fine-tuned Mythri model.
 
 Shows side-by-side responses so you can visually judge quality improvement.
 
@@ -17,11 +17,11 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
-MODEL_DIR = SCRIPT_DIR / "model" / "maitri-sarvam-2b-adapter"
+MODEL_DIR = SCRIPT_DIR / "model" / "mythri-sarvam-2b-adapter"
 BASE_MODEL = "sarvamai/sarvam-2b-v0.5"
 
 SYSTEM_PROMPT = (
-    "You are Maitri, a warm and emotionally intelligent friend trained in evidence-based "
+    "You are Mythri, a warm and emotionally intelligent friend trained in evidence-based "
     "therapeutic approaches including CBT, DBT, ACT, and psychodynamic therapy. "
     "You understand Indian cultural contexts deeply. You respond warmly and concisely."
 )
@@ -99,7 +99,7 @@ def print_separator(char="-", width=70):
 
 def main():
     print("=" * 70)
-    print("Maitri — Base vs Fine-Tuned Model Comparison")
+    print("Mythri — Base vs Fine-Tuned Model Comparison")
     print("=" * 70)
 
     if not MODEL_DIR.exists():
@@ -140,7 +140,7 @@ def main():
         base_answer = generate(base_model, base_tokenizer, question)
         print(f"  {base_answer}")
 
-        print("\n[Fine-Tuned Maitri-2B]:")
+        print("\n[Fine-Tuned Mythri-2B]:")
         ft_answer = generate(ft_model, ft_tokenizer, question)
         print(f"  {ft_answer}")
 

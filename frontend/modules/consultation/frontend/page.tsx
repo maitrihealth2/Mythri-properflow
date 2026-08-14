@@ -1,9 +1,11 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { startSession, sendMessage, getTranscript } from '@/core/api'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Message {
   role: 'user' | 'assistant'
@@ -16,66 +18,32 @@ interface Message {
   via?: 'text' | 'voice'
   is_new?: boolean
   exercise_trigger?: string
+  /** True on the last bubble of an assistant response group */
+  is_last_in_group?: boolean
 }
 
-function TypewriterText({ text, animate, onComplete }: { text: string; animate: boolean, onComplete?: () => void }) {
-  const [displayed, setDisplayed] = useState(animate ? '' : text)
-  const completedRef = useRef(false)
-  const textRef = useRef(text)
-  const onCompleteRef = useRef(onComplete)
-
-  useEffect(() => {
-    onCompleteRef.current = onComplete
-  }, [onComplete])
-  
-  if (text !== textRef.current) {
-    textRef.current = text
-    completedRef.current = false
-    setDisplayed(animate ? '' : text)
-  }
-
-  useEffect(() => {
-    if (!animate) {
-      setDisplayed(text)
-      if (onCompleteRef.current && !completedRef.current) {
-        completedRef.current = true
-        onCompleteRef.current()
-      }
-      return
-    }
-    
-    if (completedRef.current) return;
-    
-    let currentText = ''
-    const words = text.split(/(\s+)/)
-    let i = 0
-    
-    const interval = setInterval(() => {
-      if (i < words.length) {
-        currentText += words[i]
-        setDisplayed(currentText)
-        i++
-      } else {
-        clearInterval(interval)
-        if (!completedRef.current) {
-          completedRef.current = true
-          if (onCompleteRef.current) onCompleteRef.current()
-        }
-      }
-    }, 50)
-    
-    return () => clearInterval(interval)
-  }, [text, animate])
-
-  return <>{displayed}</>
+/** A segment waiting to be typed out as a bubble */
+interface BubbleItem {
+  content: string
+  is_crisis?: boolean
+  helplines?: string[]
+  emotion?: string
+  emotion_emoji?: string
+  rag_used?: boolean
+  exercise_trigger?: string
+  is_last_in_group?: boolean
 }
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const INPUT_PLACEHOLDERS: Record<string, string> = {
-  'en-IN': "Describe your feelings...",
-  'hi-IN': "अपनी भावनाओं का वर्णन करें...",
-  'te-IN': "మీ భావాలను వివరించండి...",
-  'ta-IN': "உங்கள் உணர்வுகளை விவரிக்கவும்..."
+  'en-IN': 'Describe your feelings...',
+  'hi-IN': 'अपनी भावनाओं का वर्णन करें...',
+  'te-IN': 'మీ భావాలను వివరించండి...',
+  'ta-IN': 'உங்கள் உணர்வுகளை விவரிக்கவும்...',
 }
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ConsultationPage() {
   const router = useRouter()
@@ -85,7 +53,19 @@ export default function ConsultationPage() {
   const [loading, setLoading] = useState(false)
   const [language, setLanguage] = useState('en-IN')
   const [starting, setStarting] = useState(true)
-  
+
+  // ── Natural multi-bubble state ──────────────────────────────────────────────
+  /**
+   * Completed segments buffered during streaming.  Drained one-at-a-time
+   * into activeBubble for sequential typing animation.
+   */
+  const [bubbleQueue, setBubbleQueue] = useState<BubbleItem[]>([])
+  /** The segment currently being typed out on screen. */
+  const [activeBubble, setActiveBubble] = useState<BubbleItem | null>(null)
+  /** Text revealed so far inside activeBubble. */
+  const [activeBubbleText, setActiveBubbleText] = useState('')
+  // ── ──────────────────────────────────────────────────────────────────────────
+
   const [menuOpen, setMenuOpen] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [exerciseMode, setExerciseMode] = useState<string | null>(null)
@@ -93,18 +73,28 @@ export default function ConsultationPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const initialized = useRef(false)
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const inputPlaceholder = INPUT_PLACEHOLDERS[language] || INPUT_PLACEHOLDERS['en-IN']
 
+  // ─── Auth + language + session init ───────────────────────────────────────
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
     if (!token) { router.replace('/login'); return }
 
     const savedLanguage = typeof window !== 'undefined' ? localStorage.getItem('mb_language') : null
     if (savedLanguage) setLanguage(savedLanguage)
-    
+
     const savedDraft = typeof window !== 'undefined' ? localStorage.getItem('mb_chat_draft') : null
     if (savedDraft) setInput(savedDraft)
+
+    const existingSessionId = sessionStorage.getItem('mb_session_id')
+    if (existingSessionId) {
+      const savedMessages = localStorage.getItem('mb_chat_history_' + existingSessionId)
+      if (savedMessages && messages.length === 0) {
+        try { setMessages(JSON.parse(savedMessages)) } catch (_) {}
+      }
+    }
 
     const handleLangEvent = () => {
       const newLang = localStorage.getItem('mb_language')
@@ -116,17 +106,71 @@ export default function ConsultationPage() {
       initialized.current = true
       initSession()
     }
-    
+
     return () => window.removeEventListener('mb_language_changed', handleLangEvent)
-  }, [router])
+  }, [router]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ─── Scroll + persist whenever committed messages change ──────────────────
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 && sessionId && !activeBubble) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      localStorage.setItem('mb_chat_history_' + sessionId, JSON.stringify(messages))
     }
-  }, [messages, loading])
+  }, [messages, sessionId, activeBubble])
 
-  // Lock body scroll for the chat interface
+  // ─── Queue processor: start next bubble when idle ─────────────────────────
+  useEffect(() => {
+    if (bubbleQueue.length > 0 && !activeBubble) {
+      const [next, ...rest] = bubbleQueue
+      setActiveBubble(next)
+      setActiveBubbleText('')
+      setBubbleQueue(rest)
+    }
+  }, [bubbleQueue, activeBubble])
+
+  // ─── Typing animation: word-by-word, ~40 ms/word ─────────────────────────
+  useEffect(() => {
+    if (!activeBubble) return
+
+    const fullText = activeBubble.content
+    const words = fullText.split(' ')
+    const revealedWords = activeBubbleText ? activeBubbleText.split(' ') : []
+
+    if (revealedWords.length < words.length) {
+      typingTimerRef.current = setTimeout(() => {
+        setActiveBubbleText(words.slice(0, revealedWords.length + 1).join(' '))
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      }, 40)
+    } else {
+      // Typing complete — commit bubble to the message list
+      typingTimerRef.current = setTimeout(() => {
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: fullText,
+            is_new: true,
+            is_crisis: activeBubble.is_crisis,
+            helplines: activeBubble.helplines,
+            emotion: activeBubble.emotion,
+            emotion_emoji: activeBubble.emotion_emoji,
+            rag_used: activeBubble.rag_used,
+            exercise_trigger: activeBubble.exercise_trigger,
+            is_last_in_group: activeBubble.is_last_in_group,
+          },
+        ])
+        if (activeBubble.exercise_trigger) {
+          setExerciseMode(activeBubble.exercise_trigger)
+        }
+        setActiveBubble(null)
+        setActiveBubbleText('')
+      }, 300)
+    }
+
+    return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current) }
+  }, [activeBubble, activeBubbleText])
+
+  // ─── Lock body scroll ─────────────────────────────────────────────────────
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     document.body.style.height = '100dvh'
@@ -136,6 +180,7 @@ export default function ConsultationPage() {
     }
   }, [])
 
+  // ─── Session init ─────────────────────────────────────────────────────────
   const initSession = async () => {
     try {
       const existingSessionId = sessionStorage.getItem('mb_session_id')
@@ -144,72 +189,159 @@ export default function ConsultationPage() {
           const data = await getTranscript(existingSessionId)
           setSessionId(existingSessionId)
           if (data.messages && data.messages.length > 0) {
-            setMessages(data.messages)
+            // Restore history as-is (one message per DB row)
+            setMessages(data.messages.map((m: Message) => ({ ...m, is_new: false })))
             setStarting(false)
             return
           }
-        } catch (e) {
-          // Invalid session, fallback to new
-        }
+        } catch (_) { /* invalid session — fall through to new */ }
       }
 
       const data = await startSession()
       setSessionId(data.session_id)
       sessionStorage.setItem('mb_session_id', data.session_id)
-      
-      // Removed hardcoded WELCOME_MSGS fallback to rely purely on dynamic backend opening.
-      const welcome = data.message;
-      if (welcome && welcome !== "Session started.") {
-        setMessages([{ role: 'assistant', content: welcome, is_new: true }])
+
+      const welcome = data.message
+      if (welcome && welcome !== 'Session started.') {
+        setMessages([{ role: 'assistant', content: welcome, is_new: true, is_last_in_group: true }])
       }
-    } catch {
-      // router.replace('/')
+    } catch (_) {
+      // silent — user stays on page
     } finally {
       setStarting(false)
     }
   }
 
+  // ─── Send message ─────────────────────────────────────────────────────────
+  /**
+   * Natural segmentation algorithm:
+   *   - Chunks accumulate into fullContent (never split mid-sentence)
+   *   - When \n\n appears in unprocessed content → completed paragraph → push to bubbleQueue
+   *   - Stream ends → flush remaining partial segment as final bubble
+   *   - Result: DB always holds ONE assistant message; UI renders sequential bubbles
+   */
   const handleTextSend = async (text?: string) => {
     const msg = (text || input).trim()
     if (!msg || !sessionId || loading) return
-    setInput(''); setLoading(true)
+    setInput('')
+    setLoading(true)
     setMessages(prev => [...prev, { role: 'user', content: msg, via: 'text', is_new: true }])
-    
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
     try {
-      const data = await sendMessage(sessionId, msg, language)
-      
-      // Clear draft on success
+      const token = localStorage.getItem('mb_token') || ''
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+      const res = await fetch(`${apiUrl}/api/consultation/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ session_id: sessionId, message: msg, language }),
+      })
+
+      if (res.status === 404) {
+        sessionStorage.removeItem('mb_session_id')
+        localStorage.removeItem('mb_chat_history_' + sessionId)
+        initialized.current = false
+        setMessages([])
+        await initSession()
+        return
+      }
+      if (!res.ok) throw new Error(`HTTP error: ${res.status}`)
+
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('No readable stream')
+
+      const decoder = new TextDecoder()
+      let fullContent = ''      // complete accumulated text from this response
+      let metadataObj: any = null
+      let ndjsonBuffer = ''
+      let processedChars = 0   // chars of fullContent already pushed to bubbleQueue
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        ndjsonBuffer += decoder.decode(value, { stream: true })
+        const lines = ndjsonBuffer.split('\n')
+        ndjsonBuffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const data = JSON.parse(line)
+            if (data.type === 'initial_metadata' || data.type === 'metadata') {
+              metadataObj = { ...metadataObj, ...data }
+            } else if (data.type === 'chunk') {
+              fullContent += data.text
+
+              // Natural boundary detection: only split on paragraph breaks (\n\n).
+              // Network chunk boundaries are NOT semantic — accumulate until \n\n found.
+              let unprocessed = fullContent.slice(processedChars)
+              while (unprocessed.includes('\n\n')) {
+                const nnIdx = unprocessed.indexOf('\n\n')
+                const segment = unprocessed.slice(0, nnIdx).trim()
+                if (segment) {
+                  // Intermediate segment — no response-level metadata yet
+                  setBubbleQueue(prev => [...prev, { content: segment }])
+                }
+                processedChars += nnIdx + 2
+                unprocessed = fullContent.slice(processedChars)
+              }
+            }
+          } catch (_) {
+            // malformed NDJSON line — skip
+          }
+        }
+      }
+
+      // ── Stream complete: flush the final partial segment ─────────────────
+      const remaining = fullContent.slice(processedChars).trim()
+
+      const responseMeta: Partial<BubbleItem> = {
+        is_crisis: metadataObj?.is_crisis,
+        helplines: metadataObj?.helplines,
+        emotion: metadataObj?.emotion,
+        emotion_emoji: metadataObj?.emotion_emoji,
+        rag_used: metadataObj?.rag_used,
+        exercise_trigger:
+          metadataObj?.exercise_state !== 'idle' ? metadataObj?.exercise_type : undefined,
+        is_last_in_group: true,
+      }
+
+      if (remaining) {
+        // Typical case: response ends with text (no trailing \n\n)
+        setBubbleQueue(prev => [...prev, { content: remaining, ...responseMeta }])
+      } else if (processedChars > 0) {
+        // Response ended exactly on \n\n — tag the last queued segment with meta
+        setBubbleQueue(prev => {
+          if (prev.length > 0) {
+            const updated = [...prev]
+            updated[updated.length - 1] = { ...updated[updated.length - 1], ...responseMeta }
+            return updated
+          }
+          return prev
+        })
+      }
+
       localStorage.removeItem('mb_chat_draft')
 
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.response,
-        is_crisis: data.is_crisis,
-        helplines: data.helplines,
-        emotion: data.emotion,
-        emotion_emoji: data.emotion_emoji,
-        rag_used: data.rag_used,
-        is_new: true,
-        exercise_trigger: data.exercise_state !== 'idle' ? data.exercise_type : undefined,
-      }])
-
-      // Exercise overlay — show when exercise is suggested or in progress
-      if (data.exercise_state === 'suggested' || data.exercise_state === 'in_progress') {
-        setExerciseMode(data.exercise_type || null)
-      } else if (data.exercise_state === 'completed' || data.exercise_state === 'idle') {
-        setExerciseMode(null)
-      }
     } catch (err) {
-      console.error("Chat send error:", err)
-      // Remove optimistic user message and restore input text
-      setMessages(prev => prev.slice(0, -1))
-      setInput(msg)
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Connection issue. Please try again.', is_new: true }])
-    } finally { setLoading(false) }
+      console.error('Chat send error:', err)
+      setBubbleQueue(prev => [
+        ...prev,
+        {
+          content: "Couldn't reach Mythri right now \uD83D\uDE4F Please try again in a moment.",
+          is_last_in_group: true,
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // ─── Textarea auto-resize ─────────────────────────────────────────────────
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
     localStorage.setItem('mb_chat_draft', e.target.value)
@@ -217,65 +349,74 @@ export default function ConsultationPage() {
     e.target.style.height = `${e.target.scrollHeight}px`
   }
 
+  // ─── Language switch ──────────────────────────────────────────────────────
   const changeLanguage = (lang: string) => {
     setLanguage(lang)
     localStorage.setItem('mb_language', lang)
     setLangMenuOpen(false)
   }
 
-  const handleNewChat = () => {
+  // ─── New chat ─────────────────────────────────────────────────────────────
+  const handleNewChat = useCallback(() => {
     sessionStorage.removeItem('mb_session_id')
     setSessionId(null)
     setMessages([])
+    setBubbleQueue([])
+    setActiveBubble(null)
+    setActiveBubbleText('')
     setStarting(true)
     initialized.current = false
     initSession()
-  }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const handleShortcutNewChat = () => handleNewChat()
-    window.addEventListener('shortcut:new-chat', handleShortcutNewChat)
-    return () => {
-      window.removeEventListener('shortcut:new-chat', handleShortcutNewChat)
-    }
+    const handler = () => handleNewChat()
+    window.addEventListener('shortcut:new-chat', handler)
+    return () => window.removeEventListener('shortcut:new-chat', handler)
   }, [handleNewChat])
 
+  // ─── Computed helpers ─────────────────────────────────────────────────────
+  /** True while waiting for TTFT (loading but nothing typed/queued yet) */
+  const showLoadingDots = loading && !activeBubble && bubbleQueue.length === 0
+
+  /** Should we show the "Mythri" label above the active bubble? */
+  const showMythriLabelOnActive =
+    !messages.length || messages[messages.length - 1].role !== 'assistant'
+
+  // ─── Loading screen ────────────────────────────────────────────────────────
   if (starting) return (
     <div className="bg-background text-on-background min-h-screen flex items-center justify-center pt-24">
-       <div className="flex flex-col items-center gap-4 opacity-70">
-           <span className="material-symbols-outlined text-4xl text-primary/80 animate-pulse" style={{ animationDuration: '2s' }}>spa</span>
-           <span className="text-primary font-label-md tracking-widest uppercase text-xs animate-pulse" style={{ animationDuration: '2s' }}>Preparing Space</span>
-       </div>
+      <div className="flex flex-col items-center gap-4 opacity-70">
+        <span className="material-symbols-outlined text-4xl text-primary/80 animate-pulse" style={{ animationDuration: '2s' }}>spa</span>
+        <span className="text-primary font-label-md tracking-widest uppercase text-xs animate-pulse" style={{ animationDuration: '2s' }}>Preparing Space</span>
+      </div>
     </div>
   )
 
+  // ─── Main UI ───────────────────────────────────────────────────────────────
   return (
     <div className="relative flex flex-col min-h-[100dvh] w-full">
-      <div 
+      <div
         className="fixed inset-0 w-full h-[100dvh] bg-cover bg-center bg-no-repeat z-0"
         style={{ backgroundImage: "url('/assets/mythri-chat-scenery.png')" }}
-      ></div>
-      <div className="fixed inset-0 w-full h-[100dvh] bg-white/10 md:bg-white/5 pointer-events-none z-0"></div>
+      />
+      <div className="fixed inset-0 w-full h-[100dvh] bg-white/10 md:bg-white/5 pointer-events-none z-0" />
       <ExerciseOverlay exerciseMode={exerciseMode} onClose={() => setExerciseMode(null)} />
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes msgEnter {
           from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        .animate-msg-enter {
-          animation: msgEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+        .animate-msg-enter { animation: msgEnter 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
         @keyframes breathe {
           0%, 100% { opacity: 0.4; transform: scale(0.9); }
-          50% { opacity: 1; transform: scale(1.1); }
+          50%       { opacity: 1;   transform: scale(1.1); }
         }
-        .animate-breathe {
-          animation: breathe 2.5s ease-in-out infinite;
-        }
+        .animate-breathe { animation: breathe 2.5s ease-in-out infinite; }
       `}} suppressHydrationWarning />
 
-      {/* Desktop Header */}
+      {/* ── Desktop Header ── */}
       <header className="hidden md:flex fixed top-0 z-40 justify-between items-center w-full px-margin-desktop py-4 pointer-events-none animate-fade-in-up bg-transparent" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center gap-4 pointer-events-auto">
           <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 hover:bg-white/80 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
@@ -283,33 +424,21 @@ export default function ConsultationPage() {
         </div>
         <div className="flex items-center gap-4 relative pointer-events-auto">
           <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">add</button>
-          <button onClick={() => {setLangMenuOpen(!langMenuOpen); setMenuOpen(false);}} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">language</button>
-          <button onClick={() => {setMenuOpen(!menuOpen); setLangMenuOpen(false);}} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">grid_view</button>
-          
-          {/* Dropdown Menu */}
+          <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">language</button>
+          <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">grid_view</button>
+
+          {/* Dropdown */}
           <nav className={`absolute right-0 top-[100%] mt-2 w-56 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
-            </Link>
-            <Link href="/text-chat" className="text-primary font-bold bg-white/80 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
-            </Link>
-            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
-            </Link>
-            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">person</span> Profile
-            </Link>
-            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
-            </Link>
-            <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-            <button onClick={() => { localStorage.clear(); router.replace('/login'); }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
-              <span className="material-symbols-outlined text-[20px]">logout</span> Logout
-            </button>
+            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">home</span> Sanctuary</Link>
+            <Link href="/text-chat" className="text-primary font-bold bg-white/80 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation</Link>
+            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">history</span> Your Sessions</Link>
+            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">person</span> Profile</Link>
+            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">feedback</span> Feedback</Link>
+            <div className="h-px bg-outline-variant/30 my-1 mx-2" />
+            <button onClick={() => { localStorage.clear(); router.replace('/login') }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full"><span className="material-symbols-outlined text-[20px]">logout</span> Logout</button>
           </nav>
-          
-          {/* Language Menu */}
+
+          {/* Language menu */}
           <div className={`absolute right-12 top-[100%] mt-2 w-40 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
             <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>English</button>
             <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>Hindi</button>
@@ -319,7 +448,7 @@ export default function ConsultationPage() {
         </div>
       </header>
 
-      {/* Mobile Header */}
+      {/* ── Mobile Header ── */}
       <header className="flex md:hidden fixed top-0 z-40 justify-between items-center w-full px-4 py-3 bg-white/60 backdrop-blur-md border-b border-white/40 shadow-sm pointer-events-none">
         <div className="flex items-center gap-3 pointer-events-auto">
           <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
@@ -337,85 +466,99 @@ export default function ConsultationPage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className={`flex-1 min-h-0 flex flex-col w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto px-margin-mobile relative md:px-8 lg:px-12 pt-20 md:pt-16 z-10 transition-all duration-700 animate-fade-in-up ${exerciseMode ? 'opacity-30 scale-[0.95] blur-[2px] pointer-events-none' : ''}`} style={{ animationDelay: '0.2s' }}>
-        
-        {/* Chat Thread */}
-        <div className="flex-1 overflow-y-auto pt-4 pb-48 md:pb-36 flex flex-col gap-6 hide-scrollbar pr-2" onClick={() => {setMenuOpen(false); setLangMenuOpen(false);}}>
-          {messages.map((m, i) => (
-            <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end self-end max-w-[90%] md:max-w-[65%]' : 'items-start max-w-[90%] md:max-w-[65%]'} ${m.is_new ? 'animate-msg-enter' : ''}`}>
-              <span className={`text-label-md text-on-surface-variant/70 mb-1.5 ${m.role === 'user' ? 'mr-3' : 'ml-3'}`}>
-                {m.role === 'user' ? 'You' : 'Mythri'}
-              </span>
-              {m.role === 'user' ? (
-                <div className="frosted-plum rounded-tr-sm bg-plum-high-contrast/90 text-white px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
-                  <p className="text-body-lg leading-relaxed text-white">
-                    {m.content}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3 w-full">
-                  {m.content.split('\n\n').filter(s => s.trim()).map((segment, idx, arr) => (
-                    <div key={idx} className={`frosted-blush ${idx === 0 ? 'rounded-tl-sm' : ''} bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20`}>
-                      <p className="text-body-lg leading-relaxed text-on-primary-fixed">
-                        <TypewriterText 
-                          text={segment.trim()} 
-                          animate={!!m.is_new} 
-                          onComplete={() => {
-                            if (idx === arr.length - 1 && m.exercise_trigger) {
-                              setExerciseMode(m.exercise_trigger)
-                            }
-                          }} 
-                        />
-                      </p>
+      {/* ── Chat Area ── */}
+      <main
+        className={`flex-1 min-h-0 flex flex-col w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto px-margin-mobile relative md:px-8 lg:px-12 pt-20 md:pt-16 z-10 transition-all duration-700 animate-fade-in-up ${exerciseMode ? 'opacity-30 scale-[0.95] blur-[2px] pointer-events-none' : ''}`}
+        style={{ animationDelay: '0.2s' }}
+      >
+        <div
+          className="flex-1 overflow-y-auto pt-4 pb-48 md:pb-36 flex flex-col gap-3 hide-scrollbar pr-2"
+          onClick={() => { setMenuOpen(false); setLangMenuOpen(false) }}
+        >
+          {/* ── Committed messages ── */}
+          {messages.map((m, i) => {
+            const showLabel = i === 0 || messages[i - 1].role !== m.role
+            return (
+              <div
+                key={i}
+                className={`flex flex-col ${m.role === 'user' ? 'items-end self-end max-w-[90%] md:max-w-[65%]' : 'items-start max-w-[90%] md:max-w-[65%]'} ${m.is_new ? 'animate-msg-enter' : ''}`}
+              >
+                {showLabel && (
+                  <span className={`text-label-md text-on-surface-variant/70 mb-1.5 ${m.role === 'user' ? 'mr-3' : 'ml-3'}`}>
+                    {m.role === 'user' ? 'You' : 'Mythri'}
+                  </span>
+                )}
+                {m.role === 'user' ? (
+                  <div className="frosted-plum rounded-tr-sm bg-plum-high-contrast/90 text-white px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
+                    <p className="text-body-lg leading-relaxed text-white whitespace-pre-wrap">{m.content}</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="frosted-blush rounded-tl-sm bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
+                      <p className="text-body-lg leading-relaxed text-on-primary-fixed whitespace-pre-wrap">{m.content}</p>
                     </div>
-                  ))}
-                  {/* Crisis & Helplines */}
-                  {m.is_crisis && m.helplines && m.helplines.length > 0 && (
-                    <div className="mt-2 p-4 bg-error-container/80 backdrop-blur-sm border border-error/20 rounded-xl">
-                      <span className="font-label-sm text-error block mb-2 font-bold flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">emergency</span> Helpline Information
-                      </span>
-                      <ul className="list-disc pl-5 space-y-1 text-xs text-on-error-container">
-                        {m.helplines.map((h, hi) => (
-                          <li key={hi}>{h}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {/* RAG metadata badge */}
-                  {m.rag_used && (
-                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-primary/70 bg-white/40 px-2.5 py-1 rounded-full w-fit border border-white/50 shadow-sm">
-                      <span className="material-symbols-outlined text-[12px]">library_books</span>
-                      <span>Sanctuary Library Referenced</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+                    {/* Crisis helplines — only on last bubble of group */}
+                    {m.is_last_in_group && m.is_crisis && m.helplines && m.helplines.length > 0 && (
+                      <div className="mt-1 p-4 bg-error-container/80 backdrop-blur-sm border border-error/20 rounded-xl">
+                        <span className="font-label-sm text-error block mb-2 font-bold flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px]">emergency</span> Helpline Information
+                        </span>
+                        <ul className="list-disc pl-5 space-y-1 text-xs text-on-error-container">
+                          {m.helplines.map((h, hi) => <li key={hi}>{h}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {/* RAG badge — only on last bubble of group */}
+                    {m.is_last_in_group && m.rag_used && (
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-primary/70 bg-white/40 px-2.5 py-1 rounded-full w-fit border border-white/50 shadow-sm">
+                        <span className="material-symbols-outlined text-[12px]">library_books</span>
+                        <span>Sanctuary Library Referenced</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
-          {loading && (
-            <div className="flex flex-col items-start transition-opacity duration-300 animate-msg-enter">
-              <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
-              <div className="frosted-blush bg-white/70 px-6 py-4 rounded-2xl rounded-tl-sm flex items-center gap-3 shadow-sm border border-white/20">
+          {/* ── Active bubble (currently typing) ── */}
+          {activeBubble && (
+            <div className="flex flex-col items-start max-w-[90%] md:max-w-[65%] animate-msg-enter">
+              {showMythriLabelOnActive && (
+                <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
+              )}
+              <div className="frosted-blush bg-white/70 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20">
+                <p className="text-body-lg leading-relaxed text-on-primary-fixed whitespace-pre-wrap">
+                  {activeBubbleText}
+                  <span className="inline-block w-1.5 h-4 ml-1 bg-primary/40 animate-pulse" />
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Breathing dots: TTFT wait (loading but nothing typed yet) ── */}
+          {showLoadingDots && (
+            <div className="flex flex-col items-start animate-msg-enter">
+              {(!messages.length || messages[messages.length - 1].role !== 'assistant') && (
+                <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
+              )}
+              <div className="frosted-blush bg-white/70 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20 min-w-[80px]">
                 <div className="flex gap-1.5 py-1">
-                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe"></div>
-                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" style={{ animationDelay: '0.4s' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" style={{ animationDelay: '0.8s' }}></div>
+                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" />
+                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" style={{ animationDelay: '0.4s' }} />
+                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" style={{ animationDelay: '0.8s' }} />
                 </div>
               </div>
             </div>
           )}
+
           <div ref={bottomRef} />
         </div>
       </main>
 
-      {/* Floating Composer — fixed, no strip wrapper */}
+      {/* ── Floating Composer ── */}
       <div className={`fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center px-margin-mobile md:px-8 lg:px-12 pb-20 md:pb-8 pointer-events-none transition-all duration-700 ${exerciseMode ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto flex flex-col items-center pointer-events-auto">
-
-          {/* Floating Glass Composer */}
           <div className={`relative flex items-center gap-2 md:gap-4 backdrop-blur-3xl border border-white/60 rounded-[2rem] p-2 md:p-2.5 pl-6 md:pl-8 transition-all duration-300 shadow-lg w-full ${exerciseMode ? 'bg-white/50' : 'bg-white/75'} focus-within:bg-white/90 focus-within:border-white focus-within:shadow-xl focus-within:shadow-plum-high-contrast/10 focus-within:-translate-y-0.5`}>
             <textarea
               ref={textareaRef}

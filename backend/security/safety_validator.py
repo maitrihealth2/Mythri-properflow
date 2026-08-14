@@ -3,7 +3,7 @@ import asyncio
 from providers.llm.router import llm_router
 
 INPUT_SAFETY_PROMPT = """
-You are the Input Safety Validator for MAITRI, an AI mental health companion.
+You are the Input Safety Validator for MYTHRI, an AI mental health companion.
 Your job is to analyze the user's input and classify the risk level based on strict criteria.
 
 RISK LEVELS:
@@ -24,7 +24,7 @@ Output ONLY valid JSON matching this schema:
 """
 
 OUTPUT_SAFETY_PROMPT = """
-You are the Output Safety Validator for MAITRI, an AI mental health companion.
+You are the Output Safety Validator for MYTHRI, an AI mental health companion.
 Your job is to analyze the AI's drafted response and ensure it adheres to safety and truthfulness boundaries.
 
 RULES TO ENFORCE:
@@ -100,5 +100,5 @@ def get_safe_fallback_response(risk_level: str) -> str:
     if risk_level in ["HIGH", "CRITICAL"]:
         return "I'm really hearing how much pain you're in right now, and I want to make sure you have the right support. Please consider reaching out to iCall at 9152987821. You don't have to carry this alone."
     if risk_level == "DOMAIN_VIOLATION":
-        return "I'm MAITRI, so I focus specifically on emotional wellbeing and psychological support. I can't help with technical or programming tasks. If you're dealing with stress or frustration around that task, though, I'm here to talk about that."
+        return "I'm MYTHRI, so I focus specifically on emotional wellbeing and psychological support. I can't help with technical or programming tasks. If you're dealing with stress or frustration around that task, though, I'm here to talk about that."
     return "I hear you, but I cannot respond to that in the way you requested. How else can I support you right now?"

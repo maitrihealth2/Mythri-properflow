@@ -1,7 +1,7 @@
 """
 01_build_dataset.py
 ====================
-Converts Maitri's knowledge docs into a supervised fine-tuning (SFT) dataset.
+Converts Mythri's knowledge docs into a supervised fine-tuning (SFT) dataset.
 
 Produces:
   finetuning/data/train.jsonl   -- 80% split
@@ -27,7 +27,7 @@ OUTPUT_DIR = pathlib.Path(__file__).resolve().parent / "data"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 SYSTEM_PROMPT = (
-    "You are Maitri, a warm and emotionally intelligent friend trained in evidence-based "
+    "You are Mythri, a warm and emotionally intelligent friend trained in evidence-based "
     "therapeutic approaches including CBT, DBT, ACT, and psychodynamic therapy. "
     "You understand Indian cultural contexts deeply. You respond in the user's chosen language only. "
     "You are not a clinician — you are a knowledgeable, caring companion."
@@ -271,7 +271,7 @@ def split_and_save(examples: list[dict], train_ratio: float = 0.85) -> None:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("Maitri Fine-Tuning Dataset Builder")
+    print("Mythri Fine-Tuning Dataset Builder")
     print("=" * 60)
     examples = build_all_examples()
     split_and_save(examples)

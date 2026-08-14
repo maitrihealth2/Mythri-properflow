@@ -1,11 +1,11 @@
-# Maitri Fine-Tuning Pipeline — Complete Run Guide
-### `maitri-sarvam-2b` | QLoRA | RTX 4050 | Windows 11 | Python 3.11
+# Mythri Fine-Tuning Pipeline — Complete Run Guide
+### `mythri-sarvam-2b` | QLoRA | RTX 4050 | Windows 11 | Python 3.11
 
 ---
 
 ## What This Does
 
-Fine-tunes **Sarvam-2B** (`sarvamai/sarvam-2b-v0.5`) on Maitri's therapeutic knowledge base using **QLoRA** (4-bit quantized LoRA adapters). Produces a specialized model that understands CBT, DBT, ACT, and psychodynamic therapy in Indian cultural context.
+Fine-tunes **Sarvam-2B** (`sarvamai/sarvam-2b-v0.5`) on Mythri's therapeutic knowledge base using **QLoRA** (4-bit quantized LoRA adapters). Produces a specialized model that understands CBT, DBT, ACT, and psychodynamic therapy in Indian cultural context.
 
 After training, the pipeline evaluates the model and generates 8 publication-quality plots showing exactly how well the model learned.
 
@@ -27,7 +27,7 @@ After training, the pipeline evaluates the model and generates 8 publication-qua
 ## Folder Structure (Where Everything Lives)
 
 ```
-maitri-v4-main/
+mythri-v4-main/
   backend/                        <-- YOU WORK FROM HERE
     finetuning/
       01_build_dataset.py         -- Step 1: Build training data
@@ -41,7 +41,7 @@ maitri-v4-main/
         train.jsonl               -- 119 training examples
         eval.jsonl                -- 21 evaluation examples
       model/                      -- Created by Step 2
-        maitri-sarvam-2b-adapter/ -- Saved LoRA adapter weights
+        mythri-sarvam-2b-adapter/ -- Saved LoRA adapter weights
       results/                    -- Created by Steps 2, 3, 4
         training_log.json         -- All training metrics (loss, LR)
         eval_metrics.json         -- ROUGE, BLEU, BERTScore, Perplexity
@@ -66,7 +66,7 @@ maitri-v4-main/
         transcripts/
           sample_dialogues.json
       finetuning_datasets/
-        maitri_sft_dataset.jsonl  -- Hand-crafted conversation examples
+        mythri_sft_dataset.jsonl  -- Hand-crafted conversation examples
         analyst_sft_dataset.jsonl -- Analyst phase examples
 ```
 
@@ -98,7 +98,7 @@ nvcc --version
 Open PowerShell **as Administrator** and navigate to the backend folder:
 
 ```powershell
-cd E:\MindBridge\Project\maitri-v4-main\backend
+cd E:\MindBridge\Project\mythri-v4-main\backend
 ```
 
 Create and activate the fine-tuning venv:
@@ -152,7 +152,7 @@ python finetuning/01_build_dataset.py
 **Expected output:**
 ```
 ============================================================
-Maitri Fine-Tuning Dataset Builder
+Mythri Fine-Tuning Dataset Builder
 ============================================================
 
 [1] Building QA pairs from domain knowledge...
@@ -190,7 +190,7 @@ python finetuning/02_train.py
 - Trains for 3 epochs with cosine LR schedule (warmup 5%)
 - Evaluates on eval set every 50 steps
 - Logs every metric to `finetuning/results/training_log.json`
-- Saves best checkpoint to `finetuning/model/maitri-sarvam-2b-adapter/`
+- Saves best checkpoint to `finetuning/model/mythri-sarvam-2b-adapter/`
 
 **Expected VRAM usage:** 4.5–5.5GB (stays within your 6GB)
 
@@ -199,7 +199,7 @@ python finetuning/02_train.py
 **Expected output (first few lines):**
 ```
 ============================================================
-Maitri QLoRA Fine-Tuning -- Sarvam-2B
+Mythri QLoRA Fine-Tuning -- Sarvam-2B
 Base model: sarvamai/sarvam-2b-v0.5
 Device: RTX 4050 6GB (optimized)
 ============================================================
@@ -322,7 +322,7 @@ python finetuning/05_inference_test.py
 ```
 
 **What happens:**
-- Loads BOTH the base Sarvam-2B AND the fine-tuned Maitri-2B
+- Loads BOTH the base Sarvam-2B AND the fine-tuned Mythri-2B
 - Shows responses side by side for 10 pre-set therapy questions
 
 Choose mode when prompted:
@@ -337,7 +337,7 @@ Question 1: I feel so anxious all the time and I don't know why.
 [Base Sarvam-2B]:
   Anxiety can be caused by many factors including stress, health...
 
-[Fine-Tuned Maitri-2B]:
+[Fine-Tuned Mythri-2B]:
   That constant background anxiety is exhausting — especially when you
   can't even name what's driving it. Sometimes the body holds stress
   before the mind understands it. Have you noticed if certain moments
@@ -355,7 +355,7 @@ Results saved to: `finetuning/results/inference_comparison.json`
 # --- Open PowerShell as Administrator ---
 
 # 1. Navigate to backend
-cd E:\MindBridge\Project\maitri-v4-main\backend
+cd E:\MindBridge\Project\mythri-v4-main\backend
 
 # 2. Create and activate fine-tuning venv
 python -m venv venv_finetune
@@ -438,7 +438,7 @@ import sys; sys.stdout.reconfigure(encoding='utf-8')
 |------|-----------|----------|
 | `finetuning/data/train.jsonl` | Step 1 | 119 ChatML training examples |
 | `finetuning/data/eval.jsonl` | Step 1 | 21 ChatML eval examples |
-| `finetuning/model/maitri-sarvam-2b-adapter/` | Step 2 | LoRA adapter weights (~50-100MB) |
+| `finetuning/model/mythri-sarvam-2b-adapter/` | Step 2 | LoRA adapter weights (~50-100MB) |
 | `finetuning/results/training_log.json` | Step 2 | Per-step loss, LR, per-epoch summaries |
 | `finetuning/results/eval_metrics.json` | Step 3 | ROUGE, BLEU, BERTScore, Perplexity, Knowledge Retention |
 | `finetuning/results/inference_comparison.json` | Step 5 | Before/after responses per question |

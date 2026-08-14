@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mythri - Profile &amp; Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Manrope:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#e0e3e5",
+                        "on-tertiary-container": "#312e5f",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#9a97cf",
+                        "secondary-fixed-dim": "#3cddc7",
+                        "on-primary-container": "#3c1989",
+                        "surface-container-low": "#191c1e",
+                        "on-tertiary-fixed": "#181445",
+                        "on-surface-variant": "#cac4d4",
+                        "secondary": "#44e2cd",
+                        "on-secondary-fixed-variant": "#005047",
+                        "on-primary-fixed-variant": "#4f319c",
+                        "surface-container": "#1d2022",
+                        "on-secondary": "#003731",
+                        "surface-dim": "#101415",
+                        "primary-fixed-dim": "#cebdff",
+                        "on-tertiary": "#2d2a5b",
+                        "tertiary-fixed": "#e3dfff",
+                        "inverse-on-surface": "#2d3133",
+                        "background": "#101415",
+                        "error-container": "#93000a",
+                        "primary-container": "#a78bfa",
+                        "secondary-container": "#03c6b2",
+                        "surface-bright": "#363a3b",
+                        "surface": "#101415",
+                        "primary-fixed": "#e8ddff",
+                        "on-background": "#e0e3e5",
+                        "surface-container-high": "#272a2c",
+                        "on-tertiary-fixed-variant": "#444173",
+                        "surface-variant": "#323537",
+                        "surface-container-lowest": "#0b0f10",
+                        "tertiary-fixed-dim": "#c4c1fb",
+                        "secondary-fixed": "#62fae3",
+                        "surface-tint": "#cebdff",
+                        "inverse-surface": "#e0e3e5",
+                        "on-secondary-fixed": "#00201c",
+                        "on-secondary-container": "#004d44",
+                        "outline": "#948e9d",
+                        "on-error-container": "#ffdad6",
+                        "inverse-primary": "#674bb5",
+                        "tertiary": "#c4c1fb",
+                        "outline-variant": "#494552",
+                        "on-primary": "#381385",
+                        "surface-container-highest": "#323537",
+                        "primary": "#cebdff",
+                        "on-primary-fixed": "#21005e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "64px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "container-max": "1200px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Manrope"],
+                        "label-sm": ["Manrope"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "body-md": ["Be Vietnam Pro"],
+                        "headline-md": ["Manrope"],
+                        "display-lg-mobile": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #cebdff;
+            box-shadow: 0 0 15px rgba(206,189,255,0.6);
+        }
+        .toggle-checkbox:checked + .toggle-label:after {
+            transform: translateX(100%);
+            border-color: white;
+            background-color: #101415;
+        }
+        
+        .toggle-label {
+            width: 3rem;
+            height: 1.5rem;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-label:after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 1.25rem;
+            height: 1.25rem;
+            background-color: #e0e3e5;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+        }
+        
+        .bg-img-layer {
+            background-image: url('https://lh3.googleusercontent.com/aida/AP1WRLvmaX9a4Aj3sYh_Q-PqrrlgrEa4a5nWvbuzxbGGMYz87dCol3Im70AMMBUcOqfRggclKMzSkjeLcxhlI9GEXIuOoDc_kwtCYelWGvkCMzEctWGWHhlC9pkTkmB3sX-VAsHgpWKHyN3ltC48_ifQ9ivDSiKHECZCETHQ16igY7Y9DOflukKWPl5guYT4jKjUgAGph8b42KqSZ5Kc760XvJ9t5lsRVa05scmjI_OOk9pnK68mHhAYzrwfzl4');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen antialiased overflow-x-hidden">
+<!-- Fixed Background Layer -->
+<div class="fixed inset-0 z-[-2] bg-img-layer"></div>
+<div class="fixed inset-0 z-[-1] bg-surface/70 backdrop-blur-[2px]"></div>
+<!-- TopAppBar -->
+<header class="bg-white/10 dark:bg-white/5 backdrop-blur-xl font-headline-md text-headline-md docked full-width top-0 border-b border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="font-display-lg text-display-lg-mobile tracking-tighter text-white drop-shadow-[0_0_15px_rgba(206,189,255,0.5)]">
+                Mythri
+            </div>
+</div>
+<div class="text-primary dark:text-primary-fixed hover:bg-white/10 transition-all duration-500 rounded-full p-2 cursor-pointer flex items-center justify-center hover:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-[100px] pb-[120px] px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto flex flex-col gap-12">
+<!-- Profile Header -->
+<section class="flex flex-col items-center justify-center text-center gap-6 mt-8">
+<div class="relative group">
+<!-- Ethereal Ring -->
+<div class="absolute inset-[-4px] rounded-full bg-gradient-to-tr from-secondary via-primary to-transparent opacity-80 blur-[8px] group-hover:blur-[12px] transition-all duration-500"></div>
+<div class="absolute inset-0 rounded-full border-2 border-white/20 shadow-[inset_0_0_20px_rgba(206,189,255,0.4)] z-10"></div>
+<div class="relative w-32 h-32 rounded-full overflow-hidden bg-surface-variant z-0">
+<img class="w-full h-full object-cover" data-alt="A highly detailed close-up portrait of an elegant woman with subtle luminous makeup, bathed in soft bioluminescent teal and violet light. The background is a deeply blurred cosmic nebula, creating a serene, luxurious, and technologically advanced atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpcEW-2fHPztxNlBG012YlXcgNR6-KMS6AeeswoT6nrTCEI4Vmn4Vv8xQUwCydB8GI2gshZxTuv-Dys5IGNygTzc99dQB6a95jImqW-2FDmcKAOIEwpgQ0v2GD4wLZf1_M6S3RKbAQAvdvu2bfTJghvo0UDXonsz0NOhmJF7-x9APzOmqeF08uKi2McqX1ZPw8RTFWdzEY0I6A-S5_IzrwaWJflLaUqBvCNsQCCLeJFzlKuGg00NLVc67IlF_R1iFUOBokACTrY-8"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<h1 class="font-display-lg-mobile md:font-display-lg text-white tracking-wide">Astra</h1>
+<p class="font-body-lg text-on-surface-variant/80 max-w-md mx-auto">Seeking stillness in the infinite expanse. Explorer of inner cosmos and sonic landscapes.</p>
+</div>
+</section>
+<!-- Wellness Stats Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+<div class="glass-panel rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3 transition-transform hover:scale-[1.02] duration-300">
+<div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-2 shadow-[0_0_15px_rgba(206,189,255,0.2)]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">self_improvement</span>
+</div>
+<span class="font-display-lg-mobile text-white leading-none">42</span>
+<span class="font-label-sm text-on-surface-variant uppercase tracking-widest text-[10px]">Meditations</span>
+</div>
+<div class="glass-panel rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3 transition-transform hover:scale-[1.02] duration-300">
+<div class="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-secondary mb-2 shadow-[0_0_15px_rgba(68,226,205,0.2)]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">schedule</span>
+</div>
+<span class="font-display-lg-mobile text-white leading-none">640</span>
+<span class="font-label-sm text-on-surface-variant uppercase tracking-widest text-[10px]">Mindful Mins</span>
+</div>
+<div class="glass-panel rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3 transition-transform hover:scale-[1.02] duration-300 md:col-span-2 relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-45deg] translate-x-[-150%] hover:translate-x-[150%] transition-transform duration-1000 ease-in-out"></div>
+<h3 class="font-headline-md text-primary-fixed-dim">Daily Alignment</h3>
+<div class="w-full h-2 bg-white/10 rounded-full mt-4 overflow-hidden shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]">
+<div class="h-full bg-gradient-to-r from-secondary to-primary w-[75%] rounded-full shadow-[0_0_10px_rgba(206,189,255,0.8)]"></div>
+</div>
+<p class="font-label-sm text-on-surface-variant mt-2 text-[10px]">75% to cosmic resonance</p>
+</div>
+</section>
+<!-- Settings Section -->
+<section class="flex flex-col gap-6">
+<h2 class="font-headline-md text-white border-b border-white/10 pb-4 inline-flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">tune</span>
+                Sanctuary Settings
+            </h2>
+<div class="glass-panel rounded-3xl overflow-hidden divide-y divide-white/5">
+<!-- Toggle Item 1 -->
+<div class="p-6 flex justify-between items-center hover:bg-white/5 transition-colors">
+<div class="flex flex-col gap-1">
+<span class="font-body-lg text-white">Cosmic Theme</span>
+<span class="font-body-md text-on-surface-variant/70 text-sm">Deep space visuals and ethereal glows</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 opacity-0" id="toggle1" name="toggle1" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle1"></label>
+</div>
+</div>
+<!-- Toggle Item 2 -->
+<div class="p-6 flex justify-between items-center hover:bg-white/5 transition-colors">
+<div class="flex flex-col gap-1">
+<span class="font-body-lg text-white">Soundscapes</span>
+<span class="font-body-md text-on-surface-variant/70 text-sm">Ambient binaural beats in background</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 opacity-0" id="toggle2" name="toggle2" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle2"></label>
+</div>
+</div>
+<!-- Toggle Item 3 -->
+<div class="p-6 flex justify-between items-center hover:bg-white/5 transition-colors">
+<div class="flex flex-col gap-1">
+<span class="font-body-lg text-white">Quiet Mode</span>
+<span class="font-body-md text-on-surface-variant/70 text-sm">Suppress all notifications during sessions</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 opacity-0" id="toggle3" name="toggle3" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer" for="toggle3"></label>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="bg-white/10 dark:bg-white/5 backdrop-blur-2xl font-label-sm text-label-sm docked full-width bottom-0 rounded-t-3xl border-t border-white/10 shadow-[0_-8px_32px_0_rgba(0,0,0,0.3)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant/60 dark:text-on-surface-variant/60 p-2 hover:text-white transition-colors duration-300 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">auto_awesome</span>
+<span>Sanctuary</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/60 dark:text-on-surface-variant/60 p-2 hover:text-white transition-colors duration-300 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">self_improvement</span>
+<span>Reflect</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/60 dark:text-on-surface-variant/60 p-2 hover:text-white transition-colors duration-300 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">explore</span>
+<span>Cosmos</span>
+</div>
+<!-- Active Tab: Profile -->
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed bg-white/10 rounded-xl p-2 drop-shadow-[0_0_8px_rgba(68,226,205,0.4)] scale-95 duration-200 cursor-pointer">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">person</span>
+<span>Profile</span>
+</div>
+</nav>
+</body></html>

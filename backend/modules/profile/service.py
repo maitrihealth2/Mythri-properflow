@@ -225,7 +225,7 @@ def get_persona_summary(db: Session, user_id: int) -> str:
     if persona.behavioral_notes:
         parts.append(f"Clinical observation: {persona.behavioral_notes}")
     if persona.initial_presenting_topic:
-        parts.append(f"Originally came to Maitri about: {persona.initial_presenting_topic}")
+        parts.append(f"Originally came to Mythri about: {persona.initial_presenting_topic}")
 
     # Inject raw onboarding JSON for deepest context
     from core.database.models import UserOnboarding

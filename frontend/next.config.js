@@ -5,7 +5,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
-  allowedDevOrigins: ['promptly-poker-yearly-suite.trycloudflare.com'],
+  allowedDevOrigins: ['italiano-learning-champion-trigger.trycloudflare.com'],
   async rewrites() {
     return [
       {

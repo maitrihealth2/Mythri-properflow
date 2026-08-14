@@ -1,27 +1,27 @@
 [
   {
     "user": "Hello",
-    "maitri": "{\"response\":\"Hey! I'm Maitri. How are you doing today?\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.9634580016136169,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"Hey! I'm Mythri. How are you doing today?\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.9634580016136169,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 14.924154043197632
   },
   {
     "user": "How are you?",
-    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.5841161012649536,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.5841161012649536,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 38.39993643760681
   },
   {
     "user": "What's my goal?",
-    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.6950429677963257,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Curiosity\",\"emotion_emoji\":\"\ud83e\udd14\",\"emotion_score\":0.6950429677963257,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 26.337785720825195
   },
   {
     "user": "I'm stressed",
-    "maitri": "{\"response\":\"Oh, that sounds heavy. What's been making you feel so stressed lately?\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.32303911447525024,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"Oh, that sounds heavy. What's been making you feel so stressed lately?\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.32303911447525024,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 25.591077089309692
   },
   {
     "user": "Help me",
-    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Caring\",\"emotion_emoji\":\"\ud83e\udd17\",\"emotion_score\":0.7131736278533936,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"5babf594-b030-469b-9fba-e8fb780448bb\",\"emotion\":\"Caring\",\"emotion_emoji\":\"\ud83e\udd17\",\"emotion_score\":0.7131736278533936,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 41.256340742111206
   }
 ]

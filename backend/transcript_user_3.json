@@ -1,27 +1,27 @@
 [
   {
     "user": "Hi",
-    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.9640623331069946,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Neutral\",\"emotion_emoji\":\"\ud83d\ude10\",\"emotion_score\":0.9640623331069946,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 23.980334997177124
   },
   {
     "user": "I'm sad",
-    "maitri": "{\"response\":\"Oh no, that's tough. What's been making you feel this way?\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.9089760184288025,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"Oh no, that's tough. What's been making you feel this way?\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.9089760184288025,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 24.44390559196472
   },
   {
     "user": "Why am I sad?",
-    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.7913522720336914,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.7913522720336914,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 25.633311986923218
   },
   {
     "user": "What did I say earlier?",
-    "maitri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Confusion\",\"emotion_emoji\":\"\ud83d\ude15\",\"emotion_score\":0.4486065208911896,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"I hear you. Tell me more about what's on your mind.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Confusion\",\"emotion_emoji\":\"\ud83d\ude15\",\"emotion_score\":0.4486065208911896,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 24.551745176315308
   },
   {
     "user": "Goodbye",
-    "maitri": "{\"response\":\"Oh. I'm here if you need to talk, you know? Don't go just like that.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.6307355761528015,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
+    "mythri": "{\"response\":\"Oh. I'm here if you need to talk, you know? Don't go just like that.\",\"is_crisis\":false,\"helplines\":[],\"session_id\":\"c842f26c-b8d2-44be-ba7f-bfd4beafa83b\",\"emotion\":\"Sadness\",\"emotion_emoji\":\"\ud83d\ude22\",\"emotion_score\":0.6307355761528015,\"rag_used\":false,\"exercise_state\":\"idle\",\"exercise_type\":null}",
     "latency": 31.041812658309937
   }
 ]

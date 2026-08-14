@@ -16,35 +16,28 @@ import json
 
 def empty_case_file() -> dict:
     return {
-      "conversation_state": {
-        "known_facts": [],
-        "unanswered_questions": [],
-        "assumptions_made": [],
-        "emotion": {"value": None, "confidence": 0.0, "source": "inferred"},
-        "emotion_history": [],
-        "hypotheses": {
-            "Burnout": 0.0,
-            "Stress": 0.0,
-            "Relationship Conflict": 0.0,
-            "Routine Change": 0.0,
-            "Sleep Issue": 0.0,
-            "Anxiety": 0.0,
-            "Grief": 0.0,
-            "Unknown": 100.0
+        "emotional_state": {
+            "primary": "neutral",
+            "secondary": [],
+            "intensity": 0.0
         },
-        "conversation_goal": "unknown",
-        "risk_level": "none",
-        "phase": "Listen",
-        "possible_contradiction": False,
-        "asked_topics": [],
-        "recommended_question": None
-      },
-      "runtime_state": {
-        "decision": "GREETING",
-        "exercise_in_progress": False,
-        "turns_since_last_question": 0,
-        "give_up_asking": False
-      }
+        "cognitive_patterns": [],
+        "behavioral_context": {
+            "withdrawal": False,
+            "avoidance": False,
+            "social_engagement": 0.5
+        },
+        "conversation_state": {
+            "openness": 0.5,
+            "engagement": 0.5,
+            "risk_level": "low"
+        },
+        "runtime_state": {
+            "response_strategy": "LISTEN",
+            "reason_codes": [],
+            "expected_effect": "",
+            "exercise_in_progress": False
+        }
     }
 
 # Valid exercise states (ordered lifecycle)
@@ -88,7 +81,7 @@ class SessionState(BaseModel):
     session_message_lengths: List[int] = Field(default_factory=list)
     session_emotions_seen: List[str] = Field(default_factory=list)
 
-    # MAITRI AGENT LOOP v2 Case File
+    # MYTHRI AGENT LOOP v2 Case File
     case_file_json: dict = Field(default_factory=empty_case_file)
 
     last_updated: datetime = Field(default_factory=datetime.utcnow)

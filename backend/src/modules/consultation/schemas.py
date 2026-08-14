@@ -14,7 +14,7 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    response: str
+    responses: List[str]
     is_crisis: bool
     helplines: List[str]
     session_id: str

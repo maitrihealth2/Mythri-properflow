@@ -1,5 +1,5 @@
 """
-Sarvam LLM Provider — Dedicated provider for Maitri using Sarvam 105B.
+Sarvam LLM Provider — Dedicated provider for Mythri using Sarvam 105B.
 """
 import httpx
 from openai import AsyncOpenAI
@@ -61,15 +61,14 @@ class SarvamProvider(LLMProviderBase):
             )
         return self._client
 
-    async def generate(
+    async def stream(
         self,
         api_messages: list[dict],
         max_tokens: int,
         temperature: float,
-    ) -> str:
+    ):
         client = self._get_client()
         try:
-            # Overriding max_tokens to ensure sufficient budget for reasoning
             safe_max_tokens = max(max_tokens, 4096)
             
             response = await client.chat.completions.create(
@@ -80,64 +79,48 @@ class SarvamProvider(LLMProviderBase):
                 stream=True,
             )
             
-            final_text_chunks: list[str] = []
-            
             async for chunk in response:
                 if not chunk.choices:
                     continue
-                    
                 delta = chunk.choices[0].delta
-                
-                # Check for reasoning_content separately to not include it in final text
-                # We just ignore reasoning_content for now, we only want actual content
                 if getattr(delta, "content", None):
-                    final_text_chunks.append(delta.content)
-
-            result = "".join(final_text_chunks).strip()
-            
-            # Remove any <think>...</think> blocks if the model generated them despite prompt
-            import re
-            result = re.sub(r'<think>.*?</think>', '', result, flags=re.DOTALL | re.IGNORECASE).strip()
-            
-            if not result:
-                raise ProviderEmptyResponseError(
-                    f"Sarvam/{self.model} returned an empty final response."
-                )
-            return result
+                    # Filter out think tags immediately if they stream in
+                    content = delta.content
+                    if "<think>" in content or "</think>" in content:
+                        continue # simple filter
+                    yield content
 
         except APITimeoutError as e:
-            raise ProviderTimeoutError(f"Sarvam timeout: {e}") from e
-
+            raise ProviderTimeoutError(f"Sarvam timed out: {e}") from e
         except APIConnectionError as e:
-            raise ProviderNetworkError(f"Sarvam connection error: {e}") from e
-
+            raise ProviderNetworkError(f"Sarvam network error: {e}") from e
         except APIStatusError as e:
-            status = e.status_code
-            if status == 401:
-                raise ProviderConfigurationError(
-                    f"Sarvam authentication failed (401). Check SARVAM_API_KEY."
-                ) from e
-            elif status == 400:
-                raise ProviderConfigurationError(
-                    f"Sarvam bad request (400): {e.message}"
-                ) from e
-            elif status == 429:
-                raise ProviderRateLimitError(
-                    f"Sarvam rate limited (429)."
-                ) from e
-            elif status >= 500:
-                raise ProviderServerError(
-                    f"Sarvam server error ({status})."
-                ) from e
-            else:
-                raise ProviderStreamError(
-                    f"Sarvam unexpected status {status}: {e.message}"
-                ) from e
+            if e.status_code == 429:
+                raise ProviderRateLimitError(f"Sarvam rate limit: {e}") from e
+            if e.status_code >= 500:
+                raise ProviderServerError(f"Sarvam server error: {e}") from e
+            raise ProviderError(f"Sarvam HTTP {e.status_code}: {e}") from e
+        except Exception as e:
+            raise ProviderStreamError(f"Sarvam streaming failed: {e}") from e
 
-        except (StopAsyncIteration, RuntimeError, GeneratorExit) as e:
-            raise ProviderStreamError(
-                f"Sarvam stream was interrupted: {e}"
-            ) from e
+    async def generate(
+        self,
+        api_messages: list[dict],
+        max_tokens: int,
+        temperature: float,
+    ) -> str:
+        chunks = []
+        async for chunk in self.stream(api_messages, max_tokens, temperature):
+            chunks.append(chunk)
+            
+        result = "".join(chunks).strip()
+        import re
+        result = re.sub(r'<think>.*?</think>', '', result, flags=re.DOTALL | re.IGNORECASE).strip()
+        
+        if not result:
+            raise ProviderEmptyResponseError("Sarvam returned an empty response")
+            
+        return result
 
     async def close(self) -> None:
         if self._http_client is not None:

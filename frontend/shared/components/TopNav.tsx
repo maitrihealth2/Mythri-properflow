@@ -59,7 +59,7 @@ export default function TopNav() {
           onClick={() => router.push('/text-chat')}
         >
           <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>spa</span>
-          <span className="font-headline text-2xl font-bold tracking-tight text-on-background">Maitri</span>
+          <span className="font-headline text-2xl font-bold tracking-tight text-on-background">Mythri</span>
         </div>
 
         {/* Right Actions */}

@@ -1,7 +1,7 @@
 """
 02_train.py
 ============
-QLoRA fine-tuning of Sarvam-2B on Maitri's therapeutic knowledge.
+QLoRA fine-tuning of Sarvam-2B on Mythri's therapeutic knowledge.
 
 Optimized for: RTX 4050 Laptop GPU (6GB VRAM), Windows, CUDA 12.x
 
@@ -11,7 +11,7 @@ What this does:
   3. Trains on finetuning/data/train.jsonl
   4. Evaluates on finetuning/data/eval.jsonl after each epoch
   5. Logs all metrics to finetuning/results/training_log.json
-  6. Saves adapter weights to finetuning/model/maitri-sarvam-2b-adapter/
+  6. Saves adapter weights to finetuning/model/mythri-sarvam-2b-adapter/
 
 Run:
   python finetuning/02_train.py
@@ -37,7 +37,7 @@ SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 BACKEND_ROOT = SCRIPT_DIR.parent
 
 DATA_DIR = SCRIPT_DIR / "data"
-MODEL_OUTPUT_DIR = SCRIPT_DIR / "model" / "maitri-sarvam-2b-adapter"
+MODEL_OUTPUT_DIR = SCRIPT_DIR / "model" / "mythri-sarvam-2b-adapter"
 RESULTS_DIR = SCRIPT_DIR / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
 MODEL_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -130,7 +130,7 @@ class MetricLogger:
 def make_trainer_callback(metric_logger: MetricLogger):
     from transformers import TrainerCallback
 
-    class MaitriCallback(TrainerCallback):
+    class MythriCallback(TrainerCallback):
         def __init__(self):
             self._epoch_losses = []
 
@@ -156,7 +156,7 @@ def make_trainer_callback(metric_logger: MetricLogger):
             self._epoch_losses = []
             print(f"  [Epoch {epoch}] Avg train loss: {avg_train:.4f}")
 
-    return MaitriCallback()
+    return MythriCallback()
 
 
 # ---------------------------------------------------------------------------
@@ -184,7 +184,7 @@ def format_example(example: dict, tokenizer) -> str:
 # ---------------------------------------------------------------------------
 def main():
     print("=" * 60)
-    print("Maitri QLoRA Fine-Tuning -- Sarvam-2B")
+    print("Mythri QLoRA Fine-Tuning -- Sarvam-2B")
     print(f"Base model: {CONFIG['base_model']}")
     print(f"Device: RTX 4050 6GB (optimized)")
     print("=" * 60)

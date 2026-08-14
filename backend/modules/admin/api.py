@@ -38,8 +38,8 @@ class AdminLoginRequest(BaseModel):
 
 @router.post("/login")
 def admin_login(req: AdminLoginRequest):
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@maitri.org")
-    admin_pass = os.getenv("ADMIN_PASSWORD", "Maitri2026")
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@mythri.org")
+    admin_pass = os.getenv("ADMIN_PASSWORD", "Mythri2026")
     
     if req.email == admin_email and req.password == admin_pass:
         now = datetime.now(timezone.utc)

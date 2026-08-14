@@ -1,7 +1,7 @@
 import os
 import re
 
-backend_dir = r"d:\Maitri V5\backend"
+backend_dir = r"d:\Mythri V5\backend"
 
 def update_imports(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:

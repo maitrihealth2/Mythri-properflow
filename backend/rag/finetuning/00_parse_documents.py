@@ -18,7 +18,7 @@ import pathlib
 import sys
 
 BACKEND_ROOT = pathlib.Path(__file__).resolve().parent.parent
-DOCS_DIR = BACKEND_ROOT.parent  # maitri-v5 root where PDFs live
+DOCS_DIR = BACKEND_ROOT.parent  # mythri-v5 root where PDFs live
 OUTPUT_DIR = pathlib.Path(__file__).resolve().parent / "data"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -195,7 +195,7 @@ def chunk_text(text: str, source: str, min_words: int = 60, max_words: int = 300
 
 def main():
     print("=" * 60)
-    print("Maitri Document Parser")
+    print("Mythri Document Parser")
     print("=" * 60)
 
     all_chunks = []

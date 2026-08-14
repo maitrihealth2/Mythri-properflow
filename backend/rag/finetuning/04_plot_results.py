@@ -294,7 +294,7 @@ def plot_07_before_after(plt, metrics: dict) -> None:
 def plot_summary_card(plt, log: dict, metrics: dict) -> None:
     """Single-page summary dashboard of all key metrics."""
     fig = plt.figure(figsize=(12, 7))
-    fig.suptitle("Maitri Fine-Tuning — Results Dashboard", fontsize=16, fontweight="bold", y=0.98)
+    fig.suptitle("Mythri Fine-Tuning — Results Dashboard", fontsize=16, fontweight="bold", y=0.98)
 
     # Key numbers
     eval_data = log.get("eval_loss", [])
