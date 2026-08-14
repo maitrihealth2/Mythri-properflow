@@ -8,8 +8,6 @@ import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 interface Message {
   role: 'user' | 'assistant'
   content: string
-  segments?: string[]
-  visibleSegments?: number
   is_crisis?: boolean
   helplines?: string[]
   emotion?: string
@@ -85,7 +83,6 @@ export default function ConsultationPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [revealing, setRevealing] = useState(false)
   const [language, setLanguage] = useState('en-IN')
   const [starting, setStarting] = useState(true)
   
@@ -124,17 +121,7 @@ export default function ConsultationPage() {
     if (messages.length > 0) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, loading, revealing])
-
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg.role === 'assistant' && lastMsg.visibleSegments !== undefined && lastMsg.segments && lastMsg.visibleSegments < lastMsg.segments.length) {
-      setRevealing(true);
-    } else {
-      setRevealing(false);
-    }
-  }, [messages])
+  }, [messages, loading])
 
   // Lock body scroll for the chat interface
   useEffect(() => {
@@ -170,13 +157,7 @@ export default function ConsultationPage() {
       // Removed hardcoded WELCOME_MSGS fallback to rely purely on dynamic backend opening.
       const welcome = data.message;
       if (welcome && welcome !== "Session started.") {
-        setMessages([{ 
-          role: 'assistant', 
-          content: welcome, 
-          segments: data.segments, 
-          visibleSegments: 1, 
-          is_new: true 
-        }])
+        setMessages([{ role: 'assistant', content: welcome, is_new: true }])
       }
     } catch {
       // router.replace('/')
@@ -199,8 +180,6 @@ export default function ConsultationPage() {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: data.response,
-        segments: data.segments,
-        visibleSegments: 1,
         is_crisis: data.is_crisis,
         helplines: data.helplines,
         emotion: data.emotion,
@@ -353,96 +332,37 @@ export default function ConsultationPage() {
         
         {/* Chat Thread */}
         <div className="flex-1 overflow-y-auto pt-4 pb-48 md:pb-36 flex flex-col gap-6 hide-scrollbar pr-2" onClick={() => {setMenuOpen(false); setLangMenuOpen(false);}}>
-          {messages.map((m, i) => {
-            const isUser = m.role === 'user';
-            
-            if (!isUser && m.segments && m.segments.length > 0) {
-              const visibleCount = m.visibleSegments !== undefined ? m.visibleSegments : m.segments.length;
-              return m.segments.slice(0, visibleCount).map((segment, sIndex) => {
-                const isLastVisible = sIndex === visibleCount - 1;
-                const isCurrentlyRevealing = m.is_new && isLastVisible && (m.visibleSegments !== undefined ? m.visibleSegments === sIndex + 1 : false);
-                return (
-                  <div key={`${i}-${sIndex}`} className={`flex flex-col items-start max-w-[90%] md:max-w-[65%] ${isCurrentlyRevealing ? 'animate-msg-enter' : ''}`}>
-                    {sIndex === 0 && (
-                      <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">
-                        Mythri
-                      </span>
-                    )}
-                    <div className={`frosted-blush ${sIndex === 0 ? 'rounded-tl-sm' : ''} bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20`}>
+          {messages.map((m, i) => (
+            <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end self-end max-w-[90%] md:max-w-[65%]' : 'items-start max-w-[90%] md:max-w-[65%]'} ${m.is_new ? 'animate-msg-enter' : ''}`}>
+              <span className={`text-label-md text-on-surface-variant/70 mb-1.5 ${m.role === 'user' ? 'mr-3' : 'ml-3'}`}>
+                {m.role === 'user' ? 'You' : 'Mythri'}
+              </span>
+              {m.role === 'user' ? (
+                <div className="frosted-plum rounded-tr-sm bg-plum-high-contrast/90 text-white px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
+                  <p className="text-body-lg leading-relaxed text-white">
+                    {m.content}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3 w-full">
+                  {m.content.split('\n\n').filter(s => s.trim()).map((segment, idx, arr) => (
+                    <div key={idx} className={`frosted-blush ${idx === 0 ? 'rounded-tl-sm' : ''} bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20`}>
                       <p className="text-body-lg leading-relaxed text-on-primary-fixed">
                         <TypewriterText 
-                          text={segment} 
-                          animate={isCurrentlyRevealing} 
+                          text={segment.trim()} 
+                          animate={!!m.is_new} 
                           onComplete={() => {
-                            if (m.visibleSegments !== undefined && m.visibleSegments < m.segments!.length) {
-                                setTimeout(() => {
-                                  setMessages(prev => {
-                                      const newMsgs = [...prev];
-                                      const msgToUpdate = { ...newMsgs[i] };
-                                      if (msgToUpdate.visibleSegments === sIndex + 1) {
-                                          msgToUpdate.visibleSegments += 1;
-                                          newMsgs[i] = msgToUpdate;
-                                      }
-                                      return newMsgs;
-                                  });
-                                }, 800);
-                            }
-                            if (sIndex === m.segments!.length - 1 && m.exercise_trigger) {
-                                setExerciseMode(m.exercise_trigger)
+                            if (idx === arr.length - 1 && m.exercise_trigger) {
+                              setExerciseMode(m.exercise_trigger)
                             }
                           }} 
                         />
                       </p>
-                      {sIndex === m.segments!.length - 1 && (
-                        <>
-                          {m.is_crisis && m.helplines && m.helplines.length > 0 && (
-                            <div className="mt-4 p-4 bg-error-container/80 backdrop-blur-sm border border-error/20 rounded-xl">
-                              <span className="font-label-sm text-error block mb-2 font-bold flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[16px]">emergency</span> Helpline Information
-                              </span>
-                              <ul className="list-disc pl-5 space-y-1 text-xs text-on-error-container">
-                                {m.helplines.map((h, hi) => (
-                                  <li key={hi}>{h}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {m.rag_used && (
-                            <div className="mt-3 flex items-center gap-1.5 text-[10px] text-primary/70 bg-white/40 px-2.5 py-1 rounded-full w-fit border border-white/50 shadow-sm">
-                              <span className="material-symbols-outlined text-[12px]">library_books</span>
-                              <span>Sanctuary Library Referenced</span>
-                            </div>
-                          )}
-                        </>
-                      )}
                     </div>
-                  </div>
-                );
-              });
-            }
-
-            return (
-              <div key={i} className={`flex flex-col ${isUser ? 'items-end self-end max-w-[90%] md:max-w-[65%]' : 'items-start max-w-[90%] md:max-w-[65%]'} ${m.is_new ? 'animate-msg-enter' : ''}`}>
-                <span className={`text-label-md text-on-surface-variant/70 mb-1.5 ${isUser ? 'mr-3' : 'ml-3'}`}>
-                  {isUser ? 'You' : 'Mythri'}
-                </span>
-                <div className={`${isUser ? 'frosted-plum rounded-tr-sm bg-plum-high-contrast/90 text-white' : 'frosted-blush rounded-tl-sm bg-white/70'} px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20`}>
-                  <p className={`text-body-lg leading-relaxed ${isUser ? 'text-white' : 'text-on-primary-fixed'}`}>
-                    {!isUser ? (
-                      <TypewriterText 
-                        text={m.content} 
-                        animate={!!m.is_new} 
-                        onComplete={() => {
-                          if (m.exercise_trigger) setExerciseMode(m.exercise_trigger)
-                        }} 
-                      />
-                    ) : (
-                      m.content
-                    )}
-                  </p>
+                  ))}
                   {/* Crisis & Helplines */}
                   {m.is_crisis && m.helplines && m.helplines.length > 0 && (
-                    <div className="mt-4 p-4 bg-error-container/80 backdrop-blur-sm border border-error/20 rounded-xl">
+                    <div className="mt-2 p-4 bg-error-container/80 backdrop-blur-sm border border-error/20 rounded-xl">
                       <span className="font-label-sm text-error block mb-2 font-bold flex items-center gap-2">
                         <span className="material-symbols-outlined text-[16px]">emergency</span> Helpline Information
                       </span>
@@ -454,21 +374,21 @@ export default function ConsultationPage() {
                     </div>
                   )}
                   {/* RAG metadata badge */}
-                  {!isUser && m.rag_used && (
-                    <div className="mt-3 flex items-center gap-1.5 text-[10px] text-primary/70 bg-white/40 px-2.5 py-1 rounded-full w-fit border border-white/50 shadow-sm">
+                  {m.rag_used && (
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-primary/70 bg-white/40 px-2.5 py-1 rounded-full w-fit border border-white/50 shadow-sm">
                       <span className="material-symbols-outlined text-[12px]">library_books</span>
                       <span>Sanctuary Library Referenced</span>
                     </div>
                   )}
                 </div>
-              </div>
-            );
-          })}
+              )}
+            </div>
+          ))}
 
-          {(loading || revealing) && (
+          {loading && (
             <div className="flex flex-col items-start transition-opacity duration-300 animate-msg-enter">
-              {!revealing && <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>}
-              <div className={`frosted-blush bg-white/70 px-6 py-4 rounded-2xl ${!revealing ? 'rounded-tl-sm' : ''} flex items-center gap-3 shadow-sm border border-white/20`}>
+              <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
+              <div className="frosted-blush bg-white/70 px-6 py-4 rounded-2xl rounded-tl-sm flex items-center gap-3 shadow-sm border border-white/20">
                 <div className="flex gap-1.5 py-1">
                   <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe"></div>
                   <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" style={{ animationDelay: '0.4s' }}></div>
@@ -500,8 +420,8 @@ export default function ConsultationPage() {
               <button onClick={() => router.push('/voice-chat')} className="material-symbols-outlined text-primary/70 bg-primary/5 md:bg-transparent md:text-outline p-3 hover:bg-white/60 rounded-full transition-all duration-150 hover:text-primary hover:scale-[1.02] active:scale-[0.98] shadow-sm md:shadow-none hover:shadow-sm">mic</button>
               <button
                 onClick={() => handleTextSend()}
-                disabled={!input.trim() || loading || revealing}
-                className={`p-3 md:p-3.5 rounded-full transition-all duration-150 flex items-center justify-center shadow-sm ${!input.trim() || loading || revealing ? 'bg-primary/20 text-white shadow-none' : 'bg-plum-high-contrast text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-md'}`}
+                disabled={!input.trim() || loading}
+                className={`p-3 md:p-3.5 rounded-full transition-all duration-150 flex items-center justify-center shadow-sm ${!input.trim() || loading ? 'bg-primary/20 text-white shadow-none' : 'bg-plum-high-contrast text-white hover:scale-[1.02] active:scale-[0.98] hover:shadow-md'}`}
               >
                 <span className="material-symbols-outlined text-[20px] md:text-[22px]">arrow_upward</span>
               </button>
