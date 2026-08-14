@@ -123,15 +123,6 @@ allowed_origins = [
 if cors_origins_env:
     allowed_origins.extend([o.strip() for o in cors_origins_env.split(",") if o.strip()])
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_origin_regex=r"https://.*\.onrender\.com|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*.pinggy.link", "*.vercel.app", "*.onrender.com", "*.trycloudflare.com", "*.loca.lt"])
 
@@ -140,6 +131,15 @@ app.add_middleware(SecurityMiddleware, max_payload_bytes=10 * 1024 * 1024)
 
 from core.middleware.audit import AuditLoggerMiddleware
 app.add_middleware(AuditLoggerMiddleware)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.onrender\.com|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.middleware("http")
 async def monitor_requests(request: Request, call_next):
@@ -173,6 +173,9 @@ app.include_router(profile_router)
 
 from modules.src.features.feature_flags.api import router as features_router
 app.include_router(features_router)
+
+from modules.config.api import router as config_router
+app.include_router(config_router)
 
 
 from core.exceptions import register_exception_handlers

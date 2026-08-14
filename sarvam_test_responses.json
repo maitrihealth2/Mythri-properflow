@@ -1,0 +1,222 @@
+{
+  "1": {
+    "success": 1,
+    "fallback": 0,
+    "empty": 0,
+    "errors": 0,
+    "latency": [
+      4.47411036491394
+    ],
+    "responses": [
+      {
+        "prompt": "I just feel so overwhelmed with everything lately. I can't seem to catch a break.",
+        "response": "That sounds incredibly heavy - feeling like you're constantly running but never quite catching your breath can be exhausting. I'm here with you, and you don't have to carry all of this alone. \n\nWhat's been feeling the most overwhelming lately? Is it work, studies, family expectations, or just life in general piling up?"
+      }
+    ]
+  },
+  "5": {
+    "success": 5,
+    "fallback": 0,
+    "empty": 0,
+    "errors": 0,
+    "latency": [
+      1.4884076118469238,
+      2.0570356845855713,
+      2.26719331741333,
+      3.158766984939575,
+      6.84075665473938
+    ],
+    "responses": [
+      {
+        "prompt": "My parents keep pressuring me to get married, but I'm just not ready.",
+        "response": "That sounds incredibly overwhelming - having that pressure from family when you're not ready must feel so heavy. It's completely valid to need more time for yourself before taking such a big step.\n\nWhat's been the hardest part about these conversations with your parents? Is it the constant reminders, or something else that's really weighing on you?"
+      },
+      {
+        "prompt": "I just feel so overwhelmed with everything lately. I can't seem to catch a break.",
+        "response": "That sounds really heavy to carry right now. It's completely understandable to feel overwhelmed when life keeps piling things on. What's been weighing on you the most lately?"
+      },
+      {
+        "prompt": "Work is piling up and my manager is being completely unreasonable. I'm exhausted.",
+        "response": "That sounds incredibly draining - when work feels overwhelming and your manager isn't being supportive, it's like carrying a heavy weight on your shoulders. \n\nHow are you holding up through all of this? Sometimes just getting it off your chest can help a bit."
+      },
+      {
+        "prompt": "My partner and I had a huge fight last night. I'm scared we might break up.",
+        "response": "That sounds incredibly scary and painful. Fighting with someone you care about can feel like the world is falling apart in that moment.\n\nWhat was the fight about, if you feel ready to share? Sometimes just talking through what happened can help clear some of that fear."
+      },
+      {
+        "prompt": "My heart is racing and I keep worrying about the future. What if I fail?",
+        "response": "I hear you, and that racing heart sounds really overwhelming right now. The fear of failure can feel so heavy, especially when all those \"what if\" thoughts start spinning. What specific situation is making you worry most about failing?"
+      }
+    ]
+  },
+  "10": {
+    "success": 10,
+    "fallback": 0,
+    "empty": 0,
+    "errors": 0,
+    "latency": [
+      2.0284690856933594,
+      2.1536850929260254,
+      2.7699735164642334,
+      2.9894862174987793,
+      3.1942780017852783,
+      3.478039026260376,
+      3.7490432262420654,
+      4.5779712200164795,
+      5.071761846542358,
+      7.460047245025635
+    ],
+    "responses": [
+      {
+        "prompt": "Hi Maitri, how are you today?",
+        "response": "Hi there! I'm doing really well, thanks for asking. It's lovely to hear from you - how are you feeling today?"
+      },
+      {
+        "prompt": "My parents keep pressuring me to get married, but I'm just not ready.",
+        "response": "That sounds incredibly difficult - feeling pressured about something so personal when you're not ready. It's completely valid to want to wait until you feel prepared for such a big life decision.\n\nWhat kind of pressure are they putting on you specifically? And how are you feeling about all this right now?"
+      },
+      {
+        "prompt": "Work is piling up and my manager is being completely unreasonable. I'm exhausted.",
+        "response": "That sounds incredibly draining - trying to keep up with so much work while dealing with an unreasonable manager is a recipe for burnout. Your exhaustion makes complete sense.\n\nHow long has this been going on? And is there anyone else on your team who might be feeling similarly, or are you navigating this alone?"
+      },
+      {
+        "prompt": "Do you remember what we talked about yesterday?",
+        "response": "I don't have access to our previous conversations, so I can't remember what we talked about yesterday. But I'm here with you now, and I'd love to hear what's on your mind. Is there something specific from yesterday you'd like to pick up where we left off?"
+      },
+      {
+        "prompt": "Everyone seems to have friends and plans, and I'm just sitting here alone again.",
+        "response": "That feeling of being left out while everyone else seems to be moving forward can be really heavy. It makes perfect sense that you'd feel lonely right now.\n\nWhat's been going through your mind when you notice everyone else has plans?"
+      },
+      {
+        "prompt": "I got rejected from yet another job interview. I feel completely worthless.",
+        "response": "Oh, that's such a heavy feeling to carry. Your worth isn't measured by one interview - that rejection says nothing about who you are as a person. It's completely okay to feel this way right now; rejection hurts deeply, especially when it keeps happening."
+      },
+      {
+        "prompt": "I just feel so overwhelmed with everything lately. I can't seem to catch a break.",
+        "response": "That sounds really tough. When everything piles up like that, it can feel like you're carrying the weight of the whole world on your shoulders. What's been feeling the most overwhelming lately?"
+      },
+      {
+        "prompt": "I have no energy to do anything. Even getting out of bed feels like a chore.",
+        "response": "I hear you, and it sounds incredibly heavy to be carrying that kind of exhaustion. When even basic tasks feel monumental, it can feel like you're fighting against your own body and mind.\n\nHave you been feeling this way for a while, or did it come on more recently? Sometimes understanding the pattern can help us figure out what might be going on."
+      },
+      {
+        "prompt": "My heart is racing and I keep worrying about the future. What if I fail?",
+        "response": "That racing heart and constant worry must feel exhausting right now. The fear of failure can be so heavy, especially when it feels like so much is riding on your success.\n\nCan you tell me more about what's making the future feel so uncertain at this moment? Sometimes naming the specific worries can help them feel less overwhelming."
+      },
+      {
+        "prompt": "My partner and I had a huge fight last night. I'm scared we might break up.",
+        "response": "Oh no, that sounds incredibly scary to go through. Fights that big can shake you to your core, and that fear of losing someone you care about is completely valid. \n\nDo you want to talk about what happened? Sometimes just getting it out can help make sense of the storm."
+      }
+    ]
+  },
+  "20": {
+    "success": 18,
+    "fallback": 2,
+    "empty": 0,
+    "errors": 0,
+    "latency": [
+      1.7969050407409668,
+      1.9770286083221436,
+      2.0132644176483154,
+      2.0103261470794678,
+      2.4196155071258545,
+      2.6700594425201416,
+      2.81581974029541,
+      2.9047539234161377,
+      3.009943962097168,
+      3.132366895675659,
+      3.2950167655944824,
+      3.4505105018615723,
+      3.7962615489959717,
+      4.274841070175171,
+      4.380491495132446,
+      4.541282415390015,
+      6.331195592880249,
+      6.448590993881226,
+      10.23241376876831,
+      10.454944849014282
+    ],
+    "responses": [
+      {
+        "prompt": "Hi Maitri, how are you today?",
+        "response": "Hi! I'm doing really well today, thanks for asking. It's always nice to hear from you. How are you feeling right now?"
+      },
+      {
+        "prompt": "I don't know what my purpose in life is anymore.",
+        "response": "That feeling of being lost about your purpose is so heavy, and I'm really glad you shared this with me. Sometimes the weight of \"shoulds\" and expectations can make us forget who we actually are and what truly matters to us.\n\nCan you tell me more about what's been making you feel this way lately?"
+      },
+      {
+        "prompt": "I have no energy to do anything. Even getting out of bed feels like a chore.",
+        "response": "That sounds incredibly heavy. When even basic things feel like climbing mountains, it's exhausting just to exist.\n\nWhat's been happening for you lately? Sometimes just naming what's underneath this weight can help a little."
+      },
+      {
+        "prompt": "Do you remember what we talked about yesterday?",
+        "response": "I don't have access to our previous conversations, so I can't recall what we talked about yesterday. It sounds like you wanted to share something important though - would you like to tell me what was on your mind? I'm here to listen."
+      },
+      {
+        "prompt": "Work is piling up and my manager is being completely unreasonable. I'm exhausted.",
+        "response": "That sounds incredibly draining - having work pile up while dealing with an unreasonable manager is a perfect storm of stress.\n\nWhat's been the most overwhelming part about the workload? Is it the volume of tasks, the deadlines, or something else entirely?"
+      },
+      {
+        "prompt": "I'm feeling much better today, but I'm scared it won't last.",
+        "response": "That's wonderful that you're feeling better today! It makes complete sense to feel scared about it not lasting - that fear doesn't take away from how good you're feeling right now. \n\nWhat does this \"better\" feeling look like for you today? Is it a quiet calm or more like a burst of energy?"
+      },
+      {
+        "prompt": "I just want someone to listen to me without judging.",
+        "response": "I'm here with you, and I want to listen. Whatever you're feeling or going through, you can share it with me without any judgment at all. What's on your mind?"
+      },
+      {
+        "prompt": "I feel like an imposter at work. They're going to find out I don't know what I'm doing.",
+        "response": "Oh, that feeling of being \"found out\" is so intense - I hear how scary that feels right now. You know, imposter feelings are actually incredibly common, especially when you're in a new role or doing challenging work.\n\nWhat makes this feeling most intense for you right now? Is there something specific that triggered this worry today?"
+      },
+      {
+        "prompt": "My parents keep pressuring me to get married, but I'm just not ready.",
+        "response": "That sounds incredibly stressful - carrying your own feelings about timing while facing that pressure from family can feel overwhelming. \n\nIt's completely okay to not be ready, and your feelings matter just as much as anyone else's expectations. \n\nHow are you handling these conversations with your parents right now?"
+      },
+      {
+        "prompt": "My financial situation is really stressing me out right now.",
+        "response": "That sounds incredibly heavy to carry right now. Financial stress can feel so overwhelming and all-consuming. I'm here with you, and you don't have to figure this out alone. What's weighing on you most about your financial situation at the moment?"
+      },
+      {
+        "prompt": "I just feel so overwhelmed with everything lately. I can't seem to catch a break.",
+        "response": "That sounds incredibly heavy - feeling like you're constantly running without any pause can be exhausting. What's been weighing on you the most lately?"
+      },
+      {
+        "prompt": "I can't focus on studying for my exams at all.",
+        "response": "That sounds really frustrating - exam season can feel so overwhelming sometimes. What's been making it hardest to focus? Is it the pressure itself, or are there specific distractions getting in the way?"
+      },
+      {
+        "prompt": "I got rejected from yet another job interview. I feel completely worthless.",
+        "response": "Oh no, that's such a heavy feeling - I'm so sorry you're going through this. Job rejections can feel so personal, even though they rarely reflect your actual worth. Want to talk about what happened in the interview? Sometimes just getting it out can help lighten the weight a bit."
+      },
+      {
+        "prompt": "I've been crying for no reason all morning.",
+        "response": "Oh no, that sounds so overwhelming. It's actually pretty common to feel like you're crying for no reason - sometimes our emotions build up silently and just need to come out.\n\nAre you feeling okay right now, or is this still hitting you pretty hard?"
+      },
+      {
+        "prompt": "I keep having bad memories from my childhood pop up.",
+        "response": "I'm so sorry you're experiencing that - having painful childhood memories surface unexpectedly can be really difficult. Take your time, and know that I'm here to listen whenever you're ready to talk about what's coming up for you. Would you like to share what's been happening, or would you prefer just to sit with this feeling for now?"
+      },
+      {
+        "prompt": "I'm feeling really insecure about my body today.",
+        "response": "Oh honey, that's such a heavy feeling to carry. Body insecurities can be so overwhelming and make everything feel harder than it already is.\n\nWhat part of your body is bothering you most right now? Sometimes putting words to it can help lighten the weight a bit."
+      },
+      {
+        "prompt": "My friends went out without me and I feel left out.",
+        "response": "Oh that hurts - feeling left out when friends go out without you is such a lonely feeling. It's completely valid to feel that way right now.\n\nDo you want to talk about what happened, or would you prefer to share something that might help take your mind off it?"
+      },
+      {
+        "prompt": "Everyone seems to have friends and plans, and I'm just sitting here alone again.",
+        "response": "I hear you. Tell me more about what's on your mind."
+      },
+      {
+        "prompt": "My partner and I had a huge fight last night. I'm scared we might break up.",
+        "response": "That sounds incredibly scary. I'm so sorry you're going through this. I'm here to listen if you want to talk about it."
+      },
+      {
+        "prompt": "My heart is racing and I keep worrying about the future. What if I fail?",
+        "response": "I hear you. Tell me more about what's on your mind."
+      }
+    ]
+  }
+}

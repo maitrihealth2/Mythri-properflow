@@ -33,30 +33,31 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 pass
         
         # 2. Rate Limiting
-        client_ip = request.client.host if request.client else "unknown"
-        path = request.url.path
-        
-        current_time = time.time()
-        
-        # Select limit based on path
-        limit = AUTH_RATE_LIMIT if path.startswith("/api/auth/") else DEFAULT_RATE_LIMIT
-        
-        # Clean up old entries to prevent memory leak (simplified for in-memory)
-        # In a real distributed prod, we'd use Redis
-        if client_ip in RATE_LIMIT_STORE:
-            count, reset_time = RATE_LIMIT_STORE[client_ip]
-            if current_time > reset_time:
-                RATE_LIMIT_STORE[client_ip] = (1, current_time + RATE_LIMIT_WINDOW)
+        if request.method != "OPTIONS":
+            client_ip = request.client.host if request.client else "unknown"
+            path = request.url.path
+            
+            current_time = time.time()
+            
+            # Select limit based on path
+            limit = AUTH_RATE_LIMIT if path.startswith("/api/auth/") else DEFAULT_RATE_LIMIT
+            
+            # Clean up old entries to prevent memory leak (simplified for in-memory)
+            # In a real distributed prod, we'd use Redis
+            if client_ip in RATE_LIMIT_STORE:
+                count, reset_time = RATE_LIMIT_STORE[client_ip]
+                if current_time > reset_time:
+                    RATE_LIMIT_STORE[client_ip] = (1, current_time + RATE_LIMIT_WINDOW)
+                else:
+                    if count >= limit:
+                        logger.warning(f"Rate limit exceeded for IP: {client_ip} on path {path}")
+                        return JSONResponse(
+                            status_code=429,
+                            content={"detail": "Too many requests. Please try again later."}
+                        )
+                    RATE_LIMIT_STORE[client_ip] = (count + 1, reset_time)
             else:
-                if count >= limit:
-                    logger.warning(f"Rate limit exceeded for IP: {client_ip} on path {path}")
-                    return JSONResponse(
-                        status_code=429,
-                        content={"detail": "Too many requests. Please try again later."}
-                    )
-                RATE_LIMIT_STORE[client_ip] = (count + 1, reset_time)
-        else:
-            RATE_LIMIT_STORE[client_ip] = (1, current_time + RATE_LIMIT_WINDOW)
+                RATE_LIMIT_STORE[client_ip] = (1, current_time + RATE_LIMIT_WINDOW)
         
         # 3. Process Request
         response = await call_next(request)

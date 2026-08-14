@@ -224,3 +224,29 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
     admin_email = admin.get("email", "admin")
     CommandCenter.log_db("ADMIN", f"Admin {admin_email} exported CSV for user {user_id}")
     return response
+
+class ThemeUpdateRequest(BaseModel):
+    theme: str
+
+@router.put("/theme")
+def update_global_theme(req: ThemeUpdateRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    from core.logger.terminal import CommandCenter
+    from core.database.models import AppConfiguration
+
+    if req.theme not in ["mythri", "space"]:
+        raise HTTPException(status_code=400, detail="Invalid theme")
+
+    config_entry = db.query(AppConfiguration).filter(AppConfiguration.config_key == "global_theme").first()
+    if config_entry:
+        config_entry.config_value = req.theme
+    else:
+        new_entry = AppConfiguration(config_key="global_theme", config_value=req.theme)
+        db.add(new_entry)
+
+    db.commit()
+
+    admin_email = admin.get("email", "admin")
+    CommandCenter.log_db("ADMIN", f"Admin {admin_email} updated global theme to {req.theme}")
+    
+    return {"message": "Theme updated successfully", "theme": req.theme}
+

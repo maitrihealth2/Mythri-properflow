@@ -131,13 +131,14 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
 
-  const [activeTab, setActiveTab] = useState<'users' | 'consents' | 'feedback'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'consents' | 'feedback' | 'themes'>('users')
   const [search, setSearch] = useState('')
   
   // Data State
   const [users, setUsers] = useState<UserListRecord[]>([])
   const [consents, setConsents] = useState<ConsentRecord[]>([])
   const [feedbacks, setFeedbacks] = useState<FeedbackRecord[]>([])
+  const [currentTheme, setCurrentTheme] = useState('mythri')
   const [loading, setLoading] = useState(false)
   
   // Drill-down State
@@ -193,6 +194,34 @@ export default function AdminDashboard() {
       } else if (tab === 'feedback') {
         const res = await getAdminFeedback()
         setFeedbacks(res.feedbacks)
+      } else if (tab === 'themes') {
+        const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
+        const res = await fetch(`${API_URL}/api/config/theme`)
+        const data = await res.json()
+        setCurrentTheme(data.theme || 'mythri')
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleApplyTheme = async (themeName: string) => {
+    setLoading(true)
+    try {
+      const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
+      const token = sessionStorage.getItem('mb_admin_token')
+      const res = await fetch(`${API_URL}/api/admin/theme`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ theme: themeName })
+      })
+      if (res.ok) {
+        window.location.reload()
       }
     } catch (err) {
       console.error(err)
@@ -412,19 +441,21 @@ export default function AdminDashboard() {
 
         <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-8 py-6 overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 flex-shrink-0">
-            <div className="flex space-x-1 border-b border-outline-variant/30">
-              {(['users', 'consents', 'feedback'] as const).map((tab) => (
+            <div className="flex space-x-1 border-b border-outline-variant/30 overflow-x-auto">
+              {(['users', 'consents', 'feedback', 'themes'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => { setActiveTab(tab); setSearch('') }}
-                  className={`font-label-md px-5 py-2.5 capitalize transition-colors ${
+                  className={`font-label-md px-5 py-2.5 capitalize transition-colors whitespace-nowrap ${
                     activeTab === tab ? 'text-primary border-b-2 border-primary -mb-px' : 'text-on-surface-variant hover:text-on-surface'
                   }`}
                 >
                   {tab}
-                  <span className="ml-2 text-xs bg-surface-dim text-on-surface-variant px-2 py-0.5 rounded-full">
-                    {tab === 'users' ? users.length : tab === 'consents' ? consents.length : feedbacks.length}
-                  </span>
+                  {tab !== 'themes' && (
+                    <span className="ml-2 text-xs bg-surface-dim text-on-surface-variant px-2 py-0.5 rounded-full">
+                      {tab === 'users' ? users.length : tab === 'consents' ? consents.length : feedbacks.length}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -517,6 +548,55 @@ export default function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Themes Tab */}
+              {activeTab === 'themes' && (
+                <div className="h-full flex flex-col">
+                  <h2 className="text-xl font-headline-md text-on-surface mb-6">Global Application Theme</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Mythri Default */}
+                    <div className={`relative overflow-hidden rounded-2xl border-2 transition-all ${currentTheme === 'mythri' ? 'border-primary ring-4 ring-primary/20' : 'border-outline-variant/30'}`}>
+                      <div className="aspect-video bg-[#FDF9F1] p-6 flex flex-col">
+                        <div className="font-headline-md text-[#5F4B3A]">Mythri (Default)</div>
+                        <div className="text-sm text-[#876F5E] mt-2">Warm, natural, and inviting colors focusing on grounding elements.</div>
+                      </div>
+                      <div className="p-4 bg-white border-t border-outline-variant/30 flex justify-between items-center">
+                        <span className="text-sm font-medium text-on-surface-variant">
+                          {currentTheme === 'mythri' ? 'Active Theme' : ''}
+                        </span>
+                        <button 
+                          onClick={() => handleApplyTheme('mythri')}
+                          disabled={currentTheme === 'mythri' || loading}
+                          className="px-6 py-2 bg-primary text-white rounded-full font-label-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
+                        >
+                          {currentTheme === 'mythri' ? 'Active' : 'Apply Theme'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Space Theme */}
+                    <div className={`relative overflow-hidden rounded-2xl border-2 transition-all ${currentTheme === 'space' ? 'border-primary ring-4 ring-primary/20' : 'border-outline-variant/30'}`}>
+                      <div className="aspect-video bg-[#0B0D17] p-6 flex flex-col relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#1B1238] to-[#0B0D17] opacity-80" />
+                        <div className="relative z-10 font-headline-md text-[#E0E0FF]">Space Sanctuary</div>
+                        <div className="relative z-10 text-sm text-[#A0A0C0] mt-2">Deep, calm, cinematic cosmic void for deep reflection and serenity.</div>
+                      </div>
+                      <div className="p-4 bg-white border-t border-outline-variant/30 flex justify-between items-center">
+                        <span className="text-sm font-medium text-on-surface-variant">
+                          {currentTheme === 'space' ? 'Active Theme' : ''}
+                        </span>
+                        <button 
+                          onClick={() => handleApplyTheme('space')}
+                          disabled={currentTheme === 'space' || loading}
+                          className="px-6 py-2 bg-[#2D2B55] text-white rounded-full font-label-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#3D3B65]"
+                        >
+                          {currentTheme === 'space' ? 'Active' : 'Apply Theme'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

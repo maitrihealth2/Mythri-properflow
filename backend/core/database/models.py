@@ -389,6 +389,16 @@ class UserFeatureAccess(Base):
     granted_at = Column(DateTime(timezone=True), default=func.now())
 
 
+class AppConfiguration(Base):
+    __tablename__ = "app_configuration"
+    __table_args__ = {'comment': 'Global application settings (e.g., global themes)'}
+
+    id = Column(Integer, primary_key=True, index=True)
+    config_key = Column(String(100), unique=True, index=True, nullable=False)
+    config_value = Column(String(255), nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+
+
 
 def get_db():
     db = SessionLocal()
