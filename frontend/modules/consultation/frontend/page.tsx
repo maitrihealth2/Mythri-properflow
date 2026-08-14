@@ -345,21 +345,19 @@ export default function ConsultationPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 w-full">
-                  {m.content.split('\n\n').filter(s => s.trim()).map((segment, idx, arr) => (
-                    <div key={idx} className={`frosted-blush ${idx === 0 ? 'rounded-tl-sm' : ''} bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20`}>
-                      <p className="text-body-lg leading-relaxed text-on-primary-fixed">
-                        <TypewriterText 
-                          text={segment.trim()} 
-                          animate={!!m.is_new} 
-                          onComplete={() => {
-                            if (idx === arr.length - 1 && m.exercise_trigger) {
-                              setExerciseMode(m.exercise_trigger)
-                            }
-                          }} 
-                        />
-                      </p>
-                    </div>
-                  ))}
+                  <div className="frosted-blush rounded-tl-sm bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
+                    <p className="text-body-lg leading-relaxed text-on-primary-fixed whitespace-pre-wrap">
+                      <TypewriterText 
+                        text={m.content.trim()} 
+                        animate={!!m.is_new} 
+                        onComplete={() => {
+                          if (m.exercise_trigger) {
+                            setExerciseMode(m.exercise_trigger)
+                          }
+                        }} 
+                      />
+                    </p>
+                  </div>
                   {/* Crisis & Helplines */}
                   {m.is_crisis && m.helplines && m.helplines.length > 0 && (
                     <div className="mt-2 p-4 bg-error-container/80 backdrop-blur-sm border border-error/20 rounded-xl">

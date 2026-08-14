@@ -130,60 +130,7 @@
   }
 }
 
-/* Space Theme Overrides */
-[data-theme="space"] {
-  --color-secondary-fixed-dim: #9EA5BE;
-  --color-surface-container-lowest: #05060D;
-  --color-primary-container: #1C203A;
-  --color-primary-fixed: #A3ADD7;
-  --color-tertiary-fixed: #9DBED8;
-  --color-primary-fixed-dim: #8E98C1;
-  --color-outline: #5B5F75;
-  --color-outline-variant: #3A3E54;
-  --color-on-secondary-fixed-variant: #2B3047;
-  --color-on-primary-fixed-variant: #282D46;
-  --color-on-error-container: #FFD2D8;
-  --color-tertiary-fixed-dim: #82A2B9;
-  --color-secondary: #3D4566;
-  --color-on-primary-container: #D1D9FF;
-  --color-primary: #212642;
-  --color-surface-dim: #070911;
-  --color-tertiary: #2D3E53;
-  --color-surface-container-low: #0A0D18;
-  --color-surface: #090B13;
-  --color-surface-container: #0D101C;
-  --color-on-primary: #E0E5FF;
-  --color-surface-container-high: #121525;
-  --color-on-tertiary-container: #D1EAFF;
-  --color-on-tertiary-fixed-variant: #1F2D40;
-  --color-surface-variant: #1F2338;
-  --color-on-secondary: #D4DAFF;
-  --color-on-primary-fixed: #111425;
-  --color-secondary-container: #2A304D;
-  --color-secondary-fixed: #C5CDFF;
-  --color-background: #090B13;
-  --color-surface-bright: #171A2A;
-  --color-inverse-on-surface: #090B13;
-  --color-on-secondary-container: #BCC3EF;
-  --color-inverse-surface: #E0E5F9;
-  --color-on-tertiary-fixed: #101B2B;
-  --color-inverse-primary: #38426B;
-  --color-surface-container-highest: #161A2D;
-  --color-surface-tint: #4B5784;
-  --color-on-surface-variant: #949AB4;
-  --color-on-error: #5C000B;
-  --color-error: #FFB3BB;
-  --color-on-surface: #D8DDF2;
-  --color-on-tertiary: #E3F1FF;
-  --color-tertiary-container: #233549;
-  --color-error-container: #830018;
-  --color-on-secondary-fixed: #13172A;
-  --color-on-background: #D8DDF2;
-  --color-plum-high-contrast: #E0E4FA;
-  
-  background-color: var(--color-background);
-  color: var(--color-on-surface);
-}
+
 
 @layer utilities {
   .hide-scrollbar::-webkit-scrollbar {
@@ -220,10 +167,6 @@
   .bg-immersive {
       background: linear-gradient(135deg, #fff8f5 0%, #f0e6e1 100%);
   }
-  
-  [data-theme="space"] .bg-immersive {
-      background: transparent;
-  }
 
   .bg-grain {
       position: fixed;
@@ -236,15 +179,6 @@
       transform: translateZ(0);
   }
 
-  [data-theme="space"] .bg-grain {
-      background-image: url('/themes/space/background.webp');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      opacity: 1;
-      filter: saturate(0.8) contrast(1.1);
-  }
-
   .frosted-card {
       background: rgba(255, 248, 245, 0.45);
       backdrop-filter: blur(12px) saturate(130%);
@@ -253,20 +187,10 @@
       box-shadow: 0 4px 16px 0 rgba(60, 31, 51, 0.03);
       transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s cubic-bezier(0.2, 0, 0, 1);
   }
-  
-  [data-theme="space"] .frosted-card {
-      background: rgba(9, 11, 19, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
-  }
 
   .frosted-card:hover {
       transform: translateY(-1px);
       box-shadow: 0 8px 24px 0 rgba(60, 31, 51, 0.06);
-  }
-
-  [data-theme="space"] .frosted-card:hover {
-      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.4);
   }
 
   .frosted-plum {
@@ -277,12 +201,6 @@
       box-shadow: 0 4px 12px 0 rgba(60, 31, 51, 0.1);
       color: #ffffff;
   }
-  
-  [data-theme="space"] .frosted-plum {
-      background: rgba(28, 32, 58, 0.85); /* primary-container */
-      border: 1px solid rgba(163, 173, 215, 0.3); /* primary-fixed */
-      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.3);
-  }
 
   .frosted-blush {
       background: rgba(255, 216, 230, 0.6); /* primary-fixed */
@@ -291,13 +209,6 @@
       border: 1px solid rgba(255, 255, 255, 0.6);
       box-shadow: 0 4px 12px 0 rgba(60, 31, 51, 0.03);
       color: #330e21; /* on-primary-fixed */
-  }
-
-  [data-theme="space"] .frosted-blush {
-      background: rgba(163, 173, 215, 0.6); /* primary-fixed */
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
-      color: #E0E5FF; /* on-primary */
   }
 
   @keyframes message-fade-up {
