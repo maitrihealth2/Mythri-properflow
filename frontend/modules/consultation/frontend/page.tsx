@@ -100,8 +100,11 @@ export default function ConsultationPage() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
     if (!token) { router.replace('/login'); return }
 
-    const storedLang = localStorage.getItem('mb_language')
-    if (storedLang) setLanguage(storedLang)
+    const savedLanguage = typeof window !== 'undefined' ? localStorage.getItem('mb_language') : null
+    if (savedLanguage) setLanguage(savedLanguage)
+    
+    const savedDraft = typeof window !== 'undefined' ? localStorage.getItem('mb_chat_draft') : null
+    if (savedDraft) setInput(savedDraft)
 
     const handleLangEvent = () => {
       const newLang = localStorage.getItem('mb_language')
@@ -176,6 +179,9 @@ export default function ConsultationPage() {
 
     try {
       const data = await sendMessage(sessionId, msg, language)
+      
+      // Clear draft on success
+      localStorage.removeItem('mb_chat_draft')
 
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -197,12 +203,16 @@ export default function ConsultationPage() {
       }
     } catch (err) {
       console.error("Chat send error:", err)
+      // Remove optimistic user message and restore input text
+      setMessages(prev => prev.slice(0, -1))
+      setInput(msg)
       setMessages(prev => [...prev, { role: 'assistant', content: 'Connection issue. Please try again.', is_new: true }])
     } finally { setLoading(false) }
   }
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
+    localStorage.setItem('mb_chat_draft', e.target.value)
     e.target.style.height = 'auto'
     e.target.style.height = `${e.target.scrollHeight}px`
   }
@@ -345,19 +355,21 @@ export default function ConsultationPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 w-full">
-                  <div className="frosted-blush rounded-tl-sm bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
-                    <p className="text-body-lg leading-relaxed text-on-primary-fixed whitespace-pre-wrap">
-                      <TypewriterText 
-                        text={m.content.trim()} 
-                        animate={!!m.is_new} 
-                        onComplete={() => {
-                          if (m.exercise_trigger) {
-                            setExerciseMode(m.exercise_trigger)
-                          }
-                        }} 
-                      />
-                    </p>
-                  </div>
+                  {m.content.split('\n\n').filter(s => s.trim()).map((segment, idx, arr) => (
+                    <div key={idx} className={`frosted-blush ${idx === 0 ? 'rounded-tl-sm' : ''} bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20`}>
+                      <p className="text-body-lg leading-relaxed text-on-primary-fixed">
+                        <TypewriterText 
+                          text={segment.trim()} 
+                          animate={!!m.is_new} 
+                          onComplete={() => {
+                            if (idx === arr.length - 1 && m.exercise_trigger) {
+                              setExerciseMode(m.exercise_trigger)
+                            }
+                          }} 
+                        />
+                      </p>
+                    </div>
+                  ))}
                   {/* Crisis & Helplines */}
                   {m.is_crisis && m.helplines && m.helplines.length > 0 && (
                     <div className="mt-2 p-4 bg-error-container/80 backdrop-blur-sm border border-error/20 rounded-xl">

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, RiskLog, User, ExerciseLog, UserPersonaProfile, UserOnboarding
+from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, MessageReasoning, RiskLog, User, ExerciseLog, UserPersonaProfile, UserOnboarding
 from providers.sarvam.sarvam_client import chat_with_maitri
 from rag.brain.emotion_detector import detect_emotion, detect_emotion_heuristic
 from rag.brain.analyst import should_skip_assessor, assess_turn
@@ -385,6 +385,17 @@ async def send_message(
             db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
         ai_msg = Message(session_id=session.id, role="assistant", content=ai_response, language=req.language)
         db.add(ai_msg)
+        db.flush()
+        
+        # Save reasoning for the AI message
+        reasoning_decision = case_file.get("runtime_state", {}).get("decision", "RESPOND")
+        db.add(MessageReasoning(
+            message_id=ai_msg.id,
+            session_id=session.id,
+            decision=reasoning_decision,
+            reasoning_context=case_file
+        ))
+        
         db.commit()
         
     await asyncio.to_thread(_save_messages)

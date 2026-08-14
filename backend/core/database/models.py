@@ -197,6 +197,7 @@ class Message(Base):
     # Relationships
     session = relationship("Session", back_populates="messages")
     emotion = relationship("MessageEmotion", back_populates="message", uselist=False, cascade="all, delete-orphan")
+    reasoning = relationship("MessageReasoning", back_populates="message", uselist=False, cascade="all, delete-orphan")
 
 
 class MessageEmotion(Base):
@@ -211,6 +212,20 @@ class MessageEmotion(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     message = relationship("Message", back_populates="emotion")
+
+
+class MessageReasoning(Base):
+    __tablename__ = "message_reasonings"
+    __table_args__ = {'comment': 'Tracks the Dialogue Manager case file context and why an AI response was generated'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), unique=True, nullable=False)
+    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), index=True, nullable=False)
+    decision = Column(String(50), nullable=True, comment="The high-level action decided (e.g. ASK, RESPOND)")
+    reasoning_context = Column(JSON, nullable=True, comment="The full case file or structural context used by the AI")
+    created_at = Column(DateTime(timezone=True), default=func.now())
+
+    message = relationship("Message", back_populates="reasoning")
 
 
 class CompanionMemory(Base):
