@@ -226,3 +226,65 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
     return response
 
 
+class BulkDeleteRequest(BaseModel):
+    user_ids: list[int]
+
+@router.post("/users/bulk-delete")
+async def bulk_delete_users(req: BulkDeleteRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    """Delete multiple users from the database and Firebase Auth."""
+    from core.logger.terminal import CommandCenter
+
+    admin_email = admin.get("email", "admin")
+
+    if not req.user_ids:
+        raise HTTPException(status_code=400, detail="No user IDs provided")
+
+    deleted = []
+    errors = []
+
+    # Check if Firebase Admin SDK is initialized
+    firebase_admin_available = False
+    try:
+        import firebase_admin
+        import firebase_admin.auth as fb_auth
+        firebase_admin_available = bool(firebase_admin._apps)
+    except ImportError:
+        pass
+
+    for uid in req.user_ids:
+        user = db.query(User).filter(User.id == uid).first()
+        if not user:
+            errors.append({"id": uid, "error": "User not found"})
+            continue
+
+        user_email = user.email
+        firebase_note = "skipped (Admin SDK not initialized)"
+
+        # 1. Delete from Firebase Auth (best-effort via Admin SDK)
+        if firebase_admin_available:
+            try:
+                fb_user = fb_auth.get_user_by_email(user_email)
+                fb_auth.delete_user(fb_user.uid)
+                firebase_note = "deleted from Firebase"
+                CommandCenter.log_db("ADMIN", f"Firebase user {fb_user.uid} ({user_email}) deleted")
+            except fb_auth.UserNotFoundError:
+                firebase_note = "not found in Firebase"
+            except Exception as fb_err:
+                firebase_note = f"Firebase error: {str(fb_err)}"
+                CommandCenter.log_db("ADMIN", f"Firebase delete failed for {user_email}: {fb_err}")
+
+        # 2. Delete from DB — cascade removes sessions, messages, profile, memory, etc.
+        try:
+            db.delete(user)
+            db.commit()
+            deleted.append({"id": uid, "email": user_email, "firebase": firebase_note})
+            CommandCenter.log_db("ADMIN", f"Admin {admin_email} deleted user {uid} ({user_email}) from DB")
+        except Exception as db_err:
+            db.rollback()
+            errors.append({"id": uid, "error": str(db_err)})
+
+    return {
+        "deleted": deleted,
+        "errors": errors,
+        "message": f"Deleted {len(deleted)} user(s). {len(errors)} error(s)."
+    }

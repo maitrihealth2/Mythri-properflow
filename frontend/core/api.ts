@@ -227,6 +227,12 @@ export const exportAdminUserData = async (userId: number) => {
   return response
 }
 
+export const deleteAdminUsers = async (userIds: number[]) => {
+  const response = await api.post('/api/admin/users/bulk-delete', { user_ids: userIds })
+  return response.data
+}
+
+
 // ==========================================
 // Profile
 // ==========================================

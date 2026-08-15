@@ -9,7 +9,8 @@ import {
   getAdminUserDetail,
   getAdminUserSessions,
   getAdminSessionMessages,
-  exportAdminUserData
+  exportAdminUserData,
+  deleteAdminUsers
 } from '@/core/api'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -139,6 +140,11 @@ export default function AdminDashboard() {
   const [consents, setConsents] = useState<ConsentRecord[]>([])
   const [feedbacks, setFeedbacks] = useState<FeedbackRecord[]>([])
   const [loading, setLoading] = useState(false)
+
+  // Multi-select + delete
+  const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set())
+  const [deleting, setDeleting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
   
   // Drill-down State
   const [activeUser, setActiveUser] = useState<UserDetailRecord | null>(null)
@@ -224,6 +230,38 @@ export default function AdminDashboard() {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // ─── Multi-select helpers ────────────────────────────────────────────────
+  const toggleUser = (id: number) => {
+    setSelectedUsers(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleAllUsers = () => {
+    if (selectedUsers.size === filteredUsers.length) {
+      setSelectedUsers(new Set())
+    } else {
+      setSelectedUsers(new Set(filteredUsers.map(u => u.id)))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedUsers.size === 0) return
+    setDeleting(true)
+    try {
+      await deleteAdminUsers(Array.from(selectedUsers))
+      setSelectedUsers(new Set())
+      setDeleteConfirm(false)
+      await loadData('users')
+    } catch (err) {
+      console.error('Bulk delete error:', err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -451,11 +489,63 @@ export default function AdminDashboard() {
               
               {/* Users Tab */}
               {activeTab === 'users' && (
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col gap-3">
+
+                  {/* ── Bulk delete bar ── */}
+                  {selectedUsers.size > 0 && (
+                    <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-5 py-3 shadow-sm">
+                      <span className="text-sm font-medium text-red-700">
+                        {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''} selected
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setSelectedUsers(new Set())}
+                          className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+                        >
+                          Clear
+                        </button>
+                        {!deleteConfirm ? (
+                          <button
+                            onClick={() => setDeleteConfirm(true)}
+                            className="px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-full hover:bg-red-700 transition-colors"
+                          >
+                            🗑 Delete Selected
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-red-700 font-medium">Are you sure?</span>
+                            <button
+                              onClick={handleBulkDelete}
+                              disabled={deleting}
+                              className="px-4 py-1.5 bg-red-700 text-white text-sm font-medium rounded-full hover:bg-red-800 transition-colors disabled:opacity-50"
+                            >
+                              {deleting ? 'Deleting…' : 'Yes, Delete'}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(false)}
+                              className="px-4 py-1.5 border border-outline-variant rounded-full text-sm hover:bg-surface transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-white shadow-sm">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                       <thead className="sticky top-0 z-10 bg-surface-dim font-label-md text-on-surface-variant border-b border-outline-variant/30">
                         <tr>
+                          <th className="p-4 w-10">
+                            <input
+                              type="checkbox"
+                              checked={filteredUsers.length > 0 && selectedUsers.size === filteredUsers.length}
+                              onChange={toggleAllUsers}
+                              className="w-4 h-4 accent-primary cursor-pointer"
+                              title="Select all"
+                            />
+                          </th>
                           <th className="p-4">User</th>
                           <th className="p-4">Email</th>
                           <th className="p-4 text-center">Sessions</th>
@@ -464,11 +554,29 @@ export default function AdminDashboard() {
                       </thead>
                       <tbody>
                         {filteredUsers.map(u => (
-                          <tr key={u.id} onClick={() => handleUserClick(u.id)} className="border-b last:border-0 border-outline-variant/30 hover:bg-primary/5 cursor-pointer transition-colors group">
-                            <td className="p-4 font-medium text-on-surface group-hover:text-primary transition-colors">{u.username}</td>
-                            <td className="p-4 text-on-surface-variant">{u.email}</td>
-                            <td className="p-4 text-center">{u.session_count}</td>
-                            <td className="p-4 text-right text-on-surface-variant">{new Date(u.created_at).toLocaleDateString()}</td>
+                          <tr
+                            key={u.id}
+                            className={`border-b last:border-0 border-outline-variant/30 transition-colors group ${
+                              selectedUsers.has(u.id) ? 'bg-red-50' : 'hover:bg-primary/5'
+                            }`}
+                          >
+                            <td className="p-4" onClick={e => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedUsers.has(u.id)}
+                                onChange={() => toggleUser(u.id)}
+                                className="w-4 h-4 accent-primary cursor-pointer"
+                              />
+                            </td>
+                            <td
+                              className="p-4 font-medium text-on-surface group-hover:text-primary transition-colors cursor-pointer"
+                              onClick={() => handleUserClick(u.id)}
+                            >
+                              {u.username}
+                            </td>
+                            <td className="p-4 text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>{u.email}</td>
+                            <td className="p-4 text-center cursor-pointer" onClick={() => handleUserClick(u.id)}>{u.session_count}</td>
+                            <td className="p-4 text-right text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>{new Date(u.created_at).toLocaleDateString()}</td>
                           </tr>
                         ))}
                       </tbody>
