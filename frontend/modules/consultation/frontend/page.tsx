@@ -493,7 +493,7 @@ export default function ConsultationPage() {
                     <p className="text-body-lg leading-relaxed text-white whitespace-pre-wrap">{m.content}</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2 w-full">
+                  <div className="flex flex-col gap-2">
                     <div className="frosted-blush rounded-tl-sm bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
                       <p className="text-body-lg leading-relaxed text-on-primary-fixed whitespace-pre-wrap">{m.content}</p>
                     </div>
