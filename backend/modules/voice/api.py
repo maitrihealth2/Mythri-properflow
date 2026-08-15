@@ -6,7 +6,7 @@ Full pipeline: audio → STT → crisis → emotion → RAG → LLM → TTS → 
 import base64
 import traceback
 import asyncio
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -81,6 +81,7 @@ async def handle_voice_turn(
     language: str,
     current_user: User,
     db: Session,
+    background_tasks: BackgroundTasks = None,
 ):
     """
     Process a single voice turn — IDENTICAL cognitive pipeline to text consultation:
@@ -123,8 +124,9 @@ async def handle_voice_turn(
     # ── Delegate to Existing Consultation Pipeline ────────────────────────────
     print(f"[VOICE] Routing text through centralized consultation pipeline...")
     from modules.consultation.api import send_message, ChatRequest
+    _bg = background_tasks if background_tasks is not None else BackgroundTasks()
     chat_req = ChatRequest(session_id=session_id, message=transcript, language=language)
-    chat_resp = await send_message(req=chat_req, current_user=current_user, db=db)
+    chat_resp = await send_message(req=chat_req, background_tasks=_bg, current_user=current_user, db=db)
     
     ai_response = chat_resp.response
     emotion_label = chat_resp.emotion
