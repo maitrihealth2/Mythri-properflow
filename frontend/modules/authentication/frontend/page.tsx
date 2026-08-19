@@ -159,67 +159,66 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex-1 w-full flex items-center justify-center relative overflow-hidden">
+    <div className="flex-1 w-full min-h-screen flex items-center justify-center md:justify-start relative overflow-hidden">
       <style dangerouslySetInnerHTML={{ __html: `
           @keyframes drawCheck {
               to { stroke-dashoffset: 0; }
           }
       `}} suppressHydrationWarning />
       
-      {/* Video Backgrounds */}
-      <video autoPlay loop muted playsInline className="hidden md:block fixed inset-0 w-full h-full object-cover z-0 pointer-events-none">
-          <source src="/desktop_bg.webm" type="video/webm" />
-      </video>
-      <video autoPlay loop muted playsInline className="block md:hidden fixed inset-0 w-full h-full object-cover z-0 pointer-events-none">
-          <source src="/mobile_bg.webm" type="video/webm" />
-      </video>
+      {/* Image Background */}
+      <img 
+          src="/assets/login%20page.jpeg" 
+          alt="Background" 
+          className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none" 
+      />
       
       {/* Overlay for better contrast */}
-      <div className="fixed inset-0 bg-plum-high-contrast/10 backdrop-blur-[2px] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-black/10 backdrop-blur-[2px] z-0 pointer-events-none"></div>
       
       {/* Main Authentication Container */}
-      <main className={`relative z-10 w-full max-w-[440px] m-auto px-margin-mobile animate-fade-in-up transition-opacity duration-500 ${authPhase === 'transitioning' ? 'opacity-0' : 'opacity-100'}`} style={{ animationDelay: '0.1s' }}>
-          <div className="frosted-card rounded-3xl px-8 py-6 md:px-10 md:py-8 flex flex-col items-center space-y-5 relative overflow-hidden">
+      <main className={`relative z-10 w-full max-w-[420px] mx-auto md:mx-0 md:ml-[10vw] px-6 md:px-0 animate-fade-in-up transition-opacity duration-500 ${authPhase === 'transitioning' ? 'opacity-0' : 'opacity-100'}`} style={{ animationDelay: '0.1s' }}>
+          <div className="bg-white/10 backdrop-blur-2xl border border-white/30 shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] rounded-[2.5rem] w-full px-6 py-8 md:px-10 flex flex-col items-center justify-center space-y-4 relative overflow-hidden">
               
               {/* The absolute overlay is removed because the verification UI is now inside the merged credential container */}
 
               {/* Brand Identity */}
-              <div className={`text-center transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 -translate-y-4 blur-sm pointer-events-none' : 'opacity-100 translate-y-0 blur-none'}`}>
-                  <h1 className="text-plum-high-contrast font-display-lg text-4xl md:text-5xl mb-1">Mythri</h1>
-                  <p className="text-on-surface-variant font-body-md text-sm md:text-base italic opacity-90">A digital sanctuary for the mind.</p>
+              <div className={`text-center transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 -translate-y-4 blur-sm pointer-events-none' : 'opacity-100 translate-y-0 blur-none'} -mt-2`}>
+                  <h1 className="text-white font-display-lg text-4xl md:text-5xl mb-1">Mythri</h1>
+                  <p className="text-white/70 font-body-md text-sm md:text-base italic opacity-90">A digital sanctuary for the mind.</p>
               </div>
 
               {/* Step 1: Auth Container */}
               <div id="authStep" className="w-full space-y-5 relative">
                   
                   {/* Tab Switcher */}
-                  <div className={`relative w-full flex border-b border-outline-variant/30 transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden border-transparent' : 'opacity-100 h-12'}`}>
+                  <div className={`relative w-full flex border-b border-white/20 transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden border-transparent' : 'opacity-100 h-12'}`}>
                       <button
-                          className={`flex-1 text-center font-label-md text-sm transition-colors ${mode === 'signin' ? 'text-plum-high-contrast' : 'text-on-surface-variant/70 hover:text-plum-high-contrast'}`}
+                          className={`flex-1 text-center font-label-md text-sm transition-colors ${mode === 'signin' ? 'text-white' : 'text-white/60 hover:text-white'}`}
                           onClick={() => { setMode('signin'); setError(''); }}
                           type="button" disabled={authPhase !== 'idle'}>
                           Sign in
                       </button>
                       <button
-                          className={`flex-1 text-center font-label-md text-sm transition-colors ${mode === 'create' ? 'text-plum-high-contrast' : 'text-on-surface-variant/70 hover:text-plum-high-contrast'}`}
+                          className={`flex-1 text-center font-label-md text-sm transition-colors ${mode === 'create' ? 'text-white' : 'text-white/60 hover:text-white'}`}
                           onClick={() => { setMode('create'); setError(''); }}
                           type="button" disabled={authPhase !== 'idle'}>
                           Create account
                       </button>
                       {/* Active Underline */}
-                      <div className="absolute bottom-0 left-0 w-1/2 h-0.5 bg-plum-high-contrast tab-underline transition-transform duration-300"
+                      <div className="absolute bottom-0 left-0 w-1/2 h-0.5 bg-white tab-underline transition-transform duration-300"
                           style={{ transform: mode === 'signin' ? 'translateX(0%)' : 'translateX(100%)' }}></div>
                   </div>
 
                   {/* Auth Form */}
-                  <form className="w-full space-y-4 relative" onSubmit={handleSubmit}>
+                  <form className="w-full space-y-3 relative" onSubmit={handleSubmit}>
                       
                       {/* Welcome Message (Dynamic) */}
-                      <div className={`text-center transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 scale-95 h-0 overflow-hidden mb-0' : 'opacity-100 scale-100 h-[60px] mb-2 space-y-1'}`}>
-                          <h2 className="text-plum-high-contrast font-headline-md text-2xl">
+                      <div className={`text-center transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 scale-95 h-0 overflow-hidden mb-0' : 'opacity-100 scale-100 h-[50px] mb-1 space-y-1'}`}>
+                          <h2 className="text-white font-headline-md text-xl md:text-2xl">
                               {mode === 'signin' ? 'Welcome back' : 'Join our sanctuary'}
                           </h2>
-                          <p className="text-on-surface-variant font-body-sm text-sm">
+                          <p className="text-white/70 font-body-sm text-xs md:text-sm">
                               {mode === 'signin' ? 'Please enter your credentials to continue.' : 'Begin your journey toward quiet reflection.'}
                           </p>
                       </div>
@@ -227,9 +226,9 @@ export default function LoginPage() {
                       {/* Name Field (Hidden for Sign In) */}
                       {mode === 'create' && (
                           <div className={`transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-[72px] space-y-1.5'} animate-fade-up`}>
-                              <label className="block font-label-md text-sm text-plum-high-contrast ml-1" htmlFor="name">Full name</label>
+                              <label className="block font-label-md text-sm text-white ml-1" htmlFor="name">Full name</label>
                               <input
-                                  className="w-full h-12 px-5 rounded-2xl border border-outline-variant/30 bg-white/40 font-body-md placeholder:text-outline/40 focus:bg-white/80 transition-all outline-none"
+                                  className="w-full h-12 px-5 rounded-2xl border border-white/20 bg-white/20 text-white font-body-md placeholder:text-white/50 focus:bg-white/30 transition-all outline-none"
                                   id="name" placeholder="John Doe" type="text"
                                   value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                                   required
@@ -278,12 +277,12 @@ export default function LoginPage() {
                           <div className={`flex flex-col justify-center transition-all duration-700 ease-in-out ${
                               authPhase !== 'idle' ? 'h-10 opacity-0 pointer-events-none' : 'h-[72px] opacity-100'
                           }`}>
-                              <label className={`block font-label-md text-sm text-plum-high-contrast ml-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`} htmlFor="email">Email address</label>
+                              <label className={`block font-label-md text-sm text-white ml-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`} htmlFor="email">Email address</label>
                               <input
-                                  className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-outline/40 transition-all duration-700 outline-none ${
+                                  className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-white/50 transition-all duration-700 outline-none ${
                                       authPhase !== 'idle' 
                                       ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
-                                      : 'bg-white/40 border border-outline-variant/30 focus:bg-white/80 text-on-surface'
+                                      : 'bg-white/20 border border-white/20 focus:bg-white/30 text-white'
                                   }`}
                                   id="email" placeholder="name@example.com" required type="email"
                                   value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
@@ -297,24 +296,24 @@ export default function LoginPage() {
                           }`}>
                               <div className="flex flex-col justify-center relative flex-1 h-full">
                                   <div className={`flex justify-between items-center px-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`}>
-                                      <label className="font-label-md text-sm text-plum-high-contrast" htmlFor="password">Password</label>
+                                      <label className="font-label-md text-sm text-white" htmlFor="password">Password</label>
                                       {mode === 'signin' && (
-                                          <button className="font-label-md text-primary/70 hover:text-plum-high-contrast transition-colors text-xs" onClick={handleForgotPassword} type="button" disabled={authPhase !== 'idle'}>Forgot?</button>
+                                          <button className="font-label-md text-white/70 hover:text-white transition-colors text-xs" onClick={handleForgotPassword} type="button" disabled={authPhase !== 'idle'}>Forgot?</button>
                                       )}
                                   </div>
                                   <div className="relative h-12">
                                       <input
-                                          className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-outline/40 transition-all duration-700 outline-none ${
+                                          className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-white/50 transition-all duration-700 outline-none ${
                                               authPhase !== 'idle' 
                                               ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
-                                              : 'bg-white/40 border border-outline-variant/30 focus:bg-white/80 text-on-surface'
+                                              : 'bg-white/20 border border-white/20 focus:bg-white/30 text-white'
                                           }`}
                                           id="password" placeholder="••••••••" required type={showPassword ? 'text' : 'password'}
                                           value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                                           disabled={authPhase !== 'idle'}
                                       />
                                       <button
-                                          className={`absolute right-4 top-1/2 -translate-y-1/2 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'text-on-surface-variant/50 hover:text-plum-high-contrast flex items-center'}`}
+                                          className={`absolute right-4 top-1/2 -translate-y-1/2 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'text-white/60 hover:text-white flex items-center'}`}
                                           onClick={() => setShowPassword(!showPassword)} type="button" disabled={authPhase !== 'idle'}>
                                           <span className="material-symbols-outlined text-[18px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
                                       </button>
@@ -325,21 +324,21 @@ export default function LoginPage() {
                               {mode === 'create' && (
                                   <div className={`flex flex-col justify-center relative flex-1 h-full transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`}>
                                       <div className="flex justify-between items-center px-1 mb-1.5">
-                                          <label className="font-label-md text-sm text-plum-high-contrast" htmlFor="confirmPassword">Confirm</label>
+                                          <label className="font-label-md text-sm text-white" htmlFor="confirmPassword">Confirm</label>
                                       </div>
                                       <div className="relative h-12">
                                           <input
-                                              className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-outline/40 transition-all duration-700 outline-none ${
+                                              className={`w-full h-12 px-5 rounded-2xl font-body-md placeholder:text-white/50 transition-all duration-700 outline-none ${
                                                   authPhase !== 'idle' 
                                                   ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
-                                                  : 'bg-white/40 border border-outline-variant/30 focus:bg-white/80 text-on-surface'
+                                                  : 'bg-white/20 border border-white/20 focus:bg-white/30 text-white'
                                               }`}
                                               id="confirmPassword" placeholder="••••••••" required type={showConfirmPassword ? 'text' : 'password'}
                                               value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
                                               disabled={authPhase !== 'idle'}
                                           />
                                           <button
-                                              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-plum-high-contrast transition-colors flex items-center"
+                                              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors flex items-center"
                                               onClick={() => setShowConfirmPassword(!showConfirmPassword)} type="button" disabled={authPhase !== 'idle'}>
                                               <span className="material-symbols-outlined text-[18px]">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
                                           </button>
@@ -367,7 +366,7 @@ export default function LoginPage() {
 
                       {/* Submit Button */}
                       <button
-                          className={`w-full bg-plum-high-contrast text-white font-label-md text-sm rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all duration-500 flex justify-center items-center gap-2 shadow-xl shadow-plum-high-contrast/20 disabled:opacity-50 mt-2 ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden p-0 border-0 mt-0' : 'h-12 opacity-100'}`}
+                          className={`w-full bg-white text-black font-label-md text-sm rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all duration-500 flex justify-center items-center gap-2 shadow-xl shadow-white/10 disabled:opacity-50 mt-1 ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden p-0 border-0 mt-0' : 'h-12 opacity-100'}`}
                           type="submit" disabled={authPhase !== 'idle'}>
                           <span>{mode === 'signin' ? 'Continue to Sanctuary' : 'Create Account'}</span>
                           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -376,13 +375,13 @@ export default function LoginPage() {
 
                   {/* Social/Other Methods */}
                   <div className={`w-full transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-24'} animate-fade-up`}>
-                      <div className="flex items-center gap-4 mb-3">
-                          <div className="h-[1px] flex-1 bg-outline-variant/20"></div>
-                          <span className="font-label-md text-[10px] text-outline/50 uppercase tracking-widest">or</span>
-                          <div className="h-[1px] flex-1 bg-outline-variant/20"></div>
+                      <div className="flex items-center gap-4 mb-2 md:mb-3">
+                          <div className="h-[1px] flex-1 bg-white/20"></div>
+                          <span className="font-label-md text-[10px] text-white/50 uppercase tracking-widest">or</span>
+                          <div className="h-[1px] flex-1 bg-white/20"></div>
                       </div>
                       <button
-                          className="w-full h-12 border border-outline-variant/30 bg-white/20 text-plum-high-contrast font-label-md text-sm rounded-2xl hover:bg-white/40 transition-colors flex justify-center items-center gap-3 disabled:opacity-50"
+                          className="w-full h-12 border border-white/30 bg-white/10 text-white font-label-md text-sm rounded-2xl hover:bg-white/20 transition-colors flex justify-center items-center gap-3 disabled:opacity-50"
                           type="button" onClick={handleGoogleLogin} disabled={authPhase !== 'idle'}>
                           <svg className="w-5 h-5" viewBox="0 0 24 24">
                               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>

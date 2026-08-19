@@ -26,7 +26,7 @@ export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [greeting, setGreeting] = useState('Good morning')
   const [stats, setStats] = useState<any>(null)
-  const { theme } = useTheme()
+  const { theme, resolvedTheme } = useTheme()
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
       {/* Ambient Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#fff8f5] dark:bg-black">
-        <div className={`absolute inset-0 bg-cover bg-center opacity-50 ${theme === 'dark' ? "bg-[url('/assets/Gemini_Generated_Image_psevl6psevl6psev-clean.png')]" : "bg-[url('/assets/background.png')]"}`}></div>
+        <div className={`absolute inset-0 bg-cover bg-center opacity-50 ${resolvedTheme === 'dark' ? "bg-[url('/assets/Gemini_Generated_Image_psevl6psevl6psev-clean.png')]" : "bg-[url('/assets/background.png')]"}`}></div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#fff8f5]/60 via-transparent to-[#fff8f5]/80 dark:from-black/60 dark:to-black/80"></div>
         <div className="absolute inset-0 bg-grain opacity-[0.03] mix-blend-overlay"></div>
       </div>
