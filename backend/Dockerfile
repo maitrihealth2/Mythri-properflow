@@ -24,8 +24,12 @@ COPY . .
 
 # Create a non-root user and grant ownership
 RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
 
+# Set up Hugging Face cache directory for transformers
+ENV HF_HOME=/app/.cache/huggingface
+RUN mkdir -p $HF_HOME && chown -R appuser:appuser /app/.cache
+
+USER appuser
 # Expose port
 EXPOSE 8000
 
