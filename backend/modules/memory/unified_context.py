@@ -47,6 +47,8 @@ class UnifiedCognitiveProfile:
     primary_goal: str = "Personal growth & emotional balance"
     goals: List[str] = field(default_factory=list)
     reasons_for_joining: List[str] = field(default_factory=list)
+    initial_emotion: str = ""
+    check_in_preference: str = ""
     
     # Persona & Clinical Profile
     presenting_problem: str = ""
@@ -89,16 +91,20 @@ class UnifiedCognitiveProfile:
             id_parts.append(f"Style: {self.conversation_style}")
         if self.communication_mode:
             id_parts.append(f"Mode: {self.communication_mode}")
+        if self.check_in_preference:
+            id_parts.append(f"Check-ins: {self.check_in_preference}")
         sections.append(f"[USER IDENTITY & PREFERENCES]\n• " + " | ".join(id_parts))
 
         # 2. THERAPEUTIC GOALS & REASONS
         goal_items = []
         if self.primary_goal:
-            goal_items.append(f"Primary Goal: {self.primary_goal}")
+            goal_items.append(f"Primary Goal/Vibe: {self.primary_goal}")
         if self.goals:
             goal_items.append(f"Goals: {', '.join(self.goals)}")
         if self.reasons_for_joining:
             goal_items.append(f"Motivations: {', '.join(self.reasons_for_joining)}")
+        if self.initial_emotion:
+            goal_items.append(f"Current Feeling: {self.initial_emotion}")
         if goal_items:
             sections.append(f"[THERAPEUTIC GOALS & MOTIVATIONS]\n• " + "\n• ".join(goal_items))
 
@@ -194,6 +200,8 @@ class UnifiedCognitiveContextEngine:
                     if onboarding.get("conversation_style"): profile.conversation_style = onboarding.get("conversation_style")
                     if onboarding.get("communication_mode"): profile.communication_mode = onboarding.get("communication_mode")
                     if onboarding.get("primary_goal"): profile.primary_goal = onboarding.get("primary_goal")
+                    if onboarding.get("initial_emotion"): profile.initial_emotion = onboarding.get("initial_emotion")
+                    if onboarding.get("check_in_preference"): profile.check_in_preference = onboarding.get("check_in_preference")
                     if onboarding.get("goals") and isinstance(onboarding.get("goals"), list): profile.goals = onboarding.get("goals")
                     if onboarding.get("reasons") and isinstance(onboarding.get("reasons"), list): profile.reasons_for_joining = onboarding.get("reasons")
                 

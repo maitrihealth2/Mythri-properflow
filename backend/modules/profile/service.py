@@ -25,7 +25,7 @@ load_dotenv(_BASE / ".env.local", override=True)
 
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
-MODEL = "sarvam-105b"
+MODEL = "sarvam-105b-conversations"
 
 LIFE_DOMAINS = [
     "work", "career", "relationships", "family", "health", "identity",

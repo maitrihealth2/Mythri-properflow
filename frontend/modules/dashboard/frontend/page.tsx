@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getDashboardStats, getOnboardingStatus } from '@/core/api'
+import { getDashboardStats, getOnboardingStatus, logout } from '@/core/api'
 
 const getMoodIcon = (mood: string) => {
   switch (mood?.toLowerCase()) {
@@ -123,8 +123,10 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-            <button onClick={() => { 
+            <button onClick={async () => { 
+              await logout();
               localStorage.clear(); 
+              sessionStorage.removeItem('mb_session_id');
               document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
               router.replace('/login'); 
             }} className="text-error hover:bg-error/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">

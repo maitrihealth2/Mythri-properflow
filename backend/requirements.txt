@@ -57,3 +57,5 @@ langchain-text-splitters
 ytmusicapi>=1.12.1
 yt-dlp>=2024.0.0
 
+# ── Telemetry ──────────────────────────────────────────────────────────────────
+sentry-sdk[fastapi]>=2.5.0

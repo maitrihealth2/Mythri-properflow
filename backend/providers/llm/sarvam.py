@@ -10,6 +10,7 @@ from providers.llm.config import PROVIDER_TIMEOUT
 from providers.llm.exceptions import (
     ProviderConfigurationError,
     ProviderEmptyResponseError,
+    ProviderError,
     ProviderNetworkError,
     ProviderRateLimitError,
     ProviderServerError,
@@ -21,7 +22,7 @@ from providers.llm.provider_base import LLMProviderBase
 # Pull from env since it's specific to Sarvam
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 SARVAM_BASE_URL = "https://api.sarvam.ai/v1"
-SARVAM_MODEL = "sarvam-105b"
+SARVAM_MODEL = "sarvam-105b-conversations"
 
 
 class SarvamProvider(LLMProviderBase):
@@ -69,8 +70,8 @@ class SarvamProvider(LLMProviderBase):
     ):
         client = self._get_client()
         try:
-            safe_max_tokens = max(max_tokens, 4096)
-            
+            safe_max_tokens = min(max(max_tokens, 256), 2048)
+
             response = await client.chat.completions.create(
                 model=self.model,
                 messages=api_messages,
@@ -78,17 +79,56 @@ class SarvamProvider(LLMProviderBase):
                 temperature=temperature,
                 stream=True,
             )
-            
+
+            # Stateful buffer to strip <think>…</think> blocks that may span chunks
+            buf = ""
+            in_think = False
+
             async for chunk in response:
                 if not chunk.choices:
                     continue
                 delta = chunk.choices[0].delta
-                if getattr(delta, "content", None):
-                    # Filter out think tags immediately if they stream in
-                    content = delta.content
-                    if "<think>" in content or "</think>" in content:
-                        continue # simple filter
-                    yield content
+                if not getattr(delta, "content", None):
+                    continue
+
+                buf += delta.content
+
+                # Drain the buffer: strip any complete <think>…</think> blocks,
+                # yield everything before them, and handle partial open tags.
+                output = ""
+                while True:
+                    if in_think:
+                        end = buf.find("</think>")
+                        if end == -1:
+                            # Still inside a think block, hold the whole buffer
+                            break
+                        # Consume through </think>
+                        buf = buf[end + len("</think>"):]
+                        in_think = False
+                    else:
+                        start = buf.find("<think>")
+                        if start == -1:
+                            # No think block — but guard against partial tag at tail
+                            # e.g. buffer ends with "<thi" — hold those chars back
+                            safe_end = len(buf)
+                            for partial_len in range(1, len("<think>")):
+                                if buf.endswith("<think>"[:partial_len]):
+                                    safe_end = len(buf) - partial_len
+                                    break
+                            output += buf[:safe_end]
+                            buf = buf[safe_end:]
+                            break
+                        # Yield content before the think block
+                        output += buf[:start]
+                        buf = buf[start + len("<think>"):]
+                        in_think = True
+
+                if output:
+                    yield output
+
+            # Flush any remaining buffer after stream ends
+            if buf and not in_think:
+                yield buf
 
         except APITimeoutError as e:
             raise ProviderTimeoutError(f"Sarvam timed out: {e}") from e

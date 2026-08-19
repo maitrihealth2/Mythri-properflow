@@ -78,6 +78,7 @@ api.interceptors.response.use(
           localStorage.removeItem('mb_token')
           localStorage.removeItem('mb_username')
           localStorage.removeItem('mb_language')
+          sessionStorage.removeItem('mb_session_id')
           document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
           window.location.href = '/login'
           return Promise.reject(err);
@@ -110,6 +111,14 @@ export async function googleLogin(idToken: string) {
 export async function getMe() {
   const res = await api.get('/api/auth/me')
   return res.data
+}
+
+export async function logout() {
+  try {
+    await api.post('/api/auth/logout')
+  } catch (err) {
+    console.error('Logout API failed', err)
+  }
 }
 
 export async function getOnboardingStatus() {

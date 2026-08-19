@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { startSession, sendMessage, getTranscript } from '@/core/api'
+import { startSession, sendMessage, getTranscript, logout } from '@/core/api'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
+import { motion } from 'framer-motion'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,25 @@ const INPUT_PLACEHOLDERS: Record<string, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+const AmbientBackground = ({ isAiActive }: { isAiActive: boolean }) => {
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#FFFDF9]">
+      <motion.img
+        src="/mythri_gradient_bg.jpg"
+        alt="Ambient Background"
+        className="absolute inset-0 w-full h-full object-cover"
+        animate={{ 
+          scale: isAiActive ? [1.02, 1.05, 1.02] : [1, 1.02, 1],
+          opacity: isAiActive ? [0.9, 1, 0.9] : [0.7, 0.85, 0.7]
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* Central Softener / Mask to ensure readability */}
+      <div className="absolute inset-0 bg-[#FFFDF9]/30" />
+    </div>
+  )
+}
+
 export default function ConsultationPage() {
   const router = useRouter()
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -66,6 +86,7 @@ export default function ConsultationPage() {
   const [activeBubbleText, setActiveBubbleText] = useState('')
   // ── ──────────────────────────────────────────────────────────────────────────
 
+
   const [menuOpen, setMenuOpen] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [exerciseMode, setExerciseMode] = useState<string | null>(null)
@@ -74,6 +95,7 @@ export default function ConsultationPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const initialized = useRef(false)
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const sendingRef = useRef(false)
 
   const inputPlaceholder = INPUT_PLACEHOLDERS[language] || INPUT_PLACEHOLDERS['en-IN']
 
@@ -221,24 +243,44 @@ export default function ConsultationPage() {
    *   - Result: DB always holds ONE assistant message; UI renders sequential bubbles
    */
   const handleTextSend = async (text?: string) => {
+    if (sendingRef.current) return
     const msg = (text || input).trim()
     if (!msg || !sessionId || loading) return
+    
+    sendingRef.current = true
     setInput('')
     setLoading(true)
     setMessages(prev => [...prev, { role: 'user', content: msg, via: 'text', is_new: true }])
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
+    let fullContent = ''      // complete accumulated text from this response
+    let processedChars = 0   // chars of fullContent already pushed to bubbleQueue
+
     try {
-      const token = localStorage.getItem('mb_token') || ''
-      const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
-      const res = await fetch(`${apiUrl}/api/consultation/message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ session_id: sessionId, message: msg, language }),
-      })
+      const doFetch = async (isRetry = false): Promise<Response> => {
+        const token = localStorage.getItem('mb_token') || ''
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+        const res = await fetch(`${apiUrl}/api/consultation/message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ session_id: sessionId, message: msg, language }),
+        })
+
+        if (res.status === 401 && !isRetry) {
+          try {
+            await api.get('/api/auth/me') // Trigger interceptor to refresh token
+          } catch {
+            throw new Error('AUTH_FAILED')
+          }
+          return doFetch(true)
+        }
+        return res
+      }
+
+      const res = await doFetch()
 
       if (res.status === 404) {
         sessionStorage.removeItem('mb_session_id')
@@ -254,10 +296,9 @@ export default function ConsultationPage() {
       if (!reader) throw new Error('No readable stream')
 
       const decoder = new TextDecoder()
-      let fullContent = ''      // complete accumulated text from this response
       let metadataObj: any = null
       let ndjsonBuffer = ''
-      let processedChars = 0   // chars of fullContent already pushed to bubbleQueue
+      let firstSegmentQueued = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -276,10 +317,37 @@ export default function ConsultationPage() {
             } else if (data.type === 'chunk') {
               fullContent += data.text
 
-              // Natural boundary detection: only split on paragraph breaks (\n\n).
-              // Network chunk boundaries are NOT semantic — accumulate until \n\n found.
               let unprocessed = fullContent.slice(processedChars)
-              while (unprocessed.includes('\n\n')) {
+
+              if (!firstSegmentQueued) {
+                // First-bubble responsiveness: don't wait for \n\n if a sentence ends early.
+                const nnIdx = unprocessed.indexOf('\n\n')
+                const match = unprocessed.match(/([.!?])\s/)
+                
+                let splitIdx = -1
+                let skip = 0
+                
+                if (nnIdx !== -1) {
+                  splitIdx = nnIdx
+                  skip = 2
+                } else if (match && match.index !== undefined && match.index > 15) {
+                  splitIdx = match.index + 1
+                  skip = 0
+                }
+                
+                if (splitIdx !== -1) {
+                  const segment = unprocessed.slice(0, splitIdx).trim()
+                  if (segment) {
+                    setBubbleQueue(prev => [...prev, { content: segment }])
+                  }
+                  processedChars += splitIdx + skip
+                  unprocessed = fullContent.slice(processedChars)
+                  firstSegmentQueued = true
+                }
+              }
+
+              // Natural boundary detection: split on paragraph breaks (\n\n) for subsequent bubbles.
+              while (firstSegmentQueued && unprocessed.includes('\n\n')) {
                 const nnIdx = unprocessed.indexOf('\n\n')
                 const segment = unprocessed.slice(0, nnIdx).trim()
                 if (segment) {
@@ -327,8 +395,15 @@ export default function ConsultationPage() {
 
       localStorage.removeItem('mb_chat_draft')
 
-    } catch (err) {
+    } catch (err: any) {
+      if (err.message === 'AUTH_FAILED') return // Interceptor will redirect to login
       console.error('Chat send error:', err)
+      
+      const remaining = fullContent.slice(processedChars).trim()
+      if (remaining) {
+        setBubbleQueue(prev => [...prev, { content: remaining, is_last_in_group: false }])
+      }
+      
       setBubbleQueue(prev => [
         ...prev,
         {
@@ -338,6 +413,7 @@ export default function ConsultationPage() {
       ])
     } finally {
       setLoading(false)
+      sendingRef.current = false
     }
   }
 
@@ -393,14 +469,12 @@ export default function ConsultationPage() {
     </div>
   )
 
+  const isAiActive = loading || activeBubble !== null
+
   // ─── Main UI ───────────────────────────────────────────────────────────────
   return (
     <div className="relative flex flex-col min-h-[100dvh] w-full">
-      <div
-        className="fixed inset-0 w-full h-[100dvh] bg-cover bg-center bg-no-repeat z-0"
-        style={{ backgroundImage: "url('/assets/mythri-chat-scenery.png')" }}
-      />
-      <div className="fixed inset-0 w-full h-[100dvh] bg-white/10 md:bg-white/5 pointer-events-none z-0" />
+      <AmbientBackground isAiActive={isAiActive} />
       <ExerciseOverlay exerciseMode={exerciseMode} onClose={() => setExerciseMode(null)} />
 
       <style dangerouslySetInnerHTML={{ __html: `
@@ -435,7 +509,7 @@ export default function ConsultationPage() {
             <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">person</span> Profile</Link>
             <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">feedback</span> Feedback</Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2" />
-            <button onClick={() => { localStorage.clear(); router.replace('/login') }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full"><span className="material-symbols-outlined text-[20px]">logout</span> Logout</button>
+            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login') }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full"><span className="material-symbols-outlined text-[20px]">logout</span> Logout</button>
           </nav>
 
           {/* Language menu */}
@@ -521,7 +595,7 @@ export default function ConsultationPage() {
             )
           })}
 
-          {/* ── Active bubble (currently typing) ── */}
+          {/* ── Active bubble (currently typing out via animation) ── */}
           {activeBubble && (
             <div className="flex flex-col items-start max-w-[90%] md:max-w-[65%] animate-msg-enter">
               {showMythriLabelOnActive && (
@@ -536,7 +610,7 @@ export default function ConsultationPage() {
             </div>
           )}
 
-          {/* ── Breathing dots: TTFT wait (loading but nothing typed yet) ── */}
+          {/* ── Breathing dots: TTFT wait (loading, nothing streaming or typing yet) ── */}
           {showLoadingDots && (
             <div className="flex flex-col items-start animate-msg-enter">
               {(!messages.length || messages[messages.length - 1].role !== 'assistant') && (

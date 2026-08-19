@@ -11,7 +11,7 @@ logger = logging.getLogger("security")
 # Format: {ip_address: (count, reset_time)}
 RATE_LIMIT_STORE: Dict[str, Tuple[int, float]] = {}
 DEFAULT_RATE_LIMIT = 100  # requests per minute
-AUTH_RATE_LIMIT = 10      # requests per minute for auth routes
+AUTH_RATE_LIMIT = 60      # requests per minute for auth routes
 RATE_LIMIT_WINDOW = 60    # 60 seconds
 
 class SecurityMiddleware(BaseHTTPMiddleware):

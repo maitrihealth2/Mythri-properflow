@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-import { getProfile, updateProfile } from '@/core/api'
+import { getProfile, updateProfile, logout } from '@/core/api'
 
 export default function ProfilePage() {
     const router = useRouter()
@@ -68,9 +68,11 @@ export default function ProfilePage() {
         })
     }, [router])
 
-    const handleLogout = (e: React.MouseEvent) => {
+    const handleLogout = async (e: React.MouseEvent) => {
         e.preventDefault()
+        await logout()
         localStorage.clear()
+        sessionStorage.removeItem('mb_session_id')
         router.replace('/login')
     }
 

@@ -14,6 +14,14 @@ load_dotenv(_BACKEND_DIR / ".env.local", override=True)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://745686ad2b61b972ce0225326e2afed4@o4511751388725248.ingest.us.sentry.io/4511751653425152",
+    # Add data like request headers and IP for users,
+    send_default_pii=True,
+)
+
 from contextlib import asynccontextmanager
 import traceback
 from fastapi.responses import JSONResponse
@@ -192,6 +200,10 @@ register_exception_handlers(app)
 async def favicon():
     from fastapi import Response
     return Response(status_code=204)
+
+@app.get("/sentry-debug")
+async def trigger_error():
+    division_by_zero = 1 / 0
 
 @app.get("/health")
 def health():
