@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getDashboardStats, getOnboardingStatus, logout } from '@/core/api'
+import ThemeToggle from '@/shared/components/ThemeToggle'
+import { useTheme } from 'next-themes'
 
 const getMoodIcon = (mood: string) => {
   switch (mood?.toLowerCase()) {
@@ -24,6 +26,7 @@ export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [greeting, setGreeting] = useState('Good morning')
   const [stats, setStats] = useState<any>(null)
+  const { theme } = useTheme()
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
@@ -90,36 +93,47 @@ export default function DashboardPage() {
           background: rgba(255, 255, 255, 0.65);
           box-shadow: 0 15px 50px rgba(60, 31, 51, 0.05);
         }
+        .dark .glass-panel {
+          background: rgba(18, 18, 18, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        .dark .glass-panel:hover {
+          background: rgba(30, 30, 30, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+        }
       `}} />
 
       {/* Ambient Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#fff8f5]">
-        <div className="absolute inset-0 bg-[url('/assets/background.png')] bg-cover bg-center opacity-50"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#fff8f5]/60 via-transparent to-[#fff8f5]/80"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#fff8f5] dark:bg-black">
+        <div className={`absolute inset-0 bg-cover bg-center opacity-50 ${theme === 'dark' ? "bg-[url('/assets/Gemini_Generated_Image_psevl6psevl6psev-clean.png')]" : "bg-[url('/assets/background.png')]"}`}></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#fff8f5]/60 via-transparent to-[#fff8f5]/80 dark:from-black/60 dark:to-black/80"></div>
         <div className="absolute inset-0 bg-grain opacity-[0.03] mix-blend-overlay"></div>
       </div>
 
       {/* Navigation */}
-      <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up glass-panel border-b border-white/60" style={{ animationDelay: '0.1s' }}>
+      <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up glass-panel border-b border-white/60 dark:border-white/10" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center gap-4">
           <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
         </div>
-        <div className="relative">
+        <div className="relative flex items-center gap-2">
+          <ThemeToggle />
           <button onClick={() => setMenuOpen(!menuOpen)} className="w-12 h-12 flex items-center justify-center rounded-full glass-panel text-primary transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] z-50">
             <span className="material-symbols-outlined text-[24px]">grid_view</span>
           </button>
           
-          <nav className={`absolute right-0 top-[110%] w-56 bg-white/70 backdrop-blur-3xl border border-white/60 shadow-2xl rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${menuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-primary font-bold bg-white/80 px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md transition-colors">
+          <nav className={`absolute right-0 top-[110%] w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${menuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+            <Link href="/home" className="text-primary font-bold bg-white/80 dark:bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md transition-colors">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
-            <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+            <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
-            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
-            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
@@ -129,7 +143,7 @@ export default function DashboardPage() {
               sessionStorage.removeItem('mb_session_id');
               document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
               router.replace('/login'); 
-            }} className="text-error hover:bg-error/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
+            }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>

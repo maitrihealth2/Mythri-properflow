@@ -17,7 +17,7 @@ export default function BottomNav() {
   if (pathname === '/login' || pathname?.startsWith('/voice')) return null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-around items-center bg-white/70 backdrop-blur-2xl py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.06)] border-t border-white/40">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-around items-center bg-white/70 dark:bg-[#121212]/90 backdrop-blur-2xl py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.5)] border-t border-white/40 dark:border-white/10">
       {navItems.map(({ href, label, icon }) => {
         const isActive = pathname === href
         return (
@@ -25,7 +25,7 @@ export default function BottomNav() {
             key={href}
             href={href}
             className={`flex flex-col items-center justify-center w-16 gap-0.5 transition-transform duration-150 hover:scale-[1.01] active:scale-[0.98] ${
-              isActive ? 'text-primary' : 'text-on-surface-variant/60 hover:text-primary'
+              isActive ? 'text-primary' : 'text-on-surface-variant/60 dark:text-white/60 hover:text-primary dark:hover:text-primary'
             }`}
           >
             {isActive ? (

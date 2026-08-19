@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 import { getProfile, updateProfile, logout } from '@/core/api'
+import ThemeToggle from '@/shared/components/ThemeToggle'
+import { useTheme } from 'next-themes'
 
 export default function ProfilePage() {
     const router = useRouter()
@@ -37,6 +39,7 @@ export default function ProfilePage() {
     })
 
     const [activeSection, setActiveSection] = useState('personal')
+    const { theme } = useTheme()
 
     useEffect(() => {
         setMounted(true)
@@ -156,15 +159,25 @@ export default function ProfilePage() {
                 .animate-ring-spin { animation: ring-spin 20s linear infinite; }
                 
                 .glass-panel-premium {
-                    background: rgba(255, 255, 255, 0.45);
-                    backdrop-filter: blur(28px) saturate(150%);
-                    -webkit-backdrop-filter: blur(28px) saturate(150%);
+                    background: rgba(255, 248, 245, 0.45);
+                    backdrop-filter: blur(24px) saturate(140%);
+                    -webkit-backdrop-filter: blur(24px) saturate(140%);
                     border: 1px solid rgba(255, 255, 255, 0.7);
-                    box-shadow: 0 10px 40px rgba(60, 31, 51, 0.03), inset 0 1px 0 rgba(255,255,255,0.8);
+                    box-shadow: 0 10px 40px rgba(60, 31, 51, 0.03);
                 }
                 .glass-panel-premium:hover {
-                    background: rgba(255, 255, 255, 0.55);
-                    box-shadow: 0 15px 50px rgba(60, 31, 51, 0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+                    background: rgba(255, 248, 245, 0.6);
+                    box-shadow: 0 15px 50px rgba(60, 31, 51, 0.05);
+                }
+                .dark .glass-panel-premium {
+                    background: rgba(18, 18, 18, 0.6);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                }
+                .dark .glass-panel-premium:hover {
+                    background: rgba(30, 30, 30, 0.7);
+                    border: 1px solid rgba(255, 255, 255, 0.25);
+                    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
                 }
                 .glass-input {
                     background: rgba(255, 255, 255, 0.5);
@@ -179,11 +192,11 @@ export default function ProfilePage() {
             `}} />
 
             {/* Enhanced Background with Mesh Gradients & Particles */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute inset-0 bg-[#fff8f5]"></div>
-                <div className="absolute inset-0 bg-grain opacity-[0.04] mix-blend-overlay"></div>
-                <div className="absolute top-[-10%] left-[-5%] w-[50vw] h-[50vw] rounded-full bg-secondary-container/40 mix-blend-multiply filter blur-[120px] animate-float-slow"></div>
-                <div className="absolute bottom-[-10%] right-[-5%] w-[60vw] h-[60vw] rounded-full bg-primary-container/40 mix-blend-multiply filter blur-[140px] animate-float-slower"></div>
+            <div className="fixed inset-0 pointer-events-none z-0 dark:bg-black">
+                <div className="absolute inset-0 bg-[#fff8f5] dark:bg-black"></div>
+                <div className={`absolute inset-0 bg-cover bg-center opacity-50 transition-all duration-1000 ${theme === 'dark' ? "bg-[url('/assets/Gemini_Generated_Image_psevl6psevl6psev-clean.png')]" : "bg-[url('/assets/background.png')]"}`}></div>
+                <div className="absolute top-[-10%] left-[-5%] w-[50vw] h-[50vw] rounded-full bg-secondary-container/40 mix-blend-multiply filter blur-[120px] animate-float-slow dark:bg-secondary-container/20"></div>
+                <div className="absolute bottom-[-10%] right-[-5%] w-[60vw] h-[60vw] rounded-full bg-primary-container/40 mix-blend-multiply filter blur-[140px] animate-float-slower dark:bg-primary-container/20"></div>
                 
                 {/* Subtle Floating Particles */}
                 <div className="absolute top-[20%] left-[20%] w-2 h-2 rounded-full bg-primary/20" style={{ animation: 'particle-drift 8s infinite ease-in-out' }}></div>
@@ -198,32 +211,33 @@ export default function ProfilePage() {
                     <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
                 </div>
                 <div className="flex items-center gap-4 relative pointer-events-auto">
+                    <ThemeToggle />
                     <button 
                         onClick={() => setMainMenuOpen(!mainMenuOpen)}
-                        className="hidden md:flex w-12 h-12 items-center justify-center rounded-full glass-panel-premium text-primary transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98] z-50"
+                        className="hidden md:flex w-12 h-12 items-center justify-center rounded-full glass-panel-premium text-primary transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98] z-50 dark:hover:bg-white/10"
                     >
                         <span className="material-symbols-outlined text-[24px]">grid_view</span>
                     </button>
                     
                     {/* Desktop Dropdown Menu */}
-                    <nav className={`absolute right-0 top-[110%] w-56 bg-white/70 backdrop-blur-3xl border border-white/60 shadow-2xl rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
-                        <Link href="/home" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+                    <nav className={`absolute right-0 top-[110%] w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+                        <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
                             <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
                         </Link>
-                        <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+                        <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
                             <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
                         </Link>
-                        <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+                        <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
                             <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
                         </Link>
-                        <Link href="/profile" className="text-primary font-bold bg-white/80 px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md transition-colors">
-                            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>person</span> Profile
+                        <Link href="/profile" className="text-primary font-bold bg-white/80 dark:bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md transition-colors">
+                            <span className="material-symbols-outlined text-[20px]">person</span> Profile
                         </Link>
-                        <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+                        <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
                             <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
                         </Link>
                         <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-                        <button onClick={handleLogout} className="text-error hover:bg-error/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
+                        <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
                             <span className="material-symbols-outlined text-[20px]">logout</span> Logout
                         </button>
                     </nav>

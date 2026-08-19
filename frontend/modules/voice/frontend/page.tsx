@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { startSession, sendVoiceMessage, getTranscript, logout } from '@/core/api'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
+import ThemeToggle from '@/shared/components/ThemeToggle'
+import { useTheme } from 'next-themes'
+import { motion } from 'framer-motion'
 
 type ConvState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'paused'
 
@@ -34,6 +37,7 @@ export default function VoiceModePage() {
   const [mainMenuOpen, setMainMenuOpen] = useState(false)
   const [exerciseMode, setExerciseMode] = useState<string | null>(null)
   const [currentLang, setCurrentLang] = useState<'en' | 'hi' | 'te' | 'ta'>('en')
+  const { theme } = useTheme()
 
   const initialized = useRef(false)
   const streamRef = useRef<MediaStream | null>(null)
@@ -553,55 +557,70 @@ export default function VoiceModePage() {
         }
         
         .bg-gradient-voice {
-            background-color: #fff8f5;
+            background-color: transparent;
         }
       `}} />
-      <div className={`bg-gradient-voice h-[100dvh] flex flex-col items-center justify-between overflow-hidden fixed inset-0 state-${convState}`}>
+      <div className={`bg-gradient-voice h-[100dvh] flex flex-col items-center justify-between overflow-hidden fixed inset-0 state-${convState} dark:bg-black`}>
+
+        {/* Background Ambient Image */}
+        <motion.img
+          src={theme === 'dark' ? "/mythri_gradient_bg_dark_v2.jpg" : "/mythri_gradient_bg.jpg"}
+          alt="Ambient Background"
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          animate={{ 
+            scale: [1, 1.05, 1],
+            opacity: [0.8, 1, 0.8]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Central Softener / Mask to ensure readability in dark mode */}
+        <div className="absolute inset-0 bg-[#FFFDF9]/30 dark:bg-black/10 z-0" />
 
         {/* Background Atmospheric Shader */}
-        <div className="absolute inset-0 z-0 pointer-events-none grain-overlay opacity-[0.04] mix-blend-overlay" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}></div>
-        <div className="absolute rounded-full filter blur-[80px] opacity-40 z-0 pointer-events-none bg-secondary-fixed w-96 h-96 top-[10%] left-[-10%]"></div>
-        <div className="absolute rounded-full filter blur-[80px] opacity-40 z-0 pointer-events-none bg-tertiary-fixed w-96 h-96 bottom-[10%] right-[-10%]"></div>
-        <div className="absolute rounded-full filter blur-[80px] opacity-30 z-0 pointer-events-none bg-primary-fixed-dim w-[500px] h-[500px] top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute inset-0 z-0 pointer-events-none grain-overlay opacity-[0.04] mix-blend-overlay dark:opacity-[0.1]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}></div>
+        <div className="absolute rounded-full filter blur-[80px] opacity-40 z-0 pointer-events-none bg-secondary-fixed w-96 h-96 top-[10%] left-[-10%] dark:opacity-20"></div>
+        <div className="absolute rounded-full filter blur-[80px] opacity-40 z-0 pointer-events-none bg-tertiary-fixed w-96 h-96 bottom-[10%] right-[-10%] dark:opacity-20"></div>
+        <div className="absolute rounded-full filter blur-[80px] opacity-30 z-0 pointer-events-none bg-primary-fixed-dim w-[500px] h-[500px] top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 dark:opacity-10"></div>
 
         {/* TopAppBar */}
         <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-margin-desktop py-4 md:py-6 bg-transparent animate-fade-in-up">
           <div className="text-headline-md font-headline-md font-medium text-primary ml-2">Mythri</div>
           <div className="flex gap-3 md:gap-4 items-center relative mr-2">
-            <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMainMenuOpen(false) }} className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors">language</button>
-            <button onClick={() => { setMainMenuOpen(!mainMenuOpen); setLangMenuOpen(false) }} className="hidden md:block material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors">grid_view</button>
-            <button onClick={() => router.replace('/text-chat')} className="md:hidden material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors">close</button>
+            <ThemeToggle />
+            <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMainMenuOpen(false) }} className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors dark:hover:bg-white/10">language</button>
+            <button onClick={() => { setMainMenuOpen(!mainMenuOpen); setLangMenuOpen(false) }} className="hidden md:block material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors dark:hover:bg-white/10">grid_view</button>
+            <button onClick={() => router.replace('/text-chat')} className="md:hidden material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors dark:hover:bg-white/10">close</button>
           </div>
 
           {/* Desktop Main Menu */}
-          <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+          <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
-            <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
-            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
-            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
             </Link>
-            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
+            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>
 
           {/* Language Menu */}
-          <div className={`absolute right-16 md:right-20 top-[100%] mt-2 w-40 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
-            <button onClick={() => changeLanguage('en')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'en' ? 'text-primary font-bold bg-white/80 hover:bg-white/90' : 'text-on-surface-variant hover:bg-white/60'}`}>English</button>
-            <button onClick={() => changeLanguage('hi')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'hi' ? 'text-primary font-bold bg-white/80 hover:bg-white/90' : 'text-on-surface-variant hover:bg-white/60'}`}>Hindi</button>
-            <button onClick={() => changeLanguage('te')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'te' ? 'text-primary font-bold bg-white/80 hover:bg-white/90' : 'text-on-surface-variant hover:bg-white/60'}`}>Telugu</button>
-            <button onClick={() => changeLanguage('ta')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'ta' ? 'text-primary font-bold bg-white/80 hover:bg-white/90' : 'text-on-surface-variant hover:bg-white/60'}`}>Tamil</button>
+          <div className={`absolute right-16 md:right-20 top-[100%] mt-2 w-40 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+            <button onClick={() => changeLanguage('en')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'en' ? 'text-primary font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
+            <button onClick={() => changeLanguage('hi')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'hi' ? 'text-primary font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Hindi</button>
+            <button onClick={() => changeLanguage('te')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'te' ? 'text-primary font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Telugu</button>
+            <button onClick={() => changeLanguage('ta')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'ta' ? 'text-primary font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Tamil</button>
           </div>
         </nav>
 
@@ -639,7 +658,7 @@ export default function VoiceModePage() {
         </main>
 
         {/* Controls Footer */}
-        <footer className="w-full pb-12 md:pb-16 pt-4 flex flex-col items-center z-20 fixed bottom-0 bg-gradient-to-t from-[#fff8f5] via-[#fff8f5]/90 to-transparent transition-transform duration-600">
+        <footer className="w-full pb-12 md:pb-16 pt-4 flex flex-col items-center z-20 fixed bottom-0 bg-gradient-to-t from-[#fff8f5] dark:from-black via-[#fff8f5]/90 dark:via-black/90 to-transparent transition-transform duration-600">
           <div className="flex items-center gap-8 md:gap-16 justify-center">
             <button onClick={toggleMute} disabled={isPaused} className="group flex flex-col items-center gap-2 disabled:opacity-50">
               <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full border flex items-center justify-center transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm backdrop-blur-md ${isMuted ? 'border-error text-error bg-error/10' : 'border-outline/30 text-on-surface-variant group-hover:bg-white/60 group-hover:border-outline/50'}`}>

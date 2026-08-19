@@ -102,24 +102,24 @@ export default function HistoryPage() {
         <div className="flex items-center gap-4 relative pointer-events-auto">
           <button onClick={() => setMenuOpen(!menuOpen)} className="hidden md:block material-symbols-outlined text-primary hover:bg-surface-container-high p-2 rounded-full transition-all active:scale-95">grid_view</button>
           
-          <nav className={`hidden md:flex absolute right-0 top-[100%] mt-2 w-56 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+          <nav className={`hidden md:flex absolute right-0 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+            <Link href="/home" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
-            <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/text-chat" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
-            <Link href="/history" className="text-primary font-bold bg-white/80 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/history" className="text-primary font-bold bg-white/80 dark:bg-white/20 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
-            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/profile" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
             </Link>
-            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/feedback" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
-            <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
+            <div className="h-px bg-outline-variant/30 dark:bg-white/10 my-1 mx-2"></div>
+            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>
@@ -149,17 +149,17 @@ export default function HistoryPage() {
               sessions.map(s => {
                 const isActive = selectedSession?.session_id === s.session_id
                 return (
-                  <button key={s.session_id} onClick={() => handleSessionClick(s)} className={`session-card text-left backdrop-blur-md p-4 rounded-xl flex items-center justify-between group transition-all ${isActive ? 'bg-white/50 border border-primary shadow-lg' : 'bg-white/30 border border-white/50 hover:bg-white/50 hover:shadow-md'}`}>
+                  <button key={s.session_id} onClick={() => handleSessionClick(s)} className={`session-card text-left backdrop-blur-md p-4 rounded-xl flex items-center justify-between group transition-all ${isActive ? 'bg-white/50 dark:bg-white/10 border border-primary shadow-lg' : 'bg-white/30 dark:bg-white/5 border border-white/50 dark:border-white/10 hover:bg-white/50 dark:hover:bg-white/10 hover:shadow-md'}`}>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <span className={`text-label-md font-label-md ${isActive ? 'text-primary' : 'text-on-surface-variant'}`}>
+                        <span className={`text-label-md font-label-md ${isActive ? 'text-primary' : 'text-on-surface-variant dark:text-white/80'}`}>
                           {new Date(s.started_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}
                         </span>
                         {s.is_crisis_flagged && <span className="w-2 h-2 rounded-full bg-error" title="Flagged"></span>}
                       </div>
-                      <p className="text-body-sm font-body-sm text-on-surface-variant line-clamp-1">{s.channel === 'voice' ? 'Voice Session' : 'Text Consultation'}</p>
+                      <p className="text-body-sm font-body-sm text-on-surface-variant dark:text-white/60 line-clamp-1">{s.channel === 'voice' ? 'Voice Session' : 'Text Consultation'}</p>
                     </div>
-                    <span className={`material-symbols-outlined transition-opacity ${isActive ? 'text-primary opacity-100' : 'text-on-surface-variant opacity-0 group-hover:opacity-100'}`}>chevron_right</span>
+                    <span className={`material-symbols-outlined transition-opacity ${isActive ? 'text-primary opacity-100' : 'text-on-surface-variant dark:text-white/60 opacity-0 group-hover:opacity-100'}`}>chevron_right</span>
                   </button>
                 )
               })
@@ -168,7 +168,7 @@ export default function HistoryPage() {
         </section>
 
         {/* Right Side: Transcript Viewer (Desktop) */}
-        <section className="hidden md:flex w-2/3 h-full bg-white/50 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-2xl flex-col relative overflow-hidden p-8">
+        <section className="hidden md:flex w-2/3 h-full bg-white/50 dark:bg-[#1e1e1e]/80 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex-col relative overflow-hidden p-8">
           {selectedSession ? (
             <div className="relative z-10 flex flex-col h-full w-full">
               <header className="flex justify-between items-center mb-8 border-b border-outline-variant pb-6">
@@ -217,24 +217,24 @@ export default function HistoryPage() {
       </main>
 
       {/* Mobile Modal */}
-      <div className={`md:hidden fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${modalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`md:hidden fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${modalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
-        <div className={`relative w-[90%] max-w-sm bg-white/80 backdrop-blur-xl border border-white/50 rounded-3xl p-6 shadow-2xl transition-transform duration-300 ${modalOpen ? 'scale-100' : 'scale-95'}`}>
+        <div className={`relative w-[90%] max-w-sm bg-white/80 dark:bg-[#1e1e1e]/90 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-3xl p-6 shadow-2xl transition-transform duration-300 ${modalOpen ? 'scale-100' : 'scale-95'}`}>
           <div className="flex justify-between items-start mb-4">
               <h3 className="text-headline-md font-headline-md text-primary">Reflection</h3>
-              <button onClick={() => setModalOpen(false)} className="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
+              <button onClick={() => setModalOpen(false)} className="material-symbols-outlined text-on-surface-variant hover:text-primary dark:text-white/60 dark:hover:text-primary">close</button>
           </div>
           <div className="space-y-3 mb-6">
-              <p className="text-body-sm text-on-surface-variant leading-relaxed line-clamp-3">
+              <p className="text-body-sm text-on-surface-variant dark:text-white/80 leading-relaxed line-clamp-3">
                   {transcriptLoading ? 'Loading session details...' : (transcript[0]?.content || 'Empty session')}
               </p>
-              <div className="p-3 bg-secondary-fixed-dim/20 rounded-xl border border-secondary-fixed-dim/30">
+              <div className="p-3 bg-secondary-fixed-dim/20 dark:bg-black/40 rounded-xl border border-secondary-fixed-dim/30 dark:border-white/10">
                   <span className="block text-[10px] font-label-md text-primary uppercase tracking-wider mb-1">Details</span>
                   <p className="text-body-sm text-primary">Date: {selectedSession ? new Date(selectedSession.started_at).toLocaleString() : ''}</p>
               </div>
           </div>
           <div className="flex gap-3">
-              <button onClick={() => setModalOpen(false)} className="flex-1 py-3 px-4 rounded-2xl border border-outline-variant/50 bg-white/50 text-on-surface-variant font-label-md hover:bg-white/80 transition-colors">
+              <button onClick={() => setModalOpen(false)} className="flex-1 py-3 px-4 rounded-2xl border border-outline-variant/50 dark:border-white/20 bg-white/50 dark:bg-white/10 text-on-surface-variant dark:text-white/80 font-label-md hover:bg-white/80 dark:hover:bg-white/20 transition-colors">
                   Close
               </button>
               <button onClick={() => selectedSession && handleResume(selectedSession.session_id)} className="flex-[2] py-3 px-4 rounded-2xl bg-primary text-white font-label-md flex justify-center items-center gap-2 hover:opacity-90 shadow-md">
@@ -245,27 +245,6 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 w-full z-40 flex justify-around items-center bg-white/70 backdrop-blur-xl py-3 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.05)] border-t border-white/40">
-        <Link href="/home" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-[24px]">home</span>
-          <span className="text-[10px] font-label-md mt-1">Home</span>
-        </Link>
-        <Link href="/history" className="flex flex-col items-center justify-center text-primary w-16 transition-all duration-300 active:scale-90">
-          <div className="bg-primary text-white p-2.5 rounded-full shadow-lg transform -translate-y-3 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95">
-            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
-          </div>
-          <span className="text-[10px] font-label-md font-bold -mt-2">History</span>
-        </Link>
-        <Link href="/text-chat" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-[24px]">health_and_safety</span>
-          <span className="text-[10px] font-label-md mt-1">Chat</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-[24px]">person</span>
-          <span className="text-[10px] font-label-md mt-1">Profile</span>
-        </Link>
-      </nav>
     </>
   )
 }

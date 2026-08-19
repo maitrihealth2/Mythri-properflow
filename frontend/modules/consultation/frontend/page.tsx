@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { startSession, sendMessage, getTranscript, logout } from '@/core/api'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
+import ThemeToggle from '@/shared/components/ThemeToggle'
+import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,10 +49,11 @@ const INPUT_PLACEHOLDERS: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const AmbientBackground = ({ isAiActive }: { isAiActive: boolean }) => {
+  const { theme } = useTheme()
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#FFFDF9]">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#FFFDF9] dark:bg-black">
       <motion.img
-        src="/mythri_gradient_bg.jpg"
+        src={theme === 'dark' ? "/mythri_gradient_bg_dark_v2.jpg" : "/mythri_gradient_bg.jpg"}
         alt="Ambient Background"
         className="absolute inset-0 w-full h-full object-cover"
         animate={{ 
@@ -60,7 +63,7 @@ const AmbientBackground = ({ isAiActive }: { isAiActive: boolean }) => {
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* Central Softener / Mask to ensure readability */}
-      <div className="absolute inset-0 bg-[#FFFDF9]/30" />
+      <div className="absolute inset-0 bg-[#FFFDF9]/30 dark:bg-black/10" />
     </div>
   )
 }
@@ -498,45 +501,59 @@ export default function ConsultationPage() {
           <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
         </div>
         <div className="flex items-center gap-4 relative pointer-events-auto">
-          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">add</button>
-          <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">language</button>
-          <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02]">grid_view</button>
+          <ThemeToggle />
+          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">add</button>
+          <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">language</button>
+          <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">grid_view</button>
 
           {/* Dropdown */}
-          <nav className={`absolute right-0 top-[100%] mt-2 w-56 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">home</span> Sanctuary</Link>
-            <Link href="/text-chat" className="text-primary font-bold bg-white/80 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation</Link>
-            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">history</span> Your Sessions</Link>
-            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">person</span> Profile</Link>
-            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md"><span className="material-symbols-outlined text-[20px]">feedback</span> Feedback</Link>
+          <nav className={`absolute right-0 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
+            </Link>
+            <Link href="/text-chat" className="text-primary font-bold bg-white/80 dark:bg-white/20 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
+            </Link>
+            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
+            </Link>
+            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">person</span> Profile
+            </Link>
+            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
+            </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2" />
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login') }} className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full"><span className="material-symbols-outlined text-[20px]">logout</span> Logout</button>
+            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login') }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
+              <span className="material-symbols-outlined text-[20px]">logout</span> Logout
+            </button>
           </nav>
 
           {/* Language menu */}
-          <div className={`absolute right-12 top-[100%] mt-2 w-40 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
-            <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>English</button>
-            <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>Hindi</button>
-            <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>Telugu</button>
-            <button onClick={() => changeLanguage('ta-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'ta-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>Tamil</button>
+          <div className={`absolute right-12 top-[100%] mt-2 w-40 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+            <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
+            <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>हिंदी (Hindi)</button>
+            <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>తెలుగు (Telugu)</button>
+            <button onClick={() => changeLanguage('ta-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'ta-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>தமிழ் (Tamil)</button>
           </div>
         </div>
       </header>
 
       {/* ── Mobile Header ── */}
-      <header className="flex md:hidden fixed top-0 z-40 justify-between items-center w-full px-4 py-3 bg-white/60 backdrop-blur-md border-b border-white/40 shadow-sm pointer-events-none">
+      <header className="flex md:hidden fixed top-0 z-40 justify-between items-center w-full px-4 py-3 bg-white/60 dark:bg-[#121212]/80 backdrop-blur-md border-b border-white/40 dark:border-white/10 shadow-sm pointer-events-none">
         <div className="flex items-center gap-3 pointer-events-auto">
           <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
           <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
         </div>
         <div className="flex items-center gap-2 relative pointer-events-auto mr-2">
-          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm">add</button>
-          <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm">language</button>
-          <div className={`absolute right-0 top-[100%] mt-2 w-40 bg-white/70 backdrop-blur-3xl border border-white/50 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
-            <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>English</button>
-            <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>Hindi</button>
-            <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>Telugu</button>
-            <button onClick={() => changeLanguage('ta-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'ta-IN' ? 'text-primary font-bold bg-white/80' : 'text-on-surface-variant hover:bg-white/60'}`}>Tamil</button>
+          <ThemeToggle />
+          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">add</button>
+          <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">language</button>
+          <div className={`absolute right-0 top-[100%] mt-2 w-40 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+            <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
+            <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>हिंदी (Hindi)</button>
+            <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>తెలుగు (Telugu)</button>
+            <button onClick={() => changeLanguage('ta-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'ta-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>தமிழ் (Tamil)</button>
           </div>
         </div>
       </header>
@@ -634,7 +651,7 @@ export default function ConsultationPage() {
       {/* ── Floating Composer ── */}
       <div className={`fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center px-margin-mobile md:px-8 lg:px-12 pb-20 md:pb-8 pointer-events-none transition-all duration-700 ${exerciseMode ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto flex flex-col items-center pointer-events-auto">
-          <div className={`relative flex items-center gap-2 md:gap-4 backdrop-blur-3xl border border-white/60 rounded-[2rem] p-2 md:p-2.5 pl-6 md:pl-8 transition-all duration-300 shadow-lg w-full ${exerciseMode ? 'bg-white/50' : 'bg-white/75'} focus-within:bg-white/90 focus-within:border-white focus-within:shadow-xl focus-within:shadow-plum-high-contrast/10 focus-within:-translate-y-0.5`}>
+          <div className={`relative flex items-center gap-2 md:gap-4 backdrop-blur-3xl border border-white/60 dark:border-white/20 rounded-[2rem] p-2 md:p-2.5 pl-6 md:pl-8 transition-all duration-300 shadow-lg w-full ${exerciseMode ? 'bg-white/50' : 'bg-white/75 dark:bg-black/60'} focus-within:bg-white/90 dark:focus-within:bg-black/80 focus-within:border-white focus-within:shadow-xl focus-within:shadow-plum-high-contrast/10 focus-within:-translate-y-0.5`}>
             <textarea
               ref={textareaRef}
               value={input}
