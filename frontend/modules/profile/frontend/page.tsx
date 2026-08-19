@@ -134,7 +134,7 @@ export default function ProfilePage() {
     if (!mounted) return null;
 
     return (
-        <div className="flex-1 w-full h-full min-h-[100dvh] flex flex-col font-body-md text-on-background relative overflow-hidden">
+        <div className="flex-1 w-full h-full min-h-[100dvh] flex flex-col font-body-md text-on-background relative overflow-x-hidden overflow-y-auto">
             {/* Custom Animations & Micro-interactions */}
             <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes float-slow {

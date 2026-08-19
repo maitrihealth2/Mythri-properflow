@@ -581,13 +581,13 @@ export default function ConsultationPage() {
                   </span>
                 )}
                 {m.role === 'user' ? (
-                  <div className="frosted-plum rounded-tr-sm bg-plum-high-contrast/90 text-white px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
-                    <p className="text-body-lg leading-relaxed text-white whitespace-pre-wrap">{m.content}</p>
+                  <div className="frosted-plum rounded-tr-sm bg-plum-high-contrast/90 dark:bg-primary-container/80 text-white px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
+                    <p className="text-body-lg leading-relaxed text-white dark:text-white/95 whitespace-pre-wrap">{m.content}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <div className="frosted-blush rounded-tl-sm bg-white/70 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20">
-                      <p className="text-body-lg leading-relaxed text-on-primary-fixed whitespace-pre-wrap">{m.content}</p>
+                    <div className="frosted-blush rounded-tl-sm bg-white/70 dark:bg-black/50 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
+                      <p className="text-body-lg leading-relaxed text-on-primary-fixed dark:text-white/90 whitespace-pre-wrap">{m.content}</p>
                     </div>
                     {/* Crisis helplines — only on last bubble of group */}
                     {m.is_last_in_group && m.is_crisis && m.helplines && m.helplines.length > 0 && (
@@ -619,10 +619,10 @@ export default function ConsultationPage() {
               {showMythriLabelOnActive && (
                 <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
               )}
-              <div className="frosted-blush bg-white/70 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20">
-                <p className="text-body-lg leading-relaxed text-on-primary-fixed whitespace-pre-wrap">
+              <div className="frosted-blush bg-white/70 dark:bg-black/50 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20 dark:border-white/10">
+                <p className="text-body-lg leading-relaxed text-on-primary-fixed dark:text-white/90 whitespace-pre-wrap">
                   {activeBubbleText}
-                  <span className="inline-block w-1.5 h-4 ml-1 bg-primary/40 animate-pulse" />
+                  <span className="inline-block w-1.5 h-4 ml-1 bg-primary/40 dark:bg-white/40 animate-pulse" />
                 </p>
               </div>
             </div>
@@ -634,11 +634,11 @@ export default function ConsultationPage() {
               {(!messages.length || messages[messages.length - 1].role !== 'assistant') && (
                 <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
               )}
-              <div className="frosted-blush bg-white/70 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20 min-w-[80px]">
+              <div className="frosted-blush bg-white/70 dark:bg-black/50 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20 dark:border-white/10 min-w-[80px]">
                 <div className="flex gap-1.5 py-1">
-                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" />
-                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" style={{ animationDelay: '0.4s' }} />
-                  <div className="w-2 h-2 rounded-full bg-primary/60 animate-breathe" style={{ animationDelay: '0.8s' }} />
+                  <div className="w-2 h-2 rounded-full bg-primary/60 dark:bg-white/60 animate-breathe" />
+                  <div className="w-2 h-2 rounded-full bg-primary/60 dark:bg-white/60 animate-breathe" style={{ animationDelay: '0.4s' }} />
+                  <div className="w-2 h-2 rounded-full bg-primary/60 dark:bg-white/60 animate-breathe" style={{ animationDelay: '0.8s' }} />
                 </div>
               </div>
             </div>
