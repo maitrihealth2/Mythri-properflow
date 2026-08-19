@@ -271,7 +271,8 @@ export default function ConsultationPage() {
 
         if (res.status === 401 && !isRetry) {
           try {
-            await api.get('/api/auth/me') // Trigger interceptor to refresh token
+            const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+            await fetch(`${apiUrl}/api/auth/me`, { headers: { Authorization: `Bearer ${localStorage.getItem('mb_token') || ''}` } }) // Trigger token refresh
           } catch {
             throw new Error('AUTH_FAILED')
           }
