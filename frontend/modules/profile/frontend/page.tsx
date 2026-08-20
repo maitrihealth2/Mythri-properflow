@@ -549,9 +549,30 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="space-y-8 relative z-10">
-                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 p-4 rounded-2xl border border-outline-variant/20 hover:bg-white/30 transition-colors">
+                            {/* Memory & Privacy Section */}
+                            <div className="flex flex-col gap-4 p-5 rounded-2xl bg-white/40 dark:bg-black/20 border border-primary/10">
+                                <div className="flex items-start gap-4">
+                                    <span className="material-symbols-outlined text-primary text-[28px]">psychology</span>
+                                    <div>
+                                        <h4 className="text-lg font-headline-md text-primary">Mythri's Memory</h4>
+                                        <p className="text-sm font-body-sm text-on-surface-variant mt-1">
+                                            Mythri remembers your preferences and past conversations to provide a continuous, tailored experience. You are always in control of this memory.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-3 mt-2 pl-11">
+                                    <button className="px-5 py-2.5 rounded-xl bg-primary/10 text-primary font-medium text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
+                                        <span className="material-symbols-outlined text-[18px]">download</span> Download Memory
+                                    </button>
+                                    <button className="px-5 py-2.5 rounded-xl border border-error/30 text-error font-medium text-sm hover:bg-error/10 transition-colors flex items-center justify-center gap-2">
+                                        <span className="material-symbols-outlined text-[18px]">delete_forever</span> Clear Memory
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 p-4 rounded-2xl border border-outline-variant/20 hover:bg-white/30 dark:hover:bg-white/5 transition-colors">
                                 <div>
-                                    <p className="text-base font-headline-md text-primary mb-1">Password</p>
+                                    <p className="text-base font-headline-md text-primary mb-1">Account Password</p>
                                     <p className="text-sm font-body-sm text-on-surface-variant">Last changed 3 months ago</p>
                                 </div>
                                 {editMode.privacy ? (
@@ -561,7 +582,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
 
-                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 p-4 rounded-2xl border border-outline-variant/20 hover:bg-white/30 transition-colors">
+                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 p-4 rounded-2xl border border-outline-variant/20 hover:bg-white/30 dark:hover:bg-white/5 transition-colors">
                                 <div>
                                     <p className="text-base font-headline-md text-primary mb-1">Two-Factor Authentication</p>
                                     <p className="text-sm font-body-sm text-on-surface-variant">Add an extra layer of security</p>
@@ -578,7 +599,7 @@ export default function ProfilePage() {
                                 )}
                             </div>
                             
-                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 p-4 rounded-2xl border border-outline-variant/20 hover:bg-white/30 transition-colors">
+                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 p-4 rounded-2xl border border-outline-variant/20 hover:bg-white/30 dark:hover:bg-white/5 transition-colors">
                                 <div>
                                     <p className="text-base font-headline-md text-primary mb-1">Login Devices</p>
                                     <p className="text-sm font-body-sm text-on-surface-variant">Manage active sessions</p>

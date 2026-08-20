@@ -1,5 +1,7 @@
 import asyncio
 import uuid
+import json
+import re
 from typing import Dict, Any, List
 from fastapi import HTTPException
 from loguru import logger
@@ -30,6 +32,8 @@ except Exception as e:
 class ConsultationService:
     def __init__(self, repository: ConsultationRepository):
         self.repo = repository
+        from modules.memory.manager import MemoryManager
+        self.memory_manager = MemoryManager(db_session=self.repo.db)
 
     async def start_session(self, user: User) -> StartSessionResponse:
         token = str(uuid.uuid4())
@@ -39,6 +43,9 @@ class ConsultationService:
         is_first = session_count == 1
         
         tracker.init_session(session.id, is_first_session=is_first)
+        
+        # Start new session in the memory subsystem
+        self.memory_manager.on_conversation_start(user.id, session.id)
         
         return StartSessionResponse(
             session_id=token,
@@ -77,8 +84,17 @@ class ConsultationService:
         pattern_signal = analyze_patterns(recent_user_msgs, req.message)
         pattern_block = pattern_signal.as_prompt_block()
 
-        # Persona & Context
-        persona_summary = get_persona_summary(self.repo.db, user.id)
+        # Persona & Advanced Memory Context
+        prompt_ctx = self.memory_manager.get_memory_context(user.id, req.message, session_id=session.id)
+        
+        # Format the PromptContext into a clean string for the LLM
+        formatted_memory = ""
+        for section in prompt_ctx.all_sections:
+            if not section.is_empty:
+                formatted_memory += f"[{section.name.upper()}]\n"
+                formatted_memory += "\n".join(f"- {item}" for item in section.items)
+                formatted_memory += "\n\n"
+        
         rag_context = retrieve_context(req.message) if RAG_AVAILABLE else ""
         lang_prompt = get_language_prompt(req.language)
 
@@ -111,7 +127,7 @@ class ConsultationService:
                         emotion_label=emotion.label,
                         rag_context=rag_context,
                         pattern_block=pattern_block,
-                        persona_summary=persona_summary,
+                        persona_summary=formatted_memory,
                     ),
                     timeout=15.0
                 )
@@ -148,11 +164,38 @@ class ConsultationService:
             language_prompt=lang_prompt,
             is_crisis=crisis.is_crisis,
             exercise_phase=current_exercise_state,
+            memory_context=formatted_memory,
+            memory_usage_mode="SILENT_BACKGROUND",
         )
         await broadcast_event("LLM_DONE", "Response generated")
+        
+        # Parse dynamic exercise if present
+        exercise_match = re.search(r'<EXERCISE>\s*({.*?})\s*</EXERCISE>', ai_response, flags=re.DOTALL | re.IGNORECASE)
+        if exercise_match:
+            try:
+                dynamic_ex_str = exercise_match.group(1).strip()
+                # Validate it's actually JSON
+                json.loads(dynamic_ex_str)
+                # Overwrite the exercise type with the dynamic JSON
+                tracker.suggest_exercise(session.id, exercise_type=dynamic_ex_str, triggered_by="llm", pre_emotion=emotion.label)
+                # Remove from visible text
+                ai_response = re.sub(r'<EXERCISE>\s*({.*?})\s*</EXERCISE>', '', ai_response, flags=re.DOTALL | re.IGNORECASE).strip()
+                
+                # If we were previously idle, advance to suggested so frontend knows to open it
+                if exercise_ctx.get("state", "idle") == "idle":
+                    tracker.suggest_exercise(session.id, exercise_type=dynamic_ex_str, triggered_by="llm", pre_emotion=emotion.label)
+            except Exception as e:
+                logger.error(f"[Exercise Parse Error] Could not parse dynamic exercise JSON: {e}")
 
         # Persistence
         self.repo.save_messages(session.id, req.message, ai_response, req.language, emotion.label, emotion.score)
+
+        # Trigger Memory Extraction Pipeline
+        try:
+            self.memory_manager.on_user_message(user.id, req.message, session.id)
+            self.memory_manager.on_assistant_response(user.id, ai_response, session.id)
+        except Exception as e:
+            logger.error(f"[Memory Pipeline] Error executing extraction pipeline: {e}")
 
         # Persona Background Task
         total_user_msgs = len([m for m in past_msgs if m.role == "user"]) + 1

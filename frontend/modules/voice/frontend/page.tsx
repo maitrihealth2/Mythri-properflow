@@ -9,6 +9,7 @@ import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
+import MythriAura, { AuraState } from '@/shared/components/MythriAura'
 
 type ConvState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'paused'
 
@@ -235,10 +236,10 @@ export default function VoiceModePage() {
       let match = null
       if (data.response) {
         let cleanResponse = data.response
-        match = cleanResponse.match(/\[EXERCISE:\s*(.*?)\]/i)
+        match = cleanResponse.match(/<EXERCISE>\s*(.*?)\s*<\/EXERCISE>/i)
         if (match) {
-          setExerciseMode(match[1].toUpperCase())
-          cleanResponse = cleanResponse.replace(/\[EXERCISE:\s*(.*?)\]/gi, '').trim()
+          setExerciseMode(match[1])
+          cleanResponse = cleanResponse.replace(/<EXERCISE>\s*(.*?)\s*<\/EXERCISE>/gi, '').trim()
 
           if (!isPaused) {
             setIsPaused(true)
@@ -560,27 +561,55 @@ export default function VoiceModePage() {
             background-color: transparent;
         }
       `}} />
-      <div className={`bg-gradient-voice h-[100dvh] flex flex-col items-center justify-between overflow-hidden fixed inset-0 state-${convState} dark:bg-black`}>
-
-        {/* Background Ambient Image */}
-        <motion.img
-          src={theme === 'dark' ? "/mythri_gradient_bg_dark_v2.jpg" : "/mythri_gradient_bg.jpg"}
-          alt="Ambient Background"
-          className="absolute inset-0 w-full h-full object-cover z-0"
+      <div className={`bg-gradient-voice h-[100dvh] flex flex-col items-center justify-between overflow-hidden fixed inset-0 state-${convState} bg-[#FFFDF9] dark:bg-[#141218]`}>
+        {/* Base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FFFDF9] via-[#FDF5F2] to-[#F5E6E1] dark:from-[#141218] dark:via-[#1A161E] dark:to-[#221A21] z-0" />
+        
+        {/* Swirling Layer 1 - Muted Plum */}
+        <motion.div
+          className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] rounded-[40%_60%_70%_30%] blur-[100px] opacity-[0.15] dark:opacity-[0.08] z-0"
+          style={{ background: 'radial-gradient(circle, #7A4A5F 0%, transparent 70%)' }}
           animate={{ 
-            scale: [1, 1.05, 1],
-            opacity: [0.8, 1, 0.8]
+            rotate: [0, 90, 180, 270, 360],
+            scale: convState === 'listening' || convState === 'speaking' ? [1, 1.2, 1] : [1, 1.05, 1],
+            borderRadius: ['40% 60% 70% 30%', '50% 50% 40% 60%', '60% 40% 50% 50%', '40% 60% 70% 30%']
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
         />
-        {/* Central Softener / Mask to ensure readability in dark mode */}
-        <div className="absolute inset-0 bg-[#FFFDF9]/30 dark:bg-black/10 z-0" />
-
-        {/* Background Atmospheric Shader */}
-        <div className="absolute inset-0 z-0 pointer-events-none grain-overlay opacity-[0.04] mix-blend-overlay dark:opacity-[0.1]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}></div>
-        <div className="absolute rounded-full filter blur-[80px] opacity-40 z-0 pointer-events-none bg-secondary-fixed w-96 h-96 top-[10%] left-[-10%] dark:opacity-20"></div>
-        <div className="absolute rounded-full filter blur-[80px] opacity-40 z-0 pointer-events-none bg-tertiary-fixed w-96 h-96 bottom-[10%] right-[-10%] dark:opacity-20"></div>
-        <div className="absolute rounded-full filter blur-[80px] opacity-30 z-0 pointer-events-none bg-primary-fixed-dim w-[500px] h-[500px] top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 dark:opacity-10"></div>
+        
+        {/* Swirling Layer 2 - Dusty Mauve */}
+        <motion.div
+          className="absolute top-[30%] right-[-20%] w-[70vw] h-[70vw] rounded-[60%_40%_30%_70%] blur-[120px] opacity-[0.12] dark:opacity-[0.07] z-0"
+          style={{ background: 'radial-gradient(circle, #9A7B88 0%, transparent 70%)' }}
+          animate={{ 
+            rotate: [360, 270, 180, 90, 0],
+            scale: convState === 'listening' || convState === 'speaking' ? [1, 1.15, 1] : [1, 1.05, 1],
+            x: [0, -50, 0],
+            y: [0, 30, 0]
+          }}
+          transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Swirling Layer 3 - Warm Brown / Blush */}
+        <motion.div
+          className="absolute bottom-[-20%] left-[20%] w-[90vw] h-[60vw] rounded-[50%] blur-[140px] opacity-[0.1] dark:opacity-[0.05] z-0"
+          style={{ background: 'radial-gradient(ellipse, #A68A80 0%, transparent 60%)' }}
+          animate={{ 
+            rotate: [0, -45, 0, 45, 0],
+            scale: convState === 'listening' || convState === 'speaking' ? [1.05, 1.25, 1.05] : [1, 1.1, 1]
+          }}
+          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Subtle Breathing overlay during AI Activity */}
+        <motion.div 
+          className="absolute inset-0 bg-[#7A4A5F]/[0.02] dark:bg-[#d0bcff]/[0.01] z-0"
+          animate={{ opacity: convState === 'listening' || convState === 'speaking' ? [0, 1, 0] : 0 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Center content mask to keep readability high */}
+        <div className="absolute inset-x-[10%] inset-y-[5%] bg-white/[0.25] dark:bg-black/[0.15] blur-[80px] rounded-full pointer-events-none z-0" />
 
         {/* TopAppBar */}
         <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-margin-desktop py-4 md:py-6 bg-transparent animate-fade-in-up">
@@ -633,12 +662,10 @@ export default function VoiceModePage() {
           </div>
 
           <div className="relative flex flex-shrink-0 items-center justify-center w-64 h-64 my-6 md:my-12">
-            <div className="orb-ring"></div>
-            <div className="orb w-32 h-32 rounded-full bg-gradient-to-br from-primary-fixed to-secondary-fixed-dim shadow-lg flex items-center justify-center relative z-10 transition-all duration-700">
-              <div className="absolute inset-0 rounded-full bg-white/30 mix-blend-overlay"></div>
-              <div className="w-16 h-16 rounded-full bg-primary/10 backdrop-blur-sm mix-blend-multiply"></div>
-            </div>
-            <canvas ref={canvasRef} width="256" height="256" className={`absolute inset-0 w-full h-full object-contain z-20 pointer-events-none transition-opacity duration-400 ${convState === 'listening' || convState === 'speaking' ? 'opacity-100' : 'opacity-0'}`}></canvas>
+            <MythriAura 
+              state={(convState === 'thinking' ? 'processing' : (convState === 'paused' ? 'idle' : convState)) as AuraState} 
+              size="xl" 
+            />
           </div>
 
           <div className="text-center max-w-lg w-full flex flex-col items-center gap-4 md:gap-6">

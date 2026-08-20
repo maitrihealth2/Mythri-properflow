@@ -390,11 +390,11 @@ async def send_message(
                         persona_summary= persona_summary,
                         memory_context = memory_context,
                     ),
-                    timeout=10.0
+                    timeout=30.0
                 )
                 tracker.update_case_file(session.id, bg_case_file)
             except Exception as e:
-                print(f"[Background Assessor] Error: {e}")
+                print(f"[Background Assessor] Error: {repr(e)}")
                 
             from rag.brain.evaluator import evaluate_response_async
             await evaluate_response_async(ai_msg.id)
@@ -405,7 +405,7 @@ async def send_message(
                 
             await _process_memory_write_path_async(current_user.id, req.message, session.id)
         except Exception as e:
-            print(f"[PostProcess] Error: {e}")
+            print(f"[PostProcess] Error: {repr(e)}")
             bg_db.rollback()
         finally:
             bg_db.close()

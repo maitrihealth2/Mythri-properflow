@@ -22,6 +22,9 @@ from modules.memory.types import (
     MemoryEvent,
     MemoryEventType,
 )
+from modules.memory.read_pipeline import MemoryReadPipeline
+from modules.memory.retrieval import MemoryRetrievalEngine
+from modules.memory.prompt_context import PromptContextEngine, PromptContext
 
 
 class MemoryManager:
@@ -47,6 +50,11 @@ class MemoryManager:
 
         self.pipeline = pipeline or MemoryPipeline()
         self.dispatcher = dispatcher or MemoryEventDispatcher()
+        
+        # Initialize Read Path Integration
+        self.retrieval_engine = MemoryRetrievalEngine(repository=self.repository)
+        self.read_pipeline = MemoryReadPipeline(retrieval_engine=self.retrieval_engine)
+        self.prompt_context_engine = PromptContextEngine()
 
     # ── Primary Orchestration Execution ─────────────────────────────────────
 
@@ -165,13 +173,17 @@ class MemoryManager:
         self.dispatcher.dispatch(event)
 
     def get_memory_context(
-        self, user_id: int, query: str, limit: int = 5
-    ) -> MemoryContext:
+        self, user_id: int, query: str, limit: int = 5, session_id: Optional[int] = None
+    ) -> PromptContext:
         """
-        Extension point stub for future Retrieval & Context Engine integration.
-        Currently returns an empty MemoryContext container until Milestone 10+.
+        Executes the MemoryReadPipeline and builds categorized PromptContext.
         """
-        return MemoryContext()
+        optimized_context = self.read_pipeline.run(
+            user_id=user_id,
+            query=query,
+            session_id=session_id
+        )
+        return self.prompt_context_engine.build_prompt_context(optimized_context)
 
 
 # Global singleton instance for foundation access

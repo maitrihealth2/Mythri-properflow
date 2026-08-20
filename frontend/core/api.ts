@@ -87,9 +87,31 @@ api.interceptors.response.use(
         }
       }
     }
+    
+    // Add empathetic error translation for other errors
+    error.userMessage = translateApiError(error)
     return Promise.reject(error)
   }
 )
+
+function translateApiError(error: any): string {
+  if (!error.response) {
+    return "Mythri is having trouble connecting right now. Let's try again in a moment."
+  }
+  
+  const status = error.response.status
+  if (status === 429) {
+    return "Things are a little busy right now. Please take a deep breath and try again shortly."
+  }
+  if (status >= 500) {
+    return "Something shifted on our end. We are gently fixing it."
+  }
+  if (status === 403 || status === 401) {
+    return "Your session has gently faded. Please log in again to continue."
+  }
+  
+  return "I'm having trouble understanding right now. Can we try again?"
+}
 
 export default api
 

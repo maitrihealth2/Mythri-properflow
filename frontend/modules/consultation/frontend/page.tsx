@@ -7,6 +7,7 @@ import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
+import MythriAura from '@/shared/components/MythriAura'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,21 +50,64 @@ const INPUT_PLACEHOLDERS: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const AmbientBackground = ({ isAiActive }: { isAiActive: boolean }) => {
-  const { theme } = useTheme()
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#FFFDF9] dark:bg-black">
-      <motion.img
-        src={theme === 'dark' ? "/mythri_gradient_bg_dark_v2.jpg" : "/mythri_gradient_bg.jpg"}
-        alt="Ambient Background"
-        className="absolute inset-0 w-full h-full object-cover"
-        animate={{ 
-          scale: isAiActive ? [1.02, 1.05, 1.02] : [1, 1.02, 1],
-          opacity: isAiActive ? [0.9, 1, 0.9] : [0.7, 0.85, 0.7]
-        }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#FFFDF9] dark:bg-[#0a080c]">
+      {/* Base image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 bg-[url('/mythri_gradient_bg.jpg')] dark:bg-[url('/mythri_gradient_bg_dark_v2.jpg')]"
       />
-      {/* Central Softener / Mask to ensure readability */}
-      <div className="absolute inset-0 bg-[#FFFDF9]/30 dark:bg-black/10" />
+      
+      {/* Semi-transparent overlay to ensure text readability */}
+      <div className="absolute inset-0 bg-white/40 dark:bg-black/10" />
+      
+      {/* Base gradient (softened to let the image peek through) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#FFFDF9]/60 via-[#FDF5F2]/50 to-[#F5E6E1]/60 dark:from-[#141218]/20 dark:via-transparent dark:to-[#221A21]/20" />
+      
+      {/* Swirling Layer 1 - Muted Plum */}
+      <motion.div
+        className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] rounded-[40%_60%_70%_30%] blur-[100px] opacity-[0.15] dark:opacity-[0.08]"
+        style={{ background: 'radial-gradient(circle, #7A4A5F 0%, transparent 70%)' }}
+        animate={{ 
+          rotate: [0, 90, 180, 270, 360],
+          scale: isAiActive ? [1, 1.2, 1] : [1, 1.05, 1],
+          borderRadius: ['40% 60% 70% 30%', '50% 50% 40% 60%', '60% 40% 50% 50%', '40% 60% 70% 30%']
+        }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+      />
+      
+      {/* Swirling Layer 2 - Dusty Mauve */}
+      <motion.div
+        className="absolute top-[30%] right-[-20%] w-[70vw] h-[70vw] rounded-[60%_40%_30%_70%] blur-[120px] opacity-[0.12] dark:opacity-[0.07]"
+        style={{ background: 'radial-gradient(circle, #9A7B88 0%, transparent 70%)' }}
+        animate={{ 
+          rotate: [360, 270, 180, 90, 0],
+          scale: isAiActive ? [1, 1.15, 1] : [1, 1.05, 1],
+          x: [0, -50, 0],
+          y: [0, 30, 0]
+        }}
+        transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+      />
+      
+      {/* Swirling Layer 3 - Warm Brown / Blush */}
+      <motion.div
+        className="absolute bottom-[-20%] left-[20%] w-[90vw] h-[60vw] rounded-[50%] blur-[140px] opacity-[0.1] dark:opacity-[0.05]"
+        style={{ background: 'radial-gradient(ellipse, #A68A80 0%, transparent 60%)' }}
+        animate={{ 
+          rotate: [0, -45, 0, 45, 0],
+          scale: isAiActive ? [1.05, 1.25, 1.05] : [1, 1.1, 1]
+        }}
+        transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+      />
+      
+      {/* Subtle Breathing overlay during AI Activity */}
+      <motion.div 
+        className="absolute inset-0 bg-[#7A4A5F]/[0.02] dark:bg-[#d0bcff]/[0.01]"
+        animate={{ opacity: isAiActive ? [0, 1, 0] : 0 }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      
+      {/* Center content mask to keep readability high */}
+      <div className="absolute inset-x-[10%] inset-y-[5%] bg-white/[0.25] dark:bg-black/[0.15] blur-[80px] rounded-full pointer-events-none" />
     </div>
   )
 }
@@ -94,6 +138,7 @@ export default function ConsultationPage() {
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [exerciseMode, setExerciseMode] = useState<string | null>(null)
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const initialized = useRef(false)
@@ -138,7 +183,9 @@ export default function ConsultationPage() {
   // ─── Scroll + persist whenever committed messages change ──────────────────
   useEffect(() => {
     if (messages.length > 0 && sessionId && !activeBubble) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: 'smooth' })
+      }
       localStorage.setItem('mb_chat_history_' + sessionId, JSON.stringify(messages))
     }
   }, [messages, sessionId, activeBubble])
@@ -164,7 +211,9 @@ export default function ConsultationPage() {
     if (revealedWords.length < words.length) {
       typingTimerRef.current = setTimeout(() => {
         setActiveBubbleText(words.slice(0, revealedWords.length + 1).join(' '))
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+        }
       }, 40)
     } else {
       // Typing complete — commit bubble to the message list
@@ -214,8 +263,32 @@ export default function ConsultationPage() {
           const data = await getTranscript(existingSessionId)
           setSessionId(existingSessionId)
           if (data.messages && data.messages.length > 0) {
-            // Restore history as-is (one message per DB row)
-            setMessages(data.messages.map((m: Message) => ({ ...m, is_new: false })))
+            // Restore history, splitting assistant messages by \n\n to match live bubble segmentation
+            const expandedMessages: Message[] = []
+            
+            for (const m of data.messages) {
+              if (m.role === 'assistant' && m.content) {
+                const chunks = m.content.split('\n\n').filter((c: string) => c.trim().length > 0)
+                chunks.forEach((chunk: string, index: number) => {
+                  const isLast = index === chunks.length - 1
+                  expandedMessages.push({
+                    ...m,
+                    content: chunk.trim(),
+                    is_new: false,
+                    is_last_in_group: isLast,
+                    // Clear out special flags on non-final chunks to prevent duplicated UI elements
+                    is_crisis: isLast ? m.is_crisis : false,
+                    helplines: isLast ? m.helplines : undefined,
+                    rag_used: isLast ? m.rag_used : false,
+                    exercise_trigger: isLast ? m.exercise_trigger : undefined
+                  })
+                })
+              } else {
+                expandedMessages.push({ ...m, is_new: false })
+              }
+            }
+            
+            setMessages(expandedMessages)
             setStarting(false)
             return
           }
@@ -564,6 +637,7 @@ export default function ConsultationPage() {
         style={{ animationDelay: '0.2s' }}
       >
         <div
+          ref={scrollContainerRef}
           className="flex-1 overflow-y-auto pt-4 pb-48 md:pb-36 flex flex-col gap-3 hide-scrollbar pr-2"
           onClick={() => { setMenuOpen(false); setLangMenuOpen(false) }}
         >
@@ -630,17 +704,8 @@ export default function ConsultationPage() {
 
           {/* ── Breathing dots: TTFT wait (loading, nothing streaming or typing yet) ── */}
           {showLoadingDots && (
-            <div className="flex flex-col items-start animate-msg-enter">
-              {(!messages.length || messages[messages.length - 1].role !== 'assistant') && (
-                <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
-              )}
-              <div className="frosted-blush bg-white/70 dark:bg-black/50 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20 dark:border-white/10 min-w-[80px]">
-                <div className="flex gap-1.5 py-1">
-                  <div className="w-2 h-2 rounded-full bg-primary/60 dark:bg-white/60 animate-breathe" />
-                  <div className="w-2 h-2 rounded-full bg-primary/60 dark:bg-white/60 animate-breathe" style={{ animationDelay: '0.4s' }} />
-                  <div className="w-2 h-2 rounded-full bg-primary/60 dark:bg-white/60 animate-breathe" style={{ animationDelay: '0.8s' }} />
-                </div>
-              </div>
+            <div className="flex flex-col items-start animate-msg-enter mt-2 mb-2">
+              <MythriAura state="processing" size="sm" className="ml-4" />
             </div>
           )}
 

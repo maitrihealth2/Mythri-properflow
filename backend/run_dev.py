@@ -59,9 +59,10 @@ class RestartHandler(FileSystemEventHandler):
         now = time.time()
         if now - self._last_restart < COOLDOWN:
             return
-        self._last_restart = now
+        
         print(f"\n[Watcher] Detected change in {event.src_path}. Restarting...")
         self.start_server()
+        self._last_restart = time.time()
 
 def free_port(port: int):
     """Kill any process occupying the given port so we can bind cleanly."""
