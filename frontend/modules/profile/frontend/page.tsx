@@ -207,14 +207,14 @@ export default function ProfilePage() {
             {/* TopAppBar */}
             <header className="fixed top-0 z-40 flex justify-between items-center w-full px-5 md:px-8 py-4 pointer-events-none transition-all duration-500 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <div className="flex items-center gap-4 pointer-events-auto">
-                    <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-transform duration-150 hover:bg-white/80 hover:scale-[1.02] active:scale-[0.98] shadow-sm">home</Link>
-                    <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
+                    <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20 p-2 rounded-full transition-transform duration-150 hover:bg-white/80 dark:hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] shadow-sm">home</Link>
+                    <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 tracking-wide">Mythri</span>
                 </div>
                 <div className="flex items-center gap-4 relative pointer-events-auto">
                     <ThemeToggle />
                     <button 
                         onClick={() => setMainMenuOpen(!mainMenuOpen)}
-                        className="hidden md:flex w-12 h-12 items-center justify-center rounded-full glass-panel-premium text-primary transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98] z-50 dark:hover:bg-white/10"
+                        className="hidden md:flex w-12 h-12 items-center justify-center rounded-full glass-panel-premium text-primary dark:text-white/90 transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98] z-50 dark:hover:bg-white/20"
                     >
                         <span className="material-symbols-outlined text-[24px]">grid_view</span>
                     </button>
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                 <aside className="w-full md:w-[320px] lg:w-[360px] flex flex-col gap-6 shrink-0 pb-8 md:pb-0">
                     
                     {/* Premium User Card */}
-                    <div className="w-full glass-panel-premium rounded-[2rem] p-8 flex flex-col items-center relative overflow-hidden group">
+                    <div className="w-full shrink-0 glass-panel-premium rounded-[2rem] p-8 pb-10 flex flex-col items-center relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
                         
                         <div className="relative mb-6">

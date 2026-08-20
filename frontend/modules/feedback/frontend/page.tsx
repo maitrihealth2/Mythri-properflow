@@ -79,13 +79,13 @@ export default function FeedbackPage() {
       </div>
 
       {/* Navigation */}
-      <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up glass-panel border-b border-white/60 dark:border-white/10" style={{ animationDelay: '0.1s' }}>
+      <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center gap-4">
-          <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
+          <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 tracking-wide">Mythri</span>
         </div>
         <div className="relative flex items-center gap-2">
           <ThemeToggle />
-          <button onClick={() => setMenuOpen(!menuOpen)} className="w-12 h-12 flex items-center justify-center rounded-full glass-panel text-primary transition-all active:scale-95 z-50">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="w-12 h-12 flex items-center justify-center rounded-full glass-panel text-primary dark:text-white/90 transition-all active:scale-95 z-50">
             <span className="material-symbols-outlined text-[24px]">grid_view</span>
           </button>
           
@@ -127,7 +127,7 @@ export default function FeedbackPage() {
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Let us know what features you want, what's broken, or how we can improve..."
-                className="w-full h-48 bg-white/50 border border-white/60 rounded-2xl p-4 text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all resize-none"
+                className="w-full h-48 bg-white/50 dark:bg-black/20 border border-white/60 dark:border-white/10 rounded-2xl p-4 text-body-md text-on-surface dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/30 dark:focus:ring-white/30 transition-all resize-none"
                 required
               ></textarea>
             </div>

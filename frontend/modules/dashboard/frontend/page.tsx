@@ -113,13 +113,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Navigation */}
-      <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up glass-panel border-b border-white/60 dark:border-white/10" style={{ animationDelay: '0.1s' }}>
+      <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center gap-4">
           <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
         </div>
         <div className="relative flex items-center gap-2">
           <ThemeToggle />
-          <button onClick={() => setMenuOpen(!menuOpen)} className="w-12 h-12 flex items-center justify-center rounded-full glass-panel text-primary transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] z-50">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="w-12 h-12 flex items-center justify-center rounded-full glass-panel text-primary dark:text-white/90 transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] z-50">
             <span className="material-symbols-outlined text-[24px]">grid_view</span>
           </button>
           
@@ -169,8 +169,8 @@ export default function DashboardPage() {
             <div className="absolute inset-0 rounded-full border-2 border-primary/20 ring-pulse scale-[0.7] md:scale-[0.8] lg:scale-95 pointer-events-none"></div>
             <div className="absolute inset-0 rounded-full border border-primary/10 ring-pulse scale-[0.8] md:scale-90 lg:scale-110 pointer-events-none" style={{ animationDelay: '1s' }}></div>
             
-            <div className="w-40 h-40 lg:w-56 lg:h-56 rounded-full bg-gradient-to-br from-white/80 to-primary-fixed/50 backdrop-blur-xl border border-white/60 shadow-2xl orb-pulse flex flex-col items-center justify-center relative z-10 transition-transform duration-500 group-hover:scale-[1.03]">
-              <span className="material-symbols-outlined text-[40px] lg:text-[56px] text-primary mb-2 opacity-80 group-hover:opacity-100 transition-opacity" style={{ fontVariationSettings: "'wght' 300" }}>mic</span>
+            <div className="w-40 h-40 lg:w-56 lg:h-56 rounded-full bg-gradient-to-br from-white/80 to-primary-fixed/50 dark:from-white/10 dark:to-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-2xl orb-pulse flex flex-col items-center justify-center relative z-10 transition-transform duration-500 group-hover:scale-[1.03]">
+              <span className="material-symbols-outlined text-[40px] lg:text-[56px] text-primary dark:text-white/90 mb-2 opacity-80 group-hover:opacity-100 transition-opacity" style={{ fontVariationSettings: "'wght' 300" }}>mic</span>
               <div className="flex gap-1 items-center h-4 opacity-50">
                 <div className="w-1 h-2 bg-primary rounded-full"></div>
                 <div className="w-1 h-3 bg-primary rounded-full"></div>
@@ -215,7 +215,7 @@ export default function DashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="flex items-start gap-4 relative z-10 h-full flex-col justify-center">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center text-primary dark:text-white/90">
                   <span className="material-symbols-outlined text-[18px] lg:text-[20px]" style={{ fontVariationSettings: "'wght' 300" }}>auto_awesome</span>
                 </div>
                 <p className="text-[10px] lg:text-xs font-label-md text-primary uppercase tracking-widest opacity-80">Mythri Suggests</p>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
           
           <div className="grid grid-cols-2 gap-3 lg:gap-4 shrink-0">
             <Link href="/history" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 border border-white flex items-center justify-center text-primary group-hover:bg-white/80 transition-colors">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary dark:text-white/90 group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
                 <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>edit_document</span>
               </div>
               <div>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link href="/voice-chat" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 border border-white flex items-center justify-center text-primary group-hover:bg-white/80 transition-colors">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary dark:text-white/90 group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
                 <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>mic</span>
               </div>
               <div>
@@ -274,7 +274,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link href="/text-chat" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 border border-white flex items-center justify-center text-primary group-hover:bg-white/80 transition-colors">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary dark:text-white/90 group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
                 <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>self_improvement</span>
               </div>
               <div>
@@ -284,7 +284,7 @@ export default function DashboardPage() {
             </Link>
             
             <Link href="/profile" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 border border-white flex items-center justify-center text-primary group-hover:bg-white/80 transition-colors">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary dark:text-white group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
                 <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>insights</span>
               </div>
               <div>

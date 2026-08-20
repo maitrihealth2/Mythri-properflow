@@ -96,11 +96,11 @@ export default function HistoryPage() {
       {/* Header */}
       <header className="fixed top-0 z-40 flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 pointer-events-none animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center gap-4 pointer-events-auto">
-          <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all hover:bg-white/80 active:scale-95 shadow-sm">home</Link>
-          <span className="text-headline-md font-headline-md font-medium text-primary">Mythri</span>
+          <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20 p-2 rounded-full transition-all hover:bg-white/80 dark:hover:bg-white/20 active:scale-95 shadow-sm">home</Link>
+          <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90">Mythri</span>
         </div>
         <div className="flex items-center gap-4 relative pointer-events-auto">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="hidden md:block material-symbols-outlined text-primary hover:bg-surface-container-high p-2 rounded-full transition-all active:scale-95">grid_view</button>
+          <button onClick={() => setMenuOpen(!menuOpen)} className="hidden md:block material-symbols-outlined text-primary dark:text-white/90 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-all active:scale-95">grid_view</button>
           
           <nav className={`hidden md:flex absolute right-0 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
             <Link href="/home" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">

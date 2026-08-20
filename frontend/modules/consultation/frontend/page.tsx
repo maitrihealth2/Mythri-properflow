@@ -444,14 +444,23 @@ export default function ConsultationPage() {
       // ── Stream complete: flush the final partial segment ─────────────────
       const remaining = fullContent.slice(processedChars).trim()
 
+      // Extract dynamically generated exercise from the final text payload
+      let finalExerciseTrigger = metadataObj?.exercise_state !== 'idle' ? metadataObj?.exercise_type : undefined;
+      
+      if (metadataObj?.full_text) {
+        const match = metadataObj.full_text.match(/<EXERCISE>\s*(.*?)\s*<\/EXERCISE>/i);
+        if (match) {
+          finalExerciseTrigger = match[1];
+        }
+      }
+
       const responseMeta: Partial<BubbleItem> = {
         is_crisis: metadataObj?.is_crisis,
         helplines: metadataObj?.helplines,
         emotion: metadataObj?.emotion,
         emotion_emoji: metadataObj?.emotion_emoji,
         rag_used: metadataObj?.rag_used,
-        exercise_trigger:
-          metadataObj?.exercise_state !== 'idle' ? metadataObj?.exercise_type : undefined,
+        exercise_trigger: finalExerciseTrigger,
         is_last_in_group: true,
       }
 
@@ -570,14 +579,14 @@ export default function ConsultationPage() {
       {/* ── Desktop Header ── */}
       <header className="hidden md:flex fixed top-0 z-40 justify-between items-center w-full px-margin-desktop py-4 pointer-events-none animate-fade-in-up bg-transparent" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center gap-4 pointer-events-auto">
-          <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 hover:bg-white/80 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
-          <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
+          <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20 p-2 rounded-full transition-all duration-150 hover:bg-white/80 dark:hover:bg-white/20 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
+          <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 drop-shadow-md">Mythri</span>
         </div>
         <div className="flex items-center gap-4 relative pointer-events-auto">
           <ThemeToggle />
-          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">add</button>
-          <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">language</button>
-          <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">grid_view</button>
+          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">add</button>
+          <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">language</button>
+          <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">grid_view</button>
 
           {/* Dropdown */}
           <nav className={`absolute right-0 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>

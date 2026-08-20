@@ -209,6 +209,21 @@ async def send_message(
             ))
             bg_db.commit()
             
+            import re
+            exercise_match = re.search(r'<EXERCISE>\s*({.*?})\s*</EXERCISE>', final_text, flags=re.DOTALL | re.IGNORECASE)
+            if exercise_match:
+                try:
+                    dynamic_ex_str = exercise_match.group(1).strip()
+                    import json
+                    json.loads(dynamic_ex_str)
+                    tracker.suggest_exercise(session.id, exercise_type=dynamic_ex_str, triggered_by="llm", pre_emotion=emotion.label if emotion else "neutral")
+                    
+                    exercise_ctx = tracker.get_state(session.id)
+                    if exercise_ctx.exercise_state == "idle":
+                        tracker.advance_exercise_state(session.id, "suggested")
+                except Exception as e:
+                    print(f"[PostProcess] Exercise parsing error: {e}")
+            
             from rag.brain.evaluator import evaluate_response_async
             await evaluate_response_async(ai_msg.id)
             
