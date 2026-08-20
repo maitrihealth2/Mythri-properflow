@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { motion } from 'framer-motion'
+import { motion, Variants } from 'framer-motion'
 
 export type AuraState = 'idle' | 'listening' | 'processing' | 'speaking' | 'error' | 'success'
 
@@ -22,7 +22,7 @@ export default function MythriAura({ state = 'idle', className = '', size = 'md'
   const baseSize = sizeMap[size]
 
   // Define animation variants based on state
-  const centerVariants = {
+  const centerVariants: Variants = {
     idle: { scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8], transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' } },
     listening: { scale: [1.05, 1.15, 1.05], opacity: [0.9, 1, 0.9], transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } },
     processing: { scale: [0.95, 1.1, 0.95], opacity: [0.6, 1, 0.6], transition: { duration: 1, repeat: Infinity, ease: 'easeInOut' } },
@@ -31,7 +31,7 @@ export default function MythriAura({ state = 'idle', className = '', size = 'md'
     success: { scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8], transition: { duration: 2, ease: 'easeOut' } }
   }
 
-  const ring1Variants = {
+  const ring1Variants: Variants = {
     idle: { scale: [1.1, 1.2, 1.1], opacity: [0.3, 0.5, 0.3], transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' } },
     listening: { scale: [1.2, 1.4, 1.2], opacity: [0.4, 0.7, 0.4], transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } },
     processing: { scale: [1.1, 1.3, 1.1], opacity: [0.2, 0.6, 0.2], transition: { duration: 1.2, repeat: Infinity, ease: 'easeInOut' } },
@@ -40,7 +40,7 @@ export default function MythriAura({ state = 'idle', className = '', size = 'md'
     success: { scale: [1.1, 1.5, 1.2], opacity: [0.4, 0, 0.4], transition: { duration: 2, ease: 'easeOut' } }
   }
 
-  const ring2Variants = {
+  const ring2Variants: Variants = {
     idle: { scale: [1.3, 1.4, 1.3], opacity: [0.1, 0.2, 0.1], transition: { duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.5 } },
     listening: { scale: [1.4, 1.7, 1.4], opacity: [0.2, 0.4, 0.2], transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' } },
     processing: { scale: [1.3, 1.6, 1.3], opacity: [0.1, 0.3, 0.1], transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.2 } },
