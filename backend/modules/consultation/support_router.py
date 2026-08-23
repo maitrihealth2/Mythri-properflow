@@ -18,7 +18,7 @@ class SupportDecision:
     confidence: float
 
 
-def route(case_file: dict, is_crisis: bool, exercise_state: str) -> SupportDecision:
+def route(case_file: dict, is_crisis: bool, exercise_state: str, current_message: str = "", current_emotion: str = "") -> SupportDecision:
     """
     Converts case_file into a concrete support decision.
     Uses deterministic rules for MVP — no additional LLM call needed.
@@ -39,6 +39,22 @@ def route(case_file: dict, is_crisis: bool, exercise_state: str) -> SupportDecis
         )
 
     strategy   = case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
+    
+    # ── Quick Safety Override for Stale Strategy ──
+    # If the strategy was set to GROUND or PROPOSE_EXERCISE by the previous turn's assessor,
+    # but the user is currently feeling positive/motivated or explicitly rejecting it.
+    positives = ["motivation", "joy", "relief", "excitement", "calm"]
+    rejects = ["no", "don't", "stop", "nevermind", "actually no", "im fine", "i'm fine", "not now"]
+    
+    is_positive = current_emotion.lower() in positives
+    is_reject = any(r in current_message.lower() for r in rejects)
+    
+    if strategy in ("GROUND", "PROPOSE_EXERCISE"):
+        if is_positive:
+            strategy = "AFFIRM"
+        elif is_reject:
+            strategy = "LISTEN"
+
     risk       = case_file.get("conversation_state", {}).get("risk_level", "low")
     emotion    = case_file.get("emotional_state", {}).get("primary", "neutral")
     intensity  = float(case_file.get("emotional_state", {}).get("intensity", 0.0))

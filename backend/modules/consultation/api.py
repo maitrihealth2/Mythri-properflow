@@ -325,8 +325,18 @@ async def send_message(
         case_file=case_file,
         is_crisis=crisis.is_crisis,
         exercise_state=exercise_ctx.get("state", "idle"),
+        current_message=req.message,
+        current_emotion=emotion.label if emotion else "neutral",
     )
     print(f"[SUPPORT_DECISION] mode={support_decision.mode} exercise={support_decision.exercise_type} reason={support_decision.reason} confidence={support_decision.confidence:.2f}")
+
+    # Override the raw strategy in case_file so the LLM sees the corrected strategy
+    if "runtime_state" not in case_file:
+        case_file["runtime_state"] = {}
+    
+    # Only override if the router downgraded/changed it
+    if support_decision.mode in ("TALK", "AFFIRM", "LISTEN", "GROUND", "PROPOSE_EXERCISE", "ESCALATE"):
+         case_file["runtime_state"]["response_strategy"] = support_decision.mode
 
     if support_decision.mode == "GROUND" and exercise_ctx.get("state", "idle") == "idle":
         exercise_type = support_decision.exercise_type or "GROUNDING"
@@ -347,8 +357,8 @@ async def send_message(
     elif support_decision.mode == "PROPOSE_EXERCISE":
         pass  # LLM handles the proposal via PROPOSE_EXERCISE strategy in system prompt
     elif exercise_ctx.get("state", "idle") != "idle":
-        # If exercise was previously in progress but assessor moved on, reset
-        if strategy not in ("GROUND", "PROPOSE_EXERCISE"):
+        # If exercise was previously in progress but router moved on, reset
+        if support_decision.mode not in ("GROUND", "PROPOSE_EXERCISE"):
             tracker.reset_exercise(session.id)
 
     if exercise_ctx.get("state") == "awaiting_feedback":
