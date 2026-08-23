@@ -244,7 +244,7 @@ export default function VoiceModePage() {
 
       const decoder = new TextDecoder()
       let fullResponseText = ''
-      let match = null
+      let match: RegExpMatchArray | null = null
       let isPlayingAudio = false
       const audioQueue: string[] = []
 
