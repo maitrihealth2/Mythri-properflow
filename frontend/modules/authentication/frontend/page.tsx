@@ -300,7 +300,7 @@ export default function LoginPage() {
         <SanctuaryWisp />
 
         {/* Mobile Get Started Button */}
-        <div className="md:hidden relative z-20 w-full animate-fade-in-up mt-auto pb-4" style={{ animationDelay: '0.3s' }}>
+        <div className="md:hidden relative z-20 w-full animate-fade-in-up mt-auto pb-12 mb-8" style={{ animationDelay: '0.3s' }}>
             <button 
                 onClick={() => setMobileDrawerOpen(true)}
                 className="w-full bg-white text-on-surface font-label-md text-base h-14 rounded-full shadow-xl shadow-black/20 flex items-center justify-center gap-2 hover:bg-white/90 transition-colors"
