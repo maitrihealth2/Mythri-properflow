@@ -166,13 +166,13 @@ JSON Schema Requirements for the Output:
 
 {
   "emotional_state": {
-    "primary": "string (e.g. frustration, uncertainty, anxiety-like, relief, joy, neutral)",
+    "primary": "string (e.g. frustration, uncertainty, anxiety-like, relief, joy, neutral, motivation, excitement)",
     "secondary": ["string"],
     "intensity": 0.5
   },
   "cognitive_patterns": [
     {
-      "pattern": "string (e.g. rumination, overthinking, catastrophizing, self_criticism, all_or_nothing_thinking)",
+      "pattern": "string (e.g. rumination, overthinking, catastrophizing, self_criticism, resilience, goal_oriented, clarity, optimism)",
       "confidence": 0.5
     }
   ],
@@ -187,8 +187,8 @@ JSON Schema Requirements for the Output:
     "risk_level": "low"
   },
   "runtime_state": {
-    "response_strategy": "LISTEN | CLARIFY | VALIDATE | EXPLORE | REFLECT | PROPOSE_EXERCISE | GROUND | ENCOURAGE | PROBLEM_SOLVE | SAFETY_CHECK | GREETING",
-    "reason_codes": ["string (e.g. user_expressed_ambivalence, clarification_needed)"],
+    "response_strategy": "LISTEN | CLARIFY | VALIDATE | EXPLORE | REFLECT | PROPOSE_EXERCISE | GROUND | ENCOURAGE | AFFIRM | PROBLEM_SOLVE | SAFETY_CHECK | GREETING",
+    "reason_codes": ["string (e.g. user_expressed_motivation, clarification_needed)"],
     "expected_effect": "string (e.g. encourage_user_to_elaborate)",
     "exercise_in_progress": false
   }
@@ -197,10 +197,12 @@ JSON Schema Requirements for the Output:
 STRATEGY SELECTION RULES:
 - EXPLORE: If the cause is ambiguous or they are ruminating.
 - VALIDATE: If they express a strong, valid emotion and just need to be heard.
+- AFFIRM: If they share a win, positive realization, or motivation. Celebrate their progress and validate their positive state naturally.
 - REFLECT: Mirroring what they said to show understanding without asking a direct question.
 - LISTEN: Minimal acknowledgment (e.g. "hmm", "go on", "yeah").
-- PROPOSE_EXERCISE: User describes active panic, overwhelm, or high stress, and you want to ask if they'd like to try an exercise.
+- PROPOSE_EXERCISE: User describes active panic, overwhelm, or high stress, and you want to ask if they'd like to try an exercise. DO NOT use this for positive emotions like motivation.
 - GROUND: User has explicitly agreed to do an exercise, or explicitly asked for one.
+- ENCOURAGE: Offer support, hope, and reassurance. No questions needed.
 - SAFETY_CHECK: If risk_level is high (self-harm, severe crisis).
 - GREETING: Simple hello.
 
@@ -370,7 +372,8 @@ async def stream_chat_with_mythri(
                 "CRITICAL CONVERSATIONAL RULES FOR MEMORY USAGE:\n"
                 "1. Memory is provided SILENTLY as background knowledge so you know who/what the user is talking about.\n"
                 "2. Speak naturally, warmly, and empathically as a human companion/therapist who naturally knows their history.\n"
-                "3. Weave this context naturally into your response to make it personalized, but DO NOT say 'I remember' or announce facts like a database."
+                "3. Weave this context naturally into your response to make it personalized, but DO NOT say 'I remember' or announce facts like a database.\n"
+                "4. If they share a win, motivation, or positive progress, use their past struggles from the memory to highlight how far they've come (e.g. 'After everything that happened, seeing you so motivated is amazing.')."
             )
 
     if case_file:
@@ -395,6 +398,7 @@ async def stream_chat_with_mythri(
             "- PROPOSE_EXERCISE: Gently ask if they would like to try a short breathing or grounding exercise right now. Do not start the exercise yet.\n"
             "- GROUND: The user agreed to an exercise. You MUST generate a dynamic, context-specific exercise. Output a JSON block anywhere in your response matching this exact format: <EXERCISE>{\"title\": \"...\", \"description\": \"...\", \"steps\": [\"step 1\", \"step 2\", ...]}</EXERCISE> (ensure it is valid JSON inside the tag).\n"
             "- ENCOURAGE: Offer support, hope, and reassurance. No questions needed.\n"
+            "- AFFIRM: Celebrate their win, positive emotion, or motivation. Validate their progress. No questions needed.\n"
             "- PROBLEM_SOLVE: ONLY if they asked for advice, gently offer actionable suggestions. Provide the suggestion without asking for immediate feedback.\n"
             "- SAFETY_CHECK: High priority. Reassure them they are safe and support is available.\n\n"
             "CRITICAL: Match your response length and tone to the ACTIVE RESPONSE STRATEGY above. DO NOT default to asking a question at the end of your response."
