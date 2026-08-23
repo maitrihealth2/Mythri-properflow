@@ -18,7 +18,7 @@ def get_prosody_params(emotion_label: str) -> dict:
     Base minimisation is applied across the board for a deeper, more human resonance.
     """
     # Base adjustments for "minimised pitch" (more human, slightly deeper baseline)
-    base_semitones = -1.5
+    base_semitones = -0.5
     
     # Defaults
     params = {

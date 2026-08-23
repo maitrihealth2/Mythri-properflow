@@ -184,7 +184,11 @@ export default function ConsultationPage() {
   useEffect(() => {
     if (messages.length > 0 && sessionId && !activeBubble) {
       if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: 'smooth' })
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+        // Only auto-scroll if the user is already near the bottom (within 150px)
+        if (scrollHeight - scrollTop - clientHeight < 150) {
+          scrollContainerRef.current.scrollTo({ top: scrollHeight, behavior: 'smooth' })
+        }
       }
       localStorage.setItem('mb_chat_history_' + sessionId, JSON.stringify(messages))
     }
@@ -212,7 +216,11 @@ export default function ConsultationPage() {
       typingTimerRef.current = setTimeout(() => {
         setActiveBubbleText(words.slice(0, revealedWords.length + 1).join(' '))
         if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+          const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+          // Smart scroll during typing: only scroll if near the bottom
+          if (scrollHeight - scrollTop - clientHeight < 150) {
+            scrollContainerRef.current.scrollTop = scrollHeight
+          }
         }
       }, 40)
     } else {

@@ -132,6 +132,21 @@ class UnifiedCognitiveProfile:
         if persona_items:
             sections.append(f"[CLINICAL PROFILE & COPING]\n• " + "\n• ".join(persona_items))
 
+        # 4b. ACTIVE THERAPEUTIC GOALS
+        if self.active_goals:
+            goals_str = "; ".join(self.active_goals[:3])
+            sections.append(f"[ACTIVE GOALS]\n• {goals_str}")
+
+        # 4c. INTERVENTION HISTORY & WHAT HELPS (always shown — critical for adaptive support)
+        # This includes exercise outcomes written to companion_memories (MemoryCategory.TRIGGER)
+        if self.emotional_triggers:
+            trigger_items = []
+            for t in self.emotional_triggers[:3]:  # cap at 3 most relevant
+                trigger_items.append(t)
+            sections.append(
+                f"[WHAT HAS HELPED / WHAT TRIGGERS DISTRESS]\n• " + "\n• ".join(trigger_items)
+            )
+
         # 5. RECENT CLINICAL SUMMARY & EMOTIONAL TREND (Only for greetings to prevent mid-conversation repetition)
         if is_greeting:
             hist_items = []
@@ -172,85 +187,49 @@ class UnifiedCognitiveContextEngine:
         start_time = time.time()
         profile = UnifiedCognitiveProfile(user_id=user_id)
 
-        from sqlalchemy import text
         try:
-            sql = text("""
-                SELECT 
-                  (SELECT preferred_language FROM users WHERE id = u.id) AS language,
-                  (SELECT row_to_json(o) FROM user_onboarding o WHERE o.user_id = u.id) AS onboarding,
-                  (SELECT row_to_json(p) FROM user_persona_profiles p WHERE p.user_id = u.id) AS persona,
-                  (SELECT json_agg(m) FROM (SELECT * FROM companion_memories WHERE user_id = u.id ORDER BY importance_score DESC, created_at DESC LIMIT 5) m) AS memories,
-                  (SELECT json_agg(n) FROM (SELECT n.* FROM consultation_notes n JOIN sessions s ON n.session_id = s.id WHERE s.user_id = u.id ORDER BY n.created_at DESC LIMIT 3) n) AS notes,
-                  (SELECT count(id) FROM sessions WHERE user_id = u.id) AS sessions_count,
-                  (SELECT json_agg(g) FROM (SELECT * FROM user_goals WHERE user_id = u.id AND status = 'in_progress') g) AS goals,
-                  (SELECT json_agg(j) FROM (SELECT * FROM user_journals WHERE user_id = u.id ORDER BY created_at DESC LIMIT 2) j) AS journals,
-                  (SELECT row_to_json(e) FROM (SELECT e.* FROM message_emotions e JOIN messages m ON e.message_id = m.id JOIN sessions s ON m.session_id = s.id WHERE s.user_id = u.id AND m.role = 'user' ORDER BY e.created_at DESC LIMIT 1) e) AS last_emotion
-                FROM users u
-                WHERE u.id = :user_id;
-            """)
+            from core.database.models import LivingUserContext, CompanionMemory, User
             
-            result = db.execute(sql, {"user_id": user_id}).mappings().first()
-            if result:
-                profile.language = result["language"] or "en-IN"
+            # 1. Fetch user basics
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                profile.language = user.preferred_language or "en-IN"
+                profile.preferred_name = user.username # Default fallback
+            
+            # 2. Fetch Living User Context
+            living_ctx = db.query(LivingUserContext).filter(LivingUserContext.user_id == user_id).first()
+            if living_ctx:
+                if living_ctx.compact_summary:
+                    profile.recent_session_summaries.append(living_ctx.compact_summary)
+                if living_ctx.active_themes:
+                    profile.active_goals.extend(living_ctx.active_themes)
+                if living_ctx.unresolved_topics:
+                    profile.goals.extend(living_ctx.unresolved_topics)
+                if living_ctx.emotional_baseline:
+                    profile.recent_emotional_trend = living_ctx.emotional_baseline
+            else:
+                profile.recent_session_summaries.append("New user context being built in background.")
                 
-                onboarding = result["onboarding"]
-                if onboarding:
-                    if onboarding.get("preferred_name"): profile.preferred_name = onboarding.get("preferred_name")
-                    if onboarding.get("language"): profile.language = onboarding.get("language")
-                    if onboarding.get("conversation_style"): profile.conversation_style = onboarding.get("conversation_style")
-                    if onboarding.get("communication_mode"): profile.communication_mode = onboarding.get("communication_mode")
-                    if onboarding.get("primary_goal"): profile.primary_goal = onboarding.get("primary_goal")
-                    if onboarding.get("initial_emotion"): profile.initial_emotion = onboarding.get("initial_emotion")
-                    if onboarding.get("check_in_preference"): profile.check_in_preference = onboarding.get("check_in_preference")
-                    if onboarding.get("goals") and isinstance(onboarding.get("goals"), list): profile.goals = onboarding.get("goals")
-                    if onboarding.get("reasons") and isinstance(onboarding.get("reasons"), list): profile.reasons_for_joining = onboarding.get("reasons")
+            # 3. Fetch Top Companion Memories
+            memories = db.query(CompanionMemory).filter(
+                CompanionMemory.user_id == user_id
+            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(5).all()
+            
+            seen_facts: Set[str] = set()
+            for m in memories:
+                content_clean = m.content.strip()
+                if not content_clean: continue
+                norm_content = content_clean.lower()
+                if norm_content in seen_facts: continue
+                seen_facts.add(norm_content)
                 
-                persona = result["persona"]
-                if persona:
-                    if persona.get("initial_presenting_topic"): profile.presenting_problem = persona.get("initial_presenting_topic")
-                    elif persona.get("initial_presenting_problem"): profile.presenting_problem = persona.get("initial_presenting_problem")
-                    if persona.get("coping_mechanisms"): profile.coping_mechanisms = str(persona.get("coping_mechanisms"))
-                    if persona.get("perceived_support_system"): profile.support_system = str(persona.get("perceived_support_system"))
-                    if persona.get("personality_traits"): profile.personality_traits = str(persona.get("personality_traits"))
-                    if persona.get("risk_level"): profile.risk_level = persona.get("risk_level")
-                    
-                memories = result["memories"] or []
-                seen_facts: Set[str] = set()
-                for m in memories:
-                    content_clean = m.get("content", "").strip()
-                    if not content_clean: continue
-                    norm_content = content_clean.lower()
-                    if norm_content in seen_facts: continue
-                    seen_facts.add(norm_content)
-                    
-                    mtype = (m.get("memory_type") or "").lower()
-                    if "relationship" in mtype: profile.relationships.append(content_clean)
-                    elif "preference" in mtype: profile.long_term_preferences.append(content_clean)
-                    elif "goal" in mtype: profile.active_goals.append(content_clean)
-                    elif "habit" in mtype: profile.habits_and_routines.append(content_clean)
-                    elif "trigger" in mtype: profile.emotional_triggers.append(content_clean)
-                    else: profile.personal_facts.append(content_clean)
-                    
-                notes = result["notes"] or []
-                for n in notes:
-                    if n.get("summary"):
-                        profile.recent_session_summaries.append(n.get("summary")[:200])
-                        
-                profile.total_sessions_count = result["sessions_count"] or 0
-                
-                last_emotion = result["last_emotion"]
-                if last_emotion and last_emotion.get("emotion_label"):
-                    profile.recent_emotional_trend = last_emotion.get("emotion_label").capitalize()
-                    
-                goals = result["goals"] or []
-                for ug in goals:
-                    if ug.get("title") and ug.get("title") not in profile.goals:
-                        profile.goals.append(ug.get("title"))
-                        
-                journals = result["journals"] or []
-                for j in journals:
-                    j_title = j.get("title") or (j.get("content", "")[:50])
-                    profile.journal_highlights.append(f"{j_title} (Mood: {j.get('mood') or 'Neutral'})")
+                mtype = (m.memory_type or "").lower()
+                if "relationship" in mtype: profile.relationships.append(content_clean)
+                elif "preference" in mtype: profile.long_term_preferences.append(content_clean)
+                elif "goal" in mtype: profile.active_goals.append(content_clean)
+                elif "habit" in mtype: profile.habits_and_routines.append(content_clean)
+                elif "trigger" in mtype: profile.emotional_triggers.append(content_clean)
+                else: profile.personal_facts.append(content_clean)
                     
         except Exception as e:
             print(f"[UnifiedCognitiveContextEngine] Error building profile: {e}")

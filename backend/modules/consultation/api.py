@@ -19,6 +19,7 @@ from rag.brain.state_tracker import tracker
 from security.authentication.api import get_current_user
 from modules.dashboard.api import broadcast_event
 from core.logger.terminal import CommandCenter
+from modules.consultation.support_router import route as support_route
 
 try:
     from rag.knowledge.retriever import retrieve_context, is_knowledge_base_ready
@@ -119,14 +120,15 @@ Make them feel: "I don't have to perform here, I can talk normally."
 Keep it brief (40-80 words max, 2-3 sentences). End with a gentle open question like "Where would you like to start today?" or just a warm statement like "I'm here whenever you're ready."
 IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
         else:
-            system_prompt = f"""You are Mythri, a warm, conversational, and highly attuned friend.
+            system_prompt = f"""You are Mythri, a warm, perceptive, and highly attuned friend.
 Your tone is calm, grounded, and deeply non-judgmental.
 
 You are generating the very first message to a user who just opened the app for a new session.
 Greet them warmly by name ({profile.preferred_name}).
-Naturally reference their recent progress or last conversation topic if available, but DO NOT sound like a robotic summary.
-Keep it completely natural and conversational.
-Keep it brief (40-80 words max, 2-3 sentences). You DO NOT have to ask a question. A warm statement like "It's good to see you again" is perfectly fine. Let them lead.
+Naturally reference their recent progress or last conversation topic if available, but keep it incredibly subtle and human.
+DO NOT use therapy jargon like "holding space", "heavy things", or "take a breath". Just talk to them like a real friend checking in.
+Keep it completely natural, concise, and conversational.
+Keep it brief (40-80 words max, 2-3 sentences). You DO NOT have to ask a question. Let them lead.
 IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
 
         messages = [
@@ -316,16 +318,38 @@ async def send_message(
 
     t_assessor = time.time()
     strategy = case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
-    decision = case_file.get("runtime_state", {}).get("exercise_decision", "NONE")
 
-    if strategy == "GROUND" and exercise_ctx.get("state", "idle") == "idle":
-        exercise_type = "GROUNDING"
-        tracker.suggest_exercise(session.id, exercise_type=exercise_type, triggered_by="assessor", pre_emotion=emotion.label)
-        db.add(ExerciseLog(session_id=session.id, user_id=current_user.id, exercise_type=exercise_type, triggered_by="assessor", state="suggested", pre_emotion=emotion.label))
-    elif decision == "EXERCISE_CONTINUE" and exercise_ctx.get("state", "idle") == "idle":
-        tracker.advance_exercise_state(session.id, "in_progress")
-    elif decision == "EXERCISE_BREAK" or exercise_ctx.get("state", "idle") != "idle":
-        tracker.reset_exercise(session.id)
+    # ── Support Decision Router ───────────────────────────────────────────
+    # Converts case_file into a concrete routing decision (TALK/GROUND/PROPOSE_EXERCISE/ESCALATE)
+    support_decision = support_route(
+        case_file=case_file,
+        is_crisis=crisis.is_crisis,
+        exercise_state=exercise_ctx.get("state", "idle"),
+    )
+    print(f"[SUPPORT_DECISION] mode={support_decision.mode} exercise={support_decision.exercise_type} reason={support_decision.reason} confidence={support_decision.confidence:.2f}")
+
+    if support_decision.mode == "GROUND" and exercise_ctx.get("state", "idle") == "idle":
+        exercise_type = support_decision.exercise_type or "GROUNDING"
+        tracker.suggest_exercise(session.id, exercise_type=exercise_type, triggered_by="support_router", pre_emotion=emotion.label)
+        db.add(ExerciseLog(
+            session_id=session.id, user_id=current_user.id,
+            exercise_type=exercise_type, triggered_by="support_router",
+            state="suggested", pre_emotion=emotion.label,
+        ))
+    elif support_decision.mode == "ESCALATE" and not crisis.is_crisis:
+        # Elevated risk but not full crisis — log for human review
+        db.add(RiskLog(
+            session_id=session.id, user_id=current_user.id,
+            trigger_phrase=req.message[:200],
+            system_response="Support router escalated: high risk level detected.",
+            helpline_shown=False,
+        ))
+    elif support_decision.mode == "PROPOSE_EXERCISE":
+        pass  # LLM handles the proposal via PROPOSE_EXERCISE strategy in system prompt
+    elif exercise_ctx.get("state", "idle") != "idle":
+        # If exercise was previously in progress but assessor moved on, reset
+        if strategy not in ("GROUND", "PROPOSE_EXERCISE"):
+            tracker.reset_exercise(session.id)
 
     if exercise_ctx.get("state") == "awaiting_feedback":
         _complete_exercise(db, session.id, current_user.id, emotion.label, req.message)
@@ -369,6 +393,34 @@ async def send_message(
                 context_used=case_file
             ))
             bg_db.commit()
+
+            # ── Output Safety Check (non-blocking post-response audit) ────────
+            # Runs after response is already sent — logs violations for review.
+            # Never blocks or modifies the response received by the user.
+            try:
+                from security.safety_validator import evaluate_output_safety
+                safety_result = await evaluate_output_safety(req.message, final_text)
+                if not safety_result.get("is_safe", True):
+                    violation = safety_result.get("violation_category", "unknown")
+                    reason    = safety_result.get("reason", "")
+                    print(f"[OUTPUT_SAFETY_VIOLATION] msg_id={ai_msg.id} category={violation} reason={reason}")
+            except Exception as e:
+                print(f"[OUTPUT_SAFETY_ERROR] {e}")
+
+
+            # ── on_assistant_response hook ────────────────────────────────
+            # Notifies MemoryManager that a response was generated (event hook)
+            try:
+                from modules.memory.manager import MemoryManager
+                with SessionLocal() as mm_db:
+                    mm = MemoryManager(db_session=mm_db)
+                    mm.on_assistant_response(
+                        user_id=current_user.id,
+                        response=final_text,
+                        session_id=session.id,
+                    )
+            except Exception as e:
+                print(f"[PostProcess] on_assistant_response hook error: {e}")
             
             import re
             exercise_match = re.search(r'<EXERCISE>\s*({.*?})\s*</EXERCISE>', final_text, flags=re.DOTALL | re.IGNORECASE)
@@ -379,13 +431,13 @@ async def send_message(
                     json.loads(dynamic_ex_str)
                     tracker.suggest_exercise(session.id, exercise_type=dynamic_ex_str, triggered_by="llm", pre_emotion=emotion.label if emotion else "neutral")
                     
-                    exercise_ctx = tracker.get_state(session.id)
-                    if exercise_ctx.exercise_state == "idle":
+                    exercise_ctx_now = tracker.get_state(session.id)
+                    if exercise_ctx_now.exercise_state == "idle":
                         tracker.advance_exercise_state(session.id, "suggested")
                 except Exception as e:
                     print(f"[PostProcess] Exercise parsing error: {e}")
             
-            # Background Background Assessor and Pattern Analysis
+            # Background Assessor and Pattern Analysis
             try:
                 bg_history = history.copy()
                 bg_history.append({"role": "assistant", "content": final_text})
@@ -501,7 +553,7 @@ async def send_message(
     return StreamingResponse(response_generator(), media_type="application/x-ndjson")
 
 def _complete_exercise(db: Session, session_id: int, user_id: int, post_emotion: str, feedback_text: str):
-    """Mark the most recent in-progress ExerciseLog as completed."""
+    """Mark the most recent in-progress ExerciseLog as completed and store outcome in memory."""
     ex_log = db.query(ExerciseLog).filter(
         ExerciseLog.session_id == session_id,
         ExerciseLog.user_id   == user_id,
@@ -509,11 +561,53 @@ def _complete_exercise(db: Session, session_id: int, user_id: int, post_emotion:
     ).order_by(ExerciseLog.started_at.desc()).first()
 
     if ex_log:
-        ex_log.state        = "completed"
-        ex_log.post_emotion = post_emotion
-        ex_log.user_feedback= feedback_text[:500]
-        ex_log.completed_at = datetime.utcnow()
+        ex_log.state         = "completed"
+        ex_log.post_emotion  = post_emotion
+        ex_log.user_feedback = feedback_text[:500]
+        ex_log.completed_at  = datetime.utcnow()
         db.commit()
+        print(f"[EXERCISE_COMPLETE] type={ex_log.exercise_type} pre={ex_log.pre_emotion} post={post_emotion}")
+
+        # ── Write exercise outcome directly to memory (bypass extractor) ──
+        # Outcome notes are structured system facts, not user utterances.
+        # We save them directly via repository rather than running them through
+        # the pattern-matching extractor (which only handles 1st-person speech).
+        try:
+            from modules.memory.repository import MemoryRepository
+            from modules.memory.domain import (
+                MemoryEntity, MemoryCategory, MemoryKind,
+                MemoryMetadata, MemorySource, MemoryStatus,
+            )
+            from core.database.models import SessionLocal
+            from datetime import datetime as dt
+
+            outcome_content = (
+                f"Completed {ex_log.exercise_type} exercise. "
+                f"Mood before: {ex_log.pre_emotion or 'unknown'}, after: {post_emotion}. "
+                f"Feedback: {feedback_text[:200]}"
+            )
+            outcome_entity = MemoryEntity(
+                content=outcome_content,
+                metadata=MemoryMetadata(
+                    user_id=user_id,
+                    memory_kind=MemoryKind.LONG_TERM,
+                    category=MemoryCategory.TRIGGER,  # closest category for intervention outcomes
+                    importance=0.9,
+                    confidence=1.0,
+                    created_at=dt.utcnow(),
+                    updated_at=dt.utcnow(),
+                    source=MemorySource.DIRECT_USER_STATEMENT,
+                    origin_session=session_id,
+                    status=MemoryStatus.STORED,
+                    extra={"exercise_type": ex_log.exercise_type, "pre_emotion": ex_log.pre_emotion, "post_emotion": post_emotion},
+                ),
+            )
+            with SessionLocal() as mem_db:
+                repo = MemoryRepository(mem_db)
+                repo.save_memory(outcome_entity)
+            print(f"[EXERCISE_OUTCOME_MEMORY] Written: {outcome_content[:100]}")
+        except Exception as e:
+            print(f"[EXERCISE_OUTCOME_MEMORY_ERROR] {e}")
 
 
 async def _update_persona_async(db_session_id: int, user_id: int, is_first_session: bool):
@@ -548,8 +642,8 @@ async def _update_persona_async(db_session_id: int, user_id: int, is_first_sessi
 
 async def _process_memory_write_path_async(user_id: int, user_message: str, session_id: int) -> None:
     """
-    Milestone 11 Write-Path Integration Worker.
-    Executes MemoryManager asynchronously after client response generation.
+    Memory Write-Path Worker.
+    Executes MemoryManager.process_turn() asynchronously after client response.
     Completely isolated so background errors never impact user turn responses.
     """
     from core.database.models import SessionLocal
@@ -574,14 +668,20 @@ async def _process_memory_write_path_async(user_id: int, user_message: str, sess
                 session_id=session_id,
             )
 
+            actionable = [d for d in result.decisions if d.is_actionable]
+            print(f"[MEMORY_WRITE] user={user_id} candidates={len(result.candidates)} actionable={len(actionable)}")
+            for d in actionable:
+                print(f"  → {d.outcome.value}: {str(d.candidate.content)[:80] if d.candidate else 'N/A'}")
+
             for dec in result.decisions:
                 if dec.is_actionable and dec.candidate:
                     index_engine.on_memory_created(dec.candidate)
 
             if result.has_actionable_decisions:
-                CommandCenter.log_ai("MEMORY_WRITE", f"Extracted {len(result.candidates)} candidates, executed {len(result.decisions)} decisions for user {user_id}")
+                CommandCenter.log_ai("MEMORY_WRITE", f"Extracted {len(result.candidates)} candidates, executed {len(actionable)} decisions for user {user_id}")
         except Exception as err:
             CommandCenter.log_ai("MEMORY_ERROR", f"Memory background processing failed: {err}")
+            print(f"[MEMORY_WRITE_ERROR] {err}")
         finally:
             db.close()
 
@@ -673,23 +773,95 @@ def get_transcript(
 
 
 async def generate_session_summary(session_id: int, user_id: int):
-    # run in background
-    from core.database.models import SessionLocal
+    """
+    Generates a real LLM-produced session summary after a session ends.
+    Replaces the previous hardcoded stub.
+    Runs in background — errors are isolated and never surface to the user.
+    """
+    from core.database.models import SessionLocal, SessionSummary, Message as DBMessage
+    from providers.llm.router import llm_router
+    import json, re
+
     db = SessionLocal()
     try:
-        from core.database.models import SessionSummary
-        summary = SessionSummary(
-            session_id=session_id,
-            user_id=user_id,
-            main_topics=["General Check-in"],
-            emotional_progression=["Neutral"],
-            important_context="Auto-generated end of session.",
-            unresolved_topics=[]
+        # Fetch session messages
+        messages = db.query(DBMessage).filter(
+            DBMessage.session_id == session_id
+        ).order_by(DBMessage.created_at).all()
+
+        if not messages or len(messages) < 2:
+            print(f"[SESSION_SUMMARY] Session {session_id} too short to summarize ({len(messages)} messages). Skipping.")
+            return
+
+        # Build conversation text (last 20 exchanges, user + assistant)
+        convo_lines = []
+        for m in messages[-20:]:
+            role_label = "USER" if m.role == "user" else "MYTHRI"
+            convo_lines.append(f"{role_label}: {m.content[:300]}")
+        conversation_text = "\n".join(convo_lines)
+
+        summary_prompt = f"""You are reviewing a session between a user and MYTHRI (an AI mental health companion).
+
+SESSION TRANSCRIPT:
+{conversation_text}
+
+Generate a concise session summary as JSON. Be specific — use actual content from the transcript, not generic phrases.
+
+{{
+  "main_topics": ["specific topic 1", "specific topic 2"],
+  "emotional_progression": ["starting emotion", "ending emotion"],
+  "important_context": "Key insight or pattern in 1-2 sentences using actual details from the session",
+  "unresolved_topics": ["anything left unaddressed or needing follow-up"],
+  "intervention_used": "Name of exercise if any was done, else null",
+  "session_outcome": "How the session appeared to end (e.g. calmer, still distressed, hopeful)"
+}}
+
+Output ONLY valid JSON. Keep each string field under 150 chars. Arrays max 3 items."""
+
+        result = await llm_router.generate(
+            api_messages=[
+                {"role": "system", "content": "You are a clinical session summarizer. Output only valid JSON. Be specific, not generic."},
+                {"role": "user", "content": summary_prompt}
+            ],
+            max_tokens=400,
+            temperature=0.2
         )
-        db.add(summary)
+
+        if not result:
+            raise ValueError("LLM returned empty response for session summary")
+
+        match = re.search(r'\{.*\}', result, re.DOTALL)
+        if not match:
+            raise ValueError(f"No JSON found in LLM response: {result[:200]}")
+
+        data = json.loads(match.group(0))
+
+        # Write to DB — upsert (create or update if already exists)
+        existing = db.query(SessionSummary).filter(
+            SessionSummary.session_id == session_id
+        ).first()
+
+        if not existing:
+            summary = SessionSummary(
+                session_id=session_id,
+                user_id=user_id,
+                main_topics=data.get("main_topics", ["General Check-in"]),
+                emotional_progression=data.get("emotional_progression", ["Neutral"]),
+                important_context=(data.get("important_context") or "")[:500],
+                unresolved_topics=data.get("unresolved_topics", []),
+            )
+            db.add(summary)
+        else:
+            existing.main_topics = data.get("main_topics", existing.main_topics)
+            existing.emotional_progression = data.get("emotional_progression", existing.emotional_progression)
+            existing.important_context = (data.get("important_context") or existing.important_context)[:500]
+            existing.unresolved_topics = data.get("unresolved_topics", existing.unresolved_topics)
+
         db.commit()
+        print(f"[SESSION_SUMMARY] Generated for session {session_id}: topics={data.get('main_topics')} outcome={data.get('session_outcome')}")
+
     except Exception as e:
-        print(f"Error generating session summary: {e}")
+        print(f"[SESSION_SUMMARY_ERROR] session={session_id}: {e}")
     finally:
         db.close()
 
@@ -697,6 +869,7 @@ async def generate_session_summary(session_id: int, user_id: int):
 @router.post("/{session_id}/end")
 def end_session(
     session_id: str,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -711,8 +884,10 @@ def end_session(
     session.ended_at = datetime.utcnow()
     db.commit()
     
-    # Trigger the async summarizer task
-    asyncio.create_task(generate_session_summary(session.id, current_user.id))
+    # Trigger the async summarizer tasks
+    from modules.memory.incremental_updater import update_living_context
+    background_tasks.add_task(generate_session_summary, session.id, current_user.id)
+    background_tasks.add_task(update_living_context, current_user.id, session.id)
     
     return {"status": "ended", "session_id": session_id}
 

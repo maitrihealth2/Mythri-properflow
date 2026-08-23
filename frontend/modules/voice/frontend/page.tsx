@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { startSession, sendVoiceMessage, getTranscript, logout } from '@/core/api'
+import { startSession, getTranscript, logout, API_URL } from '@/core/api'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
@@ -227,44 +227,102 @@ export default function VoiceModePage() {
     formData.append('session_id', sid)
 
     try {
-      const data = await sendVoiceMessage(sid, formData)
+      const token = localStorage.getItem('mb_token')
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
 
-      if (data.transcript && data.transcript !== "[Silence]") {
-        setUserTranscript(data.transcript)
-      }
+      const res = await fetch(`${API_URL}/api/voice/conversation`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      })
 
+      if (!res.ok) throw new Error(`Fetch failed with status ${res.status}`)
+
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('No readable stream')
+
+      const decoder = new TextDecoder()
+      let fullResponseText = ''
       let match = null
-      if (data.response) {
-        let cleanResponse = data.response
-        match = cleanResponse.match(/<EXERCISE>\s*(.*?)\s*<\/EXERCISE>/i)
-        if (match) {
-          setExerciseMode(match[1])
-          cleanResponse = cleanResponse.replace(/<EXERCISE>\s*(.*?)\s*<\/EXERCISE>/gi, '').trim()
+      let isPlayingAudio = false
+      const audioQueue: string[] = []
 
-          if (!isPaused) {
-            setIsPaused(true)
-            setConvState('paused')
-            mitraStore.setState('idle')
-            isListeningRef.current = false
-            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
-            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-              mediaRecorderRef.current.onstop = null
-              mediaRecorderRef.current.stop()
-            }
+      const checkAudioQueue = async () => {
+        if (isPlayingAudio || audioQueue.length === 0) return
+        isPlayingAudio = true
+        const nextB64 = audioQueue.shift()
+        if (nextB64) {
+          if (isListeningRef.current || match) {
+            setConvState('speaking')
+            mitraStore.setState('comforting')
+            isAssistantSpeakingRef.current = true
+            await playWav(nextB64)
+            isAssistantSpeakingRef.current = false
           }
         }
-        setAgentResponse(cleanResponse)
+        isPlayingAudio = false
+        checkAudioQueue()
       }
 
-      if (data.audio_b64 && (isListeningRef.current || match)) {
-        setConvState('speaking')
-        mitraStore.setState('comforting')
-        isAssistantSpeakingRef.current = true
+      let streamBuffer = ''
 
-        await playWav(data.audio_b64)
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        
+        streamBuffer += decoder.decode(value, { stream: true })
+        const chunks = streamBuffer.split('\n')
+        
+        // Keep the last chunk in the buffer as it might be incomplete
+        streamBuffer = chunks.pop() || ''
 
-        isAssistantSpeakingRef.current = false
+        for (const chunk of chunks) {
+          const cleanChunk = chunk.trim()
+          if (!cleanChunk) continue
+          
+          try {
+            const data = JSON.parse(cleanChunk)
+            
+            if (data.type === 'transcript' && data.text && data.text !== "[Silence]") {
+              setUserTranscript(data.text)
+            } else if (data.type === 'text') {
+              fullResponseText += data.text
+              
+              match = fullResponseText.match(/<EXERCISE>\s*(.*?)\s*<\/EXERCISE>/i)
+              if (match) {
+                setExerciseMode(match[1])
+                fullResponseText = fullResponseText.replace(/<EXERCISE>\s*(.*?)\s*<\/EXERCISE>/gi, '').trim()
+                if (!isPaused) {
+                  setIsPaused(true)
+                  setConvState('paused')
+                  mitraStore.setState('idle')
+                  isListeningRef.current = false
+                  if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
+                  if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                    mediaRecorderRef.current.onstop = null
+                    mediaRecorderRef.current.stop()
+                  }
+                }
+              }
+              setAgentResponse(fullResponseText)
+            } else if (data.type === 'audio') {
+              if (data.audio_b64) {
+                audioQueue.push(data.audio_b64)
+                checkAudioQueue()
+              }
+            }
+          } catch (e) {
+            console.error('Failed to parse chunk:', cleanChunk, e)
+          }
+        }
       }
+      
+      // Wait for audio queue to finish
+      while (isPlayingAudio || audioQueue.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      
     } catch (e) {
       console.error(e)
     } finally {
@@ -665,6 +723,12 @@ export default function VoiceModePage() {
             <MythriAura 
               state={(convState === 'thinking' ? 'processing' : (convState === 'paused' ? 'idle' : convState)) as AuraState} 
               size="xl" 
+            />
+            <canvas 
+              ref={canvasRef} 
+              width={256} 
+              height={256} 
+              className="absolute inset-0 w-full h-full pointer-events-none z-10" 
             />
           </div>
 

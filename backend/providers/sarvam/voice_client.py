@@ -73,9 +73,7 @@ Reply in conversational Indian English. Relaxed, contraction-heavy, not textbook
 
 Examples: "Yeah, that makes sense." / "Let's try that." / "Actually, that's a good idea."
 
-FILLER POOL -- rotate across these, never repeat the same one twice in a row and
-never use more than one per turn: Hmm, Wait, Actually, Okay, Right, I see. Use
-naturally, not on every single line -- most turns need zero fillers.
+FILLER POOL: If you use a filler, always append an ellipsis to pace it: "Hmm...", "Wait...", "Actually...", "Okay...". Rotate them. NEVER use more than one per turn. Use naturally, not on every single line -- most turns need zero fillers.
 
 Keep technical words unchanged.
 """,
@@ -86,9 +84,7 @@ Reply primarily in Hindi. Natural Hinglish, mixed exactly like educated Indians 
 Examples: "Haan, that's actually a good idea." / "Tum login karke dekh lo." /
 "Server down lag raha hai." / "Let's ek baar aur try karte hain."
 
-FILLER POOL -- rotate across these, never repeat the same one twice in a row and
-never use more than one per turn: Haan, Arre, Yaar, Achha, Theek hai, Sach mein?,
-Waise, Chalo. Use naturally, not on every single line -- most turns need zero fillers.
+FILLER POOL: If you use a filler, always append an ellipsis to pace it: "Haan...", "Arre...", "Yaar...", "Achha...". Rotate them. NEVER use more than one per turn. Use naturally, not on every single line -- most turns need zero fillers.
 
 Keep these in English always: Login, Logout, Database, Server, API, Frontend, Backend,
 React, Python, Java, JavaScript, Firebase, MongoDB, GitHub, Windows, Android, Chrome,
@@ -100,9 +96,7 @@ Reply primarily in Tamil using Tamil script (தமிழ்). Mix in English wo
 
 Examples: "சரி, let's try பண்ணலாம்." / "Login பண்ணுங்க." / "Server busy இருக்கு."
 
-FILLER POOL -- rotate across these, never repeat the same one twice in a row and
-never use more than one per turn: Aiyo, Amma, Seri, Enna, Really-ah?, Ok-la, Apparam.
-Use naturally, not on every single line -- most turns need zero fillers.
+FILLER POOL: If you use a filler, always append an ellipsis to pace it: "Aiyo...", "Amma...", "Seri...", "Enna...". Rotate them. NEVER use more than one per turn. Use naturally, not on every single line -- most turns need zero fillers.
 
 Keep these in English always: Login, Logout, Database, Server, API, Frontend, Backend,
 React, Python, Java, JavaScript, Firebase, MongoDB, GitHub, Windows, Android, Chrome,
@@ -114,9 +108,7 @@ Reply primarily in Telugu using Telugu script (తెలుగు). Mix in Engli
 
 Examples: "సరే, start చేద్దాం." / "Login అయ్యాక continue చేయండి." / "Server slow గా ఉంది."
 
-FILLER POOL -- rotate across these, never repeat the same one twice in a row and
-never use more than one per turn: Ayyo, Amma, Enti, Sare, Nijamga?, Ala aa?, Sరే.
-Use naturally, not on every single line -- most turns need zero fillers.
+FILLER POOL: If you use a filler, always append an ellipsis to pace it: "Ayyo...", "Amma...", "Enti...", "Sare...". Rotate them. NEVER use more than one per turn. Use naturally, not on every single line -- most turns need zero fillers.
 
 Keep these in English always: Login, Logout, Database, Server, API, Frontend, Backend,
 React, Python, Java, JavaScript, Firebase, MongoDB, GitHub, Windows, Android, Chrome,
@@ -496,12 +488,12 @@ async def synthesize_speech(
     # Emotional Mapping for Sarvam Bulbul-v3
     # Pace: 0.5–2.0, Temperature: 0.01–1.0, Pitch: 0.5-2.0
     EMOTION_PARAMS = {
-        "Sadness":  {"pace": 1.05, "pitch": 0.95, "temperature": 0.75},
-        "Anxiety":  {"pace": 1.15, "pitch": 1.00, "temperature": 0.65},
-        "Anger":    {"pace": 1.25, "pitch": 1.05, "temperature": 0.80},
-        "Positive": {"pace": 1.20, "pitch": 1.05, "temperature": 0.85},
-        "Neutral":  {"pace": 1.18, "pitch": 1.00, "temperature": 0.80},
-        "Crisis":   {"pace": 1.10, "pitch": 0.95, "temperature": 0.70},
+        "Sadness":  {"pace": 0.95, "pitch": 0.95, "temperature": 0.75},
+        "Anxiety":  {"pace": 1.05, "pitch": 1.00, "temperature": 0.65},
+        "Anger":    {"pace": 1.10, "pitch": 1.05, "temperature": 0.80},
+        "Positive": {"pace": 1.05, "pitch": 1.05, "temperature": 0.85},
+        "Neutral":  {"pace": 1.00, "pitch": 1.00, "temperature": 0.80},
+        "Crisis":   {"pace": 0.95, "pitch": 0.95, "temperature": 0.70},
     }
     params = EMOTION_PARAMS.get(emotion, EMOTION_PARAMS["Neutral"])
     final_pace = max(0.5, min(2.0, params["pace"]))
@@ -547,32 +539,38 @@ async def synthesize_speech(
         return b""
 
     # Bulbul v3 has a 500 character limit per request. Split text into chunks safely.
+    # We strictly chunk by punctuation to avoid mid-sentence robotic pauses.
+    import re
     chunks = []
-    current_chunk = ""
     
-    # Split text entirely by spaces to guarantee we never cut a word in half
-    words = text.split(" ")
+    # Split by sentence endings keeping the punctuation
+    sentences = re.split(r'(?<=[.!?।])\s+', text)
     
-    # Regional scripts are denser. A 420-char Telugu sentence causes pitch failures.
     max_len = 150 if language in ["te-IN", "ta-IN"] else 420
-    ideal_len = 80 if language in ["te-IN", "ta-IN"] else 200
     
-    for word in words:
-        if not word.strip():
+    current_chunk = ""
+    for sentence in sentences:
+        if not sentence.strip():
             continue
             
-        # If adding this word pushes us over max_len chars, finalize the chunk
-        if len(current_chunk) + len(word) + 1 > max_len:
+        # If a single sentence is bizarrely long, we have to split it by commas
+        if len(sentence) > max_len:
+            sub_clauses = re.split(r'(?<=[,;])\s+', sentence)
+            for clause in sub_clauses:
+                if len(current_chunk) + len(clause) + 1 > max_len:
+                    if current_chunk:
+                        chunks.append(current_chunk.strip())
+                    current_chunk = clause + " "
+                else:
+                    current_chunk += clause + " "
+            continue
+            
+        if len(current_chunk) + len(sentence) + 1 > max_len:
             if current_chunk:
                 chunks.append(current_chunk.strip())
-            current_chunk = word + " "
+            current_chunk = sentence + " "
         else:
-            current_chunk += word + " "
-            
-        # Break chunk early at natural sentence endings if it's already a good length
-        if (word.endswith(".") or word.endswith("!") or word.endswith("?") or word.endswith("।")) and len(current_chunk) > ideal_len:
-            chunks.append(current_chunk.strip())
-            current_chunk = ""
+            current_chunk += sentence + " "
             
     if current_chunk.strip():
         chunks.append(current_chunk.strip())
@@ -631,9 +629,17 @@ async def synthesize_speech(
                             out_wav.setparams(w.getparams())
                         out_wav.writeframes(w.readframes(w.getnframes()))
                         
-                        # Add ~250ms of silence padding between chunks for natural pacing
+                        # Add dynamic silence padding between chunks based on punctuation
                         if i < len(wav_bytes_list) - 1:
-                            silence_frames = int(w.getframerate() * 0.25)
+                            chunk_text = chunks[i]
+                            if chunk_text.endswith('...'):
+                                silence_ms = 450
+                            elif chunk_text.endswith(',') or chunk_text.endswith(';'):
+                                silence_ms = 150
+                            else:
+                                silence_ms = 350
+                                
+                            silence_frames = int(w.getframerate() * (silence_ms / 1000.0))
                             silence_bytes = b'\x00' * (silence_frames * w.getsampwidth() * w.getnchannels())
                             out_wav.writeframes(silence_bytes)
                 except Exception as e:

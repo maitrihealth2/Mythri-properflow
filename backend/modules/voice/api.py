@@ -7,7 +7,7 @@ import base64
 import traceback
 import asyncio
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
@@ -107,17 +107,12 @@ async def handle_voice_turn(
     cleaned_transcript = transcript.strip().lower()
     if not cleaned_transcript or cleaned_transcript in known_hallucinations or len(cleaned_transcript) < 2:
         print(f"[VOICE] Empty or hallucinated transcript: '{transcript}' — treating as silence")
-        return {
-            "transcript": "",
-            "response": "",
-            "audio_b64": "",
-            "is_crisis": False,
-            "helplines": [],
-            "emotion": "Neutral",
-            "emotion_emoji": "😐",
-            "emotion_score": 0.0,
-            "rag_used": False,
-        }
+        async def silence_stream():
+            import json
+            yield json.dumps({"type": "transcript", "text": ""}) + "\n"
+            yield json.dumps({"type": "metadata", "emotion": "Neutral", "emotion_emoji": "😐"}) + "\n"
+            yield json.dumps({"type": "text", "text": ""}) + "\n"
+        return StreamingResponse(silence_stream(), media_type="application/x-ndjson")
         
     await broadcast_event("STT_DONE", f"Transcribed text", {"text": transcript})
 
@@ -127,44 +122,78 @@ async def handle_voice_turn(
     _bg = background_tasks if background_tasks is not None else BackgroundTasks()
     chat_req = ChatRequest(session_id=session_id, message=transcript, language=language)
     chat_resp = await send_message(req=chat_req, background_tasks=_bg, current_user=current_user, db=db)
-    
-    ai_response = chat_resp.response
-    emotion_label = chat_resp.emotion
-
-    # ── TTS ───────────────────────────────────────────────────────────────────
-    print(f"[VOICE] Calling TTS...")
-    audio_b64 = ""
-    try:
-        # Reuse user's emotion to determine voice tone instead of calling HF API again
-        await broadcast_event("ROUTING", "LLM -> TTS API")
-        await broadcast_event("TTS_START", "Synthesizing voice...")
-        response_audio = await synthesize_speech(
-            ai_response, 
-            language, 
-            emotion=emotion_label
-        )
-        # 6. Prosody & Pitch Optimization
-        await broadcast_event("TTS_OPTIMIZE", "Optimizing vocal pitch and prosody...")
-        response_audio = await asyncio.to_thread(optimize_pitch, response_audio, emotion_label)
+    async def voice_stream_generator():
+        import json
+        import re
         
-        audio_b64 = base64.b64encode(response_audio).decode()
-        await broadcast_event("TTS_DONE", "Audio ready")
-        await broadcast_event("ROUTING", "FastAPI -> Client WebSocket Playback")
-        print(f"[VOICE] TTS OK, audio size={len(response_audio)} bytes")
-    except Exception as e:
-        print(f"[VOICE] TTS failed: {type(e).__name__} - {e}")
+        # Yield transcript first so UI updates immediately
+        yield json.dumps({"type": "transcript", "text": transcript}) + "\n"
+        
+        sentence_buffer = ""
+        emotion_label = "Neutral"
 
-    return {
-        "transcript": transcript,
-        "response": ai_response,
-        "audio_b64": audio_b64,
-        "is_crisis": chat_resp.is_crisis,
-        "helplines": chat_resp.helplines,
-        "emotion": chat_resp.emotion,
-        "emotion_emoji": chat_resp.emotion_emoji,
-        "emotion_score": chat_resp.emotion_score,
-        "rag_used": chat_resp.rag_used,
-    }
+        # Helper to synthesize and yield audio
+        async def process_and_yield_audio(text_chunk):
+            if not text_chunk.strip(): return
+            try:
+                audio = await synthesize_speech(text_chunk, language, emotion=emotion_label)
+                # Skip pitch optimization for non-English to prevent "AI" robotic distortion
+                if audio and language == "en-IN":
+                    audio = await asyncio.to_thread(optimize_pitch, audio, emotion_label)
+                
+                if audio:
+                    audio_b64 = base64.b64encode(audio).decode()
+                    yield json.dumps({"type": "audio", "audio_b64": audio_b64, "text": text_chunk}) + "\n"
+            except Exception as e:
+                print(f"[VOICE] TTS chunk error: {e}")
+
+        async for chunk in chat_resp.body_iterator:
+            lines = chunk.decode("utf-8") if isinstance(chunk, bytes) else chunk
+            for line in lines.split("\n"):
+                line = line.strip()
+                if not line: continue
+                try:
+                    data = json.loads(line)
+                    if data.get("type") == "initial_metadata":
+                        emotion_label = data.get("emotion", "Neutral")
+                        
+                        # Yield metadata to client immediately
+                        yield json.dumps({
+                            "type": "metadata",
+                            "emotion": emotion_label,
+                            "emotion_emoji": data.get("emotion_emoji", "😐"),
+                            "is_crisis": data.get("is_crisis", False),
+                            "helplines": data.get("helplines", []),
+                            "rag_used": data.get("rag_used", False)
+                        }) + "\n"
+                        
+                    elif data.get("type") == "chunk":
+                        token = data.get("text", "")
+                        sentence_buffer += token
+                        # Send text token immediately
+                        yield json.dumps({"type": "text", "text": token}) + "\n"
+                        
+                        # Check for sentence boundaries
+                        if any(p in sentence_buffer for p in ['. ', '? ', '! ', '.\n', '?\n', '!\n']):
+                            match = re.search(r'([.?!]+[\s\n]+)', sentence_buffer)
+                            if match:
+                                split_idx = match.end()
+                                complete_sentence = sentence_buffer[:split_idx]
+                                sentence_buffer = sentence_buffer[split_idx:]
+                                
+                                async for item in process_and_yield_audio(complete_sentence):
+                                    yield item
+
+                    elif data.get("type") == "metadata" and "full_text" in data:
+                        # Process any remaining text in buffer at the end
+                        if sentence_buffer.strip():
+                            async for item in process_and_yield_audio(sentence_buffer):
+                                yield item
+                                
+                except Exception as e:
+                    pass
+
+    return StreamingResponse(voice_stream_generator(), media_type="application/x-ndjson", background=_bg)
 
 
 @router.post("/conversation")
@@ -201,17 +230,13 @@ async def voice_conversation(
                     err_b64 = base64.b64encode(err_audio).decode()
             except Exception:
                 err_b64 = ""
-            return {
-                "transcript": "[Audio too long]",
-                "response": msg,
-                "audio_b64": err_b64,
-                "is_crisis": False,
-                "helplines": [],
-                "emotion": "Neutral",
-                "emotion_emoji": "😐",
-                "emotion_score": 0.0,
-                "rag_used": False,
-            }
+            async def err_stream():
+                import json
+                yield json.dumps({"type": "transcript", "text": "[Audio too long]"}) + "\n"
+                yield json.dumps({"type": "text", "text": msg}) + "\n"
+                if err_b64:
+                    yield json.dumps({"type": "audio", "audio_b64": err_b64, "text": msg}) + "\n"
+            return StreamingResponse(err_stream(), media_type="application/x-ndjson")
         print(f"[VOICE] STT failed: {type(e).__name__} - {err_str}")
         raise HTTPException(status_code=500, detail={"message": f"STT failed: {err_str}"})
 

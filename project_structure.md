@@ -183,13 +183,11 @@ Maitri-V5/
 │   ├── package.json
 │   ├── postcss.config.mjs
 │   ├── public
-│   │   ├── Meshy_AI_Character_output.glb
 │   │   ├── assets
 │   │   │   └── background.png
 │   │   ├── desktop_bg.webm
 │   │   ├── mobile_bg.webm
 │   │   └── models
-│   │       └── Meshy_AI_Character_output.glb
 │   ├── shared
 │   │   ├── components
 │   │   │   ├── BottomNav.tsx

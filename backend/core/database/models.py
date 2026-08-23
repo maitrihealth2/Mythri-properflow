@@ -77,6 +77,7 @@ class User(Base):
     persona = relationship("UserPersonaProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     exercise_logs = relationship("ExerciseLog", back_populates="user", cascade="all, delete-orphan")
     onboarding_data = relationship("UserOnboarding", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    living_context = relationship("LivingUserContext", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -297,6 +298,35 @@ class SessionSummary(Base):
     created_at = Column(DateTime(timezone=True), default=func.now())
     
     session = relationship("Session", back_populates="session_summary")
+
+
+class LivingUserContext(Base):
+    __tablename__ = "living_user_contexts"
+    __table_args__ = {'comment': 'Incrementally updated, persistent user understanding'}
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    
+    # Optimistic Concurrency Control
+    version = Column(Integer, nullable=False, default=1)
+    
+    # Compressed Living State
+    compact_summary = Column(Text, nullable=True)
+    active_themes = Column(JSON, default=list)
+    unresolved_topics = Column(JSON, default=list)
+    emotional_baseline = Column(String(50), nullable=True)
+    
+    # Metadata
+    last_processed_session_id = Column(Integer, ForeignKey("sessions.id", ondelete="SET NULL"), nullable=True)
+    processing_status = Column(String(20), default="ready") # ready, updating, initializing
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    
+    # SQLAlchemy OCC Mapper
+    __mapper_args__ = {
+        "version_id_col": version
+    }
+    
+    user = relationship("User", back_populates="living_context")
 
 
 class CompanionMemory(Base):
