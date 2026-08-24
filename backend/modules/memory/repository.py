@@ -65,7 +65,7 @@ class MemoryRepository(MemoryStoreProtocol):
     def get_memories_by_user(
         self,
         user_id: int,
-        limit: int = 50,
+        limit: int = 150,
         memory_kind: Optional[MemoryKind] = None,
     ) -> List[MemoryEntity]:
         """

@@ -49,6 +49,7 @@ class UnifiedCognitiveProfile:
     reasons_for_joining: List[str] = field(default_factory=list)
     initial_emotion: str = ""
     check_in_preference: str = ""
+    onboarding_summary: str = ""
     
     # Persona & Clinical Profile
     presenting_problem: str = ""
@@ -105,6 +106,8 @@ class UnifiedCognitiveProfile:
             goal_items.append(f"Motivations: {', '.join(self.reasons_for_joining)}")
         if self.initial_emotion:
             goal_items.append(f"Current Feeling: {self.initial_emotion}")
+        if self.onboarding_summary:
+            goal_items.append(f"Onboarding Context: {self.onboarding_summary}")
         if goal_items:
             sections.append(f"[THERAPEUTIC GOALS & MOTIVATIONS]\n• " + "\n• ".join(goal_items))
 
@@ -188,13 +191,30 @@ class UnifiedCognitiveContextEngine:
         profile = UnifiedCognitiveProfile(user_id=user_id)
 
         try:
-            from core.database.models import LivingUserContext, CompanionMemory, User
+            from core.database.models import LivingUserContext, CompanionMemory, User, UserOnboarding, UserProfile
             
             # 1. Fetch user basics
             user = db.query(User).filter(User.id == user_id).first()
             if user:
                 profile.language = user.preferred_language or "en-IN"
                 profile.preferred_name = user.username # Default fallback
+            
+            user_profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+            if user_profile and user_profile.preferred_name:
+                profile.preferred_name = user_profile.preferred_name
+                
+            onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == user_id).first()
+            if onboarding:
+                if onboarding.preferred_name:
+                    profile.preferred_name = onboarding.preferred_name
+                if onboarding.language:
+                    profile.language = onboarding.language
+                if onboarding.conversation_style:
+                    profile.conversation_style = onboarding.conversation_style
+                if onboarding.communication_mode:
+                    profile.communication_mode = onboarding.communication_mode
+                if onboarding.summary:
+                    profile.onboarding_summary = onboarding.summary
             
             # 2. Fetch Living User Context
             living_ctx = db.query(LivingUserContext).filter(LivingUserContext.user_id == user_id).first()
@@ -213,7 +233,7 @@ class UnifiedCognitiveContextEngine:
             # 3. Fetch Top Companion Memories
             memories = db.query(CompanionMemory).filter(
                 CompanionMemory.user_id == user_id
-            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(5).all()
+            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(150).all()
             
             seen_facts: Set[str] = set()
             for m in memories:

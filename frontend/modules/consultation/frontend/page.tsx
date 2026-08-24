@@ -2,12 +2,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { startSession, sendMessage, getTranscript, logout } from '@/core/api'
+import { startSession, sendMessage, getTranscript, logout, getProfile } from '@/core/api'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import MythriAura from '@/shared/components/MythriAura'
+import PersonaOverlay from '@/shared/components/PersonaOverlay'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -136,6 +137,8 @@ export default function ConsultationPage() {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
+  const [personaOpen, setPersonaOpen] = useState(false)
+  const [userProfile, setUserProfile] = useState<any>(null)
   const [exerciseMode, setExerciseMode] = useState<string | null>(null)
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -175,6 +178,11 @@ export default function ConsultationPage() {
     if (!initialized.current) {
       initialized.current = true
       initSession()
+      
+      // Fetch user profile for persona overlay
+      getProfile().then(data => {
+        if (data) setUserProfile(data)
+      }).catch(err => console.error("Error fetching profile for persona:", err))
     }
 
     return () => window.removeEventListener('mb_language_changed', handleLangEvent)
@@ -276,7 +284,7 @@ export default function ConsultationPage() {
             
             for (const m of data.messages) {
               if (m.role === 'assistant' && m.content) {
-                const chunks = m.content.split('\n\n').filter((c: string) => c.trim().length > 0)
+                const chunks = m.content.split(/\n\s*\n/).filter((c: string) => c.trim().length > 0)
                 chunks.forEach((chunk: string, index: number) => {
                   const isLast = index === chunks.length - 1
                   expandedMessages.push({
@@ -570,6 +578,7 @@ export default function ConsultationPage() {
     <div className="relative flex flex-col min-h-[100dvh] w-full">
       <AmbientBackground isAiActive={isAiActive} />
       <ExerciseOverlay exerciseMode={exerciseMode} onClose={() => setExerciseMode(null)} />
+      <PersonaOverlay isOpen={personaOpen} onClose={() => setPersonaOpen(false)} profile={userProfile} />
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes msgEnter {
@@ -592,6 +601,7 @@ export default function ConsultationPage() {
         </div>
         <div className="flex items-center gap-4 relative pointer-events-auto">
           <ThemeToggle />
+          <button onClick={() => setPersonaOpen(true)} title="Mythri's Context" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">psychology</button>
           <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">add</button>
           <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">language</button>
           <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">grid_view</button>
@@ -637,6 +647,7 @@ export default function ConsultationPage() {
         </div>
         <div className="flex items-center gap-2 relative pointer-events-auto mr-2">
           <ThemeToggle />
+          <button onClick={() => setPersonaOpen(true)} title="Mythri's Context" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">psychology</button>
           <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">add</button>
           <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">language</button>
           <div className={`absolute right-0 top-[100%] mt-2 w-40 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>

@@ -72,7 +72,7 @@ class MemoryManager:
         # Fetch existing memories from repository if available to pass to pipeline
         if existing_memories is None and self.repository:
             try:
-                existing_memories = self.repository.get_memories_by_user(user_id=user_id, limit=50)
+                existing_memories = self.repository.get_memories_by_user(user_id=user_id, limit=150)
             except Exception as e:
                 print(f"[MemoryManager] Note: Could not fetch existing memories for pipeline: {e}")
                 existing_memories = []

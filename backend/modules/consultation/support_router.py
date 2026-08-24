@@ -38,7 +38,7 @@ def route(case_file: dict, is_crisis: bool, exercise_state: str, current_message
             confidence=1.0,
         )
 
-    strategy   = case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
+    strategy   = case_file.get("runtime_state", {}).get("response_strategy", "CONVERSE")
     
     # ── Quick Safety Override for Stale Strategy ──
     # If the strategy was set to GROUND or PROPOSE_EXERCISE by the previous turn's assessor,
@@ -51,9 +51,9 @@ def route(case_file: dict, is_crisis: bool, exercise_state: str, current_message
     
     if strategy in ("GROUND", "PROPOSE_EXERCISE"):
         if is_positive:
-            strategy = "AFFIRM"
+            strategy = "CELEBRATE"
         elif is_reject:
-            strategy = "LISTEN"
+            strategy = "CONVERSE"
 
     risk       = case_file.get("conversation_state", {}).get("risk_level", "low")
     emotion    = case_file.get("emotional_state", {}).get("primary", "neutral")

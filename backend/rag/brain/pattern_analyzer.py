@@ -1,4 +1,4 @@
-﻿"""
+"""
 Pattern Analyzer -- Fast heuristic distress signal detection.
 No LLM calls. Pure text analysis feeding into the Analyst.
 
@@ -15,14 +15,13 @@ from dataclasses import dataclass
 from typing import List
 
 ABSOLUTE_WORDS = {
-    "always", "never", "nobody", "everybody", "everything", "nothing",
-    "completely", "totally", "absolutely", "impossible", "hopeless",
+    "always", "never", "nobody", "impossible", "hopeless",
     "worthless", "useless", "forever", "ruined", "destroyed", "hate",
-    "cant", "cannot", "wont", "terrible", "horrible", "awful",
+    "terrible", "horrible", "awful",
 }
 
 DISTRESS_INTENSIFIERS = [
-    "so much", "too much", "all the time", "every single", "not at all",
+    "so much", "too much", "all the time", "every single",
     "i give up", "i cant do this", "whats the point", "no one cares",
     "doesnt matter", "its over", "im done", "im tired of",
 ]
@@ -65,7 +64,10 @@ def _fragmentation_score(lengths: List[int]) -> float:
     if len(lengths) < 2:
         return 0.0
     avg = sum(lengths) / len(lengths)
-    return min(max(0.0, 1.0 - (avg / 80.0)), 1.0)
+    # Average chat length is ~30-40 chars. Fragmentation means extremely short (e.g. 1-15 chars)
+    if avg >= 25.0:
+        return 0.0
+    return min(max(0.0, 1.0 - (avg / 25.0)), 1.0)
 
 
 def _absolutism_score(text: str) -> float:

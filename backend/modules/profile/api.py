@@ -45,6 +45,24 @@ def save_onboarding(
         onboarding.check_in_preference = data.check_in_preference
         onboarding.goals = data.goals
         onboarding.reasons = data.reasons
+        
+        # Generate detailed summary
+        summary = (
+            f"User prefers to be called {data.preferred_name or current_user.username}. "
+            f"They communicate primarily in {data.language or 'English'}. "
+            f"Their preferred conversation style is {data.conversation_style or 'balanced'}, "
+            f"and their mode of communication is {data.communication_mode or 'mixed'}. "
+        )
+        if data.initial_emotion:
+            summary += f"They arrived feeling {data.initial_emotion}. "
+        if data.primary_goal:
+            summary += f"Their primary goal is: {data.primary_goal}. "
+        if data.goals:
+            summary += f"Additional goals: {', '.join(data.goals)}. "
+        if data.reasons:
+            summary += f"Reasons for seeking help: {', '.join(data.reasons)}. "
+        
+        onboarding.summary = summary
         onboarding.raw_responses = data.model_dump()
         onboarding.is_completed = True
         onboarding.completed_at = func.now()
@@ -91,13 +109,14 @@ def get_user_profile(
     db: Session = Depends(get_db)
 ):
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
     
     # Calculate setup percentage (e.g. out of 4 core fields)
     core_fields = [
         profile.full_name if profile else None,
         profile.age if profile else None,
         profile.profession if profile else None,
-        profile.preferred_name if profile else None
+        profile.preferred_name if profile else (onboarding.preferred_name if onboarding else None)
     ]
     completed_fields = sum(1 for f in core_fields if f)
     setup_percentage = int((completed_fields / len(core_fields)) * 100) if len(core_fields) > 0 else 0
@@ -106,13 +125,17 @@ def get_user_profile(
         username=current_user.username,
         email=current_user.email,
         full_name=profile.full_name if profile else None,
-        preferred_name=profile.preferred_name if profile else None,
+        preferred_name=profile.preferred_name if profile else (onboarding.preferred_name if onboarding else None),
         age=profile.age if profile else None,
         profession=profile.profession if profile else None,
         preferred_language=current_user.preferred_language or "en-IN",
         is_email_verified=True, # Stub
         member_since=current_user.created_at,
-        setup_percentage=setup_percentage
+        setup_percentage=setup_percentage,
+        onboarding_summary=onboarding.summary if onboarding else None,
+        onboarding_goals=onboarding.goals if onboarding else [],
+        onboarding_reasons=onboarding.reasons if onboarding else [],
+        conversation_style=onboarding.conversation_style if onboarding else None
     )
 
 @router.put("/profile", response_model=ProfileResponse)

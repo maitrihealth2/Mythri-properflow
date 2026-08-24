@@ -237,6 +237,7 @@ export default function OnboardingChat() {
   // Finale States
   const [finaleStep, setFinaleStep] = useState(0)
   const [isEnteringConsultation, setIsEnteringConsultation] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -319,6 +320,7 @@ export default function OnboardingChat() {
     
     try {
       await submitOnboarding(collectedData.current);
+      setShowSuccess(true);
       if (collectedData.current.preferred_name) {
         localStorage.setItem('mb_username', collectedData.current.preferred_name);
       }
@@ -409,6 +411,20 @@ export default function OnboardingChat() {
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed top-8 left-1/2 -translate-x-1/2 bg-[#603347] text-white px-6 py-3 rounded-full font-label-md flex items-center gap-3 shadow-[0_8px_30px_rgba(96,51,71,0.25)] z-[100]"
+          >
+            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+            Sanctuary blueprint saved successfully
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div 
         className="absolute top-0 left-0 w-full flex flex-col z-10"

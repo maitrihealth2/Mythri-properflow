@@ -26,7 +26,10 @@ export default function ProfilePage() {
         profession: '',
         preferred_language: 'en-IN',
         setup_percentage: 0,
-        member_since: ''
+        member_since: '',
+        onboarding_summary: '',
+        onboarding_goals: [] as string[],
+        onboarding_reasons: [] as string[]
     })
     const [form, setForm] = useState(profile)
     
@@ -59,7 +62,10 @@ export default function ProfilePage() {
                 profession: data.profession || '',
                 preferred_language: data.preferred_language || 'en-IN',
                 setup_percentage: data.setup_percentage || 0,
-                member_since: data.member_since ? new Date(data.member_since).getFullYear().toString() : '2024'
+                member_since: data.member_since ? new Date(data.member_since).getFullYear().toString() : '2024',
+                onboarding_summary: data.onboarding_summary || '',
+                onboarding_goals: data.onboarding_goals || [],
+                onboarding_reasons: data.onboarding_reasons || []
             }
             setProfile(mapped)
             setForm(mapped)
@@ -110,7 +116,10 @@ export default function ProfilePage() {
                 profession: data.profession || '',
                 preferred_language: data.preferred_language || 'en-IN',
                 setup_percentage: data.setup_percentage || 0,
-                member_since: data.member_since ? new Date(data.member_since).getFullYear().toString() : '2024'
+                member_since: data.member_since ? new Date(data.member_since).getFullYear().toString() : '2024',
+                onboarding_summary: data.onboarding_summary || '',
+                onboarding_goals: data.onboarding_goals || [],
+                onboarding_reasons: data.onboarding_reasons || []
             }
             setProfile(mapped)
             setForm(mapped)
@@ -344,6 +353,22 @@ export default function ProfilePage() {
                         </button>
 
                         <button 
+                            onClick={() => scrollToSection('onboarding')}
+                            className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-150 group
+                                ${activeSection === 'onboarding' 
+                                    ? 'glass-panel-premium text-primary shadow-md scale-[1.02]' 
+                                    : 'hover:bg-white/40 text-on-surface-variant hover:text-primary hover:scale-[1.01]'}`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${activeSection === 'onboarding' ? 'bg-primary/10' : 'group-hover:bg-primary/5'}`}>
+                                    <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: activeSection === 'onboarding' ? "'FILL' 1" : "'FILL' 0" }}>psychology</span>
+                                </div>
+                                Onboarding Insights
+                            </div>
+                            {activeSection === 'onboarding' && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>}
+                        </button>
+
+                        <button 
                             onClick={() => scrollToSection('privacy')}
                             className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-label-md transition-all duration-150 group
                                 ${activeSection === 'privacy' 
@@ -530,6 +555,51 @@ export default function ProfilePage() {
                                 </button>
                             </div>
                         )}
+                    </div>
+
+                    {/* Onboarding Insights Panel */}
+                    <div id="onboarding" className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-300 hover:shadow-xl hover:-translate-y-[1px] hover:shadow-primary/5 group relative overflow-hidden">
+                        <div className="flex justify-between items-center mb-8 relative z-10">
+                            <div>
+                                <h3 className="text-headline-sm font-headline-md text-primary">Onboarding Insights</h3>
+                                <p className="text-xs font-label-md text-on-surface-variant uppercase tracking-widest mt-1 opacity-70">Your Sanctuary Blueprint</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 relative z-10">
+                            <div className="p-5 rounded-2xl bg-white/40 dark:bg-black/20 border border-primary/10">
+                                <h4 className="text-sm font-headline-md text-primary mb-2">Sanctuary Summary</h4>
+                                <p className="text-sm font-body-sm text-on-surface-variant leading-relaxed">
+                                    {profile.onboarding_summary || 'Your personalized summary will appear here once onboarding is complete.'}
+                                </p>
+                            </div>
+                            
+                            {profile.onboarding_goals && profile.onboarding_goals.length > 0 && (
+                                <div>
+                                    <h4 className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1 mb-3">Primary Goals</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {profile.onboarding_goals.map((goal, i) => (
+                                            <span key={i} className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                                                {goal}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {profile.onboarding_reasons && profile.onboarding_reasons.length > 0 && (
+                                <div>
+                                    <h4 className="text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest opacity-80 pl-1 mb-3">Motivations</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {profile.onboarding_reasons.map((reason, i) => (
+                                            <span key={i} className="px-3 py-1.5 rounded-full bg-secondary/10 text-secondary-dark text-xs font-medium border border-secondary/20">
+                                                {reason}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Privacy & Security Panel (Visual Mock) */}
