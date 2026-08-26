@@ -150,15 +150,17 @@ class UnifiedCognitiveProfile:
                 f"[WHAT HAS HELPED / WHAT TRIGGERS DISTRESS]\n• " + "\n• ".join(trigger_items)
             )
 
-        # 5. RECENT CLINICAL SUMMARY & EMOTIONAL TREND (Only for greetings to prevent mid-conversation repetition)
-        if is_greeting:
-            hist_items = []
-            hist_items.append(f"Total Sessions: {self.total_sessions_count} | Recent Emotion: {self.recent_emotional_trend}")
-            if self.recent_session_summaries:
-                hist_items.append(f"Recent Summary: {self.recent_session_summaries[0]}")
-            if self.journal_highlights:
-                hist_items.append(f"Journal Notes: {self.journal_highlights[0]}")
-            sections.append(f"[RECENT SUMMARY & EMOTIONAL TREND]\n• " + "\n• ".join(hist_items))
+        # 5. RECENT SESSION CONTEXT & EMOTIONAL TREND
+        hist_items = []
+        if self.recent_emotional_trend:
+            hist_items.append(f"Recent Emotion: {self.recent_emotional_trend}")
+        if self.recent_session_summaries:
+            for s in self.recent_session_summaries[:2]:
+                hist_items.append(f"Recent Summary: {s}")
+        if self.journal_highlights:
+            hist_items.append(f"Journal Notes: {self.journal_highlights[0]}")
+        if hist_items:
+            sections.append(f"[RECENT SESSION CONTEXT & EMOTIONAL TREND]\n• " + "\n• ".join(hist_items))
 
         full_block = "\n\n".join(sections)
 
@@ -216,40 +218,71 @@ class UnifiedCognitiveContextEngine:
                 if onboarding.summary:
                     profile.onboarding_summary = onboarding.summary
             
-            # 2. Fetch Living User Context
+            # 2. Fetch Living User Context & Recent Session Summary
+            from core.database.models import SessionSummary
+            
+            latest_summary = db.query(SessionSummary).filter(
+                SessionSummary.user_id == user_id
+            ).order_by(SessionSummary.created_at.desc()).first()
+            if latest_summary:
+                topics_str = ", ".join(latest_summary.main_topics) if latest_summary.main_topics else ""
+                unresolved_str = f" | Unresolved: {', '.join(latest_summary.unresolved_topics)}" if latest_summary.unresolved_topics else ""
+                ctx_str = latest_summary.important_context or ""
+                summary_text = f"Prior session topics: {topics_str}. Notes: {ctx_str}{unresolved_str}".strip()
+                if summary_text:
+                    profile.recent_session_summaries.append(summary_text)
+
             living_ctx = db.query(LivingUserContext).filter(LivingUserContext.user_id == user_id).first()
             if living_ctx:
-                if living_ctx.compact_summary:
-                    profile.recent_session_summaries.append(living_ctx.compact_summary)
+                if living_ctx.compact_summary and living_ctx.compact_summary not in profile.recent_session_summaries:
+                    profile.recent_session_summaries.append(f"Ongoing context: {living_ctx.compact_summary}")
                 if living_ctx.active_themes:
                     profile.active_goals.extend(living_ctx.active_themes)
                 if living_ctx.unresolved_topics:
                     profile.goals.extend(living_ctx.unresolved_topics)
                 if living_ctx.emotional_baseline:
                     profile.recent_emotional_trend = living_ctx.emotional_baseline
-            else:
+            elif not profile.recent_session_summaries:
                 profile.recent_session_summaries.append("New user context being built in background.")
                 
-            # 3. Fetch Top Companion Memories
-            memories = db.query(CompanionMemory).filter(
+            # 3. Fetch Dual-Channel Companion Memories (Recent + Core Long-Term)
+            # Channel A: Most recent memories (what was learned in recent turns/sessions)
+            recent_mems = db.query(CompanionMemory).filter(
                 CompanionMemory.user_id == user_id
-            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(150).all()
+            ).order_by(CompanionMemory.created_at.desc()).limit(75).all()
+
+            # Channel B: Core high-importance memories (essential persistent facts)
+            top_importance_mems = db.query(CompanionMemory).filter(
+                CompanionMemory.user_id == user_id
+            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(75).all()
             
             seen_facts: Set[str] = set()
-            for m in memories:
+            combined_mems = []
+            for m in recent_mems + top_importance_mems:
                 content_clean = m.content.strip()
-                if not content_clean: continue
+                if not content_clean:
+                    continue
                 norm_content = content_clean.lower()
-                if norm_content in seen_facts: continue
+                if norm_content in seen_facts:
+                    continue
                 seen_facts.add(norm_content)
-                
+                combined_mems.append(m)
+
+            for m in combined_mems:
+                content_clean = m.content.strip()
                 mtype = (m.memory_type or "").lower()
-                if "relationship" in mtype: profile.relationships.append(content_clean)
-                elif "preference" in mtype: profile.long_term_preferences.append(content_clean)
-                elif "goal" in mtype: profile.active_goals.append(content_clean)
-                elif "habit" in mtype: profile.habits_and_routines.append(content_clean)
-                elif "trigger" in mtype: profile.emotional_triggers.append(content_clean)
-                else: profile.personal_facts.append(content_clean)
+                if "relationship" in mtype:
+                    profile.relationships.append(content_clean)
+                elif "preference" in mtype:
+                    profile.long_term_preferences.append(content_clean)
+                elif "goal" in mtype:
+                    profile.active_goals.append(content_clean)
+                elif "habit" in mtype:
+                    profile.habits_and_routines.append(content_clean)
+                elif "trigger" in mtype:
+                    profile.emotional_triggers.append(content_clean)
+                else:
+                    profile.personal_facts.append(content_clean)
                     
         except Exception as e:
             print(f"[UnifiedCognitiveContextEngine] Error building profile: {e}")

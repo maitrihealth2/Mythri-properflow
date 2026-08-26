@@ -238,6 +238,10 @@ class SelectedContextBlock:
         parts: List[str] = []
         parts.append(f"[USER] {self.persona_minimal}")
 
+        # Always inject recent conversation / session context if available across all modes
+        if self.selected_session_summary:
+            parts.append(f"[RECENT CONVERSATION & CONTEXT] {self.selected_session_summary}")
+
         if self.selection_mode == "EXPLICIT_RECALL":
             if self.selected_relationships:
                 parts.append(f"[RELATIONSHIPS] {'; '.join(self.selected_relationships)}")
@@ -249,26 +253,32 @@ class SelectedContextBlock:
                 parts.append(f"[EMOTIONAL HISTORY] {'; '.join(self.selected_emotional_history)}")
             if self.selected_presenting_problem:
                 parts.append(f"[PRESENTING CONCERN] {self.selected_presenting_problem}")
-            if self.selected_session_summary:
-                parts.append(f"[RECENT SESSION] {self.selected_session_summary}")
 
         elif self.selection_mode == "EMOTIONAL":
             if self.selected_emotional_history:
                 parts.append(f"[EMOTIONAL CONTEXT] {'; '.join(self.selected_emotional_history)}")
             if self.selected_relationships:
-                parts.append(f"[RELEVANT PEOPLE] {'; '.join(self.selected_relationships[:2])}")
+                parts.append(f"[RELEVANT PEOPLE] {'; '.join(self.selected_relationships[:3])}")
+            if self.selected_facts:
+                parts.append(f"[RELEVANT CONTEXT] {'; '.join(self.selected_facts[:3])}")
 
         elif self.selection_mode == "GOAL_FOCUSED":
             if self.selected_goals:
                 parts.append(f"[GOALS] {'; '.join(self.selected_goals)}")
             if self.selected_facts:
-                parts.append(f"[RELEVANT CONTEXT] {'; '.join(self.selected_facts[:2])}")
+                parts.append(f"[RELEVANT CONTEXT] {'; '.join(self.selected_facts[:3])}")
+            if self.selected_relationships:
+                parts.append(f"[RELEVANT PEOPLE] {'; '.join(self.selected_relationships[:2])}")
 
         else:
             if self.selected_relationships:
                 parts.append(f"[RELEVANT PEOPLE] {'; '.join(self.selected_relationships)}")
             if self.selected_facts:
                 parts.append(f"[RELEVANT CONTEXT] {'; '.join(self.selected_facts)}")
+            if self.selected_goals:
+                parts.append(f"[ACTIVE GOALS] {'; '.join(self.selected_goals[:2])}")
+            if self.selected_emotional_history:
+                parts.append(f"[EMOTIONAL HISTORY] {'; '.join(self.selected_emotional_history[:2])}")
 
         result = "\n".join(parts)
         self.chars_after = len(result)
@@ -346,11 +356,12 @@ class ContextRelevanceSelector:
         if profile.recent_emotional_trend:
             all_scored.append(self._scorer.score(
                 "emotional_trend", f"Recent emotion: {profile.recent_emotional_trend}",
-                signals, importance_hint=0.70, recency_hint=0.85))
+                signals, importance_hint=0.75, recency_hint=0.90))
         if profile.recent_session_summaries:
-            all_scored.append(self._scorer.score(
-                "session_summary", profile.recent_session_summaries[0],
-                signals, importance_hint=0.65, recency_hint=0.80))
+            for s_idx, sum_text in enumerate(profile.recent_session_summaries[:2]):
+                all_scored.append(self._scorer.score(
+                    "session_summary", sum_text,
+                    signals, importance_hint=0.85, recency_hint=max(0.70, 0.95 - (s_idx * 0.10))))
         if profile.presenting_problem:
             all_scored.append(self._scorer.score(
                 "presenting_problem", profile.presenting_problem,
@@ -359,11 +370,12 @@ class ContextRelevanceSelector:
         items_before = len(all_scored)
 
         # Mode-specific override rules:
-        # 1. EMOTIONAL: always include emotional history items (triggers + trend)
-        #    regardless of threshold — the user's emotional state is always relevant context.
-        # 2. TOPIC_FOCUSED: any item whose content contains a topic keyword from the message
-        #    passes regardless of threshold (direct content-keyword match).
+        # 1. Session summary: ALWAYS pass so recent conversation context is available to the model
+        # 2. EMOTIONAL: always include emotional history items (triggers + trend)
+        # 3. TOPIC_FOCUSED: any item whose content contains a topic keyword from the message passes
         def _passes_threshold(item: ScoredItem) -> bool:
+            if item.field_name == "session_summary":
+                return True
             if item.score >= threshold:
                 return True
             if mode == "EMOTIONAL" and item.field_name in ("emotional_triggers", "emotional_trend"):
@@ -403,7 +415,10 @@ class ContextRelevanceSelector:
             elif fname in ("emotional_triggers", "emotional_trend"):
                 block.selected_emotional_history.append(item.value)
             elif fname == "session_summary":
-                block.selected_session_summary = item.value
+                if not block.selected_session_summary:
+                    block.selected_session_summary = item.value
+                else:
+                    block.selected_session_summary += f" | {item.value}"
             elif fname == "presenting_problem":
                 block.selected_presenting_problem = item.value
             elif fname == "preferences" and item.score >= 0.55:
@@ -449,10 +464,13 @@ class ContextRelevanceSelector:
     def _score_list(self, items: List[str], field_name: str, signals: MessageSignals,
                     importance_hint: float = 0.5, recency_hint: float = 0.5) -> List[ScoredItem]:
         scored: List[ScoredItem] = []
-        for item in items:
+        for idx, item in enumerate(items):
             if not item or not item.strip():
                 continue
+            # Items at the beginning of the list are recent additions; give decaying recency boost
+            position_boost = max(0.0, min(0.30, (8 - idx) * 0.04)) if idx < 8 else 0.0
+            item_recency = min(1.0, recency_hint + position_boost)
             s = self._scorer.score(field_name=field_name, value=item, signals=signals,
-                                   importance_hint=importance_hint, recency_hint=recency_hint)
+                                   importance_hint=importance_hint, recency_hint=item_recency)
             scored.append(s)
         return scored
