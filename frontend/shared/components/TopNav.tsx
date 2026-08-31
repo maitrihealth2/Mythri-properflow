@@ -44,7 +44,7 @@ export default function TopNav() {
   const handleLogout = () => {
     localStorage.removeItem('mb_token')
     document.cookie = "mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-    router.replace('/login')
+    window.location.href = '/login'
   }
 
   const navItemClass = "w-full text-left px-4 py-3 text-sm font-label-md hover:bg-surface-container-highest transition-colors flex items-center gap-3"

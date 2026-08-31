@@ -680,7 +680,7 @@ export default function VoiceModePage() {
           </div>
 
           {/* Desktop Main Menu */}
-          <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+          <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 glass-menu rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
             <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
@@ -697,13 +697,13 @@ export default function VoiceModePage() {
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
+            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>
 
           {/* Language Menu */}
-          <div className={`absolute right-16 md:right-20 top-[100%] mt-2 w-40 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+          <div className={`absolute right-16 md:right-20 top-[100%] mt-2 w-40 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
             <button onClick={() => changeLanguage('en')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'en' ? 'text-primary dark:text-white/90 font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
             <button onClick={() => changeLanguage('hi')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'hi' ? 'text-primary dark:text-white/90 font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Hindi</button>
             <button onClick={() => changeLanguage('te')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'te' ? 'text-primary dark:text-white/90 font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Telugu</button>

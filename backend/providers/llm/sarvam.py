@@ -68,7 +68,15 @@ class SarvamProvider(LLMProviderBase):
         max_tokens: int,
         temperature: float,
     ):
+        import time
+        from utils.token_counter import count_tokens, count_messages_tokens
+        from core.logger.terminal import CommandCenter
+
         client = self._get_client()
+        t0 = time.perf_counter()
+        prompt_tokens = count_messages_tokens(api_messages)
+        accumulated_text = ""
+
         try:
             safe_max_tokens = min(max(max_tokens, 256), 2048)
 
@@ -124,11 +132,17 @@ class SarvamProvider(LLMProviderBase):
                         in_think = True
 
                 if output:
+                    accumulated_text += output
                     yield output
 
             # Flush any remaining buffer after stream ends
             if buf and not in_think:
+                accumulated_text += buf
                 yield buf
+
+            duration_ms = (time.perf_counter() - t0) * 1000
+            completion_tokens = count_tokens(accumulated_text)
+            CommandCenter.log_tokens("LLM Chat Stream", prompt_tokens, completion_tokens, duration_ms)
 
         except APITimeoutError as e:
             raise ProviderTimeoutError(f"Sarvam timed out: {e}") from e

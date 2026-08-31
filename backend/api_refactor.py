@@ -231,6 +231,13 @@ async def send_message(
             if total_user_msgs % 5 == 0 or total_user_msgs == 1:
                 await _update_persona_async(session.id, current_user.id, is_onboarding)
                 
+            if total_user_msgs % 3 == 0:
+                try:
+                    from modules.memory.incremental_updater import update_living_context
+                    asyncio.create_task(update_living_context(current_user.id, session.id))
+                except Exception as sum_err:
+                    print(f"[PostProcess] Background incremental summary error: {sum_err}")
+
             await _process_memory_write_path_async(current_user.id, req.message, session.id)
         except Exception as e:
             print(f"[PostProcess] Error: {e}")

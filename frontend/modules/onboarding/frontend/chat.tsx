@@ -538,7 +538,7 @@ export default function OnboardingChat() {
                           {msg.text}
                         </div>
                       ) : (
-                        <div className="max-w-[75%] bg-white/60 backdrop-blur-md border border-white/80 px-6 py-4 rounded-2xl rounded-tr-sm shadow-[0_4px_20px_rgba(96,51,71,0.04)] text-[#603347] font-body-md text-lg">
+                        <div className="max-w-[75%] glass-panel px-6 py-4 rounded-2xl rounded-tr-sm text-[#603347] font-body-md text-lg">
                           {msg.text}
                         </div>
                       )}
@@ -565,7 +565,7 @@ export default function OnboardingChat() {
       {/* Floating Input Area */}
       <div className={`absolute bottom-0 left-0 w-full p-6 md:p-10 z-40 transition-opacity duration-1000 ${isFinale || isAiTyping ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-none'}`}>
         <div className="max-w-3xl mx-auto w-full pointer-events-auto flex items-end gap-4">
-          <div className="relative flex-1 rounded-[2rem] bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_40px_rgba(96,51,71,0.06)] overflow-hidden flex items-end">
+          <div className="relative flex-1 rounded-[2rem] glass-input overflow-hidden flex items-end">
             <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown} disabled={isAiTyping || isFinale} placeholder="Type your response..." rows={1} style={{ minHeight: '60px', maxHeight: '200px' }} className="w-full bg-transparent border-none outline-none resize-none px-8 py-5 text-[#4A2B38] font-body-lg text-lg placeholder:text-[#8C7355]/40 disabled:opacity-50 hide-scrollbar" />
             <button onClick={() => submitMessage(inputValue)} disabled={!inputValue.trim() || isAiTyping || isFinale} className="absolute right-4 bottom-3 w-10 h-10 rounded-full bg-[#603347] text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:scale-90 hover:scale-105 shadow-md"><svg className="w-4 h-4 translate-x-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5M5 12l7-7 7 7" /></svg></button>
           </div>

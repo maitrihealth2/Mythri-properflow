@@ -102,7 +102,7 @@ export default function HistoryPage() {
         <div className="flex items-center gap-4 relative pointer-events-auto">
           <button onClick={() => setMenuOpen(!menuOpen)} className="hidden md:block material-symbols-outlined text-primary dark:text-white/90 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-all active:scale-95">grid_view</button>
           
-          <nav className={`hidden md:flex absolute right-0 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+          <nav className={`hidden md:flex absolute right-0 top-[100%] mt-2 w-56 glass-menu rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
             <Link href="/home" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
@@ -119,7 +119,7 @@ export default function HistoryPage() {
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
             <div className="h-px bg-outline-variant/30 dark:bg-white/10 my-1 mx-2"></div>
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
+            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>

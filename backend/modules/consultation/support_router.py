@@ -55,9 +55,12 @@ def route(case_file: dict, is_crisis: bool, exercise_state: str, current_message
         elif is_reject:
             strategy = "CONVERSE"
 
-    risk       = case_file.get("conversation_state", {}).get("risk_level", "low")
-    emotion    = case_file.get("emotional_state", {}).get("primary", "neutral")
-    intensity  = float(case_file.get("emotional_state", {}).get("intensity", 0.0))
+    core_params = case_file.get("core_parameters", {})
+    risk       = core_params.get("risk_level", case_file.get("conversation_state", {}).get("risk_level", "low")).lower()
+    emotion    = core_params.get("emotion", case_file.get("emotional_state", {}).get("primary", "neutral"))
+    intensity  = core_params.get("intensity", float(case_file.get("emotional_state", {}).get("intensity", 0.0)))
+    distress   = core_params.get("distress", 0.0)
+    
     patterns   = [
         p.get("pattern", "")
         for p in case_file.get("cognitive_patterns", [])

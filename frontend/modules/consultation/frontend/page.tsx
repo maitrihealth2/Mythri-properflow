@@ -9,6 +9,7 @@ import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import MythriAura from '@/shared/components/MythriAura'
 import PersonaOverlay from '@/shared/components/PersonaOverlay'
+import TypingIndicator from '@/shared/components/TypingIndicator'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -121,6 +122,8 @@ export default function ConsultationPage() {
   const [loading, setLoading] = useState(false)
   const [language, setLanguage] = useState('en-IN')
   const [starting, setStarting] = useState(true)
+  const [isTyping, setIsTyping] = useState(false)
+  const wsRef = useRef<WebSocket | null>(null)
 
   // ── Natural multi-bubble state ──────────────────────────────────────────────
   /**
@@ -149,6 +152,40 @@ export default function ConsultationPage() {
   const sendingRef = useRef(false)
 
   const inputPlaceholder = INPUT_PLACEHOLDERS[language] || INPUT_PLACEHOLDERS['en-IN']
+
+  // ─── WebSocket side-channel ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!sessionId) return
+    const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
+    const wsUrl = API_URL.replace(/^http/, "ws") + `/api/consultation/ws/events?session_id=${sessionId}`
+    
+    const ws = new WebSocket(wsUrl)
+    ws.onmessage = (event) => {
+      if (event.data === "pong") return
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === "typing_start") {
+          setIsTyping(true)
+        } else if (data.type === "typing_stop") {
+          setIsTyping(false)
+        } else if (data.type === "proactive_message") {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.content, is_new: true, is_last_in_group: true }])
+        }
+      } catch (e) {}
+    }
+    wsRef.current = ws
+    
+    const interval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send("ping")
+      }
+    }, 30000)
+    
+    return () => {
+      clearInterval(interval)
+      ws.close()
+    }
+  }, [sessionId])
 
   // ─── Auth + language + session init ───────────────────────────────────────
   useEffect(() => {
@@ -601,13 +638,13 @@ export default function ConsultationPage() {
         </div>
         <div className="flex items-center gap-4 relative pointer-events-auto">
           <ThemeToggle />
-          <button onClick={() => setPersonaOpen(true)} title="Mythri's Context" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">psychology</button>
+
           <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">add</button>
           <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">language</button>
           <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">grid_view</button>
 
           {/* Dropdown */}
-          <nav className={`absolute right-0 top-[100%] mt-2 w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+          <nav className={`absolute right-0 top-[100%] mt-2 w-56 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
             <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
@@ -624,13 +661,13 @@ export default function ConsultationPage() {
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
             <div className="h-px bg-outline-variant/30 my-1 mx-2" />
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login') }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
+            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>
 
           {/* Language menu */}
-          <div className={`absolute right-12 top-[100%] mt-2 w-40 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+          <div className={`absolute right-12 top-[100%] mt-2 w-40 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
             <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
             <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>हिंदी (Hindi)</button>
             <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>తెలుగు (Telugu)</button>
@@ -647,10 +684,10 @@ export default function ConsultationPage() {
         </div>
         <div className="flex items-center gap-2 relative pointer-events-auto mr-2">
           <ThemeToggle />
-          <button onClick={() => setPersonaOpen(true)} title="Mythri's Context" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">psychology</button>
+
           <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">add</button>
           <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">language</button>
-          <div className={`absolute right-0 top-[100%] mt-2 w-40 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/50 dark:border-white/10 shadow-2xl rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+          <div className={`absolute right-0 top-[100%] mt-2 w-40 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
             <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
             <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>हिंदी (Hindi)</button>
             <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>తెలుగు (Telugu)</button>
@@ -737,6 +774,11 @@ export default function ConsultationPage() {
             </div>
           )}
 
+          {/* ── WebSocket Typing Indicator (proactive or async typing) ── */}
+          {isTyping && !loading && !activeBubble && (
+            <TypingIndicator />
+          )}
+
           <div ref={bottomRef} />
         </div>
       </main>
@@ -744,7 +786,7 @@ export default function ConsultationPage() {
       {/* ── Floating Composer ── */}
       <div className={`fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center px-margin-mobile md:px-8 lg:px-12 pb-20 md:pb-8 pointer-events-none transition-all duration-700 ${exerciseMode ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto flex flex-col items-center pointer-events-auto">
-          <div className={`relative flex items-center gap-2 md:gap-4 backdrop-blur-3xl border border-white/60 dark:border-white/20 rounded-[2rem] p-2 md:p-2.5 pl-6 md:pl-8 transition-all duration-300 shadow-lg w-full ${exerciseMode ? 'bg-white/50' : 'bg-white/75 dark:bg-black/60'} focus-within:bg-white/90 dark:focus-within:bg-black/80 focus-within:border-white focus-within:shadow-xl focus-within:shadow-plum-high-contrast/10 focus-within:-translate-y-0.5`}>
+          <div className={`relative flex items-center gap-2 md:gap-4 glass-input rounded-[2rem] p-2 md:p-2.5 pl-6 md:pl-8 transition-all duration-300 w-full`}>
             <textarea
               ref={textareaRef}
               value={input}

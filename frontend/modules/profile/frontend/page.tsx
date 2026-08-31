@@ -161,33 +161,14 @@ export default function ProfilePage() {
                 }
                 @keyframes ring-spin {
                     from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
+                @keyframes ring-pulse {
+                    0% { transform: scale(0.95); opacity: 0.5; }
+                    50% { transform: scale(1.1); opacity: 0.1; }
+                    100% { transform: scale(0.95); opacity: 0.5; }
                 }
-                .animate-float-slow { animation: float-slow 15s ease-in-out infinite; }
-                .animate-float-slower { animation: float-slower 20s ease-in-out infinite; }
-                .animate-ring-spin { animation: ring-spin 20s linear infinite; }
+                .animate-float-slow { animation: float-slow 12s ease-in-out infinite; }
+                .ring-pulse { animation: ring-pulse 6s ease-in-out infinite; }
                 
-                .glass-panel-premium {
-                    background: rgba(255, 248, 245, 0.45);
-                    backdrop-filter: blur(24px) saturate(140%);
-                    -webkit-backdrop-filter: blur(24px) saturate(140%);
-                    border: 1px solid rgba(255, 255, 255, 0.7);
-                    box-shadow: 0 10px 40px rgba(60, 31, 51, 0.03);
-                }
-                .glass-panel-premium:hover {
-                    background: rgba(255, 248, 245, 0.6);
-                    box-shadow: 0 15px 50px rgba(60, 31, 51, 0.05);
-                }
-                .dark .glass-panel-premium {
-                    background: rgba(18, 18, 18, 0.6);
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-                }
-                .dark .glass-panel-premium:hover {
-                    background: rgba(30, 30, 30, 0.7);
-                    border: 1px solid rgba(255, 255, 255, 0.25);
-                    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
-                }
                 .glass-input {
                     background: rgba(255, 255, 255, 0.5);
                     border: 1px solid rgba(255, 255, 255, 0.6);
@@ -229,7 +210,7 @@ export default function ProfilePage() {
                     </button>
                     
                     {/* Desktop Dropdown Menu */}
-                    <nav className={`absolute right-0 top-[110%] w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+                    <nav className={`absolute right-0 top-[110%] w-56 glass-menu rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
                         <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
                             <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
                         </Link>
@@ -246,7 +227,7 @@ export default function ProfilePage() {
                             <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
                         </Link>
                         <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
-                        <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); router.replace('/login'); }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
+                        <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
                             <span className="material-symbols-outlined text-[20px]">logout</span> Logout
                         </button>
                     </nav>

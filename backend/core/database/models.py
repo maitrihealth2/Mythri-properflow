@@ -249,13 +249,22 @@ class MessageAnalysis(Base):
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), index=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=True)
     speaker = Column(String(20), nullable=False)
+    
+    # The 10 Core Parameters
     emotion = Column(String(50), nullable=True)
     emotion_intensity = Column(Float, nullable=True)
-    cognitive_signals = Column(JSON, nullable=True)
+    distress_score = Column(Float, nullable=True)
     conversation_intent = Column(String(50), nullable=True)
+    arousal_score = Column(Float, nullable=True)
+    topic_sensitivity_score = Column(Float, nullable=True)
+    engagement_score = Column(Float, nullable=True)
+    primary_concern = Column(String(200), nullable=True)
     risk_level = Column(String(20), nullable=True)
     risk_score = Column(Float, nullable=True)
-    engagement_score = Column(Float, nullable=True)
+    baseline_deviation = Column(Float, nullable=True)
+
+    # Additional Context
+    cognitive_signals = Column(JSON, nullable=True)
     response_strategy = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), default=func.now())
 
@@ -316,6 +325,9 @@ class LivingUserContext(Base):
     active_themes = Column(JSON, default=list)
     unresolved_topics = Column(JSON, default=list)
     emotional_baseline = Column(String(50), nullable=True)
+    baseline_distress = Column(Float, default=0.0)
+    baseline_arousal = Column(Float, default=0.0)
+    baseline_engagement = Column(Float, default=0.0)
     
     # Metadata
     last_processed_session_id = Column(Integer, ForeignKey("sessions.id", ondelete="SET NULL"), nullable=True)
@@ -534,4 +546,28 @@ def reset_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    print("Database tables created/verified.")
+    
+    # Auto-synchronize missing columns on existing tables (PostgreSQL / SQLite safe)
+    migration_statements = [
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "user_id" INTEGER REFERENCES users(id) ON DELETE CASCADE;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "distress_score" DOUBLE PRECISION;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "arousal_score" DOUBLE PRECISION;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "topic_sensitivity_score" DOUBLE PRECISION;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "engagement_score" DOUBLE PRECISION;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "primary_concern" VARCHAR(200);',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "risk_score" DOUBLE PRECISION;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "baseline_deviation" DOUBLE PRECISION;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "cognitive_signals" JSON;',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "response_strategy" VARCHAR(50);',
+        'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW();',
+    ]
+    if "postgres" in DATABASE_URL:
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            for stmt in migration_statements:
+                try:
+                    conn.execute(text(stmt))
+                except Exception as e:
+                    print(f"[DB MIGRATE WARNING] {e}")
+                    
+    print("Database tables and schema synchronized.")

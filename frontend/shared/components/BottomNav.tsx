@@ -14,10 +14,10 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   // Don't render on login or voice pages
-  if (pathname === '/login' || pathname?.startsWith('/voice')) return null
+  if (pathname === '/' || pathname === '/login' || pathname?.startsWith('/voice')) return null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-around items-center bg-white/70 dark:bg-[#121212]/90 backdrop-blur-2xl py-2 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_24px_rgba(0,0,0,0.5)] border-t border-white/40 dark:border-white/10">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-around items-center glass-menu py-2 pb-safe border-t">
       {navItems.map(({ href, label, icon }) => {
         const isActive = pathname === href
         return (

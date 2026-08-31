@@ -36,7 +36,7 @@ export default function PersonaOverlay({ isOpen, onClose, profile }: PersonaOver
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0.5 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white/90 dark:bg-black/90 backdrop-blur-xl border-l border-white/20 dark:border-white/10 shadow-2xl z-[101] overflow-y-auto"
+            className="fixed top-0 right-0 bottom-0 w-full max-w-md glass-menu z-[101] overflow-y-auto"
           >
             <div className="p-6 pb-24 relative min-h-full">
               {/* Close Button */}

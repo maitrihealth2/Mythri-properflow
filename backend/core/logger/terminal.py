@@ -9,7 +9,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
-console = Console()
+console = Console(safe_box=True)
 
 class _CommandCenter:
     def __init__(self):
@@ -30,6 +30,15 @@ class _CommandCenter:
             "Avg Response (ms)": 0.0,
             "Last Chat Latency (ms)": 0.0,
             "Total DB Queries": 0,
+        }
+        
+        # LLM Token Counters
+        self.token_stats = {
+            "Total Input Tokens": 0,
+            "Total Output Tokens": 0,
+            "Total Tokens": 0,
+            "Total LLM Calls": 0,
+            "Last Call Tokens": "0 In / 0 Out",
         }
         self._total_response_time = 0.0
         self.startup_time = time.time()
@@ -58,10 +67,11 @@ class _CommandCenter:
         console.print(Panel("[bold red]Shutting down Backend...[/bold red]", border_style="red"))
 
     def _print_snapshot(self):
-        """Prints a horizontal summary table of Health and Performance."""
+        """Prints a horizontal summary table of Health, Performance, and Token Usage."""
         table = Table(show_header=True, header_style="bold magenta", expand=True)
         table.add_column("System Health", style="cyan")
         table.add_column("Performance Metrics", style="green")
+        table.add_column("LLM Token Usage", style="bright_yellow")
         
         with self._lock:
             health_text = []
@@ -74,10 +84,57 @@ class _CommandCenter:
                 val = f"{v:.1f}" if isinstance(v, float) else str(v)
                 perf_text.append(f"{k}: [bold]{val}[/bold]")
             
-            table.add_row("\n".join(health_text), "\n".join(perf_text))
+            token_text = [
+                f"Prompt Tokens  : [bold]{self.token_stats['Total Input Tokens']:,}[/bold]",
+                f"Output Tokens  : [bold]{self.token_stats['Total Output Tokens']:,}[/bold]",
+                f"Total Tokens   : [bold cyan]{self.token_stats['Total Tokens']:,}[/bold cyan]",
+                f"Total Calls    : [bold]{self.token_stats['Total LLM Calls']}[/bold]",
+                f"Last Call      : [dim]{self.token_stats['Last Call Tokens']}[/dim]",
+            ]
+            
+            table.add_row("\n".join(health_text), "\n".join(perf_text), "\n".join(token_text))
             self._last_snapshot_time = time.time()
             
         console.print(Panel(table, title="[b]Live Snapshot", border_style="magenta"))
+
+    def log_tokens(self, call_type: str, prompt_tokens: int, completion_tokens: int, duration_ms: float = 0.0, details: str = ""):
+        """Logs exact token usage in real-time to the terminal."""
+        import os
+        show_tokens = os.getenv("SHOW_TOKEN_USAGE", "true").lower() in ("true", "1", "yes")
+        total_tokens = prompt_tokens + completion_tokens
+
+        with self._lock:
+            self.token_stats["Total Input Tokens"] += prompt_tokens
+            self.token_stats["Total Output Tokens"] += completion_tokens
+            self.token_stats["Total Tokens"] += total_tokens
+            self.token_stats["Total LLM Calls"] += 1
+            self.token_stats["Last Call Tokens"] = f"{prompt_tokens:,} In / {completion_tokens:,} Out ({total_tokens:,})"
+            session_cumulative = self.token_stats["Total Tokens"]
+
+        if not show_tokens:
+            return
+
+        try:
+            self._check_snapshot()
+            text = Text()
+            text.append(f"[{self._ts()}] ", style="dim")
+            text.append("TOKENS ", style="bold bright_yellow")
+            text.append(f"- {call_type} ", style="bold cyan")
+            if duration_ms > 0:
+                text.append(f"({duration_ms:.1f}ms) ", style="dim")
+            text.append("| ", style="dim")
+            text.append(f"In: ", style="dim")
+            text.append(f"{prompt_tokens:,} ", style="bold green")
+            text.append(f"| Out: ", style="dim")
+            text.append(f"{completion_tokens:,} ", style="bold bright_magenta")
+            text.append(f"| Total: ", style="dim")
+            text.append(f"{total_tokens:,} tok ", style="bold bright_cyan")
+            text.append(f"[Session: {session_cumulative:,} tok]", style="dim bright_yellow")
+            if details:
+                text.append(f" ({details})", style="dim")
+            console.print(text)
+        except Exception as e:
+            print(f"[LOG_TOKEN_ERROR] {e}")
 
     def _check_snapshot(self):
         """Prints a snapshot every 60 seconds automatically."""

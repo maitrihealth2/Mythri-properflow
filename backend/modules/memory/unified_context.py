@@ -94,16 +94,16 @@ class UnifiedCognitiveProfile:
             id_parts.append(f"Mode: {self.communication_mode}")
         if self.check_in_preference:
             id_parts.append(f"Check-ins: {self.check_in_preference}")
-        sections.append(f"[USER IDENTITY & PREFERENCES]\n• " + " | ".join(id_parts))
+        sections.append(f"[USER IDENTITY & PREFERENCES]\n• " + " | ".join(str(x) for x in id_parts))
 
         # 2. THERAPEUTIC GOALS & REASONS
         goal_items = []
         if self.primary_goal:
             goal_items.append(f"Primary Goal/Vibe: {self.primary_goal}")
         if self.goals:
-            goal_items.append(f"Goals: {', '.join(self.goals)}")
+            goal_items.append(f"Goals: {', '.join(str(x) for x in self.goals)}")
         if self.reasons_for_joining:
-            goal_items.append(f"Motivations: {', '.join(self.reasons_for_joining)}")
+            goal_items.append(f"Motivations: {', '.join(str(x) for x in self.reasons_for_joining)}")
         if self.initial_emotion:
             goal_items.append(f"Current Feeling: {self.initial_emotion}")
         if self.onboarding_summary:
@@ -112,16 +112,17 @@ class UnifiedCognitiveProfile:
             sections.append(f"[THERAPEUTIC GOALS & MOTIVATIONS]\n• " + "\n• ".join(goal_items))
 
         # 3. PERSONAL FACTS & RELATIONSHIPS
-        mem_items = []
-        if self.relationships:
-            mem_items.append(f"Relationships: {'; '.join(self.relationships)}")
-        if self.personal_facts:
-            mem_items.append(f"Facts: {'; '.join(self.personal_facts)}")
-        if self.long_term_preferences:
-            mem_items.append(f"Preferences: {'; '.join(self.long_term_preferences)}")
-        if self.habits_and_routines:
-            mem_items.append(f"Habits: {'; '.join(self.habits_and_routines)}")
-        if mem_items:
+        if self.relationships or self.personal_facts or self.long_term_preferences or self.habits_and_routines:
+            mem_items = []
+            if self.relationships:
+                mem_items.append(f"Relationships: {'; '.join(str(x) for x in self.relationships)}")
+            if self.personal_facts:
+                mem_items.append(f"Facts: {'; '.join(str(x) for x in self.personal_facts)}")
+            if self.long_term_preferences:
+                mem_items.append(f"Preferences: {'; '.join(str(x) for x in self.long_term_preferences)}")
+            if self.habits_and_routines:
+                mem_items.append(f"Habits: {'; '.join(str(x) for x in self.habits_and_routines)}")
+            
             sections.append(f"[LONG-TERM MEMORY & FACTS]\n• " + "\n• ".join(mem_items))
 
         # 4. CLINICAL & PERSONA PROFILE
@@ -137,7 +138,7 @@ class UnifiedCognitiveProfile:
 
         # 4b. ACTIVE THERAPEUTIC GOALS
         if self.active_goals:
-            goals_str = "; ".join(self.active_goals[:3])
+            goals_str = "; ".join(str(x) for x in self.active_goals[:3])
             sections.append(f"[ACTIVE GOALS]\n• {goals_str}")
 
         # 4c. INTERVENTION HISTORY & WHAT HELPS (always shown — critical for adaptive support)
@@ -225,8 +226,8 @@ class UnifiedCognitiveContextEngine:
                 SessionSummary.user_id == user_id
             ).order_by(SessionSummary.created_at.desc()).first()
             if latest_summary:
-                topics_str = ", ".join(latest_summary.main_topics) if latest_summary.main_topics else ""
-                unresolved_str = f" | Unresolved: {', '.join(latest_summary.unresolved_topics)}" if latest_summary.unresolved_topics else ""
+                topics_str = ", ".join(str(x) for x in latest_summary.main_topics) if latest_summary.main_topics else ""
+                unresolved_str = f" | Unresolved: {', '.join(str(x) for x in latest_summary.unresolved_topics)}" if latest_summary.unresolved_topics else ""
                 ctx_str = latest_summary.important_context or ""
                 summary_text = f"Prior session topics: {topics_str}. Notes: {ctx_str}{unresolved_str}".strip()
                 if summary_text:

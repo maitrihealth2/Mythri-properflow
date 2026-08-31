@@ -48,6 +48,37 @@ def should_skip_assessor(user_message: str, case_file: dict) -> bool:
     return False
 
 
+from ai_engine.state_extractor import StateExtractor
+from ai_engine.ranking_algorithm import RankingAlgorithm, Concern
+
+NEW_ASSESSOR_PROMPT = """You are Mythri's internal state extraction engine.
+Analyze the user's latest message and output a strict JSON object with exactly two top-level keys: "state" and "concerns".
+"state" must contain the 10 core parameters based on the current message:
+{
+  "emotion": "string (e.g. Happy, Sad)",
+  "intensity": float (0.0 to 1.0),
+  "distress": float (0.0 to 1.0),
+  "intent": "string (e.g. Venting, Seeking advice)",
+  "arousal": float (0.0 to 1.0),
+  "sensitivity": float (0.0 to 1.0),
+  "engagement": float (0.0 to 1.0),
+  "concern": "string (Primary topic)",
+  "risk_level": "Low/Moderate/High",
+  "risk_score": float (0.0 to 1.0)
+}
+"concerns" must be an array of objects if the user mentions multiple problems, otherwise an empty array:
+[{
+  "name": "string",
+  "intensity": float (0.0 to 1.0),
+  "distress": float (0.0 to 1.0),
+  "sensitivity": float (0.0 to 1.0),
+  "recurrence": float (0.0 to 1.0),
+  "relevance": float (0.0 to 1.0),
+  "risk": float (0.0 to 1.0)
+}]
+CRITICAL: ONLY OUTPUT VALID JSON. Do not include markdown formatting.
+"""
+
 async def assess_turn(
     messages: list[dict],
     case_file: dict,
@@ -59,7 +90,8 @@ async def assess_turn(
     memory_context: str = "",
 ) -> dict:
     """
-    Call the internal assessor model to update the case file JSON.
+    Call the internal assessor model to extract the 10 parameters and rank concerns.
+    Updates the case file JSON.
     """
     from providers.sarvam.sarvam_client import get_async_client
     client = get_async_client()
@@ -70,7 +102,6 @@ async def assess_turn(
         last_3 += f"{m['role'].capitalize()}: {m['content']}\n"
 
     input_text = (
-        f"Case file: {json.dumps(case_file, indent=2)}\n\n"
         f"Last 3 exchanges:\n{last_3}\n"
         f"Latest user message: {user_message}\n\n"
     )
@@ -83,18 +114,14 @@ async def assess_turn(
             input_text += f"Pattern Analysis: {pattern_block}\n"
         if persona_summary:
             input_text += f"Persona Summary: {persona_summary}\n"
-        if rag_context:
-            input_text += f"Therapeutic RAG: {rag_context}\n"
-        if memory_context:
-            input_text += f"Cognitive Memory:\n{memory_context}\n"
-
-    # Add a strict instruction for Sarvam to only return JSON
-    system_prompt = ASSESSOR_PROMPT + "\n\nCRITICAL: You must return ONLY valid JSON. Do not include markdown formatting like ```json or any other text."
 
     analysis_input = [
-        {"role": "system", "content": system_prompt},
+        {"role": "system", "content": NEW_ASSESSOR_PROMPT},
         {"role": "user", "content": input_text},
     ]
+
+    import time
+    t0_assessor = time.perf_counter()
 
     try:
         response = await client.chat.completions.create(
@@ -105,6 +132,17 @@ async def assess_turn(
         )
         content = response.choices[0].message.content
         
+        # Token logging
+        try:
+            from utils.token_counter import count_tokens, count_messages_tokens
+            from core.logger.terminal import CommandCenter
+            in_toks = count_messages_tokens(analysis_input)
+            out_toks = count_tokens(content or "")
+            dur_ms = (time.perf_counter() - t0_assessor) * 1000
+            CommandCenter.log_tokens("Neural Assessor", in_toks, out_toks, dur_ms)
+        except Exception:
+            pass
+
         # Clean up any potential markdown formatting
         clean_content = (content or "").strip()
         if clean_content.startswith("```json"):
@@ -116,20 +154,41 @@ async def assess_turn(
         clean_content = clean_content.strip()
             
         if not clean_content:
-            print("Assessor warning: LLM returned empty content. Defaulting to LISTEN.")
-            if "runtime_state" not in case_file: case_file["runtime_state"] = {}
-            case_file["runtime_state"]["response_strategy"] = "LISTEN"
-            return case_file
+            raise ValueError("Empty LLM response")
 
-        updated_case_file = json.loads(clean_content)
-        if isinstance(updated_case_file, dict):
-            # Ensure critical keys exist
-            if "runtime_state" not in updated_case_file:
-                updated_case_file["runtime_state"] = case_file.get("runtime_state", {"response_strategy": "LISTEN"})
-            if "conversation_state" not in updated_case_file:
-                updated_case_file["conversation_state"] = case_file.get("conversation_state", {})
-            return updated_case_file
-        return case_file
+        extracted_data = json.loads(clean_content)
+        
+        # 1. Extract 10 parameters
+        state_dict = extracted_data.get("state", {})
+        user_state = StateExtractor.extract_state(state_dict)
+        
+        # 2. Rank Concerns if any
+        concerns_list = extracted_data.get("concerns", [])
+        parsed_concerns = [Concern(**c) for c in concerns_list]
+        ranked_concerns = RankingAlgorithm.rank_concerns(parsed_concerns)
+        
+        # 3. Build updated case file
+        updated_case_file = dict(case_file)
+        
+        # Store 10 params
+        updated_case_file["core_parameters"] = user_state.model_dump()
+        updated_case_file["ranked_concerns"] = ranked_concerns
+        
+        # Maintain backward compatibility for support_router / api.py before full refactor
+        if "conversation_state" not in updated_case_file:
+            updated_case_file["conversation_state"] = {}
+        updated_case_file["conversation_state"]["risk_level"] = user_state.risk_level.lower()
+        updated_case_file["conversation_state"]["engagement"] = user_state.engagement
+        
+        if "emotional_state" not in updated_case_file:
+            updated_case_file["emotional_state"] = {}
+        updated_case_file["emotional_state"]["primary"] = user_state.emotion
+        updated_case_file["emotional_state"]["intensity"] = user_state.intensity
+        
+        if "runtime_state" not in updated_case_file:
+            updated_case_file["runtime_state"] = {"response_strategy": "LISTEN"}
+            
+        return updated_case_file
     except Exception as e:
         print(f"Assessor JSON Error: {e}")
         print(f"Raw Output was: {content if 'content' in locals() else 'None'}")

@@ -110,6 +110,9 @@ async def lifespan(app: FastAPI):
     CommandCenter.set_health("API Server", "Healthy")
     CommandCenter.start_dashboard()
     
+    from ai_engine.proactive_engine import proactive_monitoring_loop
+    asyncio.create_task(proactive_monitoring_loop())
+    
     yield
     
     CommandCenter.stop_dashboard()

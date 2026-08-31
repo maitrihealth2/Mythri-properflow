@@ -81,28 +81,6 @@ export default function DashboardPage() {
         .animate-float-slower { animation: float-slower 18s ease-in-out infinite; }
         .orb-pulse { animation: orb-breathe-large 6s ease-in-out infinite; }
         .ring-pulse { animation: ring-pulse 6s ease-in-out infinite; }
-        
-        .glass-panel {
-          background: rgba(255, 255, 255, 0.5);
-          backdrop-filter: blur(24px) saturate(140%);
-          -webkit-backdrop-filter: blur(24px) saturate(140%);
-          border: 1px solid rgba(255, 255, 255, 0.7);
-          box-shadow: 0 10px 40px rgba(60, 31, 51, 0.03);
-        }
-        .glass-panel:hover {
-          background: rgba(255, 255, 255, 0.65);
-          box-shadow: 0 15px 50px rgba(60, 31, 51, 0.05);
-        }
-        .dark .glass-panel {
-          background: rgba(18, 18, 18, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-        .dark .glass-panel:hover {
-          background: rgba(30, 30, 30, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.25);
-          box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
-        }
       `}} />
 
       {/* Ambient Background */}
@@ -123,7 +101,7 @@ export default function DashboardPage() {
             <span className="material-symbols-outlined text-[24px]">grid_view</span>
           </button>
           
-          <nav className={`absolute right-0 top-[110%] w-56 bg-white/70 dark:bg-[#121212]/90 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${menuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+          <nav className={`absolute right-0 top-[110%] w-56 glass-menu rounded-3xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${menuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
             <Link href="/home" className="text-primary font-bold bg-white/80 dark:bg-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md transition-colors">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
@@ -142,7 +120,7 @@ export default function DashboardPage() {
               localStorage.clear(); 
               sessionStorage.removeItem('mb_session_id');
               document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-              router.replace('/login'); 
+              window.location.href = '/login'; 
             }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>

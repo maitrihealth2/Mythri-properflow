@@ -2,7 +2,7 @@ import uuid
 import asyncio
 import re
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -117,7 +117,7 @@ You are generating the very FIRST welcome message to a user who just completed o
 Greet them warmly by name ({profile.preferred_name}).
 Acknowledge what brought them here naturally, but DO NOT sound like a clinical intake form or a database dump. 
 Make them feel: "I don't have to perform here, I can talk normally."
-Keep it brief (40-80 words max, 2-3 sentences). End with a gentle open question like "Where would you like to start today?" or just a warm statement like "I'm here whenever you're ready."
+Keep it brief (40-80 words max, 2-3 sentences). Keep it natural, welcoming, and relaxed. You DO NOT need to constantly say "I'm here for you" or ask "What's on your mind".
 IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
         else:
             system_prompt = f"""You are Mythri, a warm, perceptive, and highly attuned friend.
@@ -153,7 +153,7 @@ IMPORTANT: Keep your internal reasoning extremely brief and output the greeting 
 
     except Exception as e:
         print(f"[PERSONALIZED_GREETING_ERROR] {e}")
-        initial_message = f"Welcome back, {current_user.username}. This is your quiet space. What would you like to talk about today?"
+        initial_message = f"Welcome back, {current_user.username}. Good to see you today."
         
         def _save_fallback():
             ai_msg = Message(session_id=session_id, role="assistant", content=initial_message)
@@ -379,17 +379,6 @@ async def send_message(
             if emotion and emotion.label:
                 bg_db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
                 
-            bg_db.add(MessageAnalysis(
-                message_id=user_msg.id,
-                session_id=session.id,
-                speaker="user",
-                emotion=emotion.label if emotion else "neutral",
-                emotion_intensity=emotion.score if emotion else 0.0,
-                cognitive_signals=case_file.get("cognitive_patterns", []),
-                conversation_intent=case_file.get("conversation_state", {}).get("engagement", 0.5),
-                risk_level=case_file.get("conversation_state", {}).get("risk_level", "low")
-            ))
-                
             ai_msg = Message(session_id=session.id, role="assistant", content=final_text, language=req.language)
             bg_db.add(ai_msg)
             bg_db.flush()
@@ -469,9 +458,71 @@ async def send_message(
                     ),
                     timeout=30.0
                 )
+                # --- PHASE 2: BASELINE & 10 PARAMETERS SAVE ---
+                from ai_engine.baseline_engine import BaselineEngine
+                from core.database.models import LivingUserContext, MessageAnalysis
+                
+                living_ctx = bg_db.query(LivingUserContext).filter_by(user_id=current_user.id).first()
+                if not living_ctx:
+                    living_ctx = LivingUserContext(user_id=current_user.id)
+                    bg_db.add(living_ctx)
+                    bg_db.flush()
+                
+                core_params = bg_case_file.get("core_parameters", {})
+                baseline_state = {
+                    "baseline_distress": living_ctx.baseline_distress,
+                    "baseline_arousal": living_ctx.baseline_arousal,
+                    "baseline_engagement": living_ctx.baseline_engagement,
+                }
+                
+                deviations = BaselineEngine.evaluate_state_deviation(core_params, baseline_state)
+                bg_case_file["baseline_deviations"] = deviations
+                
+                living_ctx.baseline_distress = BaselineEngine.update_baseline(living_ctx.baseline_distress, core_params.get("distress", 0.0))
+                living_ctx.baseline_arousal = BaselineEngine.update_baseline(living_ctx.baseline_arousal, core_params.get("arousal", 0.0))
+                living_ctx.baseline_engagement = BaselineEngine.update_baseline(living_ctx.baseline_engagement, core_params.get("engagement", 0.0))
+                
+                ranked = bg_case_file.get("ranked_concerns", {})
+                
+                from ai_engine.concern_tracker import ConcernTracker
+                p_concern = ranked.get("primary_concern", "None")
+                # Make sure we use a mutable list
+                active_themes = list(living_ctx.active_themes) if living_ctx.active_themes else []
+                concern_status, updated_themes = ConcernTracker.evaluate_concern_status(
+                    p_concern, 
+                    core_params.get("distress", 0.0), 
+                    active_themes
+                )
+                
+                # Assign back the updated JSON list to trigger SQLAlchemy mutation tracking
+                living_ctx.active_themes = updated_themes
+                
+                bg_case_file["concern_status"] = concern_status
                 tracker.update_case_file(session.id, bg_case_file)
+                
+                bg_db.add(MessageAnalysis(
+                    message_id=user_msg.id,
+                    session_id=session.id,
+                    speaker="user",
+                    emotion=core_params.get("emotion", emotion.label if emotion else "neutral"),
+                    emotion_intensity=core_params.get("intensity", 0.0),
+                    distress_score=core_params.get("distress", 0.0),
+                    conversation_intent=core_params.get("intent", ""),
+                    arousal_score=core_params.get("arousal", 0.0),
+                    topic_sensitivity_score=core_params.get("sensitivity", 0.0),
+                    engagement_score=core_params.get("engagement", 0.0),
+                    primary_concern=ranked.get("primary_concern", ""),
+                    risk_level=core_params.get("risk_level", "Low"),
+                    risk_score=core_params.get("risk_score", 0.0),
+                    baseline_deviation=deviations.get("overall_deviation_score", 0.0),
+                    cognitive_signals=bg_case_file.get("cognitive_patterns", []),
+                    response_strategy=bg_case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
+                ))
+                bg_db.commit()
+                # ----------------------------------------------
             except Exception as e:
                 print(f"[Background Assessor] Error: {repr(e)}")
+                bg_db.rollback()
                 
             from rag.brain.evaluator import evaluate_response_async
             await evaluate_response_async(ai_msg.id)
@@ -480,12 +531,26 @@ async def send_message(
             if total_user_msgs % 5 == 0 or total_user_msgs == 1:
                 await _update_persona_async(session.id, current_user.id, is_onboarding)
                 
+            # Periodically update living context and generate session summary in background so context is always fresh
+            if total_user_msgs % 3 == 0:
+                try:
+                    from modules.memory.incremental_updater import update_living_context
+                    asyncio.create_task(update_living_context(current_user.id, session.id))
+                    asyncio.create_task(generate_session_summary(session.id, current_user.id))
+                except Exception as sum_err:
+                    print(f"[PostProcess] Background incremental summary error: {sum_err}")
+                
             await _process_memory_write_path_async(current_user.id, req.message, session.id)
         except Exception as e:
             print(f"[PostProcess] Error: {repr(e)}")
             bg_db.rollback()
         finally:
             bg_db.close()
+            try:
+                from ai_engine.proactive_engine import manager
+                await manager.send_json(str(session.id), {"type": "typing_stop"})
+            except Exception:
+                pass
 
     t_prompt = time.time()
     
@@ -553,12 +618,19 @@ async def send_message(
                     pass
         except Exception as e:
             print(f"[LLM STREAM ERROR] {e}")
-            fallback_text = "I'm having a little trouble connecting right now, but please know I'm here for you. Let's take a deep breath together. Could you try sending your message again?"
+            fallback_text = "I had a momentary connection hiccup. Could you please try sending that again?"
             yield json.dumps({"type": "chunk", "text": fallback_text}) + "\n"
             full_text = fallback_text
         finally:
             if full_text:
                 background_tasks.add_task(post_process_message, full_text)
+
+    try:
+        from ai_engine.proactive_engine import manager
+        # Use asyncio.create_task to not block the response
+        asyncio.create_task(manager.send_json(str(session.id), {"type": "typing_start"}))
+    except Exception as e:
+        pass
 
     return StreamingResponse(response_generator(), media_type="application/x-ndjson")
 
@@ -948,4 +1020,19 @@ def get_session_analysis(
         "cognitive_summary": session.cognitive_summary,
         "messages": messages_data
     }
+
+from ai_engine.proactive_engine import manager
+
+@router.websocket("/ws/events")
+async def websocket_events(websocket: WebSocket, session_id: str):
+    await manager.connect(session_id, websocket)
+    try:
+        while True:
+            # Side-channel for server-pushed events
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+                manager.update_activity(session_id)
+    except WebSocketDisconnect:
+        manager.disconnect(session_id)
 
