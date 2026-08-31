@@ -20,6 +20,11 @@ from security.authentication.api import get_current_user
 from modules.dashboard.api import broadcast_event
 from core.logger.terminal import CommandCenter
 from modules.consultation.support_router import route as support_route
+from modules.consultation.turn_gate import (
+    TurnComplexity,
+    classify_turn_complexity,
+    history_limit_for,
+)
 
 try:
     from rag.knowledge.retriever import retrieve_context, is_knowledge_base_ready
@@ -203,8 +208,19 @@ async def send_message(
         session.is_crisis_flagged = True
         db.commit()
 
-    from security.safety_validator import evaluate_input_safety
-    background_tasks.add_task(evaluate_input_safety, req.message)
+    # ── Cheap turn complexity classification (deterministic, zero LLM) ──────
+    # Crisis result is already computed above and flows into the classifier.
+    # This single value gates all downstream component activation.
+    turn_complexity = classify_turn_complexity(req.message, crisis)
+    CommandCenter.log_ai("TURN_GATE", f"complexity={turn_complexity.value} msg='{req.message[:40]}'")
+
+    # ── Input safety LLM — only when turn warrants it ────────────────────────
+    # Crisis is already caught deterministically above.
+    # TRIVIAL/CASUAL messages that cleared the crisis+safety-adjacent check
+    # do not need an additional LLM safety call.
+    if turn_complexity in (TurnComplexity.MEANINGFUL, TurnComplexity.SENSITIVE):
+        from security.safety_validator import evaluate_input_safety
+        background_tasks.add_task(evaluate_input_safety, req.message)
 
     def _get_past_messages():
         from core.database.models import SessionLocal
@@ -267,22 +283,75 @@ async def send_message(
         with SessionLocal() as local_db:
             return get_persona_summary(local_db, current_user.id)
 
-    net_results = await asyncio.gather(
-        asyncio.to_thread(_fetch_rag),
-        asyncio.to_thread(_get_emotion_sync),
-        asyncio.to_thread(_get_past_messages),
-        _run_crse_pipeline(),
-        asyncio.to_thread(_get_persona_sync),
-        return_exceptions=True
-    )
-    
-    rag_context = net_results[0] if not isinstance(net_results[0], Exception) else ""
-    emotion_res = net_results[1] if not isinstance(net_results[1], Exception) else (detect_emotion_heuristic(req.message), 0.0)
-    emotion, emotion_latency = emotion_res
-    past = net_results[2] if not isinstance(net_results[2], Exception) else []
-    crse_res = net_results[3] if not isinstance(net_results[3], Exception) else (None, None)
-    selection, unified_profile = crse_res
-    persona_summary = net_results[4] if not isinstance(net_results[4], Exception) else ""
+    # ── Adaptive context gathering based on TurnComplexity ───────────────────
+    # TRIVIAL: skip CRSE, emotion LLM (use heuristic), and RAG injection.
+    #          Only run a cheap DB fetch for compact returning-user context.
+    # CASUAL/MEANINGFUL/SENSITIVE: run the full pipeline.
+
+    if turn_complexity == TurnComplexity.TRIVIAL:
+        # Heuristic emotion (no HF pipeline for pure greetings)
+        emotion = detect_emotion_heuristic(req.message)
+        emotion_latency = 0.0
+        rag_context = ""          # No RAG for trivial turns
+        selection = None
+        unified_profile = None
+        persona_summary = ""
+
+        # Cheap returning-user compact context (one DB read, ~30-50 tok)
+        compact_context = ""
+        try:
+            from core.database.models import SessionLocal, LivingUserContext
+            def _get_compact_ctx():
+                with SessionLocal() as local_db:
+                    ctx = local_db.query(LivingUserContext).filter_by(
+                        user_id=current_user.id
+                    ).first()
+                    if not ctx:
+                        return ""
+                    parts = []
+                    if ctx.compact_summary:
+                        parts.append(f"Recent: {ctx.compact_summary[:120]}")
+                    elif ctx.recent_topic:
+                        parts.append(f"Recent topic: {ctx.recent_topic}")
+                    if ctx.baseline_distress and ctx.baseline_distress > 0.1:
+                        parts.append(f"Mood baseline: {'elevated' if ctx.baseline_distress > 0.5 else 'normal'}")
+                    return ", ".join(parts) if parts else ""
+            compact_ctx_raw = await asyncio.to_thread(_get_compact_ctx)
+            if compact_ctx_raw:
+                compact_context = f"[RETURNING USER — COMPACT CONTEXT]\n{compact_ctx_raw}"
+        except Exception as cc_err:
+            print(f"[TurnGate] compact_context error: {cc_err}")
+            compact_context = ""
+
+        past = await asyncio.to_thread(_get_past_messages)
+    else:
+        # Full pipeline for CASUAL / MEANINGFUL / SENSITIVE
+        compact_context = ""
+        net_results = await asyncio.gather(
+            asyncio.to_thread(_fetch_rag),
+            asyncio.to_thread(_get_emotion_sync),
+            asyncio.to_thread(_get_past_messages),
+            _run_crse_pipeline(),
+            asyncio.to_thread(_get_persona_sync),
+            return_exceptions=True
+        )
+
+        rag_raw = net_results[0] if not isinstance(net_results[0], Exception) else ""
+        emotion_res = net_results[1] if not isinstance(net_results[1], Exception) else (detect_emotion_heuristic(req.message), 0.0)
+        emotion, emotion_latency = emotion_res
+        past = net_results[2] if not isinstance(net_results[2], Exception) else []
+        crse_res = net_results[3] if not isinstance(net_results[3], Exception) else (None, None)
+        selection, unified_profile = crse_res
+        persona_summary = net_results[4] if not isinstance(net_results[4], Exception) else ""
+
+        # RAG: gate injection on relevance score, not just complexity.
+        # ChromaDB query runs; we only inject results if they're actually relevant.
+        # For CASUAL turns, skip injection even if RAG returned results
+        # (casual messages rarely need therapy knowledge chunks).
+        if turn_complexity == TurnComplexity.CASUAL:
+            rag_context = ""  # Skip RAG injection for casual turns
+        else:
+            rag_context = rag_raw  # MEANINGFUL / SENSITIVE: inject if present
     
     t_context = time.time()
 
@@ -291,8 +360,6 @@ async def send_message(
 
     history = past.copy() if past else []
     history.append({"role": "user", "content": req.message})
-
-    # analyze_patterns is moved to background
 
     tracker.update_emotion(session.id, emotion.label)
     tracker.record_message_length(session.id, len(req.message))
@@ -305,7 +372,15 @@ async def send_message(
     lang_prompt = get_language_prompt(req.language)
 
     case_file = tracker.get_case_file(session.id)
-    if should_skip_assessor(req.message, case_file):
+    # ── Assessor skip decision ────────────────────────────────────────────────
+    # Computed here in foreground so it can be passed to post_process_message.
+    # This fixes the bug where should_skip_assessor() only set the strategy
+    # but didn't prevent the background assess_turn() call.
+    skip_assessor = (
+        turn_complexity in (TurnComplexity.TRIVIAL, TurnComplexity.CASUAL)
+        or should_skip_assessor(req.message, case_file)
+    )
+    if skip_assessor:
         msg_clean = req.message.strip().lower()
         greetings = ["hi", "hey", "hello", "yo", "sup", "good morning", "good night", "hola"]
         if "runtime_state" not in case_file: case_file["runtime_state"] = {}
@@ -313,8 +388,6 @@ async def send_message(
             case_file["runtime_state"]["response_strategy"] = "GREETING"
         else:
             case_file["runtime_state"]["response_strategy"] = "LISTEN"
-    
-    # assess_turn is moved to background to prevent blocking First Token
 
     t_assessor = time.time()
     strategy = case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
@@ -393,18 +466,19 @@ async def send_message(
             ))
             bg_db.commit()
 
-            # ── Output Safety Check (non-blocking post-response audit) ────────
-            # Runs after response is already sent — logs violations for review.
-            # Never blocks or modifies the response received by the user.
-            try:
-                from security.safety_validator import evaluate_output_safety
-                safety_result = await evaluate_output_safety(req.message, final_text)
-                if not safety_result.get("is_safe", True):
-                    violation = safety_result.get("violation_category", "unknown")
-                    reason    = safety_result.get("reason", "")
-                    print(f"[OUTPUT_SAFETY_VIOLATION] msg_id={ai_msg.id} category={violation} reason={reason}")
-            except Exception as e:
-                print(f"[OUTPUT_SAFETY_ERROR] {e}")
+            # ── Output Safety Check ───────────────────────────────────────────
+            # Only runs for MEANINGFUL / SENSITIVE turns — not for trivial responses
+            # like "Hey! 😊" that clearly cannot violate safety rules.
+            if turn_complexity in (TurnComplexity.MEANINGFUL, TurnComplexity.SENSITIVE):
+                try:
+                    from security.safety_validator import evaluate_output_safety
+                    safety_result = await evaluate_output_safety(req.message, final_text)
+                    if not safety_result.get("is_safe", True):
+                        violation = safety_result.get("violation_category", "unknown")
+                        reason    = safety_result.get("reason", "")
+                        print(f"[OUTPUT_SAFETY_VIOLATION] msg_id={ai_msg.id} category={violation} reason={reason}")
+                except Exception as e:
+                    print(f"[OUTPUT_SAFETY_ERROR] {e}")
 
 
             # ── on_assistant_response hook ────────────────────────────────
@@ -437,109 +511,113 @@ async def send_message(
                     print(f"[PostProcess] Exercise parsing error: {e}")
             
             # Background Assessor and Pattern Analysis
-            try:
-                bg_history = history.copy()
-                bg_history.append({"role": "assistant", "content": final_text})
-                
-                recent_user_msgs = [m.get("content") for m in past if m.get("role") == "user"][-5:]
-                bg_pattern_signal = await asyncio.to_thread(analyze_patterns, recent_user_msgs, req.message)
-                bg_pattern_block = bg_pattern_signal.as_prompt_block()
-                
-                bg_case_file = await asyncio.wait_for(
-                    assess_turn(
-                        messages       = bg_history,
-                        case_file      = case_file,
-                        user_message   = req.message,
-                        emotion_label  = emotion.label,
-                        rag_context    = rag_context,
-                        pattern_block  = bg_pattern_block,
-                        persona_summary= persona_summary,
-                        memory_context = memory_context,
-                    ),
-                    timeout=30.0
-                )
-                # --- PHASE 2: BASELINE & 10 PARAMETERS SAVE ---
-                from ai_engine.baseline_engine import BaselineEngine
-                from core.database.models import LivingUserContext, MessageAnalysis
-                
-                living_ctx = bg_db.query(LivingUserContext).filter_by(user_id=current_user.id).first()
-                if not living_ctx:
-                    living_ctx = LivingUserContext(user_id=current_user.id)
-                    bg_db.add(living_ctx)
-                    bg_db.flush()
-                
-                core_params = bg_case_file.get("core_parameters", {})
-                baseline_state = {
-                    "baseline_distress": living_ctx.baseline_distress,
-                    "baseline_arousal": living_ctx.baseline_arousal,
-                    "baseline_engagement": living_ctx.baseline_engagement,
-                }
-                
-                deviations = BaselineEngine.evaluate_state_deviation(core_params, baseline_state)
-                bg_case_file["baseline_deviations"] = deviations
-                
-                living_ctx.baseline_distress = BaselineEngine.update_baseline(living_ctx.baseline_distress, core_params.get("distress", 0.0))
-                living_ctx.baseline_arousal = BaselineEngine.update_baseline(living_ctx.baseline_arousal, core_params.get("arousal", 0.0))
-                living_ctx.baseline_engagement = BaselineEngine.update_baseline(living_ctx.baseline_engagement, core_params.get("engagement", 0.0))
-                
-                ranked = bg_case_file.get("ranked_concerns", {})
-                
-                from ai_engine.concern_tracker import ConcernTracker
-                p_concern = ranked.get("primary_concern", "None")
-                # Make sure we use a mutable list
-                active_themes = list(living_ctx.active_themes) if living_ctx.active_themes else []
-                concern_status, updated_themes = ConcernTracker.evaluate_concern_status(
-                    p_concern, 
-                    core_params.get("distress", 0.0), 
-                    active_themes
-                )
-                
-                # Assign back the updated JSON list to trigger SQLAlchemy mutation tracking
-                living_ctx.active_themes = updated_themes
-                
-                bg_case_file["concern_status"] = concern_status
-                tracker.update_case_file(session.id, bg_case_file)
-                
-                bg_db.add(MessageAnalysis(
-                    message_id=user_msg.id,
-                    session_id=session.id,
-                    speaker="user",
-                    emotion=core_params.get("emotion", emotion.label if emotion else "neutral"),
-                    emotion_intensity=core_params.get("intensity", 0.0),
-                    distress_score=core_params.get("distress", 0.0),
-                    conversation_intent=core_params.get("intent", ""),
-                    arousal_score=core_params.get("arousal", 0.0),
-                    topic_sensitivity_score=core_params.get("sensitivity", 0.0),
-                    engagement_score=core_params.get("engagement", 0.0),
-                    primary_concern=ranked.get("primary_concern", ""),
-                    risk_level=core_params.get("risk_level", "Low"),
-                    risk_score=core_params.get("risk_score", 0.0),
-                    baseline_deviation=deviations.get("overall_deviation_score", 0.0),
-                    cognitive_signals=bg_case_file.get("cognitive_patterns", []),
-                    response_strategy=bg_case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
-                ))
-                bg_db.commit()
-                # ----------------------------------------------
-            except Exception as e:
-                print(f"[Background Assessor] Error: {repr(e)}")
-                bg_db.rollback()
-                
-            from rag.brain.evaluator import evaluate_response_async
-            await evaluate_response_async(ai_msg.id)
-            
-            total_user_msgs = len([m for m in past if m.get("role") == "user"]) + 1
-            if total_user_msgs % 5 == 0 or total_user_msgs == 1:
-                await _update_persona_async(session.id, current_user.id, is_onboarding)
-                
-            # Periodically update living context and generate session summary in background so context is always fresh
-            if total_user_msgs % 3 == 0:
+            # skip_assessor is computed in the foreground and captured here.
+            # This fixes the previous bug where the assessor ran unconditionally.
+            if not skip_assessor:
                 try:
-                    from modules.memory.incremental_updater import update_living_context
-                    asyncio.create_task(update_living_context(current_user.id, session.id))
-                    asyncio.create_task(generate_session_summary(session.id, current_user.id))
-                except Exception as sum_err:
-                    print(f"[PostProcess] Background incremental summary error: {sum_err}")
+                    bg_history = history.copy()
+                    bg_history.append({"role": "assistant", "content": final_text})
+
+                    recent_user_msgs = [m.get("content") for m in past if m.get("role") == "user"][-5:]
+                    bg_pattern_signal = await asyncio.to_thread(analyze_patterns, recent_user_msgs, req.message)
+                    bg_pattern_block = bg_pattern_signal.as_prompt_block()
+
+                    bg_case_file = await asyncio.wait_for(
+                        assess_turn(
+                            messages       = bg_history,
+                            case_file      = case_file,
+                            user_message   = req.message,
+                            emotion_label  = emotion.label,
+                            rag_context    = rag_context,
+                            pattern_block  = bg_pattern_block,
+                            persona_summary= persona_summary,
+                            memory_context = memory_context,
+                        ),
+                        timeout=30.0
+                    )
+
+                    # --- PHASE 2: BASELINE & 10 PARAMETERS SAVE ---
+                    from ai_engine.baseline_engine import BaselineEngine
+                    from core.database.models import LivingUserContext, MessageAnalysis
+
+                    living_ctx = bg_db.query(LivingUserContext).filter_by(user_id=current_user.id).first()
+                    if not living_ctx:
+                        living_ctx = LivingUserContext(user_id=current_user.id)
+                        bg_db.add(living_ctx)
+                        bg_db.flush()
+
+                    core_params = bg_case_file.get("core_parameters", {})
+                    baseline_state = {
+                        "baseline_distress": living_ctx.baseline_distress,
+                        "baseline_arousal": living_ctx.baseline_arousal,
+                        "baseline_engagement": living_ctx.baseline_engagement,
+                    }
+
+                    deviations = BaselineEngine.evaluate_state_deviation(core_params, baseline_state)
+                    bg_case_file["baseline_deviations"] = deviations
+
+                    living_ctx.baseline_distress = BaselineEngine.update_baseline(living_ctx.baseline_distress, core_params.get("distress", 0.0))
+                    living_ctx.baseline_arousal = BaselineEngine.update_baseline(living_ctx.baseline_arousal, core_params.get("arousal", 0.0))
+                    living_ctx.baseline_engagement = BaselineEngine.update_baseline(living_ctx.baseline_engagement, core_params.get("engagement", 0.0))
+
+                    ranked = bg_case_file.get("ranked_concerns", {})
+
+                    from ai_engine.concern_tracker import ConcernTracker
+                    p_concern = ranked.get("primary_concern", "None")
+                    active_themes = list(living_ctx.active_themes) if living_ctx.active_themes else []
+                    concern_status, updated_themes = ConcernTracker.evaluate_concern_status(
+                        p_concern,
+                        core_params.get("distress", 0.0),
+                        active_themes
+                    )
+
+                    living_ctx.active_themes = updated_themes
+                    bg_case_file["concern_status"] = concern_status
+                    tracker.update_case_file(session.id, bg_case_file)
+
+                    bg_db.add(MessageAnalysis(
+                        message_id=user_msg.id,
+                        session_id=session.id,
+                        speaker="user",
+                        emotion=core_params.get("emotion", emotion.label if emotion else "neutral"),
+                        emotion_intensity=core_params.get("intensity", 0.0),
+                        distress_score=core_params.get("distress", 0.0),
+                        conversation_intent=core_params.get("intent", ""),
+                        arousal_score=core_params.get("arousal", 0.0),
+                        topic_sensitivity_score=core_params.get("sensitivity", 0.0),
+                        engagement_score=core_params.get("engagement", 0.0),
+                        primary_concern=ranked.get("primary_concern", ""),
+                        risk_level=core_params.get("risk_level", "Low"),
+                        risk_score=core_params.get("risk_score", 0.0),
+                        baseline_deviation=deviations.get("overall_deviation_score", 0.0),
+                        cognitive_signals=bg_case_file.get("cognitive_patterns", []),
+                        response_strategy=bg_case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
+                    ))
+                    bg_db.commit()
+                except Exception as e:
+                    print(f"[Background Assessor] Error: {repr(e)}")
+                    bg_db.rollback()
+            else:
+                # Assessor skipped — carry forward unchanged case_file
+                print(f"[TurnGate] Assessor skipped (complexity={turn_complexity.value})")
+
                 
+            # ── Persona update — only when turn has meaningful content ────────
+            total_user_msgs = len([m for m in past if m.get("role") == "user"]) + 1
+            if turn_complexity in (TurnComplexity.MEANINGFUL, TurnComplexity.SENSITIVE):
+                if total_user_msgs % 5 == 0 or total_user_msgs == 1:
+                    await _update_persona_async(session.id, current_user.id, is_onboarding)
+
+            # ── Living context + session summary — only on meaningful turns ───
+            if turn_complexity in (TurnComplexity.MEANINGFUL, TurnComplexity.SENSITIVE):
+                if total_user_msgs % 3 == 0:
+                    try:
+                        from modules.memory.incremental_updater import update_living_context
+                        asyncio.create_task(update_living_context(current_user.id, session.id))
+                        asyncio.create_task(generate_session_summary(session.id, current_user.id))
+                    except Exception as sum_err:
+                        print(f"[PostProcess] Background incremental summary error: {sum_err}")
+
             await _process_memory_write_path_async(current_user.id, req.message, session.id)
         except Exception as e:
             print(f"[PostProcess] Error: {repr(e)}")
@@ -580,15 +658,17 @@ async def send_message(
         first_token = True
         try:
             async for chunk_raw in stream_chat_with_mythri(
-                messages       = history,
-                language       = req.language,
-                rag_context    = rag_context,
-                case_file      = case_file,
-                language_prompt= lang_prompt,
-                is_crisis      = crisis.is_crisis,
-                exercise_phase = current_exercise_state,
-                memory_context = memory_context,
+                messages          = history,
+                language          = req.language,
+                rag_context       = rag_context,
+                case_file         = case_file if turn_complexity not in (TurnComplexity.TRIVIAL,) else None,
+                language_prompt   = lang_prompt,
+                is_crisis         = crisis.is_crisis,
+                exercise_phase    = current_exercise_state,
+                memory_context    = memory_context,
                 memory_usage_mode = memory_usage_mode,
+                history_limit     = history_limit_for(turn_complexity),
+                compact_context   = compact_context,
             ):
                 if first_token:
                     t_first_token = time.time()
