@@ -137,12 +137,13 @@ allowed_origins = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
+    "https://test.affynelabs.com",
 ]
 if cors_origins_env:
     allowed_origins.extend([o.strip() for o in cors_origins_env.split(",") if o.strip()])
 
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*.pinggy.link", "*.vercel.app", "*.onrender.com", "*.trycloudflare.com", "*.loca.lt"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "*.pinggy.link", "*.vercel.app", "*.affynelabs.com", "*.onrender.com", "*.trycloudflare.com", "*.loca.lt"])
 
 from core.middleware.security import SecurityMiddleware
 app.add_middleware(SecurityMiddleware, max_payload_bytes=10 * 1024 * 1024)
@@ -153,7 +154,7 @@ app.add_middleware(AuditLoggerMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"https://.*\.onrender\.com|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
+    allow_origin_regex=r"https://.*\.onrender\.com|https://.*\.affynelabs\.com|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -239,4 +240,4 @@ def architecture_view():
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
-    return "<html><body><h2>MindBridge Architecture Flow</h2><p>Architecture diagram file not found.</p></body></html>"
+    return "<html><body><h2>MindBridge Architecture Flow</h2><p>Architecture diagram file not found.</p></body></html>"
