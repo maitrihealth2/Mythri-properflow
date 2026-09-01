@@ -97,23 +97,23 @@ function ConsentModal({ record, onClose }: { record: ConsentRecord; onClose: () 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between p-6 border-b border-outline-variant/30">
+      <div className="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between p-6 border-b border-outline-variant/30 bg-surface-container-low">
           <div>
             <h2 className="text-xl font-semibold text-on-surface">{record.username}</h2>
             <p className="text-sm text-on-surface-variant mt-0.5">{record.email}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-dim text-on-surface-variant transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors">
             ✕
           </button>
         </div>
-        <div className="overflow-y-auto flex-1 p-6 space-y-6">
+        <div className="overflow-y-auto flex-1 p-6 space-y-6 bg-surface-container-lowest">
           <section>
             <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Consents</h3>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {consentItems.map((item) => (
-                <div key={item.key} className="flex items-start gap-3 p-3 rounded-xl border bg-surface border-outline-variant/30">
-                  <span>{item.value ? '✅' : '❌'}</span>
+                <div key={item.key} className="flex items-center gap-3 p-4 rounded-xl border bg-surface border-outline-variant/30 shadow-sm">
+                  <span className="text-lg">{item.value ? '✅' : '❌'}</span>
                   <p className="font-medium text-sm text-on-surface">{item.label}</p>
                 </div>
               ))}
@@ -134,9 +134,14 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState<'users' | 'consents' | 'feedback'>('users')
   const [search, setSearch] = useState('')
+  const [isDarkMode, setIsDarkMode] = useState(false)
   
   // Data State
   const [users, setUsers] = useState<UserListRecord[]>([])
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+
   const [consents, setConsents] = useState<ConsentRecord[]>([])
   const [feedbacks, setFeedbacks] = useState<FeedbackRecord[]>([])
   const [loading, setLoading] = useState(false)
@@ -162,10 +167,21 @@ export default function AdminDashboard() {
   }, [])
 
   useEffect(() => {
-    if (isAuthenticated && !activeUser) {
-      loadData(activeTab)
+    if (isAuthenticated) {
+      if (activeTab === 'users' && !activeUser) {
+        loadData('users')
+      } else if (!activeUser) {
+        loadData(activeTab)
+      }
     }
-  }, [activeTab, isAuthenticated])
+  }, [activeTab, isAuthenticated, page, pageSize, search])
+
+  // Optional: debounce search for users to avoid spamming
+  useEffect(() => {
+    if (activeTab === 'users') {
+       setPage(1) // Reset to page 1 on new search
+    }
+  }, [search])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -191,8 +207,10 @@ export default function AdminDashboard() {
     setLoading(true)
     try {
       if (tab === 'users') {
-        const res = await getAdminUsers()
+        const skip = (page - 1) * pageSize
+        const res = await getAdminUsers(search, skip, pageSize)
         setUsers(res.users)
+        setTotalUsers(res.total || 0)
       } else if (tab === 'consents') {
         const res = await getAdminConsents()
         setConsents(res.consents)
@@ -293,13 +311,13 @@ export default function AdminDashboard() {
   // ── Login screen ─────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-sm border border-outline-variant/30 w-full max-w-sm flex flex-col space-y-4">
-          <h1 className="text-plum-high-contrast font-headline-md text-2xl text-center">Admin Access</h1>
-          <input type="email" placeholder="Admin Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-surface text-on-surface rounded-xl border border-outline-variant focus:outline-none focus:border-primary font-body-md" required />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-surface text-on-surface rounded-xl border border-outline-variant focus:outline-none focus:border-primary font-body-md" required />
-          {loginError && <p className="text-red-500 text-sm text-center">{loginError}</p>}
-          <button type="submit" className="w-full py-3 bg-primary text-white rounded-full font-label-md hover:scale-[1.02] transition-transform">Log In</button>
+      <div className={`min-h-screen flex items-center justify-center bg-surface transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
+        <form onSubmit={handleLogin} className="bg-surface-container-lowest p-10 rounded-3xl shadow-xl border border-outline-variant/30 w-full max-w-sm flex flex-col space-y-6">
+          <h1 className="text-plum-high-contrast font-headline-lg text-3xl text-center">Admin Access</h1>
+          <input type="email" placeholder="Admin Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-surface text-on-surface rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/50 font-body-md transition-all" required />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-surface text-on-surface rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/50 font-body-md transition-all" required />
+          {loginError && <p className="text-red-500 text-sm text-center bg-red-50/50 p-2 rounded-lg">{loginError}</p>}
+          <button type="submit" className="w-full py-3 bg-primary text-on-primary rounded-full font-label-md hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] shadow-md transition-all">Log In</button>
         </form>
       </div>
     )
@@ -437,15 +455,27 @@ export default function AdminDashboard() {
 
   // ── Dashboard ─────────────────────────────────────────────────────────────
   return (
-    <>
+    <div className={`${isDarkMode ? 'dark' : ''} h-screen w-full overflow-hidden flex flex-col`}>
       {selectedConsent && <ConsentModal record={selectedConsent} onClose={() => setSelectedConsent(null)} />}
 
-      <div className="min-h-screen bg-surface flex flex-col">
-        <header className="border-b border-outline-variant/30 bg-white px-8 py-4 flex justify-between items-center flex-shrink-0">
-          <h1 className="text-plum-high-contrast font-headline-lg text-2xl">Mythri Admin</h1>
-          <button onClick={handleLogout} className="px-4 py-2 text-on-surface-variant font-label-md border rounded-full hover:bg-surface transition-colors">
-            Log Out
-          </button>
+      <div className="h-full bg-background text-on-background flex flex-col transition-colors duration-300 overflow-hidden">
+        <header className="border-b border-outline-variant/30 bg-surface-container-lowest px-8 py-4 flex justify-between items-center flex-shrink-0 shadow-sm z-10">
+          <h1 className="text-plum-high-contrast font-headline-lg text-2xl flex items-center gap-3">
+            <span className="bg-primary text-on-primary w-8 h-8 rounded-lg flex items-center justify-center text-sm">M</span>
+            Mythri Admin
+          </h1>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)} 
+              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface rounded-full transition-colors"
+              title="Toggle Theme"
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+            <button onClick={handleLogout} className="px-5 py-2 text-on-surface-variant font-label-md border border-outline-variant/50 rounded-full hover:bg-surface-variant transition-all hover:shadow-sm">
+              Log Out
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-8 py-6 overflow-hidden">
@@ -468,14 +498,17 @@ export default function AdminDashboard() {
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="relative">
+              <div className="relative group">
                 <input
                   type="text"
                   placeholder="Search…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-4 pr-4 py-2 text-sm bg-white border border-outline-variant rounded-full focus:outline-none focus:border-primary font-body-sm text-on-surface w-52"
+                  className="pl-4 pr-10 py-2.5 text-sm bg-surface-container-lowest border border-outline-variant/50 rounded-full focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-sm text-on-surface w-64 shadow-sm transition-all"
                 />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 group-focus-within:text-primary transition-colors">
+                  🔍
+                </span>
               </div>
             </div>
           </div>
@@ -533,17 +566,17 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-white shadow-sm">
+                  <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
                     <table className="w-full text-left border-collapse min-w-[700px]">
-                      <thead className="sticky top-0 z-10 bg-surface-dim font-label-md text-on-surface-variant border-b border-outline-variant/30">
+                      <thead className="sticky top-0 z-10 bg-surface-container-low font-label-md text-on-surface-variant border-b border-outline-variant/30 shadow-sm">
                         <tr>
                           <th className="p-4 w-10">
                             <input
                               type="checkbox"
-                              checked={filteredUsers.length > 0 && selectedUsers.size === filteredUsers.length}
+                              checked={users.length > 0 && selectedUsers.size === users.length}
                               onChange={toggleAllUsers}
                               className="w-4 h-4 accent-primary cursor-pointer"
-                              title="Select all"
+                              title="Select all on this page"
                             />
                           </th>
                           <th className="p-4">User</th>
@@ -553,11 +586,11 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredUsers.map(u => (
+                        {users.map(u => (
                           <tr
                             key={u.id}
                             className={`border-b last:border-0 border-outline-variant/30 transition-colors group ${
-                              selectedUsers.has(u.id) ? 'bg-red-50' : 'hover:bg-primary/5'
+                              selectedUsers.has(u.id) ? 'bg-error-container/30' : 'hover:bg-surface-variant/50'
                             }`}
                           >
                             <td className="p-4" onClick={e => e.stopPropagation()}>
@@ -575,12 +608,43 @@ export default function AdminDashboard() {
                               {u.username}
                             </td>
                             <td className="p-4 text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>{u.email}</td>
-                            <td className="p-4 text-center cursor-pointer" onClick={() => handleUserClick(u.id)}>{u.session_count}</td>
+                            <td className="p-4 text-center cursor-pointer" onClick={() => handleUserClick(u.id)}>
+                              <span className="bg-surface-variant px-2.5 py-1 rounded-full text-xs font-medium text-on-surface-variant">
+                                {u.session_count}
+                              </span>
+                            </td>
                             <td className="p-4 text-right text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>{new Date(u.created_at).toLocaleDateString()}</td>
                           </tr>
                         ))}
+                        {users.length === 0 && (
+                          <tr><td colSpan={5} className="p-8 text-center text-on-surface-variant">No users found.</td></tr>
+                        )}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-sm mt-2">
+                    <div className="text-sm text-on-surface-variant">
+                      Showing {Math.min((page - 1) * pageSize + 1, totalUsers)} to {Math.min(page * pageSize, totalUsers)} of <span className="font-medium text-on-surface">{totalUsers}</span> users
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        disabled={page === 1} 
+                        onClick={() => setPage(page - 1)}
+                        className="px-3 py-1.5 border border-outline-variant/50 rounded-lg text-sm hover:bg-surface-variant disabled:opacity-50 transition-colors text-on-surface"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm font-medium px-2 text-on-surface">Page {page}</span>
+                      <button 
+                        disabled={page * pageSize >= totalUsers} 
+                        onClick={() => setPage(page + 1)}
+                        className="px-3 py-1.5 border border-outline-variant/50 rounded-lg text-sm hover:bg-surface-variant disabled:opacity-50 transition-colors text-on-surface"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -588,19 +652,23 @@ export default function AdminDashboard() {
               {/* Consents Tab */}
               {activeTab === 'consents' && (
                 <div className="h-full flex flex-col">
-                  <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-white shadow-sm">
+                  <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
                     <table className="w-full text-left border-collapse min-w-[700px]">
-                      <thead className="sticky top-0 z-10 bg-surface-dim font-label-md text-on-surface-variant border-b border-outline-variant/30">
-                        <tr><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Completed At</th></tr>
+                      <thead className="sticky top-0 z-10 bg-surface-container-low font-label-md text-on-surface-variant border-b border-outline-variant/30 shadow-sm">
+                        <tr><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Completed At</th><th className="p-4 text-center">Action</th></tr>
                       </thead>
                       <tbody>
                         {filteredConsents.map(c => (
-                          <tr key={c.user_id} onClick={() => setSelectedConsent(c)} className="border-b hover:bg-primary/5 cursor-pointer transition-colors font-body-sm group">
+                          <tr key={c.user_id} onClick={() => setSelectedConsent(c)} className="border-b hover:bg-surface-variant/50 cursor-pointer transition-colors font-body-sm group">
                             <td className="p-4 font-medium text-on-surface group-hover:text-primary transition-colors">{c.username}</td>
                             <td className="p-4 text-on-surface-variant">{c.email}</td>
                             <td className="p-4 text-on-surface-variant">{new Date(c.completed_at).toLocaleString()}</td>
+                            <td className="p-4 text-center"><button className="text-primary text-xs font-medium px-3 py-1 bg-primary/10 rounded-full hover:bg-primary/20 transition-colors">View Details</button></td>
                           </tr>
                         ))}
+                        {filteredConsents.length === 0 && (
+                          <tr><td colSpan={4} className="p-8 text-center text-on-surface-variant">No consents found.</td></tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -635,6 +703,6 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
-    </>
+    </div>
   )
 }

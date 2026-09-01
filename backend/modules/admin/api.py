@@ -88,6 +88,12 @@ def get_feedback(admin=Depends(require_admin), db: Session = Depends(get_db)):
 
 @router.get("/users")
 def get_users(admin=Depends(require_admin), db: Session = Depends(get_db), search: str = "", skip: int = 0, limit: int = 50):
+    base_query = db.query(User)
+    if search:
+        search_term = f"%{search}%"
+        base_query = base_query.filter((User.username.ilike(search_term)) | (User.email.ilike(search_term)))
+    total = base_query.count()
+
     query = db.query(
         User, 
         func.count(DBSession.id).label('session_count'),
@@ -112,7 +118,7 @@ def get_users(admin=Depends(require_admin), db: Session = Depends(get_db), searc
             "session_count": session_count,
             "last_active": last_active or user.updated_at
         })
-    return {"users": users}
+    return {"users": users, "total": total}
 
 @router.get("/users/{user_id}")
 def get_user_detail(user_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
