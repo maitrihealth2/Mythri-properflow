@@ -218,6 +218,16 @@ def health():
         "features": ["text-chat", "voice-stt", "voice-tts", "rag", "emotion-detection"],
         "ai": "sarvam-105b + saarika + bulbul",
     }
+    
+@app.head("/health")
+async def health_head():
+    return {
+        "status": "ok",
+        "service": "MindBridge",
+        "version": "3.0.0",
+        "features": ["text-chat", "voice-stt", "voice-tts", "rag", "emotion-detection"],
+        "ai": "sarvam-105b + saarika + bulbul",
+    }
 
 
 @app.get("/")
