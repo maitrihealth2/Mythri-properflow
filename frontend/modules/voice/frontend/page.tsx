@@ -56,6 +56,7 @@ export default function VoiceModePage() {
   const languageRef = useRef('en-IN')
   const isMutedRef = useRef(false)
   const activeAudioSourceRef = useRef<AudioBufferSourceNode | null>(null)
+  const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -185,6 +186,7 @@ export default function VoiceModePage() {
       const { audioCtx, analyser } = initAudio()
       const source = audioCtx.createMediaStreamSource(stream)
       source.connect(analyser)
+      micSourceRef.current = source
 
       startChunk()
       startVisualizer()
@@ -388,6 +390,11 @@ export default function VoiceModePage() {
       activeAudioSourceRef.current.disconnect()
       activeAudioSourceRef.current = null
     }
+    
+    if (micSourceRef.current) {
+      micSourceRef.current.disconnect()
+      micSourceRef.current = null
+    }
 
     setConvState('idle')
     mitraStore.setState('idle')
@@ -532,9 +539,9 @@ export default function VoiceModePage() {
       maxDurationTimerRef.current = null
     }
     const recorder = mediaRecorderRef.current
+    isSpeakingRef.current = false
     if (!recorder || recorder.state === 'inactive') return
     recorder.stop()
-    isSpeakingRef.current = false
   }
 
   const changeLanguage = (lang: 'en' | 'hi' | 'te' | 'ta') => {

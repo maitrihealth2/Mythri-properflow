@@ -169,7 +169,7 @@ export async function getHistory() {
 }
 
 export async function getTranscript(sessionId: string) {
-  const res = await api.get(`/api/consultation/${sessionId}`)
+  const res = await api.get(`/api/consultation/${sessionId}?t=${Date.now()}`)
   return res.data
 }
 
