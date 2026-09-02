@@ -4,7 +4,7 @@ import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Leaf } from 'lucide-react'
 import { Button } from '@heroui/react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function ErrorPage({
   error,
@@ -13,6 +13,7 @@ export default function ErrorPage({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const router = useRouter()
   useEffect(() => {
     // Log the error to an error reporting service
     console.error('Application boundary error:', error)
@@ -53,8 +54,7 @@ export default function ErrorPage({
             Take a breath & try again
           </Button>
           <Button
-            as={Link}
-            href="/home"
+            onPress={() => router.push('/home')}
             variant="secondary"
             size="lg"
             className="font-medium rounded-full"

@@ -4,9 +4,10 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Compass } from 'lucide-react'
 import { Button } from '@heroui/react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function NotFound() {
+  const router = useRouter()
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100dvh-140px)] p-6 z-10 relative">
       <motion.div 
@@ -34,8 +35,7 @@ export default function NotFound() {
         </div>
 
         <Button
-          as={Link}
-          href="/home"
+          onPress={() => router.push('/home')}
           variant="secondary"
           size="lg"
           className="mt-6 font-medium rounded-full"
