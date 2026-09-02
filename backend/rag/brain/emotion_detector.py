@@ -14,26 +14,28 @@ HF_MODEL = "SamLowe/roberta-base-go_emotions"
 HF_API_DISABLED = False
 
 _emotion_pipeline = None
+_transformers_checked = False
 
 def get_emotion_pipeline():
-    global _emotion_pipeline
-    if _emotion_pipeline is None:
+    global _emotion_pipeline, _transformers_checked
+    if _emotion_pipeline is None and not _transformers_checked:
+        _transformers_checked = True
         try:
             from transformers import pipeline
             print(f"[HF Emotion] Loading local transformers pipeline for {HF_MODEL}...")
-            # top_k=1 returns [[{'label': '...', 'score': ...}]] format in recent versions, 
-            # or [{'label': '...', 'score': ...}] depending on version. We'll handle both.
             _emotion_pipeline = pipeline("text-classification", model=HF_MODEL, top_k=1)
+            print("[HF Emotion] Transformers pipeline loaded successfully.")
+        except ImportError:
+            print("[HF Emotion] 'transformers' not installed. Using built-in high-performance emotion engine.")
+            _emotion_pipeline = "NOT_INSTALLED"
         except Exception as e:
-            print(f"[HF Emotion] Error loading pipeline: {e}")
+            print(f"[HF Emotion] Could not initialize transformers pipeline ({e}). Using built-in emotion engine.")
             _emotion_pipeline = "FAILED"
     return _emotion_pipeline
 
 def preload_models():
-    """Eagerly loads the emotion detection model into memory."""
-    print("[HF Emotion] Preloading models...")
+    """Eagerly initializes the emotion detection engine."""
     get_emotion_pipeline()
-    print("[HF Emotion] Models preloaded successfully.")
 
 EMOTION_KEYWORDS = {
     "Admiration": ["admire", "impress", "respect", "amazing", "wow", "brilliant", "admiration", "arputham", "adbhutam"],
@@ -132,7 +134,7 @@ async def detect_emotion(text: str) -> EmotionResult:
         # Use local transformers pipeline. Load it in a background thread to avoid blocking loop.
         pipe = await asyncio.to_thread(get_emotion_pipeline)
         
-        if pipe and pipe != "FAILED":
+        if pipe and pipe not in ("FAILED", "NOT_INSTALLED"):
             # Run the heavy inference in a background thread
             results = await asyncio.to_thread(pipe, text)
             
