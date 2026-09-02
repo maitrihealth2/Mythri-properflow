@@ -68,8 +68,7 @@ export default function GlobalError({
               onPress={() => reset()}
               variant="primary"
               size="lg"
-              className="mt-6 font-medium"
-              radius="full"
+              className="mt-6 font-medium rounded-full"
             >
               Reload Sanctuary
             </Button>

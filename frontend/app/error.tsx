@@ -48,8 +48,7 @@ export default function ErrorPage({
             onPress={() => reset()}
             variant="primary"
             size="lg"
-            radius="full"
-            className="font-medium"
+            className="font-medium rounded-full"
           >
             Take a breath & try again
           </Button>
@@ -58,8 +57,7 @@ export default function ErrorPage({
             href="/home"
             variant="secondary"
             size="lg"
-            radius="full"
-            className="font-medium"
+            className="font-medium rounded-full"
           >
             Return to Sanctuary
           </Button>
