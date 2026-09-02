@@ -14,8 +14,9 @@ const literata = Literata({
 
 export const metadata: Metadata = {
   title: 'Mythri | Sanctuary',
-  description: 'A safe, quiet space for reflection and healing.',
-  keywords: 'mental health, AI companion, therapy, support',
+  description: 'A safe, quiet space for reflection and healing. Built by Affyne Labs.',
+  keywords: 'mental health, AI companion, therapy, support, Affyne Labs, Mythri',
+  authors: [{ name: 'Affyne Labs', url: 'https://affynelabs.com' }],
 }
 
 export const viewport: Viewport = {

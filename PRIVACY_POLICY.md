@@ -1,8 +1,9 @@
 # Privacy Policy for Mythri
+### *A product of Affyne Labs*
 
 **Effective Date:** June 22, 2026
 
-Welcome to **Mythri** ("we", "our", or "us"). We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, process, and protect your data when you use the Mythri AI-powered empathetic mental health companion (the "Service").
+Welcome to **Mythri** ("we", "our", or "us"), a product built by **Affyne Labs**. We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, process, and protect your data when you use the Mythri AI-powered empathetic mental health companion (the "Service").
 
 By using Mythri, you agree to the collection and use of information in accordance with this policy.
 
@@ -80,4 +81,6 @@ We may update our Privacy Policy from time to time as our application evolves. W
 
 If you have any questions or concerns about this Privacy Policy or our data handling practices, please contact us at:
 
-**Email:** yugavardhank@gmail.com
+**Affyne Labs**  
+**Email:** hello@affynelabs.com  
+**Website:** https://affynelabs.com

@@ -126,8 +126,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="MindBridge API",
-    description="AI Mental Health Support — Voice + Text — Powered by Sarvam AI",
+    title="Mythri API — by Affyne Labs",
+    description="AI Mental Health Support — Voice + Text — Built by Affyne Labs, Powered by Sarvam AI",
     version="3.0.0",
     lifespan=lifespan,
 )
