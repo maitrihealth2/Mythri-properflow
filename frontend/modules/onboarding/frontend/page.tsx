@@ -49,101 +49,168 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex-1 w-full flex items-center justify-center relative overflow-hidden min-h-[100dvh] bg-surface">
-      <div className="fixed inset-0 bg-plum-high-contrast/5 backdrop-blur-[2px] z-0 pointer-events-none"></div>
-      
-      <main className="relative z-10 w-full max-w-[540px] m-auto px-6 py-12 flex flex-col items-center">
-        <div className="frosted-card rounded-3xl p-6 md:p-10 w-full flex flex-col items-center shadow-sm">
-          <div className="flex flex-col space-y-4 animate-fade-in-up w-full text-left bg-surface p-6 rounded-2xl shadow-sm border border-outline-variant/30 max-h-[80vh] overflow-y-auto">
-            <h1 className="text-plum-high-contrast font-headline-md text-2xl text-center tracking-wider">AFFYNE LABS</h1>
-            <h2 className="text-on-surface font-headline-sm text-center">Participant Consent, Terms & Non-Disclosure Agreement</h2>
-            <p className="text-on-surface-variant font-body-sm text-center italic">Mythri — AI Psychological Companion</p>
-            
-            <p className="text-on-surface-variant font-body-sm mt-4">
-              This agreement governs your access and use of Mythri, built by <strong>Affyne Labs</strong>. You must read and explicitly agree to each section below to proceed. Access is strictly prohibited without full consent.
+    <div className="min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-6 md:p-8 bg-surface dark:bg-background relative overflow-y-auto">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-surface to-surface-variant/20 pointer-events-none z-0"></div>
+
+      <main className="relative z-10 w-full max-w-[560px] my-auto">
+        <div className="w-full bg-surface/95 dark:bg-surface-container/95 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-outline-variant/30 shadow-xl p-4 sm:p-6 md:p-8 flex flex-col max-h-[92dvh] overflow-hidden">
+          
+          {/* Header */}
+          <div className="text-center pb-3 border-b border-outline-variant/20 shrink-0">
+            <h1 className="text-primary font-headline-md text-xl sm:text-2xl tracking-wider uppercase font-bold">AFFYNE LABS</h1>
+            <h2 className="text-on-surface font-headline-sm text-base sm:text-lg mt-0.5">Consent, Terms &amp; NDA</h2>
+            <p className="text-on-surface-variant font-body-sm text-xs italic mt-0.5">Mythri — AI Psychological Companion</p>
+          </div>
+
+          {/* Scrollable Terms Body */}
+          <div className="overflow-y-auto flex-1 py-3.5 space-y-3 pr-1 text-on-surface font-body-sm text-xs sm:text-sm">
+            <p className="text-on-surface-variant leading-relaxed">
+              This screen governs your access to Mythri, built by <strong>Affyne Labs</strong>. You must read and explicitly agree to the required sections below before proceeding.
             </p>
 
-            <div className="space-y-4 mt-4 text-on-surface font-body-sm">
-              <div className="space-y-2 p-3.5 bg-surface-variant/20 rounded-xl border border-outline-variant/20">
-                <h3 className="font-label-lg font-bold text-primary">1. Eligibility & Age (Mandatory)</h3>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 accent-primary" checked={consent.eligibility} onChange={(e) => setConsent({...consent, eligibility: e.target.checked})} />
-                  <span>I confirm that I am 18 years of age or older.<br/><span className="text-xs text-on-surface-variant">(Participation in this application is limited to adults. If you are under 18, you may not proceed.)</span></span>
-                </label>
-              </div>
-
-              <div className="space-y-2 p-3.5 bg-primary/5 rounded-xl border border-primary/20">
-                <h3 className="font-label-lg font-bold text-primary">2. Non-Disclosure Agreement (Mandatory)</h3>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 accent-primary" checked={consent.nda_agreement} onChange={(e) => setConsent({...consent, nda_agreement: e.target.checked})} />
-                  <span className="font-medium text-on-surface">
-                    I agree to keep all system architecture, prompt engineering techniques, and internal workings of Mythri and Affyne Labs strictly confidential. I agree NOT to disclose, publish, reverse-engineer, distribute, or share any internal aspects or confidential information with any third party.
+            {/* Section 1: Eligibility */}
+            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1.5">
+              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">1. Eligibility &amp; Age (Mandatory)</h3>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
+                  checked={consent.eligibility}
+                  onChange={(e) => setConsent({ ...consent, eligibility: e.target.checked })}
+                />
+                <span className="leading-snug">
+                  I confirm that I am 18 years of age or older.
+                  <span className="block text-[11px] text-on-surface-variant mt-0.5">
+                    (Participation is limited to adults. If under 18, you may not proceed.)
                   </span>
-                </label>
-                <p className="text-xs text-on-surface-variant italic">This obligation is legally binding and survives termination of your account.</p>
-              </div>
-
-              <div className="space-y-2 p-3.5 bg-surface-variant/20 rounded-xl border border-outline-variant/20">
-                <h3 className="font-label-lg font-bold text-primary">3. Nature of the Product</h3>
-                <p>Mythri is an artificial intelligence system created by Affyne Labs, not a licensed therapist, medical doctor, or mental health professional. It does not diagnose or treat medical conditions and does not replace clinical healthcare.</p>
-              </div>
-
-              <div className="space-y-2 p-3.5 bg-surface-variant/20 rounded-xl border border-outline-variant/20">
-                <h3 className="font-label-lg font-bold text-primary">4. Data Collection & Processing (Mandatory)</h3>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 accent-primary" checked={consent.collect_text} onChange={(e) => setConsent({...consent, collect_text: e.target.checked})} />
-                  <span>I agree that Affyne Labs may collect and securely process the text and voice content of my conversations with Mythri to deliver empathetic responses.</span>
-                </label>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 accent-primary" checked={consent.collect_usage} onChange={(e) => setConsent({...consent, collect_usage: e.target.checked})} />
-                  <span>I agree that Affyne Labs may collect basic usage metrics (session length, interaction telemetry, system logs).</span>
-                </label>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 accent-primary" checked={consent.collect_feedback} onChange={(e) => setConsent({...consent, collect_feedback: e.target.checked})} />
-                  <span>I agree that Affyne Labs may collect my feedback and ratings to improve user experience.</span>
-                </label>
-              </div>
-
-              <div className="space-y-2 p-3.5 bg-surface-variant/20 rounded-xl border border-outline-variant/20">
-                <h3 className="font-label-lg font-bold text-primary">5. Use of Data for Model Improvement</h3>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 accent-primary" checked={consent.model_training} onChange={(e) => setConsent({...consent, model_training: e.target.checked})} />
-                  <span>I agree that my conversation data, after strict and full anonymization (removal of all personal identifiers), may be used to evaluate and refine Affyne Labs AI models.</span>
-                </label>
-              </div>
-
-              <div className="space-y-2 p-3.5 bg-surface-variant/20 rounded-xl border border-outline-variant/20">
-                <h3 className="font-label-lg font-bold text-primary">6. Data Retention & Privacy Rights</h3>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 accent-primary" checked={consent.data_retention} onChange={(e) => setConsent({...consent, data_retention: e.target.checked})} />
-                  <span>I understand that Affyne Labs will not sell my personal data to any third party. I may request deletion of my account and personal data at any time via hello@affynelabs.com.</span>
-                </label>
-              </div>
-
-              <div className="space-y-2 p-3.5 bg-error-container/20 rounded-xl border border-error/20">
-                <h3 className="font-label-lg font-bold text-error">7. Crisis Notice</h3>
-                <p className="text-xs">If you are experiencing thoughts of self-harm, suicide, or an acute emergency, please contact emergency services (112 in India) or a national crisis helpline immediately. Mythri is not an emergency response provider.</p>
-              </div>
+                </span>
+              </label>
             </div>
 
-            <p className="text-xs text-on-surface-variant mt-6 border-t pt-4">
-              By tapping &quot;I Agree &amp; Proceed,&quot; you confirm that you have read, understood, and accept all terms of this agreement, including the Non-Disclosure Agreement and Privacy Policy by Affyne Labs.
-            </p>
+            {/* Section 2: NDA */}
+            <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 space-y-1.5">
+              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">2. Non-Disclosure Agreement (Mandatory)</h3>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
+                  checked={consent.nda_agreement}
+                  onChange={(e) => setConsent({ ...consent, nda_agreement: e.target.checked })}
+                />
+                <span className="leading-snug font-medium text-on-surface">
+                  I agree to keep all system architecture, prompt engineering techniques, and internal workings of Mythri / Affyne Labs strictly confidential. I will NOT disclose, publish, reverse-engineer, or share them with any third party.
+                </span>
+              </label>
+            </div>
 
-            <div className="flex gap-4 mt-6">
-              <button 
-                onClick={() => router.push('/login')} 
-                className="flex-1 py-3 bg-surface text-on-surface border border-outline rounded-full font-label-md hover:bg-surface-dim transition-colors">
-                Decline
-              </button>
-              <button 
-                onClick={handleAgree} 
-                disabled={!canProceed}
-                className="flex-1 py-3 bg-primary text-white rounded-full font-label-md transition-all hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100 shadow-md">
-                I Agree &amp; Proceed
-              </button>
+            {/* Section 3: Nature of Product */}
+            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1">
+              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">3. Nature of the Product</h3>
+              <p className="text-on-surface-variant leading-snug">
+                Mythri is an AI companion created by Affyne Labs, not a licensed therapist or doctor. It does not diagnose or treat medical conditions and does not replace professional clinical healthcare.
+              </p>
+            </div>
+
+            {/* Section 4: Data Processing */}
+            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-2">
+              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">4. Data Processing (Mandatory)</h3>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
+                  checked={consent.collect_text}
+                  onChange={(e) => setConsent({ ...consent, collect_text: e.target.checked })}
+                />
+                <span className="leading-snug">
+                  I agree that Affyne Labs may collect and securely process conversation text and voice to provide empathetic responses.
+                </span>
+              </label>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
+                  checked={consent.collect_usage}
+                  onChange={(e) => setConsent({ ...consent, collect_usage: e.target.checked })}
+                />
+                <span className="leading-snug">
+                  I agree to basic usage metrics (session duration, feature interactions).
+                </span>
+              </label>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
+                  checked={consent.collect_feedback}
+                  onChange={(e) => setConsent({ ...consent, collect_feedback: e.target.checked })}
+                />
+                <span className="leading-snug">
+                  I agree to feedback and rating collection to improve quality.
+                </span>
+              </label>
+            </div>
+
+            {/* Section 5: Model Improvement */}
+            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1.5">
+              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">5. Anonymized Improvement</h3>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
+                  checked={consent.model_training}
+                  onChange={(e) => setConsent({ ...consent, model_training: e.target.checked })}
+                />
+                <span className="leading-snug">
+                  I agree that fully anonymized data (stripped of all personal identifiers) may be used to refine AI accuracy.
+                </span>
+              </label>
+            </div>
+
+            {/* Section 6: Data Retention */}
+            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1.5">
+              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">6. Privacy Rights &amp; Retention</h3>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
+                  checked={consent.data_retention}
+                  onChange={(e) => setConsent({ ...consent, data_retention: e.target.checked })}
+                />
+                <span className="leading-snug">
+                  I understand Affyne Labs will not sell my personal data. I can request account deletion at any time via hello@affynelabs.com.
+                </span>
+              </label>
+            </div>
+
+            {/* Section 7: Crisis Notice */}
+            <div className="p-3 bg-error-container/20 rounded-xl border border-error/20 space-y-1">
+              <h3 className="font-label-md font-bold text-error text-xs sm:text-sm">7. Crisis Notice</h3>
+              <p className="text-[11px] sm:text-xs text-on-surface-variant leading-snug">
+                If in an acute crisis or experiencing self-harm thoughts, please call emergency services (112 in India) or a national crisis line immediately.
+              </p>
             </div>
           </div>
+
+          {/* Footer Actions */}
+          <div className="pt-3 border-t border-outline-variant/20 shrink-0 flex flex-col sm:flex-row gap-2.5">
+            <button
+              type="button"
+              onClick={() => router.push('/login')}
+              className="w-full sm:w-1/3 py-2.5 sm:py-3 bg-surface hover:bg-surface-variant text-on-surface border border-outline-variant/50 rounded-xl font-label-md text-xs sm:text-sm transition-colors text-center"
+            >
+              Decline
+            </button>
+            <button
+              type="button"
+              onClick={handleAgree}
+              disabled={!canProceed}
+              className="w-full sm:w-2/3 py-2.5 sm:py-3 bg-primary text-white rounded-xl font-label-md text-xs sm:text-sm transition-all hover:opacity-90 disabled:opacity-40 shadow-md flex items-center justify-center gap-1.5"
+            >
+              <span>I Agree &amp; Proceed</span>
+              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </button>
+          </div>
+
         </div>
       </main>
     </div>

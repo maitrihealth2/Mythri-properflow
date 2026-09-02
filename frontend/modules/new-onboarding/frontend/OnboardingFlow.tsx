@@ -108,29 +108,29 @@ export default function OnboardingFlow() {
 
   if (phase === 0) {
     return (
-      <div className="flex-1 w-full flex items-center justify-center relative overflow-hidden min-h-[100dvh] bg-[#FFFDF9] dark:bg-[#141218]">
+      <div className="flex-1 w-full flex items-center justify-center relative overflow-hidden min-h-[100dvh] bg-[#FFFDF9] dark:bg-[#141218] p-3 sm:p-6">
         {/* Abstract Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#FFFDF9] via-[#FDF5F2] to-[#F5E6E1] dark:from-[#141218] dark:via-[#1A161E] dark:to-[#221A21] z-0" />
         <div className="absolute top-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[120px] bg-primary-container/10 z-0 pointer-events-none" />
         
-        <main className="relative z-10 w-full max-w-lg m-auto px-6 py-12 flex flex-col items-center">
-          <div className="frosted-card rounded-3xl p-8 w-full flex flex-col shadow-sm">
-            <h1 className="text-primary font-headline-md text-3xl mb-1 text-center tracking-wider">AFFYNE LABS</h1>
-            <h2 className="text-on-surface-variant font-headline-sm text-center mb-6">Terms, Privacy &amp; Non-Disclosure Agreement</h2>
+        <main className="relative z-10 w-full max-w-lg m-auto">
+          <div className="frosted-card rounded-2xl sm:rounded-3xl p-5 sm:p-8 w-full flex flex-col shadow-lg border border-outline-variant/30">
+            <h1 className="text-primary font-headline-md text-2xl sm:text-3xl mb-1 text-center tracking-wider font-bold">AFFYNE LABS</h1>
+            <h2 className="text-on-surface font-headline-sm text-sm sm:text-base text-center mb-4 sm:mb-6">Terms, Privacy &amp; Non-Disclosure Agreement</h2>
             
-            <p className="text-on-surface-variant font-body-md mb-6 leading-relaxed text-sm">
+            <p className="text-on-surface-variant font-body-md mb-4 sm:mb-6 leading-relaxed text-xs sm:text-sm text-center sm:text-left">
               Mythri is an AI mental health companion built by <strong>Affyne Labs</strong>. You must read and accept the mandatory agreements below before you can proceed.
             </p>
 
-            <div className="space-y-4 text-on-surface font-body-sm bg-white/50 dark:bg-black/20 p-5 rounded-2xl border border-outline-variant/30">
+            <div className="space-y-3.5 text-on-surface font-body-sm bg-white/60 dark:bg-black/30 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-outline-variant/30">
               <label className="flex items-start space-x-3 cursor-pointer group">
                 <input 
                   type="checkbox" 
-                  className="mt-1 w-4 h-4 rounded border-outline text-primary focus:ring-primary accent-primary" 
+                  className="mt-0.5 w-4 h-4 rounded border-outline text-primary focus:ring-primary accent-primary shrink-0" 
                   checked={consent.eligibility} 
                   onChange={(e) => setConsent({...consent, eligibility: e.target.checked})} 
                 />
-                <span className="text-sm text-on-surface-variant group-hover:text-primary transition-colors">
+                <span className="text-xs sm:text-sm text-on-surface-variant group-hover:text-primary transition-colors leading-snug">
                   I confirm that I am 18 years of age or older and agree to Affyne Labs Terms of Use &amp; Privacy Policy.
                 </span>
               </label>
@@ -138,11 +138,11 @@ export default function OnboardingFlow() {
               <label className="flex items-start space-x-3 cursor-pointer group border-t border-outline-variant/20 pt-3">
                 <input 
                   type="checkbox" 
-                  className="mt-1 w-4 h-4 rounded border-outline text-primary focus:ring-primary accent-primary" 
+                  className="mt-0.5 w-4 h-4 rounded border-outline text-primary focus:ring-primary accent-primary shrink-0" 
                   checked={consent.nda} 
                   onChange={(e) => setConsent({...consent, nda: e.target.checked})} 
                 />
-                <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
+                <span className="text-xs sm:text-sm font-medium text-on-surface group-hover:text-primary transition-colors leading-snug">
                   <strong>Non-Disclosure Agreement:</strong> I agree to keep all system architecture, prompt engineering techniques, and internal workings of Mythri / Affyne Labs strictly confidential and agree not to disclose or share them with any third party.
                 </span>
               </label>
@@ -151,9 +151,9 @@ export default function OnboardingFlow() {
             <button 
               onClick={startConversation} 
               disabled={!consent.eligibility || !consent.nda}
-              className="mt-8 py-4 w-full bg-primary text-white rounded-full font-label-md transition-all hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100 shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+              className="mt-6 sm:mt-8 py-3.5 sm:py-4 w-full bg-primary text-white rounded-full font-label-md text-xs sm:text-sm transition-all hover:scale-[1.01] disabled:opacity-40 shadow-md flex items-center justify-center gap-2"
             >
-              Enter Sanctuary <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              Enter Sanctuary <span className="material-symbols-outlined text-[16px] sm:text-[18px]">arrow_forward</span>
             </button>
           </div>
         </main>
@@ -175,7 +175,7 @@ export default function OnboardingFlow() {
       </div>
 
       {/* Main Conversation Area */}
-      <main className="relative z-10 flex-1 w-full max-w-3xl mx-auto flex flex-col pt-16 pb-32 px-6 overflow-y-auto hide-scrollbar">
+      <main className="relative z-10 flex-1 w-full max-w-3xl mx-auto flex flex-col pt-12 sm:pt-16 pb-28 sm:pb-32 px-4 sm:px-6 overflow-y-auto hide-scrollbar">
         <div className="flex-1 flex flex-col justify-end min-h-full">
           <AnimatePresence initial={false}>
             {history.map((msg, index) => {
@@ -187,16 +187,16 @@ export default function OnboardingFlow() {
                   key={msg.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: isLast ? 1 : 0.6, y: 0, scale: isLast ? 1 : 0.98 }}
-                  className={`w-full flex ${isAssistant ? 'justify-start' : 'justify-end'} mb-10 origin-bottom`}
+                  className={`w-full flex ${isAssistant ? 'justify-start' : 'justify-end'} mb-6 sm:mb-10 origin-bottom`}
                 >
-                  <div className={`max-w-[85%] ${isAssistant ? 'text-left' : 'text-right'}`}>
+                  <div className={`max-w-[90%] sm:max-w-[85%] ${isAssistant ? 'text-left' : 'text-right'}`}>
                     {isAssistant && (
-                      <div className="text-display-sm md:text-display-md font-headline-md text-primary leading-tight tracking-tight">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-headline-md text-primary leading-tight tracking-tight">
                         {msg.content}
                       </div>
                     )}
                     {!isAssistant && (
-                      <div className="inline-block px-6 py-3 rounded-3xl frosted-card text-on-surface-variant font-body-lg text-lg">
+                      <div className="inline-block px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl sm:rounded-3xl frosted-card text-on-surface-variant font-body-md text-sm sm:text-base">
                         {msg.content}
                       </div>
                     )}
@@ -210,7 +210,7 @@ export default function OnboardingFlow() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full flex justify-start mb-10"
+              className="w-full flex justify-start mb-6 sm:mb-10"
             >
               <MythriAura state="processing" size="sm" />
             </motion.div>
@@ -227,9 +227,9 @@ export default function OnboardingFlow() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-0 left-0 w-full z-20 pb-10 pt-16 bg-gradient-to-t from-[#FFFDF9] via-[#FFFDF9]/90 to-transparent dark:from-[#141218] dark:via-[#141218]/90 pointer-events-none"
+            className="fixed bottom-0 left-0 w-full z-20 pb-6 sm:pb-10 pt-10 sm:pt-16 bg-gradient-to-t from-[#FFFDF9] via-[#FFFDF9]/90 to-transparent dark:from-[#141218] dark:via-[#141218]/90 pointer-events-none"
           >
-            <div className="max-w-3xl mx-auto px-6 flex flex-wrap gap-3 justify-center pointer-events-auto">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-wrap gap-2 sm:gap-3 justify-center pointer-events-auto">
               {currentChoices.map((choice) => (
                 <ChoiceBubble
                   key={choice}

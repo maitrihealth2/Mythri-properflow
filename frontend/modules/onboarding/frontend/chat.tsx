@@ -91,14 +91,14 @@ const ReasonsControl = ({ onSelect }: { onSelect: (val: string) => void }) => {
   }
 
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className="flex flex-wrap justify-center gap-3 mt-8 max-w-2xl">
+    <div className="flex flex-col items-center w-full px-2">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-8 max-w-2xl">
         {opts.map(o => (
           <button key={o} onClick={() => toggle(o)} 
-            className={`px-5 py-3 rounded-xl backdrop-blur-md border transition-all shadow-sm font-body-md ${
+            className={`px-3.5 py-2 sm:px-5 sm:py-3 rounded-xl backdrop-blur-md border transition-all shadow-sm font-body-md text-xs sm:text-base ${
               selected.includes(o) 
                 ? 'bg-[#603347] text-white border-[#603347]' 
-                : 'bg-white/50 border-white/60 text-[#4A2B38] hover:bg-white/80'
+                : 'bg-white/60 border-white/70 text-[#4A2B38] hover:bg-white/80'
             }`}>
             {o}
           </button>
@@ -107,7 +107,7 @@ const ReasonsControl = ({ onSelect }: { onSelect: (val: string) => void }) => {
       <button 
         onClick={() => onSelect(selected.join(', '))}
         disabled={selected.length === 0}
-        className="mt-8 px-10 py-3 rounded-full bg-[#603347] text-white font-label-md disabled:opacity-50 transition-all hover:scale-105 shadow-[0_4px_14px_rgba(96,51,71,0.2)]"
+        className="mt-5 sm:mt-8 px-8 sm:px-10 py-2.5 sm:py-3 rounded-full bg-[#603347] text-white font-label-md text-xs sm:text-sm disabled:opacity-50 transition-all hover:scale-105 shadow-[0_4px_14px_rgba(96,51,71,0.2)]"
       >
         Continue
       </button>
@@ -126,14 +126,14 @@ const GoalsControl = ({ onSelect }: { onSelect: (val: string) => void }) => {
   }
 
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className="flex flex-wrap justify-center gap-3 mt-8 max-w-2xl">
+    <div className="flex flex-col items-center w-full px-2">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-8 max-w-2xl">
         {opts.map(o => (
           <button key={o} onClick={() => toggle(o)} 
-            className={`px-5 py-3 rounded-xl backdrop-blur-md border transition-all shadow-sm font-body-md ${
+            className={`px-3.5 py-2 sm:px-5 sm:py-3 rounded-xl backdrop-blur-md border transition-all shadow-sm font-body-md text-xs sm:text-base ${
               selected.includes(o) 
                 ? 'bg-[#603347] text-white border-[#603347]' 
-                : 'bg-white/50 border-white/60 text-[#4A2B38] hover:bg-white/80'
+                : 'bg-white/60 border-white/70 text-[#4A2B38] hover:bg-white/80'
             }`}>
             {o}
           </button>
@@ -142,7 +142,7 @@ const GoalsControl = ({ onSelect }: { onSelect: (val: string) => void }) => {
       <button 
         onClick={() => onSelect(selected.join(', '))}
         disabled={selected.length === 0}
-        className="mt-8 px-10 py-3 rounded-full bg-[#603347] text-white font-label-md disabled:opacity-50 transition-all hover:scale-105 shadow-[0_4px_14px_rgba(96,51,71,0.2)]"
+        className="mt-5 sm:mt-8 px-8 sm:px-10 py-2.5 sm:py-3 rounded-full bg-[#603347] text-white font-label-md text-xs sm:text-sm disabled:opacity-50 transition-all hover:scale-105 shadow-[0_4px_14px_rgba(96,51,71,0.2)]"
       >
         Continue
       </button>
@@ -161,8 +161,8 @@ const UIControlsRenderer = ({ control, onSelect }: { control: UIControl, onSelec
   if (control === 'emotion') {
     const opts = ['Happy', 'Calm', 'Okay', 'Stressed', 'Anxious', 'Sad', 'Frustrated', 'Empty', 'Confused', 'Exhausted']
     return (
-      <div className="flex flex-wrap justify-center gap-3 mt-8 max-w-2xl">
-        {opts.map(o => <button key={o} onClick={() => onSelect(o)} className="px-5 py-3 rounded-xl bg-white/50 backdrop-blur-md border border-white/60 text-[#4A2B38] font-body-md hover:bg-white/80 transition-all shadow-sm">{o}</button>)}
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-8 max-w-2xl px-2">
+        {opts.map(o => <button key={o} onClick={() => onSelect(o)} className="px-3.5 py-2 sm:px-5 sm:py-3 rounded-xl bg-white/60 backdrop-blur-md border border-white/70 text-[#4A2B38] font-body-md text-xs sm:text-base hover:bg-white/80 transition-all shadow-sm">{o}</button>)}
       </div>
     )
   }
@@ -174,40 +174,40 @@ const UIControlsRenderer = ({ control, onSelect }: { control: UIControl, onSelec
       {id: 'Practical Coach', desc: 'Focuses on action and steady progress'}
     ]
     return (
-      <div className="flex flex-col gap-4 mt-8 w-full max-w-md mx-auto">
-        {opts.map(o => <button key={o.id} onClick={() => onSelect(o.id)} className="w-full p-5 text-left rounded-2xl bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white/80 transition-all shadow-sm"><div className="font-headline-sm text-lg text-[#603347] mb-1">{o.id}</div><div className="font-body-sm text-[#504448] opacity-80">{o.desc}</div></button>)}
+      <div className="flex flex-col gap-2.5 sm:gap-4 mt-4 sm:mt-8 w-full max-w-md mx-auto px-2">
+        {opts.map(o => <button key={o.id} onClick={() => onSelect(o.id)} className="w-full p-3.5 sm:p-5 text-left rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-md border border-white/70 hover:bg-white/80 transition-all shadow-sm"><div className="font-headline-sm text-sm sm:text-lg text-[#603347] mb-0.5">{o.id}</div><div className="font-body-sm text-xs sm:text-sm text-[#504448] opacity-80">{o.desc}</div></button>)}
       </div>
     )
   }
   if (control === 'language') {
     const langs = [{id: 'English', label: 'English'}, {id: 'Hindi', label: 'हिंदी'}, {id: 'Telugu', label: 'తెలుగు'}, {id: 'Tamil', label: 'தமிழ்'}]
     return (
-      <div className="flex flex-wrap justify-center gap-4 mt-8">
-        {langs.map(l => <button key={l.id} onClick={() => onSelect(l.id)} className="px-8 py-4 rounded-full bg-white/50 backdrop-blur-md border border-white/60 text-[#4A2B38] font-body-lg hover:bg-white/80 transition-all shadow-sm">{l.label}</button>)}
+      <div className="flex flex-wrap justify-center gap-2.5 sm:gap-4 mt-4 sm:mt-8 px-2">
+        {langs.map(l => <button key={l.id} onClick={() => onSelect(l.id)} className="px-5 py-2.5 sm:px-8 sm:py-4 rounded-full bg-white/60 backdrop-blur-md border border-white/70 text-[#4A2B38] font-body-md sm:font-body-lg text-xs sm:text-base hover:bg-white/80 transition-all shadow-sm">{l.label}</button>)}
       </div>
     )
   }
   if (control === 'communication') {
     const modes = [{id: 'Voice', desc: "I'd rather speak."}, {id: 'Text', desc: "I'd rather type."}, {id: 'Both', desc: "I'll choose depending on the day."}]
     return (
-      <div className="flex flex-col gap-4 mt-8 w-full max-w-md mx-auto">
-        {modes.map(m => <button key={m.id} onClick={() => onSelect(m.id)} className="w-full p-6 text-left rounded-[2rem] bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white/80 transition-all shadow-sm"><div className="font-headline-md text-xl text-[#603347] mb-1">{m.id}</div><div className="font-body-sm text-[#504448] opacity-80">{m.desc}</div></button>)}
+      <div className="flex flex-col gap-2.5 sm:gap-4 mt-4 sm:mt-8 w-full max-w-md mx-auto px-2">
+        {modes.map(m => <button key={m.id} onClick={() => onSelect(m.id)} className="w-full p-4 sm:p-6 text-left rounded-2xl sm:rounded-[2rem] bg-white/60 backdrop-blur-md border border-white/70 hover:bg-white/80 transition-all shadow-sm"><div className="font-headline-md text-base sm:text-xl text-[#603347] mb-0.5">{m.id}</div><div className="font-body-sm text-xs sm:text-sm text-[#504448] opacity-80">{m.desc}</div></button>)}
       </div>
     )
   }
   if (control === 'check_in') {
     const checks = ['Daily', 'A few times a week', 'Only when I open Mythri', 'I\'ll decide later']
     return (
-      <div className="flex flex-col gap-4 mt-8 w-full max-w-md mx-auto">
-        {checks.map(c => <button key={c} onClick={() => onSelect(c)} className="w-full p-6 text-left rounded-[2rem] bg-white/50 backdrop-blur-md border border-white/60 hover:bg-white/80 transition-all shadow-sm"><div className="font-headline-md text-xl text-[#603347]">{c}</div></button>)}
+      <div className="flex flex-col gap-2.5 sm:gap-4 mt-4 sm:mt-8 w-full max-w-md mx-auto px-2">
+        {checks.map(c => <button key={c} onClick={() => onSelect(c)} className="w-full p-4 sm:p-6 text-left rounded-2xl sm:rounded-[2rem] bg-white/60 backdrop-blur-md border border-white/70 hover:bg-white/80 transition-all shadow-sm"><div className="font-headline-md text-sm sm:text-xl text-[#603347]">{c}</div></button>)}
       </div>
     )
   }
   if (control === 'primary_goal') {
     const opts = ['Feel calmer', 'Study consistently', 'Reduce overthinking', 'Improve sleep', 'Understand myself', 'Improve relationships', 'No goal yet']
     return (
-      <div className="flex flex-wrap justify-center gap-3 mt-8 max-w-2xl">
-        {opts.map(o => <button key={o} onClick={() => onSelect(o)} className="px-5 py-3 rounded-xl bg-white/50 backdrop-blur-md border border-white/60 text-[#4A2B38] font-body-md hover:bg-white/80 transition-all shadow-sm">{o}</button>)}
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-8 max-w-2xl px-2">
+        {opts.map(o => <button key={o} onClick={() => onSelect(o)} className="px-3.5 py-2 sm:px-5 sm:py-3 rounded-xl bg-white/60 backdrop-blur-md border border-white/70 text-[#4A2B38] font-body-md text-xs sm:text-base hover:bg-white/80 transition-all shadow-sm">{o}</button>)}
       </div>
     )
   }
@@ -522,7 +522,7 @@ export default function OnboardingChat() {
               <motion.div 
                 animate={{ opacity: isFinale ? 0 : 1 }}
                 transition={{ duration: 1.5 }}
-                className="flex-1 w-full max-w-3xl mx-auto px-6 pt-24 pb-48 flex flex-col justify-center overflow-y-auto hide-scrollbar relative z-10"
+                className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-36 sm:pb-48 flex flex-col justify-center overflow-y-auto hide-scrollbar relative z-10"
               >
                 <AnimatePresence>
                   {milestone.messages.map((msg, mIdx) => (
@@ -531,14 +531,14 @@ export default function OnboardingChat() {
                       initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
                       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                       transition={{ duration: 1, delay: mIdx * 0.2 }}
-                      className={`mb-10 w-full flex ${msg.role === 'mythri' ? 'justify-start' : 'justify-end'}`}
+                      className={`mb-6 sm:mb-10 w-full flex ${msg.role === 'mythri' ? 'justify-start' : 'justify-end'}`}
                     >
                       {msg.role === 'mythri' ? (
-                        <div className={`max-w-[85%] text-[#4A2B38] font-display-lg leading-relaxed tracking-tight ${isIntimateMilestone ? 'text-3xl md:text-4xl text-center mx-auto' : 'text-2xl md:text-3xl'}`}>
+                        <div className={`max-w-[90%] sm:max-w-[85%] text-[#4A2B38] font-display-lg leading-relaxed tracking-tight ${isIntimateMilestone ? 'text-2xl sm:text-3xl md:text-4xl text-center mx-auto' : 'text-xl sm:text-2xl md:text-3xl'}`}>
                           {msg.text}
                         </div>
                       ) : (
-                        <div className="max-w-[75%] glass-panel px-6 py-4 rounded-2xl rounded-tr-sm text-[#603347] font-body-md text-lg">
+                        <div className="max-w-[85%] sm:max-w-[75%] glass-panel px-4 py-3 sm:px-6 sm:py-4 rounded-2xl rounded-tr-sm text-[#603347] font-body-md text-sm sm:text-lg shadow-sm">
                           {msg.text}
                         </div>
                       )}
@@ -546,11 +546,11 @@ export default function OnboardingChat() {
                   ))}
                   
                   {isAiTyping && isActive && (
-                    <motion.div key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`text-[#8C7355] font-body-lg italic opacity-60 ml-2 ${isIntimateMilestone ? 'text-center mx-auto' : ''}`}>Mythri is reflecting...</motion.div>
+                    <motion.div key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`text-[#8C7355] font-body-md sm:font-body-lg italic opacity-60 ml-2 text-xs sm:text-base ${isIntimateMilestone ? 'text-center mx-auto' : ''}`}>Mythri is reflecting...</motion.div>
                   )}
                   
                   {milestone.uiControl && isActive && !isAiTyping && (
-                    <motion.div key={`ui-${milestone.id}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 1 }} className="w-full flex justify-center pb-12 relative z-50">
+                    <motion.div key={`ui-${milestone.id}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 1 }} className="w-full flex justify-center pb-8 sm:pb-12 relative z-50">
                       <UIControlsRenderer control={milestone.uiControl} onSelect={submitMessage} />
                     </motion.div>
                   )}
@@ -563,15 +563,15 @@ export default function OnboardingChat() {
       </motion.div>
 
       {/* Floating Input Area */}
-      <div className={`absolute bottom-0 left-0 w-full p-6 md:p-10 z-40 transition-opacity duration-1000 ${isFinale || isAiTyping ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-none'}`}>
-        <div className="max-w-3xl mx-auto w-full pointer-events-auto flex items-end gap-4">
-          <div className="relative flex-1 rounded-[2rem] glass-input overflow-hidden flex items-end">
-            <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown} disabled={isAiTyping || isFinale} placeholder="Type your response..." rows={1} style={{ minHeight: '60px', maxHeight: '200px' }} className="w-full bg-transparent border-none outline-none resize-none px-8 py-5 text-[#4A2B38] font-body-lg text-lg placeholder:text-[#8C7355]/40 disabled:opacity-50 hide-scrollbar" />
-            <button onClick={() => submitMessage(inputValue)} disabled={!inputValue.trim() || isAiTyping || isFinale} className="absolute right-4 bottom-3 w-10 h-10 rounded-full bg-[#603347] text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:scale-90 hover:scale-105 shadow-md"><svg className="w-4 h-4 translate-x-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5M5 12l7-7 7 7" /></svg></button>
+      <div className={`absolute bottom-0 left-0 w-full p-3 sm:p-6 md:p-10 pb-4 sm:pb-8 z-40 transition-opacity duration-1000 ${isFinale || isAiTyping ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-none'}`}>
+        <div className="max-w-3xl mx-auto w-full pointer-events-auto flex items-end gap-2 sm:gap-4">
+          <div className="relative flex-1 rounded-2xl sm:rounded-[2rem] glass-input overflow-hidden flex items-end shadow-lg">
+            <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown} disabled={isAiTyping || isFinale} placeholder="Type your response..." rows={1} style={{ minHeight: '50px', maxHeight: '180px' }} className="w-full bg-transparent border-none outline-none resize-none px-4 py-3.5 sm:px-8 sm:py-5 text-[#4A2B38] font-body-md sm:font-body-lg text-sm sm:text-lg placeholder:text-[#8C7355]/40 disabled:opacity-50 hide-scrollbar pr-12" />
+            <button onClick={() => submitMessage(inputValue)} disabled={!inputValue.trim() || isAiTyping || isFinale} className="absolute right-2.5 bottom-2 sm:right-4 sm:bottom-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#603347] text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:scale-90 hover:scale-105 shadow-md"><svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 translate-x-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5M5 12l7-7 7 7" /></svg></button>
           </div>
           {/* Allow skipping/not sure if there's no UI control active, just for flexibility */}
           {!milestones[currentIdx].uiControl && !isFinale && !isAiTyping && (
-             <button onClick={() => submitMessage("Skip")} className="px-6 py-4 rounded-[2rem] bg-white/40 backdrop-blur-md border border-white/60 text-[#8C7355] font-label-md text-sm transition-all hover:bg-white/80 shadow-sm whitespace-nowrap h-[60px]">
+             <button onClick={() => submitMessage("Skip")} className="px-4 py-3 sm:px-6 sm:py-4 rounded-2xl sm:rounded-[2rem] bg-white/50 backdrop-blur-md border border-white/70 text-[#8C7355] font-label-md text-xs sm:text-sm transition-all hover:bg-white/80 shadow-sm whitespace-nowrap h-[50px] sm:h-[60px]">
                Skip
              </button>
           )}
