@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Literata } from 'next/font/google'
 import Script from 'next/script'
 import { Providers } from '@/core/providers'
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   title: 'Mythri | Sanctuary',
   description: 'A safe, quiet space for reflection and healing.',
   keywords: 'mental health, AI companion, therapy, support',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

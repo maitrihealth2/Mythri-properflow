@@ -720,12 +720,12 @@ export default function ConsultationPage() {
                   </span>
                 )}
                 {m.role === 'user' ? (
-                  <div className="frosted-plum rounded-tr-sm bg-plum-high-contrast/90 dark:bg-primary-container/80 text-white px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
+                  <div className="frosted-plum rounded-[28px] rounded-tr-[4px] bg-plum-high-contrast/90 dark:bg-primary-container/80 text-white px-6 py-4 shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
                     <p className="text-body-lg leading-relaxed text-white dark:text-white/95 whitespace-pre-wrap">{m.content}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <div className="frosted-blush rounded-tl-sm bg-white/70 dark:bg-black/50 px-6 py-4 rounded-2xl shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
+                    <div className="frosted-blush rounded-[28px] rounded-tl-[4px] bg-white/70 dark:bg-black/50 px-6 py-4 shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
                       <p className="text-body-lg leading-relaxed text-on-primary-fixed dark:text-white/90 whitespace-pre-wrap">{m.content}</p>
                     </div>
                     {/* Crisis helplines — only on last bubble of group */}
@@ -758,7 +758,7 @@ export default function ConsultationPage() {
               {showMythriLabelOnActive && (
                 <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
               )}
-              <div className="frosted-blush bg-white/70 dark:bg-black/50 px-6 py-4 rounded-2xl rounded-tl-sm shadow-sm border border-white/20 dark:border-white/10">
+              <div className="frosted-blush bg-white/70 dark:bg-black/50 px-6 py-4 rounded-[28px] rounded-tl-[4px] shadow-sm border border-white/20 dark:border-white/10">
                 <p className="text-body-lg leading-relaxed text-on-primary-fixed dark:text-white/90 whitespace-pre-wrap">
                   {activeBubbleText}
                   <span className="inline-block w-1.5 h-4 ml-1 bg-primary/40 dark:bg-white/40 animate-pulse" />
@@ -792,7 +792,7 @@ export default function ConsultationPage() {
               value={input}
               onChange={handleTextareaChange}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTextSend() } }}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-body-md py-2 md:py-3 resize-none max-h-24 md:max-h-32 hide-scrollbar text-on-surface placeholder:text-on-surface-variant/60 font-body-md focus:outline-none transition-colors"
+              className="flex-1 bg-transparent border-none focus:ring-0 text-[16px] py-2 md:py-3 resize-none max-h-24 md:max-h-32 hide-scrollbar text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none transition-colors"
               placeholder={inputPlaceholder}
               rows={1}
             />
