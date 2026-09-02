@@ -18,8 +18,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "changethis_dev_secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 REFRESH_TOKEN_EXPIRE_DAYS = 7
-ISSUER = "mindbridge-auth"
-AUDIENCE = "mindbridge-users"
+ISSUER = "affynelabs-auth"
+AUDIENCE = "affynelabs-users"
 
 def hash_password(password: str) -> str:
     """Hashes a password using enterprise-grade Argon2id"""
@@ -79,3 +79,4 @@ def decode_token(token: str, expected_type: str = "access") -> dict | None:
         return payload
     except JWTError:
         return None
+

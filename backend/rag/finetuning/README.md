@@ -98,7 +98,7 @@ nvcc --version
 Open PowerShell **as Administrator** and navigate to the backend folder:
 
 ```powershell
-cd E:\MindBridge\Project\mythri-v4-main\backend
+cd E:\Affynelabs\Project\mythri\backend
 ```
 
 Create and activate the fine-tuning venv:
@@ -355,7 +355,7 @@ Results saved to: `finetuning/results/inference_comparison.json`
 # --- Open PowerShell as Administrator ---
 
 # 1. Navigate to backend
-cd E:\MindBridge\Project\mythri-v4-main\backend
+cd E:\Affynelabs\Project\mythri\backend
 
 # 2. Create and activate fine-tuning venv
 python -m venv venv_finetune
@@ -466,3 +466,4 @@ import sys; sys.stdout.reconfigure(encoding='utf-8')
 | Training domain | CBT, DBT, ACT, Psychodynamic, Mindfulness, Indian cultural context |
 | Training examples | 119 |
 | Eval examples | 21 |
+

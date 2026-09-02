@@ -171,7 +171,7 @@ from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 # Removed custom RequestsHuggingFaceEmbeddingFunction to avoid ChromaDB signature conflicts
 
 def build_knowledge_base():
-    print("\n[RAG] Building MindBridge Knowledge Base (Multi-Format)...")
+    print("\n[RAG] Building Affyne Labs — Mythri Knowledge Base (Multi-Format)...")
     documents = load_documents()
     print(f"\n[RAG] Total chunks loaded: {len(documents)}")
 
@@ -374,4 +374,5 @@ def ensure_knowledge_base_built(force: bool = False):
 if __name__ == "__main__":
     ensure_knowledge_base_built()
     print("\n[RAG] Done! Multi-format knowledge base is ready.")
+
 

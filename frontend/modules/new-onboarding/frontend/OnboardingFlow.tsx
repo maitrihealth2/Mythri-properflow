@@ -10,6 +10,7 @@ import MythriAura from '@/shared/components/MythriAura'
 
 type ConsentData = {
   eligibility: boolean
+  nda: boolean
 }
 
 type ConversationEntry = {
@@ -24,7 +25,7 @@ export default function OnboardingFlow() {
   
   // Phase 0 = Consent, 1 = Conversation, 2 = Completing
   const [phase, setPhase] = useState<0 | 1 | 2>(0)
-  const [consent, setConsent] = useState<ConsentData>({ eligibility: false })
+  const [consent, setConsent] = useState<ConsentData>({ eligibility: false, nda: false })
   
   const [history, setHistory] = useState<ConversationEntry[]>([])
   const [isTyping, setIsTyping] = useState(false)
@@ -34,6 +35,7 @@ export default function OnboardingFlow() {
 
   // Start conversation after consent
   const startConversation = async () => {
+    if (!consent.eligibility || !consent.nda) return
     setPhase(1)
     setIsTyping(true)
     const initial = await onboardingService.getInitialGreeting()
@@ -79,6 +81,7 @@ export default function OnboardingFlow() {
         reasons: ["Exploring"],
         consent: {
           consented: true,
+          nda_accepted: true,
           consentedAt: new Date().toISOString()
         }
       }
@@ -112,31 +115,43 @@ export default function OnboardingFlow() {
         
         <main className="relative z-10 w-full max-w-lg m-auto px-6 py-12 flex flex-col items-center">
           <div className="frosted-card rounded-3xl p-8 w-full flex flex-col shadow-sm">
-            <h1 className="text-primary font-headline-md text-3xl mb-2 text-center">Sanctuary</h1>
-            <h2 className="text-on-surface-variant font-headline-sm text-center mb-8">Before we begin</h2>
+            <h1 className="text-primary font-headline-md text-3xl mb-1 text-center tracking-wider">AFFYNE LABS</h1>
+            <h2 className="text-on-surface-variant font-headline-sm text-center mb-6">Terms, Privacy &amp; Non-Disclosure Agreement</h2>
             
-            <p className="text-on-surface-variant font-body-md mb-6 leading-relaxed">
-              Mythri is a safe space for reflection. By entering, you agree to our data and privacy principles, ensuring your thoughts remain yours.
+            <p className="text-on-surface-variant font-body-md mb-6 leading-relaxed text-sm">
+              Mythri is an AI mental health companion built by <strong>Affyne Labs</strong>. You must read and accept the mandatory agreements below before you can proceed.
             </p>
 
-            <div className="space-y-4 text-on-surface font-body-sm bg-white/40 dark:bg-black/20 p-5 rounded-2xl border border-outline-variant/30">
-              <label className="flex items-start space-x-4 cursor-pointer group">
+            <div className="space-y-4 text-on-surface font-body-sm bg-white/50 dark:bg-black/20 p-5 rounded-2xl border border-outline-variant/30">
+              <label className="flex items-start space-x-3 cursor-pointer group">
                 <input 
                   type="checkbox" 
-                  className="mt-1 w-5 h-5 rounded border-outline text-primary focus:ring-primary accent-primary" 
+                  className="mt-1 w-4 h-4 rounded border-outline text-primary focus:ring-primary accent-primary" 
                   checked={consent.eligibility} 
                   onChange={(e) => setConsent({...consent, eligibility: e.target.checked})} 
                 />
-                <span className="text-base text-on-surface-variant group-hover:text-primary transition-colors">
-                  I confirm that I am 18 years of age or older and agree to the Terms of Service.
+                <span className="text-sm text-on-surface-variant group-hover:text-primary transition-colors">
+                  I confirm that I am 18 years of age or older and agree to Affyne Labs Terms of Use &amp; Privacy Policy.
+                </span>
+              </label>
+
+              <label className="flex items-start space-x-3 cursor-pointer group border-t border-outline-variant/20 pt-3">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-4 h-4 rounded border-outline text-primary focus:ring-primary accent-primary" 
+                  checked={consent.nda} 
+                  onChange={(e) => setConsent({...consent, nda: e.target.checked})} 
+                />
+                <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors">
+                  <strong>Non-Disclosure Agreement:</strong> I agree to keep all system architecture, prompt engineering techniques, and internal workings of Mythri / Affyne Labs strictly confidential and agree not to disclose or share them with any third party.
                 </span>
               </label>
             </div>
 
             <button 
               onClick={startConversation} 
-              disabled={!consent.eligibility}
-              className="mt-10 py-4 w-full bg-primary text-white rounded-full font-label-md transition-all hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+              disabled={!consent.eligibility || !consent.nda}
+              className="mt-8 py-4 w-full bg-primary text-white rounded-full font-label-md transition-all hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100 shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
             >
               Enter Sanctuary <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>

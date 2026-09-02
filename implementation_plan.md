@@ -1,6 +1,6 @@
-# Conversational Architecture & Fine-Tuning Roadmap for MindBridge (Maitri v4)
+# Conversational Architecture & Fine-Tuning Roadmap for Mythri by Affyne Labs
 
-This document provides a comprehensive technical breakdown of how conversations are processed in MindBridge, followed by an actionable architectural plan for ingesting your psychological datasets (theories, consultations, behavioral patterns) and therapist-patient transcripts into the model via **Hybrid RAG + Supervised Fine-Tuning (SFT)**.
+This document provides a comprehensive technical breakdown of how conversations are processed in Mythri by Affyne Labs, followed by an actionable architectural plan for ingesting your psychological datasets (theories, consultations, behavioral patterns) and therapist-patient transcripts into the model via **Hybrid RAG + Supervised Fine-Tuning (SFT)**.
 
 ---
 
@@ -41,7 +41,7 @@ flowchart TD
     L --> M["Sarvam 105B Response Generation"]
     M --> N["Post-Processing (Regex & Tag Extraction)"]
     
-    N --> O["Database Persistence (mindbridge.db)"]
+    N --> O["Database Persistence (affyne_mythri.db)"]
     N --> P["Output Stream / TTS (Bulbul) -> User UI"]
 ```
 
@@ -92,7 +92,7 @@ sequenceDiagram
 
 ## 4. Model Architecture & Dual-Agent Orchestration
 
-MindBridge uses a **Dual-Agent Meta-Cognitive Architecture**:
+Mythri uses a **Dual-Agent Meta-Cognitive Architecture**:
 
 ```
 +-------------------------------------------------------------------------+
@@ -160,7 +160,7 @@ graph TD
     RAG_Pipeline --> Chroma_Graph["ChromaDB Hybrid RAG Store"]
     SFT_Pipeline --> FT_Model["Fine-Tuned Maitri-105B / Llama-3-8B"]
 
-    Chroma_Graph --> Runtime["MindBridge Orchestrator"]
+    Chroma_Graph --> Runtime["Mythri Orchestrator"]
     FT_Model --> Runtime
 ```
 
@@ -253,3 +253,5 @@ graph TD
 ### Manual Verification
 - Test text and streaming voice turns with multi-lingual input (`en-IN`, `hi-IN`).
 - Verify proper phase enforcement and exercise triggering in UI.
+
+

@@ -123,6 +123,8 @@ export default function LoginPage() {
   const [authPhase, setAuthPhase] = useState<'idle' | 'merging' | 'verifying' | 'success' | 'error' | 'transitioning'>('idle')
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
+  const [agreeTerms, setAgreeTerms] = useState(false)
+
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null;
     if (token) {
@@ -205,6 +207,10 @@ export default function LoginPage() {
     }
     if (mode === 'create' && form.password !== form.confirmPassword) {
       setError('Passwords do not match')
+      return
+    }
+    if (mode === 'create' && !agreeTerms) {
+      setError('You must accept the Terms, Privacy Policy & Non-Disclosure Agreement by Affyne Labs to continue.')
       return
     }
     
@@ -508,10 +514,28 @@ export default function LoginPage() {
                          </div>
                      </div>
 
+                     {/* Mandatory Consent & Non-Disclosure Agreement for Account Creation */}
+                     {mode === 'create' && (
+                         <div className={`p-3.5 rounded-xl bg-surface-variant/30 border border-outline-variant/30 text-xs text-on-surface-variant transition-all duration-300 ${authPhase !== 'idle' ? 'opacity-0 h-0 p-0 overflow-hidden m-0' : 'opacity-100 mt-2 space-y-2'}`}>
+                             <label className="flex items-start space-x-2.5 cursor-pointer">
+                                 <input
+                                     type="checkbox"
+                                     className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary"
+                                     checked={agreeTerms}
+                                     onChange={(e) => setAgreeTerms(e.target.checked)}
+                                     disabled={authPhase !== 'idle'}
+                                 />
+                                 <span className="leading-snug">
+                                     I am 18+ and agree to <strong>Affyne Labs</strong> Terms of Use &amp; Privacy Policy, and agree to the <strong>Non-Disclosure Agreement</strong> (I will not disclose, reverse-engineer, or share internal system architecture or prompt engineering).
+                                 </span>
+                             </label>
+                         </div>
+                     )}
+
                      {/* Submit Button */}
                      <button
                          className={`w-full bg-primary text-on-primary font-label-md text-sm rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all duration-500 flex justify-center items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 mt-2 ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden p-0 border-0 mt-0' : 'h-12 opacity-100'}`}
-                         type="submit" disabled={authPhase !== 'idle'}>
+                         type="submit" disabled={authPhase !== 'idle' || (mode === 'create' && !agreeTerms)}>
                          <span>{mode === 'signin' ? 'Continue to Sanctuary' : 'Create Account'}</span>
                          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                      </button>

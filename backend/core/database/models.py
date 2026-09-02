@@ -12,7 +12,7 @@ load_dotenv(_BASE / ".env")
 load_dotenv(_BASE / ".env.local", override=True)
 
 # Expects postgresql://...
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mindbridge.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./affyne_mythri.db")
 
 engine_kwargs = {
     "pool_pre_ping": True,

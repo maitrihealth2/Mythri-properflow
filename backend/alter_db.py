@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 load_dotenv(".env.local", override=True)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mindbridge.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./affyne_mythri.db")
 
 print(f"Connecting to {DATABASE_URL.split('@')[-1]}...")
 engine = create_engine(DATABASE_URL)
@@ -25,3 +25,4 @@ try:
     print("Successfully added profession to user_profiles table.")
 except Exception as e:
     print(f"Note/Error adding profession: {e}")
+

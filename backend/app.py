@@ -213,7 +213,7 @@ async def trigger_error():
 def health():
     return {
         "status": "ok",
-        "service": "MindBridge",
+        "service": "Affyne Labs — Mythri",
         "version": "3.0.0",
         "features": ["text-chat", "voice-stt", "voice-tts", "rag", "emotion-detection"],
         "ai": "sarvam-105b + saarika + bulbul",
@@ -223,7 +223,7 @@ def health():
 async def health_head():
     return {
         "status": "ok",
-        "service": "MindBridge",
+        "service": "Affyne Labs — Mythri",
         "version": "3.0.0",
         "features": ["text-chat", "voice-stt", "voice-tts", "rag", "emotion-detection"],
         "ai": "sarvam-105b + saarika + bulbul",
@@ -232,7 +232,7 @@ async def health_head():
 
 @app.get("/")
 def root():
-    return {"message": "MindBridge API v3 running", "docs": "/docs"}
+    return {"message": "Affyne Labs — Mythri API v3 running", "docs": "/docs"}
 
 
 from fastapi.responses import HTMLResponse
@@ -250,4 +250,5 @@ def architecture_view():
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
-    return "<html><body><h2>MindBridge Architecture Flow</h2><p>Architecture diagram file not found.</p></body></html>"
+    return "<html><body><h2>Affyne Labs — Mythri Architecture Flow</h2><p>Architecture diagram file not found.</p></body></html>"
+
