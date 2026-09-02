@@ -618,11 +618,16 @@ export default function ConsultationPage() {
       <PersonaOverlay isOpen={personaOpen} onClose={() => setPersonaOpen(false)} profile={userProfile} />
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes msgEnter {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes msgEnterUser {
+          0% { opacity: 0; transform: scale(0.85) translateY(10px); transform-origin: top right; }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
         }
-        .animate-msg-enter { animation: msgEnter 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+        @keyframes msgEnterAi {
+          0% { opacity: 0; transform: scale(0.85) translateY(10px); transform-origin: top left; }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-msg-enter-user { animation: msgEnterUser 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-msg-enter-ai { animation: msgEnterAi 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes breathe {
           0%, 100% { opacity: 0.4; transform: scale(0.9); }
           50%       { opacity: 1;   transform: scale(1.1); }
@@ -712,7 +717,7 @@ export default function ConsultationPage() {
             return (
               <div
                 key={i}
-                className={`flex flex-col ${m.role === 'user' ? 'items-end self-end max-w-[90%] md:max-w-[65%]' : 'items-start max-w-[90%] md:max-w-[65%]'} ${m.is_new ? 'animate-msg-enter' : ''}`}
+                className={`flex flex-col ${m.role === 'user' ? 'items-end self-end max-w-[90%] md:max-w-[65%]' : 'items-start max-w-[90%] md:max-w-[65%]'} ${m.is_new ? (m.role === 'user' ? 'animate-msg-enter-user' : 'animate-msg-enter-ai') : ''}`}
               >
                 {showLabel && (
                   <span className={`text-label-md text-on-surface-variant/70 mb-1.5 ${m.role === 'user' ? 'mr-3' : 'ml-3'}`}>
@@ -754,7 +759,7 @@ export default function ConsultationPage() {
 
           {/* ── Active bubble (currently typing out via animation) ── */}
           {activeBubble && (
-            <div className="flex flex-col items-start max-w-[90%] md:max-w-[65%] animate-msg-enter">
+            <div className="flex flex-col items-start max-w-[90%] md:max-w-[65%] animate-msg-enter-ai">
               {showMythriLabelOnActive && (
                 <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
               )}
@@ -769,7 +774,7 @@ export default function ConsultationPage() {
 
           {/* ── Breathing dots: TTFT wait (loading, nothing streaming or typing yet) ── */}
           {showLoadingDots && (
-            <div className="flex flex-col items-start animate-msg-enter mt-2 mb-2">
+            <div className="flex flex-col items-start animate-msg-enter-ai mt-2 mb-2">
               <MythriAura state="processing" size="sm" className="ml-4" />
             </div>
           )}
