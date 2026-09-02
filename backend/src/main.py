@@ -30,12 +30,12 @@ async def lifespan(app: FastAPI):
     logger.info("Pre-warming ML models and Vector stores...")
     await asyncio.sleep(0.5) # Mock warm-up
     
-    logger.info("Affyne Labs — Mythri Backend API started successfully.")
+    logger.info("Affyne Labs  -  Mythri Backend API started successfully.")
     
     yield
     
     # Graceful Shutdown
-    logger.info("Shutting down Affyne Labs — Mythri Backend API gracefully...")
+    logger.info("Shutting down Affyne Labs  -  Mythri Backend API gracefully...")
     # Add cleanup logic here for Redis, ML resources, etc.
 
 def create_app() -> FastAPI:
@@ -43,7 +43,7 @@ def create_app() -> FastAPI:
     Application Factory Pattern for creating the FastAPI instance.
     """
     app = FastAPI(
-        title="Affyne Labs — Mythri Enterprise API",
+        title="Affyne Labs  -  Mythri Enterprise API",
         description="Highly secure, distributed AI Mental Health Support Backend.",
         version="4.0.0",
         lifespan=lifespan,
@@ -83,4 +83,4 @@ def create_app() -> FastAPI:
 
 # The ASGI application instance
 app = create_app()
-
+

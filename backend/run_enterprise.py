@@ -3,7 +3,7 @@ import os
 
 if __name__ == "__main__":
     print("=============================================")
-    print(" Affyne Labs — Mythri Enterprise Backend Bootstrapping")
+    print(" Affyne Labs  -  Mythri Enterprise Backend Bootstrapping")
     print("=============================================")
     
     # Load from src/main:app instead of root app:app
@@ -14,4 +14,4 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
-
+

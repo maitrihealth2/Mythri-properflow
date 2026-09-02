@@ -5,7 +5,7 @@ import platform
 
 if __name__ == "__main__":
     print("=============================================")
-    print("   Affyne Labs — Mythri Production Backend Runner      ")
+    print("   Affyne Labs  -  Mythri Production Backend Runner      ")
     print("=============================================")
     
     # Calculate optimal workers for I/O bound tasks
@@ -28,4 +28,4 @@ if __name__ == "__main__":
         limit_concurrency=1000,
         log_level="info"
     )
-
+
