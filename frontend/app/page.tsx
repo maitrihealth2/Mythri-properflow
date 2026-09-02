@@ -1,5 +1,12 @@
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-export default function RootPage() {
-  redirect('/home')
+export default async function RootPage() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('mb_token')?.value
+  if (token) {
+    redirect('/home')
+  } else {
+    redirect('/login')
+  }
 }

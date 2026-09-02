@@ -140,6 +140,19 @@ export async function logout() {
     await api.post('/api/auth/logout')
   } catch (err) {
     console.error('Logout API failed', err)
+  } finally {
+    if (typeof window !== 'undefined') {
+      localStorage.clear()
+      sessionStorage.clear()
+      document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0'
+      document.cookie = `mb_token=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0`
+      try {
+        const { auth } = await import('@/core/firebase')
+        const { signOut } = await import('firebase/auth')
+        await signOut(auth)
+      } catch (_) {}
+      window.location.href = '/login'
+    }
   }
 }
 

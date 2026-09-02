@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 
+import { logout } from '@/core/api'
+
 const LANGUAGES = [
   { code: 'en-IN', native: 'English' },
   { code: 'hi-IN', native: 'हिन्दी' },
@@ -41,10 +43,8 @@ export default function TopNav() {
     window.dispatchEvent(new Event('mb_language_changed'))
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('mb_token')
-    document.cookie = "mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-    window.location.href = '/login'
+  const handleLogout = async () => {
+    await logout()
   }
 
   const navItemClass = "w-full text-left px-4 py-3 text-sm font-label-md hover:bg-surface-container-highest transition-colors flex items-center gap-3"

@@ -117,10 +117,6 @@ export default function DashboardPage() {
             <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
             <button onClick={async () => { 
               await logout();
-              localStorage.clear(); 
-              sessionStorage.removeItem('mb_session_id');
-              document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-              window.location.href = '/login'; 
             }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
