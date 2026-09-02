@@ -71,9 +71,12 @@ def decode_token(token: str, expected_type: str = "access") -> dict | None:
             token, 
             SECRET_KEY, 
             algorithms=[ALGORITHM],
-            issuer=ISSUER,
-            audience=AUDIENCE
+            options={"verify_aud": False, "verify_iss": False}
         )
+        if payload.get("iss") not in (ISSUER, "mindbridge-auth"):
+            return None
+        if payload.get("aud") not in (AUDIENCE, "mindbridge-users"):
+            return None
         if payload.get("type") != expected_type:
             return None
         return payload
