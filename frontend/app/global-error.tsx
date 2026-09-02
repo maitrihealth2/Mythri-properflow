@@ -66,8 +66,7 @@ export default function GlobalError({
 
             <Button
               onPress={() => reset()}
-              color="primary"
-              variant="solid"
+              variant="primary"
               size="lg"
               className="mt-6 font-medium"
               radius="full"

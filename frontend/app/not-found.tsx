@@ -36,8 +36,7 @@ export default function NotFound() {
         <Button
           as={Link}
           href="/home"
-          color="secondary"
-          variant="flat"
+          variant="secondary"
           size="lg"
           className="mt-6 font-medium"
           radius="full"

@@ -46,8 +46,7 @@ export default function ErrorPage({
         <div className="flex flex-col sm:flex-row gap-4 pt-6 w-full sm:w-auto">
           <Button
             onPress={() => reset()}
-            color="primary"
-            variant="solid"
+            variant="primary"
             size="lg"
             radius="full"
             className="font-medium"
@@ -57,8 +56,7 @@ export default function ErrorPage({
           <Button
             as={Link}
             href="/home"
-            color="secondary"
-            variant="flat"
+            variant="secondary"
             size="lg"
             radius="full"
             className="font-medium"
