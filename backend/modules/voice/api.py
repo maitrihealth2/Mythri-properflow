@@ -281,6 +281,11 @@ async def _process_voice_memory_write_async(user_id: int, user_message: str, ses
             if result.has_actionable_decisions:
                 print(f"[VOICE MEMORY] Extracted {len(result.candidates)} candidates, "
                       f"executed {len(result.decisions)} decisions for user {user_id}")
+
+            # Auto-clean working cache memory once written to DB
+            short_term_engine.clear_session(session_id)
+            from rag.brain.state_tracker import tracker
+            tracker.purge_turn_cache(session_id)
         except Exception as err:
             print(f"[VOICE MEMORY] Background write failed (non-fatal): {err}")
         finally:

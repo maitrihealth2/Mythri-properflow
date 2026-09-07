@@ -625,6 +625,10 @@ async def send_message(
         finally:
             bg_db.close()
             try:
+                tracker.purge_turn_cache(session.id)
+            except Exception:
+                pass
+            try:
                 from ai_engine.proactive_engine import manager
                 await manager.send_json(str(session.id), {"type": "typing_stop"})
             except Exception:
@@ -841,6 +845,10 @@ async def _process_memory_write_path_async(user_id: int, user_message: str, sess
 
             if result.has_actionable_decisions:
                 CommandCenter.log_ai("MEMORY_WRITE", f"Extracted {len(result.candidates)} candidates, executed {len(actionable)} decisions for user {user_id}")
+
+            # Auto-clean working cache memory once written to DB
+            short_term_engine.clear_session(session_id)
+            print(f"[CACHE_CLEAN] Working memory cache cleaned for session {session_id} after DB persistence.")
         except Exception as err:
             CommandCenter.log_ai("MEMORY_ERROR", f"Memory background processing failed: {err}")
             print(f"[MEMORY_WRITE_ERROR] {err}")

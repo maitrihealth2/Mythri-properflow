@@ -88,11 +88,12 @@ class SessionState(BaseModel):
 
 
 class StateTracker:
-    def __init__(self, ttl_hours: int = 24):
+    def __init__(self, ttl_hours: int = 24, max_sessions: int = 50):
         self._states: Dict[int, SessionState] = {}
         self._max_recent_emotions = 5   # Increased for trajectory analysis
         self._lock = __import__('threading').Lock()
         self._ttl_hours = ttl_hours
+        self._max_sessions = max_sessions
 
     def _cleanup_old_sessions(self):
         """Removes sessions that haven't been updated within the TTL."""
@@ -102,15 +103,21 @@ class StateTracker:
         for sid in expired:
             del self._states[sid]
 
+    def _evict_oldest_if_needed(self):
+        """Evicts the oldest session(s) if current size exceeds capacity."""
+        while len(self._states) >= self._max_sessions:
+            # Find the session with the oldest last_updated timestamp
+            oldest_sid = min(self._states.keys(), key=lambda sid: self._states[sid].last_updated)
+            del self._states[oldest_sid]
+            print(f"[STATE_TRACKER] Evicted oldest session {oldest_sid} due to capacity limit ({self._max_sessions}).")
+
     def get_state(self, session_id: int) -> SessionState:
         with self._lock:
-            # Periodically cleanup on access (every 100th access or just lazily)
-            if len(self._states) % 50 == 0:
+            # Periodically cleanup on access
+            if len(self._states) % 25 == 0:
                 self._cleanup_old_sessions()
                 
-            if session_id not in self._states:
-                self._states[session_id] = SessionState(session_id=session_id)
-            return self._states[session_id]
+            return self._get_state_nolock(session_id)
 
     def init_session(self, session_id: int, is_first_session: bool):
         """Called when a new session starts. Sets onboarding flag if first-ever session."""
@@ -122,6 +129,8 @@ class StateTracker:
 
     def _get_state_nolock(self, session_id: int) -> SessionState:
         if session_id not in self._states:
+            self._cleanup_old_sessions()
+            self._evict_oldest_if_needed()
             self._states[session_id] = SessionState(session_id=session_id)
         return self._states[session_id]
 
@@ -243,6 +252,23 @@ class StateTracker:
                 "triggered_by": state.exercise_triggered_by,
                 "pre_emotion": state.exercise_pre_emotion,
             }
+
+    def cleanup_session(self, session_id: int):
+        """Immediately removes session state from in-memory cache upon session end or closure."""
+        with self._lock:
+            if session_id in self._states:
+                del self._states[session_id]
+
+    def purge_turn_cache(self, session_id: int):
+        """Trims transient per-turn caches and capped lists once turn is written to DB."""
+        with self._lock:
+            if session_id in self._states:
+                state = self._states[session_id]
+                if len(state.session_message_lengths) > 20:
+                    state.session_message_lengths = state.session_message_lengths[-20:]
+                if len(state.session_emotions_seen) > 20:
+                    state.session_emotions_seen = state.session_emotions_seen[-20:]
+                state.last_updated = datetime.utcnow()
 
 
 # Global singleton

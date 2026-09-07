@@ -78,15 +78,24 @@ class ShortTermMemoryEngine:
     Manages session-scoped working memory lifecycles, operations, and limits.
     """
 
-    def __init__(self):
+    def __init__(self, max_sessions: int = 50):
         # Session storage map keyed by Session ID
         self._sessions: Dict[int, ShortTermMemorySession] = {}
+        self._max_sessions = max_sessions
+
+    def _evict_oldest_if_needed(self):
+        """Evicts the oldest session container from memory when capacity limit is reached."""
+        while len(self._sessions) >= self._max_sessions:
+            oldest_session_id = next(iter(self._sessions))
+            del self._sessions[oldest_session_id]
+            print(f"[SHORT_TERM_MEMORY] Evicted oldest session working memory for session {oldest_session_id} (limit: {self._max_sessions}).")
 
     def get_or_create_session(
         self, session_id: int, user_id: int, max_items: int = 20, max_tokens: int = 1000
     ) -> ShortTermMemorySession:
         """Get or initialize a ShortTermMemorySession for an active conversation."""
         if session_id not in self._sessions:
+            self._evict_oldest_if_needed()
             self._sessions[session_id] = ShortTermMemorySession(
                 session_id=session_id,
                 user_id=user_id,
