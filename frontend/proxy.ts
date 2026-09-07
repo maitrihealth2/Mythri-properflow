@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get('mb_token')?.value
 
   // List of paths that require authentication
-  const protectedPaths = ['/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/onboarding']
+  const protectedPaths = ['/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/progress', '/onboarding']
   
   // List of auth paths that should redirect to home if already logged in
   const authPaths = ['/login']
@@ -33,5 +33,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/onboarding', '/login'],
+  matcher: ['/', '/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/progress', '/onboarding', '/login'],
 }

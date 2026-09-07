@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getHistory, getTranscript, logout } from '@/core/api'
+import RadialNav from '@/shared/components/RadialNav'
 
 interface Session {
   session_id: string
@@ -95,7 +96,8 @@ export default function HistoryPage() {
 
       {/* Header */}
       <header className="fixed top-0 z-40 flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 pointer-events-none animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-        <div className="flex items-center gap-4 pointer-events-auto">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <RadialNav />
           <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20 p-2 rounded-full transition-all hover:bg-white/80 dark:hover:bg-white/20 active:scale-95 shadow-sm">home</Link>
           <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90">Mythri</span>
         </div>

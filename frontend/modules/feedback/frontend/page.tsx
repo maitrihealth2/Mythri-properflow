@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { submitFeedback, logout } from '@/core/api'
 import ThemeToggle from '@/shared/components/ThemeToggle'
+import RadialNav from '@/shared/components/RadialNav'
 import { useTheme } from 'next-themes'
 
 export default function FeedbackPage() {
@@ -64,7 +65,8 @@ export default function FeedbackPage() {
 
       {/* Navigation */}
       <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <RadialNav />
           <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 tracking-wide">Mythri</span>
         </div>
         <div className="relative flex items-center gap-2">

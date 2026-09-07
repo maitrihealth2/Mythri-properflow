@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getDashboardStats, getOnboardingStatus, logout } from '@/core/api'
 import ThemeToggle from '@/shared/components/ThemeToggle'
+import RadialNav from '@/shared/components/RadialNav'
 import { useTheme } from 'next-themes'
 
 const getMoodIcon = (mood: string) => {
@@ -92,7 +93,8 @@ export default function DashboardPage() {
 
       {/* Navigation */}
       <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <RadialNav />
           <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
         </div>
         <div className="relative flex items-center gap-2">
@@ -107,6 +109,12 @@ export default function DashboardPage() {
             </Link>
             <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
+            </Link>
+            <Link href="/exercises" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">self_improvement</span> Exercises
+            </Link>
+            <Link href="/progress" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">trending_up</span> Progress
             </Link>
             <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
@@ -192,12 +200,12 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center text-primary dark:text-white/90">
                   <span className="material-symbols-outlined text-[18px] lg:text-[20px]" style={{ fontVariationSettings: "'wght' 300" }}>auto_awesome</span>
                 </div>
-                <p className="text-[10px] lg:text-xs font-label-md text-primary uppercase tracking-widest opacity-80">Mythri Suggests</p>
+                <p className="text-[10px] lg:text-xs font-label-md text-primary uppercase tracking-widest opacity-80">Have a Chat</p>
               </div>
               <div>
                 <h3 className="text-base lg:text-lg font-headline-md text-primary leading-tight mb-2">You've had a busy week. Take 5 minutes to reflect today.</h3>
                 <span className="inline-flex items-center gap-1 text-[10px] lg:text-xs font-medium text-on-surface-variant group-hover:text-primary transition-colors">
-                  Begin Reflection <span className="material-symbols-outlined text-[14px] transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  Chat to Mythri <span className="material-symbols-outlined text-[14px] transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </span>
               </div>
             </div>
@@ -247,7 +255,7 @@ export default function DashboardPage() {
               </div>
             </Link>
 
-            <Link href="/text-chat" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
+            <Link href="/exercises" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
               <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary dark:text-white/90 group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
                 <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>self_improvement</span>
               </div>
@@ -257,7 +265,7 @@ export default function DashboardPage() {
               </div>
             </Link>
             
-            <Link href="/profile" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
+            <Link href="/progress" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
               <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary dark:text-white group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
                 <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>insights</span>
               </div>
@@ -289,9 +297,6 @@ export default function DashboardPage() {
           </div>
 
         </section>
-        
-        {/* Mobile Spacer for BottomNav */}
-        <div className="h-28 w-full md:hidden shrink-0"></div>
 
       </main>
     </>

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import { Literata } from 'next/font/google'
 import Script from 'next/script'
 import { Providers } from '@/core/providers'
-import BottomNav from '@/shared/components/BottomNav'
 import GlobalShortcuts from '@/shared/components/GlobalShortcuts'
 import './globals.css'
 
@@ -57,7 +56,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           {children}
         </Providers>
-        <BottomNav />
       </body>
     </html>
   )

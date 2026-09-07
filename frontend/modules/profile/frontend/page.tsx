@@ -6,6 +6,7 @@ import Link from 'next/link'
 
 import { getProfile, updateProfile, logout } from '@/core/api'
 import ThemeToggle from '@/shared/components/ThemeToggle'
+import RadialNav from '@/shared/components/RadialNav'
 import { useTheme } from 'next-themes'
 
 export default function ProfilePage() {
@@ -196,7 +197,8 @@ export default function ProfilePage() {
             
             {/* TopAppBar */}
             <header className="fixed top-0 z-40 flex justify-between items-center w-full px-5 md:px-8 py-4 pointer-events-none transition-all duration-500 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center gap-4 pointer-events-auto">
+                <div className="flex items-center gap-3 pointer-events-auto">
+                    <RadialNav />
                     <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20 p-2 rounded-full transition-transform duration-150 hover:bg-white/80 dark:hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] shadow-sm">home</Link>
                     <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 tracking-wide">Mythri</span>
                 </div>
@@ -669,28 +671,6 @@ export default function ProfilePage() {
                     )}
                 </section>
             </main>
-
-            {/* BottomNavBar (Mobile Only) */}
-            <nav className="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center bg-white/70 backdrop-blur-xl py-2 px-4 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.05)] border-t border-white/40">
-                <Link href="/home" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 px-5 py-1">
-                    <span className="material-symbols-outlined text-[24px]">home</span>
-                    <span className="text-[10px] font-label-md mt-1">Sanctuary</span>
-                </Link>
-                <Link href="/history" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 px-5 py-1">
-                    <span className="material-symbols-outlined text-[24px]">auto_stories</span>
-                    <span className="text-[10px] font-label-md mt-1">History</span>
-                </Link>
-                <Link href="/text-chat" className="flex flex-col items-center justify-center text-on-surface-variant/60 w-16 transition-all duration-300 active:scale-90 active:opacity-70 px-5 py-1">
-                    <span className="material-symbols-outlined text-[24px]">health_and_safety</span>
-                    <span className="text-[10px] font-label-md mt-1">Chat</span>
-                </Link>
-                <Link href="/profile" className="flex flex-col items-center justify-center text-primary w-16 transition-all duration-300 active:scale-90 px-5 py-1">
-                    <div className="bg-primary text-white p-2.5 rounded-full shadow-lg transform -translate-y-3 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95">
-                        <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
-                    </div>
-                    <span className="text-[10px] font-label-md font-bold -mt-2">Profile</span>
-                </Link>
-            </nav>
         </div>
     )
 }

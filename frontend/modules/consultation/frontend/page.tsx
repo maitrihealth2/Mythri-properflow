@@ -5,9 +5,8 @@ import Link from 'next/link'
 import { startSession, sendMessage, getTranscript, logout, getProfile } from '@/core/api'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
-import { useTheme } from 'next-themes'
+import RadialNav from '@/shared/components/RadialNav'
 import { motion } from 'framer-motion'
-import MythriAura from '@/shared/components/MythriAura'
 import PersonaOverlay from '@/shared/components/PersonaOverlay'
 import TypingIndicator from '@/shared/components/TypingIndicator'
 
@@ -108,8 +107,6 @@ const AmbientBackground = ({ isAiActive }: { isAiActive: boolean }) => {
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       />
       
-      {/* Center content mask to keep readability high */}
-      <div className="absolute inset-x-[10%] inset-y-[5%] bg-white/[0.25] dark:bg-black/[0.15] blur-[80px] rounded-full pointer-events-none" />
     </div>
   )
 }
@@ -121,7 +118,6 @@ export default function ConsultationPage() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [language, setLanguage] = useState('en-IN')
-  const [starting, setStarting] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
 
@@ -236,6 +232,20 @@ export default function ConsultationPage() {
         }
       }
       localStorage.setItem('mb_chat_history_' + sessionId, JSON.stringify(messages))
+      
+      // Auto-prune stale session cache keys to prevent memory accumulation
+      try {
+        const historyKeys: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith('mb_chat_history_') && k !== 'mb_chat_history_' + sessionId) {
+            historyKeys.push(k)
+          }
+        }
+        if (historyKeys.length > 3) {
+          historyKeys.slice(0, historyKeys.length - 3).forEach(k => localStorage.removeItem(k))
+        }
+      } catch (_) {}
     }
   }, [messages, sessionId, activeBubble])
 
@@ -342,24 +352,29 @@ export default function ConsultationPage() {
             }
             
             setMessages(expandedMessages)
-            setStarting(false)
             return
           }
         } catch (_) { /* invalid session — fall through to new */ }
       }
 
+      setLoading(true)
       const data = await startSession()
       setSessionId(data.session_id)
       sessionStorage.setItem('mb_session_id', data.session_id)
 
       const welcome = data.message
       if (welcome && welcome !== 'Session started.') {
-        setMessages([{ role: 'assistant', content: welcome, is_new: true, is_last_in_group: true }])
+        const chunks = welcome.split(/\n\s*\n/).filter((c: string) => c.trim().length > 0)
+        const bubbles: BubbleItem[] = chunks.map((chunk: string, index: number) => ({
+          content: chunk.trim(),
+          is_last_in_group: index === chunks.length - 1,
+        }))
+        setBubbleQueue(bubbles)
       }
     } catch (_) {
       // silent — user stays on page
     } finally {
-      setStarting(false)
+      setLoading(false)
     }
   }
 
@@ -546,7 +561,7 @@ export default function ConsultationPage() {
       setBubbleQueue(prev => [
         ...prev,
         {
-          content: "Couldn't reach Mythri right now \uD83D\uDE4F Please try again in a moment.",
+          content: "Couldn't reach Mythri right now 🙏 Please try again in a moment.",
           is_last_in_group: true,
         },
       ])
@@ -555,6 +570,16 @@ export default function ConsultationPage() {
       sendingRef.current = false
     }
   }
+
+  // ─── Computed helpers ─────────────────────────────────────────────────────
+  /** True while waiting for TTFT (loading but nothing typed/queued yet) */
+  const showLoadingDots = loading && !activeBubble && bubbleQueue.length === 0
+
+  /** Should we show the "Mythri" label above the active bubble? */
+  const showMythriLabelOnActive =
+    !messages.length || messages[messages.length - 1].role !== 'assistant'
+
+  const isAiActive = loading || activeBubble !== null
 
   // ─── Textarea auto-resize ─────────────────────────────────────────────────
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -579,7 +604,6 @@ export default function ConsultationPage() {
     setBubbleQueue([])
     setActiveBubble(null)
     setActiveBubbleText('')
-    setStarting(true)
     initialized.current = false
     initSession()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -590,26 +614,6 @@ export default function ConsultationPage() {
     return () => window.removeEventListener('shortcut:new-chat', handler)
   }, [handleNewChat])
 
-  // ─── Computed helpers ─────────────────────────────────────────────────────
-  /** True while waiting for TTFT (loading but nothing typed/queued yet) */
-  const showLoadingDots = loading && !activeBubble && bubbleQueue.length === 0
-
-  /** Should we show the "Mythri" label above the active bubble? */
-  const showMythriLabelOnActive =
-    !messages.length || messages[messages.length - 1].role !== 'assistant'
-
-  // ─── Loading screen ────────────────────────────────────────────────────────
-  if (starting) return (
-    <div className="bg-background text-on-background min-h-screen flex items-center justify-center pt-24">
-      <div className="flex flex-col items-center gap-4 opacity-70">
-        <span className="material-symbols-outlined text-4xl text-primary/80 animate-pulse" style={{ animationDuration: '2s' }}>spa</span>
-        <span className="text-primary font-label-md tracking-widest uppercase text-xs animate-pulse" style={{ animationDuration: '2s' }}>Preparing Space</span>
-      </div>
-    </div>
-  )
-
-  const isAiActive = loading || activeBubble !== null
-
   // ─── Main UI ───────────────────────────────────────────────────────────────
   return (
     <div className="relative flex flex-col min-h-[100dvh] w-full">
@@ -619,15 +623,15 @@ export default function ConsultationPage() {
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes msgEnterUser {
-          0% { opacity: 0; transform: scale(0.85) translateY(10px); transform-origin: top right; }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
+          0% { opacity: 0; transform: translateY(6px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
         @keyframes msgEnterAi {
-          0% { opacity: 0; transform: scale(0.85) translateY(10px); transform-origin: top left; }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
+          0% { opacity: 0; transform: translateY(6px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-msg-enter-user { animation: msgEnterUser 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .animate-msg-enter-ai { animation: msgEnterAi 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate-msg-enter-user { animation: msgEnterUser 0.2s ease-out forwards; }
+        .animate-msg-enter-ai { animation: msgEnterAi 0.2s ease-out forwards; }
         @keyframes breathe {
           0%, 100% { opacity: 0.4; transform: scale(0.9); }
           50%       { opacity: 1;   transform: scale(1.1); }
@@ -637,7 +641,8 @@ export default function ConsultationPage() {
 
       {/* ── Desktop Header ── */}
       <header className="hidden md:flex fixed top-0 z-40 justify-between items-center w-full px-margin-desktop py-4 pointer-events-none animate-fade-in-up bg-transparent" style={{ animationDelay: '0.1s' }}>
-        <div className="flex items-center gap-4 pointer-events-auto">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <RadialNav />
           <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20 p-2 rounded-full transition-all duration-150 hover:bg-white/80 dark:hover:bg-white/20 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
           <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 drop-shadow-md">Mythri</span>
         </div>
@@ -653,20 +658,33 @@ export default function ConsultationPage() {
             <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
-            <Link href="/text-chat" className="text-primary font-bold bg-white/80 dark:bg-white/20 px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
-            </Link>
             <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
+              <span className="material-symbols-outlined text-[20px]">history</span> Reflections
+            </Link>
+            <Link href="/progress" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">trending_up</span> Growth & Baseline
+            </Link>
+            <Link href="/exercises" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+              <span className="material-symbols-outlined text-[20px]">self_improvement</span> Mind Gym
             </Link>
             <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
             </Link>
             <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
+              <span className="material-symbols-outlined text-[20px]">rate_review</span> Feedback
             </Link>
-            <div className="h-px bg-outline-variant/30 my-1 mx-2" />
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
+            <div className="h-px bg-outline-variant/30 my-1" />
+            <button
+              onClick={async () => {
+                try {
+                  sessionStorage.removeItem('mb_session_id')
+                  await logout()
+                } finally {
+                  router.replace('/login')
+                }
+              }}
+              className="text-error hover:bg-error/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left"
+            >
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>
@@ -683,7 +701,8 @@ export default function ConsultationPage() {
 
       {/* ── Mobile Header ── */}
       <header className="flex md:hidden fixed top-0 z-40 justify-between items-center w-full px-4 py-3 bg-white/60 dark:bg-[#121212]/80 backdrop-blur-md border-b border-white/40 dark:border-white/10 shadow-sm pointer-events-none">
-        <div className="flex items-center gap-3 pointer-events-auto">
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <RadialNav />
           <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
           <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
         </div>
@@ -725,13 +744,13 @@ export default function ConsultationPage() {
                   </span>
                 )}
                 {m.role === 'user' ? (
-                  <div className="frosted-plum rounded-[28px] rounded-tr-[4px] bg-plum-high-contrast/90 dark:bg-primary-container/80 text-white px-6 py-4 shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
-                    <p className="text-body-lg leading-relaxed text-white dark:text-white/95 whitespace-pre-wrap">{m.content}</p>
+                  <div className="rounded-[24px] rounded-tr-[4px] bg-plum-high-contrast text-white px-6 py-4 shadow-sm">
+                    <p className="text-body-lg leading-relaxed text-white whitespace-pre-wrap">{m.content}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <div className="frosted-blush rounded-[28px] rounded-tl-[4px] bg-white/70 dark:bg-black/50 px-6 py-4 shadow-sm transition-all hover:shadow-md border border-white/20 dark:border-white/10">
-                      <p className="text-body-lg leading-relaxed text-on-primary-fixed dark:text-white/90 whitespace-pre-wrap">{m.content}</p>
+                    <div className="rounded-[24px] rounded-tl-[4px] bg-white/85 dark:bg-[#1E1B22]/90 backdrop-blur-md px-6 py-4 shadow-sm border border-black/[0.04] dark:border-white/[0.08]">
+                      <p className="text-body-lg leading-relaxed text-on-surface dark:text-zinc-100 whitespace-pre-wrap">{m.content}</p>
                     </div>
                     {/* Crisis helplines — only on last bubble of group */}
                     {m.is_last_in_group && m.is_crisis && m.helplines && m.helplines.length > 0 && (
@@ -763,8 +782,8 @@ export default function ConsultationPage() {
               {showMythriLabelOnActive && (
                 <span className="text-label-md text-on-surface-variant/70 mb-1.5 ml-3">Mythri</span>
               )}
-              <div className="frosted-blush bg-white/70 dark:bg-black/50 px-6 py-4 rounded-[28px] rounded-tl-[4px] shadow-sm border border-white/20 dark:border-white/10">
-                <p className="text-body-lg leading-relaxed text-on-primary-fixed dark:text-white/90 whitespace-pre-wrap">
+              <div className="rounded-[24px] rounded-tl-[4px] bg-white/85 dark:bg-[#1E1B22]/90 backdrop-blur-md px-6 py-4 shadow-sm border border-black/[0.04] dark:border-white/[0.08]">
+                <p className="text-body-lg leading-relaxed text-on-surface dark:text-zinc-100 whitespace-pre-wrap">
                   {activeBubbleText}
                   <span className="inline-block w-1.5 h-4 ml-1 bg-primary/40 dark:bg-white/40 animate-pulse" />
                 </p>
@@ -772,15 +791,8 @@ export default function ConsultationPage() {
             </div>
           )}
 
-          {/* ── Breathing dots: TTFT wait (loading, nothing streaming or typing yet) ── */}
-          {showLoadingDots && (
-            <div className="flex flex-col items-start animate-msg-enter-ai mt-2 mb-2">
-              <MythriAura state="processing" size="sm" className="ml-4" />
-            </div>
-          )}
-
-          {/* ── WebSocket Typing Indicator (proactive or async typing) ── */}
-          {isTyping && !loading && !activeBubble && (
+          {/* ── Responding Typing Indicator (typing dots only) ── */}
+          {(showLoadingDots || (isTyping && !loading && !activeBubble)) && (
             <TypingIndicator />
           )}
 

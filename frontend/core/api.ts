@@ -233,6 +233,27 @@ export async function submitFeedback(content: string) {
   return res.data
 }
 
+export async function getBaselineShiftAnalytics(days = 30) {
+  try {
+    const res = await api.get(`/api/consultation/analytics/baseline_shift?days=${days}`)
+    return res.data
+  } catch (err) {
+    return {
+      status: 'CALIBRATING',
+      sample_count: 0,
+      dominant_baseline_emotion: 'calm',
+      trajectory: [],
+      overall_metrics: {
+        total_regulation_events: 0,
+        average_shift_points: 0,
+        positive_shift_rate: 0,
+        baseline_stability_score: 0,
+        dominant_cluster: 'None'
+      }
+    }
+  }
+}
+
 // ==========================================
 // Admin
 // ==========================================
