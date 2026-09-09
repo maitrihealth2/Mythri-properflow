@@ -164,8 +164,6 @@ export default function ConsultationPage() {
           setIsTyping(true)
         } else if (data.type === "typing_stop") {
           setIsTyping(false)
-        } else if (data.type === "proactive_message") {
-          setMessages(prev => [...prev, { role: 'assistant', content: data.content, is_new: true, is_last_in_group: true }])
         }
       } catch (e) {}
     }
