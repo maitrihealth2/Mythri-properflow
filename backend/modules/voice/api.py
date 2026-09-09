@@ -98,14 +98,17 @@ async def handle_voice_turn(
         raise HTTPException(status_code=404, detail="Session not found")
     print(f"[VOICE] Session DB id={session.id} OK")
 
-    # Filter known STT hallucinations when there's background noise
-    known_hallucinations = [
-        "thank you.", "thank you", "subscribe", "subscribe.", 
-        "subscribe to the channel", "subtitles by amara.org", 
-        "[silence]", "you", "thanks."
-    ]
+    # Filter known STT hallucinations when there's background noise or silence
+    known_hallucinations = {
+        "thank you.", "thank you", "thank you so much.", "thank you so much",
+        "thank you very much.", "thank you very much", "subscribe", "subscribe.", 
+        "subscribe to the channel", "subscribe to our channel", "subtitles by amara.org", 
+        "[silence]", "silence", "you", "thanks.", "thanks", "bye", "bye.", "bye bye",
+        "bye-bye", "[music]", "[applause]", "...", ".", ","
+    }
     cleaned_transcript = transcript.strip().lower()
-    if not cleaned_transcript or cleaned_transcript in known_hallucinations or len(cleaned_transcript) < 2:
+    raw_content = cleaned_transcript.strip(" .?!,[]()\"'")
+    if not raw_content or cleaned_transcript in known_hallucinations or len(raw_content) < 2:
         print(f"[VOICE] Empty or hallucinated transcript: '{transcript}' — treating as silence")
         async def silence_stream():
             import json

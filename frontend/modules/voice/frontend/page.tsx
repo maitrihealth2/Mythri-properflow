@@ -220,6 +220,13 @@ export default function VoiceModePage() {
     const sid = sessionIdRef.current
     if (!sid) return
 
+    // Immediately stop listening and enter thinking state
+    isSpeakingRef.current = false
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = null
+    }
+
     setConvState('thinking')
     mitraStore.setState('curious')
 
@@ -260,7 +267,6 @@ export default function VoiceModePage() {
             mitraStore.setState('comforting')
             isAssistantSpeakingRef.current = true
             await playWav(nextB64)
-            isAssistantSpeakingRef.current = false
           }
         }
         isPlayingAudio = false
@@ -300,6 +306,7 @@ export default function VoiceModePage() {
                   setConvState('paused')
                   mitraStore.setState('idle')
                   isListeningRef.current = false
+                  isAssistantSpeakingRef.current = false
                   if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
                   if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
                     mediaRecorderRef.current.onstop = null
@@ -320,15 +327,25 @@ export default function VoiceModePage() {
         }
       }
       
-      // Wait for audio queue to finish
+      // Wait for audio queue to finish playing completely
       while (isPlayingAudio || audioQueue.length > 0) {
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise(resolve => setTimeout(resolve, 80))
       }
+
+      // Add a 400ms acoustic grace period for room reverb to decay
+      await new Promise(resolve => setTimeout(resolve, 400))
       
     } catch (e) {
       console.error(e)
     } finally {
-      if (isListeningRef.current && voiceSessionIdRef.current === currentVoiceSession && !isMutedRef.current) {
+      isAssistantSpeakingRef.current = false
+      isSpeakingRef.current = false
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current)
+        silenceTimerRef.current = null
+      }
+
+      if (isListeningRef.current && voiceSessionIdRef.current === currentVoiceSession && !isMutedRef.current && !isPaused) {
         setConvState('listening')
         mitraStore.setState('listening')
         startChunk()
@@ -375,6 +392,8 @@ export default function VoiceModePage() {
 
   const stopVoice = () => {
     isListeningRef.current = false
+    isAssistantSpeakingRef.current = false
+    isSpeakingRef.current = false
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
     if (maxDurationTimerRef.current) clearTimeout(maxDurationTimerRef.current)
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
@@ -417,7 +436,13 @@ export default function VoiceModePage() {
   }, [isMuted, isPaused, toggleMute, handleStopConversation])
 
   const startChunk = () => {
-    if (!streamRef.current || !isListeningRef.current) return
+    if (!streamRef.current || !isListeningRef.current || isAssistantSpeakingRef.current) return
+    isSpeakingRef.current = false
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = null
+    }
+
     try {
       const types = ['audio/webm', 'audio/mp4', 'audio/ogg', '']
       let selectedType = ''
@@ -432,16 +457,22 @@ export default function VoiceModePage() {
       const chunks: BlobPart[] = []
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
       recorder.onstop = async () => {
-        if (chunks.length > 0 && isListeningRef.current) {
+        if (chunks.length > 0 && isListeningRef.current && !isAssistantSpeakingRef.current) {
           const blob = new Blob(chunks, { type: selectedType || recorder.mimeType || 'audio/webm' })
-          await processVoiceTurn(blob, voiceSessionIdRef.current)
+          if (blob.size > 1000) {
+            await processVoiceTurn(blob, voiceSessionIdRef.current)
+          } else {
+            // Restart chunk if empty
+            if (isListeningRef.current && !isMutedRef.current && !isPaused) {
+              startChunk()
+            }
+          }
         }
       }
       recorder.start(250)
       mediaRecorderRef.current = recorder
 
       if (maxDurationTimerRef.current) clearTimeout(maxDurationTimerRef.current)
-      // Removed 28s auto-flush to allow natural conversation length until silence.
     } catch (e) {
       console.error(e)
     }
@@ -466,25 +497,39 @@ export default function VoiceModePage() {
       const rms = Math.sqrt(sum / timeData.length)
       const isVoiceDetected = rms > SILENCE_THRESHOLD
 
-      // Handle silence detection logic
-      if (isListeningRef.current && !isMutedRef.current) {
+      // Handle silence detection logic — ONLY when actively listening to the user
+      const canDetectUserSpeech = isListeningRef.current && !isMutedRef.current && !isAssistantSpeakingRef.current && convState === 'listening'
+
+      if (canDetectUserSpeech) {
         if (isVoiceDetected) {
           if (!isSpeakingRef.current) isSpeakingRef.current = true
-          if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null }
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current)
+            silenceTimerRef.current = null
+          }
         } else {
           if (!silenceTimerRef.current && isSpeakingRef.current) {
             silenceTimerRef.current = setTimeout(() => {
               silenceTimerRef.current = null
-              if (isListeningRef.current) flushChunk()
+              if (isListeningRef.current && !isAssistantSpeakingRef.current && convState === 'listening') {
+                flushChunk()
+              }
             }, SILENCE_MS)
           }
         }
+      } else {
+        // Not in valid user listening state (e.g. AI is speaking or thinking) -> keep silence timer clear
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current)
+          silenceTimerRef.current = null
+        }
+        isSpeakingRef.current = false
       }
 
       // Draw visualization
       ctx.clearRect(0, 0, 256, 256)
 
-      const isActuallySpeaking = (isListeningRef.current && !isMutedRef.current) || isAssistantSpeakingRef.current
+      const isActuallySpeaking = (isListeningRef.current && !isMutedRef.current && !isAssistantSpeakingRef.current) || isAssistantSpeakingRef.current
 
       const centerX = 128
       const centerY = 128
