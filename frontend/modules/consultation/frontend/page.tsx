@@ -661,9 +661,6 @@ export default function ConsultationPage() {
             <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">history</span> Reflections
             </Link>
-            <Link href="/progress" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">trending_up</span> Growth & Baseline
-            </Link>
             <Link href="/exercises" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">self_improvement</span> Mind Gym
             </Link>

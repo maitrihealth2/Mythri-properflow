@@ -100,3 +100,29 @@ fareed_logs/
 
 # --- Documentation (Internal) ---
 security_protocols.md
+
+# --- Android & Mobile (Capacitor / APK / Gradle) ---
+*.apk
+*.aab
+*.ap_
+*.dex
+android/
+frontend/android/
+capacitor.config.ts
+frontend/capacitor.config.ts
+.gradle/
+**/build/
+**/bin/
+local.properties
+captures/
+*.keystore
+*.jks
+*.idsig
+
+# --- Excluded Landing Page & Baseline Shift ---
+frontend/app/landing/
+frontend/modules/landing/
+frontend/public/landing/
+frontend/app/progress/
+frontend/modules/progress/
+

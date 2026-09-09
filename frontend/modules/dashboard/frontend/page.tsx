@@ -113,12 +113,10 @@ export default function DashboardPage() {
             <Link href="/exercises" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">self_improvement</span> Exercises
             </Link>
-            <Link href="/progress" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
-              <span className="material-symbols-outlined text-[20px]">trending_up</span> Progress
-            </Link>
             <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
+
             <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-3 rounded-2xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
@@ -265,13 +263,13 @@ export default function DashboardPage() {
               </div>
             </Link>
             
-            <Link href="/progress" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
+            <Link href="/profile" className="glass-panel rounded-3xl p-3 lg:p-5 flex flex-col items-center justify-center text-center gap-2 group transition-all duration-300 hover:-translate-y-[1px] hover:shadow-lg">
               <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary dark:text-white group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
-                <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>insights</span>
+                <span className="material-symbols-outlined text-[20px] lg:text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>person</span>
               </div>
               <div>
-                <h4 className="font-headline-md text-sm lg:text-base text-primary mb-0.5">Progress</h4>
-                <p className="text-[9px] lg:text-[10px] text-on-surface-variant">Your journey</p>
+                <h4 className="font-headline-md text-sm lg:text-base text-primary mb-0.5">Profile</h4>
+                <p className="text-[9px] lg:text-[10px] text-on-surface-variant">Settings & Privacy</p>
               </div>
             </Link>
           </div>

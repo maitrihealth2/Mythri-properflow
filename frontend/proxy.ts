@@ -5,7 +5,7 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('mb_token')?.value
 
   // List of paths that require authentication
-  const protectedPaths = ['/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/progress', '/onboarding']
+  const protectedPaths = ['/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/onboarding']
   
   // List of auth paths that should redirect to home if already logged in
   const authPaths = ['/login']
@@ -33,5 +33,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/progress', '/onboarding', '/login'],
+  matcher: ['/', '/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/onboarding', '/login'],
 }

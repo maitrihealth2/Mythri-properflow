@@ -63,14 +63,7 @@ const NAV_ITEMS: NavItem[] = [
     shortLabel: 'Exercises',
     description: 'Breathing, grounding & regulation practices',
   },
-  {
-    id: 'progress',
-    href: '/progress',
-    icon: TrendingUp,
-    label: 'Healing Progress',
-    shortLabel: 'Progress',
-    description: 'Emotional trajectory, consistency & growth',
-  },
+
   {
     id: 'history',
     href: '/history',
