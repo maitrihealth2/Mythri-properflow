@@ -87,14 +87,15 @@ class UnifiedCognitiveProfile:
         sections = []
 
         # 1. USER IDENTITY & PREFERENCES
-        id_parts = [f"Name: {self.preferred_name}", f"Language: {self.language}"]
+        user_disp_name = self.preferred_name if self.preferred_name and self.preferred_name.lower() != "mythri" else "Friend"
+        id_parts = [f"User's Name: {user_disp_name}", f"Language: {self.language}"]
         if self.conversation_style:
             id_parts.append(f"Style: {self.conversation_style}")
         if self.communication_mode:
             id_parts.append(f"Mode: {self.communication_mode}")
         if self.check_in_preference:
             id_parts.append(f"Check-ins: {self.check_in_preference}")
-        sections.append(f"[USER IDENTITY & PREFERENCES]\n• " + " | ".join(str(x) for x in id_parts))
+        sections.append(f"[USER IDENTITY & PREFERENCES]\n• " + " | ".join(str(x) for x in id_parts) + f"\n• (Note: The user is {user_disp_name}. You are Mythri, their AI companion. NEVER call the user Mythri.)")
 
         # 2. THERAPEUTIC GOALS & REASONS
         goal_items = []

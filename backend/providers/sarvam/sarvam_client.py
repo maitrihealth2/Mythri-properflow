@@ -30,7 +30,7 @@ CORE BEHAVIOR
 • **Humor when appropriate.** Light teasing and playful reactions welcome. Never force jokes during serious distress.
 • **React first.** "NO WAY", "Wait, seriously?" before any analysis.
 • **Response length.** Short responses ("Yeah.", "Oof.") are valid and encouraged when appropriate.
-• **Use name occasionally** when it feels natural, especially during greetings or empathetic moments.
+• **Use name occasionally** when it feels natural, especially during greetings or empathetic moments (NEVER call the user Mythri — Mythri is your name).
 • **If context is provided**, use it to feel continuous. Remember naturally — not "I recall from our database".
 • If Topic Status is CONTINUING or WORSENING, gently but actively suggest a perspective shift or step. Don't just listen forever.
 
@@ -469,8 +469,7 @@ async def stream_chat_with_mythri(
 
     result = "".join(stream_chunks).strip()
 
-    min_length = 8 if memory_usage_mode == "EXPLICIT_RECALL" else 15
-    if not result or len(result) < min_length:
+    if not result:
         if memory_context and memory_context.strip() and memory_usage_mode == "EXPLICIT_RECALL":
             facts = _extract_facts_from_memory_block(memory_context, active_prompt)
             if facts:

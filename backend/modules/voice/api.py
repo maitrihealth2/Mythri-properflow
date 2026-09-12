@@ -181,16 +181,19 @@ async def handle_voice_turn(
                             match = re.search(r'([.?!]+[\s\n]+)', sentence_buffer)
                             if match:
                                 split_idx = match.end()
-                                complete_sentence = sentence_buffer[:split_idx]
-                                sentence_buffer = sentence_buffer[split_idx:]
+                                complete_sentence = sentence_buffer[:split_idx].strip()
+                                sentence_buffer = sentence_buffer[split_idx:].lstrip()
                                 
-                                async for item in process_and_yield_audio(complete_sentence):
-                                    yield item
+                                if complete_sentence:
+                                    async for item in process_and_yield_audio(complete_sentence):
+                                        yield item
 
                     elif data.get("type") == "metadata" and "full_text" in data:
                         # Process any remaining text in buffer at the end
-                        if sentence_buffer.strip():
-                            async for item in process_and_yield_audio(sentence_buffer):
+                        remaining_text = sentence_buffer.strip()
+                        sentence_buffer = ""
+                        if remaining_text:
+                            async for item in process_and_yield_audio(remaining_text):
                                 yield item
                                 
                 except Exception as e:

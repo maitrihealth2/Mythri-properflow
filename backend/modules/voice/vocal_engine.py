@@ -74,8 +74,8 @@ def _get_or_create_board(emotion_label: str) -> Pedalboard:
         _DSP_CHAINS[emotion_label] = Pedalboard([
             Compressor(threshold_db=params["compressor_threshold"], ratio=params["compressor_ratio"]),
             PitchShift(semitones=params["semitones"]),
-            LowShelfFilter(cutoff_hz=300, gain_db=params["low_eq_db"]),
-            HighShelfFilter(cutoff_hz=4000, gain_db=params["high_eq_db"]),
+            LowShelfFilter(cutoff_frequency_hz=300, gain_db=params["low_eq_db"]),
+            HighShelfFilter(cutoff_frequency_hz=4000, gain_db=params["high_eq_db"]),
             Reverb(room_size=params["reverb_room_size"], damping=0.9, dry_level=1.0, wet_level=0.1)
         ])
     return _DSP_CHAINS[emotion_label]

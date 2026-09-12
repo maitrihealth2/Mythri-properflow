@@ -193,6 +193,9 @@ app.include_router(features_router)
 from modules.config.api import router as config_router
 app.include_router(config_router)
 
+from modules.maintenance.api import router as maintenance_router
+app.include_router(maintenance_router)
+
 
 from core.exceptions import register_exception_handlers
 register_exception_handlers(app)

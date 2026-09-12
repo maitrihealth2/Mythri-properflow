@@ -8,7 +8,8 @@ from providers.sarvam.voice_client import (
     convert_to_wav, 
     SUPPORTED_LANGUAGES, 
     SARVAM_API_KEY, 
-    BASE_URL
+    BASE_URL,
+    get_http_client,
 )
 
 def split_wav_into_batches(wav_bytes: bytes, chunk_duration_sec: int = 30, max_batches: int = 10) -> List[bytes]:
@@ -24,6 +25,10 @@ def split_wav_into_batches(wav_bytes: bytes, chunk_duration_sec: int = 30, max_b
             rate = w.getframerate()
             frames_per_chunk = rate * chunk_duration_sec
             
+            # If total audio is shorter than 30s, do not re-slice
+            if frames <= frames_per_chunk:
+                return [wav_bytes]
+
             for i in range(0, frames, frames_per_chunk):
                 if len(chunks) >= max_batches:
                     print(f"[STT_BATCHER] Hit max limit of {max_batches} batches (5 mins). Truncating remaining audio.")
@@ -77,14 +82,14 @@ async def batch_transcribe_audio(audio_bytes: bytes, language: str = "en-IN") ->
     """
     Main entry point for batch processing.
     1. Converts incoming webm/raw audio to a clean 16kHz WAV.
-    2. Slices the WAV into 30-second batches (max 10).
-    3. Sends all batches to the STT API (sequentially to avoid rate limits).
+    2. Slices the WAV into 30-second batches (max 10) only if exceeding 30s.
+    3. Sends batches to the STT API concurrently using the shared HTTP pool.
     4. Stitches the resulting text together.
     """
     lang_config = SUPPORTED_LANGUAGES.get(language, SUPPORTED_LANGUAGES["en-IN"])
     stt_code = lang_config["stt_code"]
 
-    # 1. Convert to clean WAV (this uses ffmpeg which now allows unrestricted length)
+    # 1. Convert to clean WAV
     print(f"[STT_BATCHER] Converting input audio of size {len(audio_bytes)} bytes...")
     wav_bytes = convert_to_wav(audio_bytes)
 
@@ -95,20 +100,16 @@ async def batch_transcribe_audio(audio_bytes: bytes, language: str = "en-IN") ->
     if not chunks:
         return ""
 
-    # 3. Transcribe chunks
-    transcripts = []
-    
-    # We process sequentially to be nice to the API rate limits and keep text strictly ordered.
-    # If speed is paramount, this could be refactored to asyncio.gather with ordered results.
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        for i, chunk in enumerate(chunks):
-            print(f"[STT_BATCHER] Processing chunk {i+1}/{len(chunks)} ({len(chunk)} bytes)...")
-            text = await _transcribe_single_chunk(client, chunk, stt_code, i+1)
-            if text:
-                transcripts.append(text)
+    client = get_http_client()
 
-    # 4. Stitch transcripts
-    final_transcript = " ".join(transcripts).strip()
+    # 3. Transcribe chunks
+    if len(chunks) == 1:
+        final_transcript = await _transcribe_single_chunk(client, chunks[0], stt_code, 1)
+    else:
+        tasks = [_transcribe_single_chunk(client, chunk, stt_code, i+1) for i, chunk in enumerate(chunks)]
+        results = await asyncio.gather(*tasks)
+        transcripts = [t for t in results if t]
+        final_transcript = " ".join(transcripts).strip()
+
     print(f"[STT_BATCHER] Final stitched transcript: '{final_transcript}'")
-    
     return final_transcript

@@ -528,6 +528,19 @@ class AppConfiguration(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
 
+class SystemMaintenance(Base):
+    __tablename__ = "system_maintenance"
+    __table_args__ = {'comment': 'System maintenance mode state and scheduling'}
+
+    id = Column(Integer, primary_key=True, index=True)
+    is_enabled = Column(Boolean, default=False, nullable=False)
+    message = Column(Text, default="We are performing scheduled maintenance to improve your experience. Mythri will be back shortly.")
+    ends_at = Column(DateTime(timezone=True), nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    updated_by = Column(String(100), default="admin")
+
+
 
 def get_db():
     db = SessionLocal()

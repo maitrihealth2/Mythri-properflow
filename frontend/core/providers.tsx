@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { FeatureFlagProvider } from '@/shared/components/contexts/FeatureFlagContext'
+import { MaintenanceGuard } from '@/shared/components/MaintenanceGuard'
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
 
@@ -18,7 +19,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
       <FeatureFlagProvider>
-        {children}
+        <MaintenanceGuard>
+          {children}
+        </MaintenanceGuard>
       </FeatureFlagProvider>
     </ThemeProvider>
   )

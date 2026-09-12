@@ -2,14 +2,14 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-PASS = "PASS ✅"
-FAIL = "FAIL ❌"
+PASS = "PASS [OK]"
+FAIL = "FAIL [X]"
 results = []
 
 def check(label, condition, detail=""):
     status = PASS if condition else FAIL
     results.append((label, condition))
-    print(f"  {status}  {label}" + (f" — {detail}" if detail else ""))
+    print(f"  {status}  {label}" + (f" - {detail}" if detail else ""))
     return condition
 
 
@@ -72,7 +72,7 @@ def run():
     try:
         from modules.voice.stt_batcher import SUPPORTED_LANGUAGES
         check("SUPPORTED_LANGUAGES defined", len(SUPPORTED_LANGUAGES) > 0,
-              f"count={len(SUPPORTED_LANGUAGES)} langs={SUPPORTED_LANGUAGES[:3]}")
+              f"count={len(SUPPORTED_LANGUAGES)} langs={list(SUPPORTED_LANGUAGES.keys())[:3]}")
     except Exception as e:
         check("SUPPORTED_LANGUAGES", False, str(e))
 
@@ -82,9 +82,9 @@ def run():
     total = len(results)
     print(f"RESULT: {passed}/{total} checks passed")
     if passed == total:
-        print("ALL CHECKS PASSED — Voice pipeline verified ✅")
+        print("ALL CHECKS PASSED - Voice pipeline verified [OK]")
     else:
-        print("SOME CHECKS FAILED — see above ❌")
+        print("SOME CHECKS FAILED - see above [X]")
     print("=" * 60)
 
 

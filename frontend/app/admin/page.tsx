@@ -10,7 +10,11 @@ import {
   getAdminUserSessions,
   getAdminSessionMessages,
   exportAdminUserData,
-  deleteAdminUsers
+  deleteAdminUsers,
+  getAdminMaintenanceStatus,
+  setAdminMaintenanceMode,
+  disableAdminMaintenanceMode,
+  MaintenanceStatus
 } from '@/core/api'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -125,6 +129,200 @@ function ConsentModal({ record, onClose }: { record: ConsentRecord; onClose: () 
   )
 }
 
+// ── Maintenance Control Modal ────────────────────────────────────────────────
+function MaintenanceModal({
+  status,
+  onClose,
+  onSave,
+  onDisable,
+  loading,
+}: {
+  status: MaintenanceStatus | null
+  onClose: () => void
+  onSave: (payload: { enabled: boolean; duration_minutes?: number | null; ends_at?: string | null; message?: string }) => Promise<void>
+  onDisable: () => Promise<void>
+  loading: boolean
+}) {
+  const [durationPreset, setDurationPreset] = useState<number | 'custom'>(status?.remaining_seconds ? 'custom' : 30)
+  const [customMinutes, setCustomMinutes] = useState<number>(status?.remaining_seconds ? Math.ceil(status.remaining_seconds / 60) : 30)
+  const [message, setMessage] = useState(status?.message || "We are performing scheduled maintenance to improve your experience. Mythri will be back shortly.")
+  const [confirmDisable, setConfirmDisable] = useState(false)
+
+  const presets = [
+    { label: '15 Mins', value: 15 },
+    { label: '30 Mins', value: 30 },
+    { label: '1 Hour', value: 60 },
+    { label: '2 Hours', value: 120 },
+    { label: '6 Hours', value: 360 },
+    { label: '24 Hours', value: 1440 },
+    { label: 'Custom', value: 'custom' as const },
+  ]
+
+  const handleActivateOrUpdate = async () => {
+    let minutes: number | null = null
+    if (durationPreset === 'custom') {
+      minutes = customMinutes > 0 ? Number(customMinutes) : null
+    } else {
+      minutes = Number(durationPreset)
+    }
+
+    await onSave({
+      enabled: true,
+      duration_minutes: minutes,
+      message: message.trim() || undefined,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div
+        className="relative bg-surface-container-lowest rounded-3xl shadow-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden border border-outline-variant/30"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-outline-variant/30 bg-surface-container-low">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-inner ${
+              status?.enabled ? 'bg-amber-500/20 text-amber-600' : 'bg-primary/10 text-primary'
+            }`}>
+              {status?.enabled ? '🔒' : '🛠️'}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-on-surface font-headline-sm">Maintenance Mode</h2>
+              <p className="text-xs text-on-surface-variant">Lock public access and show countdown timer</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-6">
+          {/* Current Status Box */}
+          <div className={`p-4 rounded-2xl border flex items-center justify-between ${
+            status?.enabled
+              ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+              : 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className={`w-3 h-3 rounded-full ${status?.enabled ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`} />
+              <div>
+                <p className="text-sm font-bold">
+                  {status?.enabled ? 'Maintenance Mode is ACTIVE' : 'Website is LIVE'}
+                </p>
+                <p className="text-xs opacity-80">
+                  {status?.enabled
+                    ? status.ends_at
+                      ? `Scheduled to reopen at ${new Date(status.ends_at).toLocaleTimeString()} (${Math.max(1, Math.ceil((status.remaining_seconds || 0) / 60))} mins remaining)`
+                      : 'No timer set (Indefinite maintenance)'
+                    : 'All users have normal access to Mythri.'}
+                </p>
+              </div>
+            </div>
+
+            {status?.enabled && (
+              <button
+                onClick={async () => {
+                  if (!confirmDisable) {
+                    setConfirmDisable(true)
+                  } else {
+                    await onDisable()
+                    setConfirmDisable(false)
+                  }
+                }}
+                disabled={loading}
+                className="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm bg-red-600 hover:bg-red-700 text-white"
+              >
+                {confirmDisable ? 'Confirm End?' : 'End Maintenance'}
+              </button>
+            )}
+          </div>
+
+          {/* Duration Presets */}
+          <div>
+            <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2.5">
+              Timer Duration (Auto-reopen on complete)
+            </label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {presets.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => setDurationPreset(p.value)}
+                  className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                    durationPreset === p.value
+                      ? 'bg-primary text-on-primary border-primary shadow-sm'
+                      : 'bg-surface hover:bg-surface-variant border-outline-variant/40 text-on-surface'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {durationPreset === 'custom' && (
+              <div className="mt-3 flex items-center gap-3 bg-surface p-3 rounded-xl border border-outline-variant/40">
+                <span className="text-xs text-on-surface-variant font-medium">Duration (in minutes):</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="43200"
+                  value={customMinutes}
+                  onChange={(e) => setCustomMinutes(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-24 px-3 py-1.5 text-sm bg-surface-container-lowest text-on-surface rounded-lg border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/40 font-medium"
+                />
+                <span className="text-xs text-on-surface-variant">
+                  ≈ {(customMinutes / 60).toFixed(1)} hours
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Announcement Message */}
+          <div>
+            <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">
+              Visitor Lock Screen Message
+            </label>
+            <textarea
+              rows={3}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Enter message for visitors during maintenance..."
+              className="w-full p-3.5 bg-surface text-on-surface text-sm rounded-xl border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary/40 leading-relaxed transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-5 border-t border-outline-variant/30 bg-surface-container-low flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-full text-sm font-medium text-on-surface-variant hover:bg-surface-variant transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={handleActivateOrUpdate}
+            disabled={loading}
+            className="px-6 py-2.5 rounded-full bg-primary text-on-primary font-semibold text-sm hover:opacity-90 active:scale-95 shadow-md transition-all flex items-center gap-2"
+          >
+            {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+            <span>{status?.enabled ? 'Update Maintenance' : 'Activate Maintenance Mode'}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -158,13 +356,64 @@ export default function AdminDashboard() {
   
   const [selectedConsent, setSelectedConsent] = useState<ConsentRecord | null>(null)
 
+  // Maintenance State
+  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus | null>(null)
+  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false)
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false)
+
+  const loadMaintenanceStatus = async () => {
+    try {
+      const status = await getAdminMaintenanceStatus()
+      setMaintenanceStatus(status)
+    } catch (e) {
+      console.error('Failed to load maintenance status', e)
+    }
+  }
+
+  const handleSaveMaintenance = async (payload: { enabled: boolean; duration_minutes?: number | null; ends_at?: string | null; message?: string }) => {
+    setMaintenanceLoading(true)
+    try {
+      const updated = await setAdminMaintenanceMode(payload)
+      setMaintenanceStatus(updated)
+      setIsMaintenanceModalOpen(false)
+    } catch (e) {
+      console.error(e)
+      alert('Failed to update maintenance mode')
+    } finally {
+      setMaintenanceLoading(false)
+    }
+  }
+
+  const handleDisableMaintenance = async () => {
+    setMaintenanceLoading(true)
+    try {
+      const updated = await disableAdminMaintenanceMode()
+      setMaintenanceStatus(updated)
+      setIsMaintenanceModalOpen(false)
+    } catch (e) {
+      console.error(e)
+      alert('Failed to disable maintenance mode')
+    } finally {
+      setMaintenanceLoading(false)
+    }
+  }
+
   useEffect(() => {
     const token = sessionStorage.getItem('mb_admin_token')
     if (token) {
       setIsAuthenticated(true)
       loadData(activeTab)
+      loadMaintenanceStatus()
     }
   }, [])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadMaintenanceStatus()
+      const interval = setInterval(loadMaintenanceStatus, 10000)
+      return () => clearInterval(interval)
+    }
+  }, [isAuthenticated])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -457,6 +706,15 @@ export default function AdminDashboard() {
   return (
     <div className={`${isDarkMode ? 'dark' : ''} h-screen w-full overflow-hidden flex flex-col`}>
       {selectedConsent && <ConsentModal record={selectedConsent} onClose={() => setSelectedConsent(null)} />}
+      {isMaintenanceModalOpen && (
+        <MaintenanceModal
+          status={maintenanceStatus}
+          onClose={() => setIsMaintenanceModalOpen(false)}
+          onSave={handleSaveMaintenance}
+          onDisable={handleDisableMaintenance}
+          loading={maintenanceLoading}
+        />
+      )}
 
       <div className="h-full bg-background text-on-background flex flex-col transition-colors duration-300 overflow-hidden">
         <header className="border-b border-outline-variant/30 bg-surface-container-lowest px-8 py-4 flex justify-between items-center flex-shrink-0 shadow-sm z-10">
@@ -465,6 +723,25 @@ export default function AdminDashboard() {
             Mythri Admin
           </h1>
           <div className="flex items-center gap-4">
+            {/* Maintenance Mode Button */}
+            <button
+              onClick={() => setIsMaintenanceModalOpen(true)}
+              className={`px-4 py-2 rounded-full font-label-md text-xs sm:text-sm font-semibold flex items-center gap-2 border transition-all shadow-sm ${
+                maintenanceStatus?.enabled
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-500/25 animate-pulse'
+                  : 'bg-surface border-outline-variant/50 text-on-surface hover:bg-surface-variant'
+              }`}
+              title="Configure Maintenance Mode & Timer"
+            >
+              <span className={`w-2 h-2 rounded-full ${maintenanceStatus?.enabled ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`} />
+              <span>{maintenanceStatus?.enabled ? 'Maintenance Active' : 'Maintenance Mode'}</span>
+              {maintenanceStatus?.enabled && maintenanceStatus.remaining_seconds > 0 && (
+                <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-full font-mono font-bold">
+                  {Math.ceil(maintenanceStatus.remaining_seconds / 60)}m left
+                </span>
+              )}
+            </button>
+
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)} 
               className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface rounded-full transition-colors"

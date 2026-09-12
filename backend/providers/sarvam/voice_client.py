@@ -277,41 +277,42 @@ async def synthesize_speech(
         return b""
 
     # Bulbul v3 has a 500 character limit per request. Split text into chunks safely.
-    # We strictly chunk by punctuation to avoid mid-sentence robotic pauses.
+    # If the text is already a single sentence within limit, do not re-split.
     import re
+    max_len = 150 if language in ["te-IN", "ta-IN"] else 420
     chunks = []
     
-    # Split by sentence endings keeping the punctuation
-    sentences = re.split(r'(?<=[.!?।])\s+', text)
-    
-    max_len = 150 if language in ["te-IN", "ta-IN"] else 420
-    
-    current_chunk = ""
-    for sentence in sentences:
-        if not sentence.strip():
-            continue
-            
-        # If a single sentence is bizarrely long, we have to split it by commas
-        if len(sentence) > max_len:
-            sub_clauses = re.split(r'(?<=[,;])\s+', sentence)
-            for clause in sub_clauses:
-                if len(current_chunk) + len(clause) + 1 > max_len:
-                    if current_chunk:
-                        chunks.append(current_chunk.strip())
-                    current_chunk = clause + " "
-                else:
-                    current_chunk += clause + " "
-            continue
-            
-        if len(current_chunk) + len(sentence) + 1 > max_len:
-            if current_chunk:
-                chunks.append(current_chunk.strip())
-            current_chunk = sentence + " "
-        else:
-            current_chunk += sentence + " "
-            
-    if current_chunk.strip():
-        chunks.append(current_chunk.strip())
+    if len(text) <= max_len:
+        chunks = [text.strip()]
+    else:
+        # Split by sentence endings keeping the punctuation
+        sentences = re.split(r'(?<=[.!?।])\s+', text)
+        current_chunk = ""
+        for sentence in sentences:
+            if not sentence.strip():
+                continue
+                
+            # If a single sentence is bizarrely long, split by commas
+            if len(sentence) > max_len:
+                sub_clauses = re.split(r'(?<=[,;])\s+', sentence)
+                for clause in sub_clauses:
+                    if len(current_chunk) + len(clause) + 1 > max_len:
+                        if current_chunk:
+                            chunks.append(current_chunk.strip())
+                        current_chunk = clause + " "
+                    else:
+                        current_chunk += clause + " "
+                continue
+                
+            if len(current_chunk) + len(sentence) + 1 > max_len:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                current_chunk = sentence + " "
+            else:
+                current_chunk += sentence + " "
+                
+        if current_chunk.strip():
+            chunks.append(current_chunk.strip())
 
     import wave
     import io

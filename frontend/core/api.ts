@@ -233,6 +233,15 @@ export async function submitFeedback(content: string) {
   return res.data
 }
 
+export async function getBaselineShiftAnalytics() {
+  try {
+    const res = await api.get('/api/consultation/baseline_analytics')
+    return res.data
+  } catch (err) {
+    return null
+  }
+}
+
 
 // ==========================================
 // Admin
@@ -289,4 +298,44 @@ export async function getProfile() {
 export async function updateProfile(data: any) {
   const res = await api.put('/api/user/profile', data)
   return res.data
+}
+
+// ==========================================
+// Maintenance Mode
+// ==========================================
+export interface MaintenanceStatus {
+  enabled: boolean
+  message: string
+  ends_at: string | null
+  started_at: string | null
+  remaining_seconds: number
+  server_time: string
+  updated_by?: string
+}
+
+export interface SetMaintenancePayload {
+  enabled: boolean
+  duration_minutes?: number | null
+  ends_at?: string | null
+  message?: string | null
+}
+
+export const getMaintenanceStatus = async (): Promise<MaintenanceStatus> => {
+  const response = await api.get('/api/system/maintenance')
+  return response.data
+}
+
+export const getAdminMaintenanceStatus = async (): Promise<MaintenanceStatus> => {
+  const response = await api.get('/api/admin/maintenance')
+  return response.data
+}
+
+export const setAdminMaintenanceMode = async (payload: SetMaintenancePayload): Promise<MaintenanceStatus> => {
+  const response = await api.post('/api/admin/maintenance/set', payload)
+  return response.data
+}
+
+export const disableAdminMaintenanceMode = async (): Promise<MaintenanceStatus> => {
+  const response = await api.post('/api/admin/maintenance/disable')
+  return response.data
 }

@@ -13,8 +13,8 @@ import MythriAura, { AuraState } from '@/shared/components/MythriAura'
 
 type ConvState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'paused'
 
-const SILENCE_THRESHOLD = 0.05
-const SILENCE_MS = 3000
+const SILENCE_THRESHOLD = 0.02
+const SILENCE_MS = 1200
 
 const translations = {
   en: { statusSpeak: "MYTHRI IS SPEAKING", statusListen: "LISTENING", statusThink: "THINKING", statusMute: "MICROPHONE MUTED", statusPause: "PAUSED", titleListen: "I'm listening to you.", titleThink: "The Space Between Thoughts", titlePause: "Conversation Paused", titleIdle: "Mythri is resting" },
@@ -540,7 +540,8 @@ export default function VoiceModePage() {
 
       ctx.lineCap = 'round'
       ctx.lineWidth = 4
-      ctx.strokeStyle = 'rgba(122, 74, 95, 0.7)'
+      const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+      ctx.strokeStyle = isDark ? 'rgba(215, 195, 235, 0.85)' : 'rgba(122, 74, 95, 0.7)'
 
       for (let i = 0; i < points; i++) {
         const angle = (i / points) * Math.PI * 2
@@ -671,13 +672,21 @@ export default function VoiceModePage() {
             background-color: transparent;
         }
       `}} />
-      <div className={`bg-gradient-voice h-[100dvh] flex flex-col items-center justify-between overflow-hidden fixed inset-0 state-${convState} bg-[#FFFDF9] dark:bg-[#141218]`}>
-        {/* Base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFFDF9] via-[#FDF5F2] to-[#F5E6E1] dark:from-[#141218] dark:via-[#1A161E] dark:to-[#221A21] z-0" />
+      <div className={`bg-gradient-voice h-[100dvh] flex flex-col items-center justify-between overflow-hidden fixed inset-0 state-${convState} bg-[#FFFDF9] dark:bg-[#0a080c]`}>
+        {/* Base background image matching Chat Page */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 bg-[url('/mythri_gradient_bg.jpg')] dark:bg-[url('/mythri_gradient_bg_dark_v2.jpg')] z-0"
+        />
+
+        {/* Semi-transparent overlay to ensure text and aura readability */}
+        <div className="absolute inset-0 bg-white/40 dark:bg-black/20 z-0 pointer-events-none" />
+
+        {/* Base gradient (softened to let the image peek through) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FFFDF9]/60 via-[#FDF5F2]/50 to-[#F5E6E1]/60 dark:from-[#141218]/30 dark:via-transparent dark:to-[#221A21]/30 z-0 pointer-events-none" />
         
         {/* Swirling Layer 1 - Muted Plum */}
         <motion.div
-          className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] rounded-[40%_60%_70%_30%] blur-[100px] opacity-[0.15] dark:opacity-[0.08] z-0"
+          className="absolute top-[-20%] left-[-10%] w-[80vw] h-[80vw] rounded-[40%_60%_70%_30%] blur-[100px] opacity-[0.18] dark:opacity-[0.14] z-0"
           style={{ background: 'radial-gradient(circle, #7A4A5F 0%, transparent 70%)' }}
           animate={{ 
             rotate: [0, 90, 180, 270, 360],
@@ -689,7 +698,7 @@ export default function VoiceModePage() {
         
         {/* Swirling Layer 2 - Dusty Mauve */}
         <motion.div
-          className="absolute top-[30%] right-[-20%] w-[70vw] h-[70vw] rounded-[60%_40%_30%_70%] blur-[120px] opacity-[0.12] dark:opacity-[0.07] z-0"
+          className="absolute top-[30%] right-[-20%] w-[70vw] h-[70vw] rounded-[60%_40%_30%_70%] blur-[120px] opacity-[0.15] dark:opacity-[0.12] z-0"
           style={{ background: 'radial-gradient(circle, #9A7B88 0%, transparent 70%)' }}
           animate={{ 
             rotate: [360, 270, 180, 90, 0],
@@ -702,7 +711,7 @@ export default function VoiceModePage() {
         
         {/* Swirling Layer 3 - Warm Brown / Blush */}
         <motion.div
-          className="absolute bottom-[-20%] left-[20%] w-[90vw] h-[60vw] rounded-[50%] blur-[140px] opacity-[0.1] dark:opacity-[0.05] z-0"
+          className="absolute bottom-[-20%] left-[20%] w-[90vw] h-[60vw] rounded-[50%] blur-[140px] opacity-[0.12] dark:opacity-[0.08] z-0"
           style={{ background: 'radial-gradient(ellipse, #A68A80 0%, transparent 60%)' }}
           animate={{ 
             rotate: [0, -45, 0, 45, 0],
@@ -713,60 +722,60 @@ export default function VoiceModePage() {
         
         {/* Subtle Breathing overlay during AI Activity */}
         <motion.div 
-          className="absolute inset-0 bg-[#7A4A5F]/[0.02] dark:bg-[#d0bcff]/[0.01] z-0"
+          className="absolute inset-0 bg-[#7A4A5F]/[0.03] dark:bg-[#d0bcff]/[0.02] z-0 pointer-events-none"
           animate={{ opacity: convState === 'listening' || convState === 'speaking' ? [0, 1, 0] : 0 }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         />
         
         {/* Center content mask to keep readability high */}
-        <div className="absolute inset-x-[10%] inset-y-[5%] bg-white/[0.25] dark:bg-black/[0.15] blur-[80px] rounded-full pointer-events-none z-0" />
+        <div className="absolute inset-x-[10%] inset-y-[5%] bg-white/[0.2] dark:bg-black/[0.1] blur-[80px] rounded-full pointer-events-none z-0" />
 
         {/* TopAppBar */}
         <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-margin-desktop py-4 md:py-6 bg-transparent animate-fade-in-up">
-          <div className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 ml-2">Mythri</div>
+          <div className="text-headline-md font-headline-md font-medium text-primary dark:text-[#F3ECF2] ml-2">Mythri</div>
           <div className="flex gap-3 md:gap-4 items-center relative mr-2">
             <ThemeToggle />
-            <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMainMenuOpen(false) }} className="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors dark:hover:bg-white/10">language</button>
-            <button onClick={() => { setMainMenuOpen(!mainMenuOpen); setLangMenuOpen(false) }} className="hidden md:block material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors dark:hover:bg-white/10">grid_view</button>
-            <button onClick={() => router.replace('/text-chat')} className="md:hidden material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors dark:hover:bg-white/10">close</button>
+            <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMainMenuOpen(false) }} className="material-symbols-outlined text-on-surface-variant dark:text-white/80 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-colors">language</button>
+            <button onClick={() => { setMainMenuOpen(!mainMenuOpen); setLangMenuOpen(false) }} className="hidden md:block material-symbols-outlined text-on-surface-variant dark:text-white/80 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-colors">grid_view</button>
+            <button onClick={() => router.replace('/text-chat')} className="md:hidden material-symbols-outlined text-on-surface-variant dark:text-white/80 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-colors">close</button>
           </div>
 
           {/* Desktop Main Menu */}
-          <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 glass-menu rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+          <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 glass-menu dark:bg-[#1C1822]/95 dark:border-white/10 rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto shadow-2xl' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
+            <Link href="/home" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
             </Link>
-            <Link href="/text-chat" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/text-chat" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
             </Link>
-            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/history" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
             </Link>
-            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/profile" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
             </Link>
-            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <Link href="/feedback" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
             </Link>
-            <div className="h-px bg-outline-variant/30 my-1 mx-2"></div>
+            <div className="h-px bg-outline-variant/30 dark:bg-white/10 my-1 mx-2"></div>
             <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
             </button>
           </nav>
 
           {/* Language Menu */}
-          <div className={`absolute right-16 md:right-20 top-[100%] mt-2 w-40 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
-            <button onClick={() => changeLanguage('en')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'en' ? 'text-primary dark:text-white/90 font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
-            <button onClick={() => changeLanguage('hi')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'hi' ? 'text-primary dark:text-white/90 font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Hindi</button>
-            <button onClick={() => changeLanguage('te')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'te' ? 'text-primary dark:text-white/90 font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Telugu</button>
-            <button onClick={() => changeLanguage('ta')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'ta' ? 'text-primary dark:text-white/90 font-bold bg-white/80 dark:bg-white/20 hover:bg-white/90 dark:hover:bg-white/30' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>Tamil</button>
+          <div className={`absolute right-16 md:right-20 top-[100%] mt-2 w-40 glass-menu dark:bg-[#1C1822]/95 dark:border-white/10 rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto shadow-2xl' : 'scale-95 opacity-0 pointer-events-none'}`}>
+            <button onClick={() => changeLanguage('en')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'en' ? 'text-primary dark:text-[#D0BCFF] font-bold bg-white/80 dark:bg-white/15' : 'text-on-surface-variant dark:text-white/70 hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
+            <button onClick={() => changeLanguage('hi')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'hi' ? 'text-primary dark:text-[#D0BCFF] font-bold bg-white/80 dark:bg-white/15' : 'text-on-surface-variant dark:text-white/70 hover:bg-white/60 dark:hover:bg-white/10'}`}>Hindi</button>
+            <button onClick={() => changeLanguage('te')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'te' ? 'text-primary dark:text-[#D0BCFF] font-bold bg-white/80 dark:bg-white/15' : 'text-on-surface-variant dark:text-white/70 hover:bg-white/60 dark:hover:bg-white/10'}`}>Telugu</button>
+            <button onClick={() => changeLanguage('ta')} className={`transition-colors px-4 py-2 rounded-xl text-left font-label-md ${currentLang === 'ta' ? 'text-primary dark:text-[#D0BCFF] font-bold bg-white/80 dark:bg-white/15' : 'text-on-surface-variant dark:text-white/70 hover:bg-white/60 dark:hover:bg-white/10'}`}>Tamil</button>
           </div>
         </nav>
 
         {/* Main Content */}
-        <main className="flex-1 w-full flex flex-col items-center justify-center z-10 px-4 h-full pb-16 md:pb-20 pt-20 animate-fade-in-up relative">
+        <main className="flex-1 w-full flex flex-col items-center justify-center z-10 px-4 h-full pb-20 pt-20 animate-fade-in-up relative">
           <div className="text-center transition-opacity duration-500">
-            <p className={`text-label-md font-label-md opacity-60 tracking-[0.2em] uppercase ${isMuted ? 'text-error' : 'text-primary dark:text-white/90'}`}>
+            <p className={`text-label-md font-label-md tracking-[0.25em] uppercase text-xs sm:text-sm font-semibold ${isMuted ? 'text-error' : 'text-primary/70 dark:text-[#D0BCFF]'}`}>
               {currentStatusText}
             </p>
           </div>
@@ -785,48 +794,54 @@ export default function VoiceModePage() {
           </div>
 
           <div className="text-center max-w-lg w-full flex flex-col items-center gap-4 md:gap-6">
-            <h1 className="text-headline-lg font-headline-md text-primary dark:text-white/90 transition-opacity duration-500" style={{ opacity: convState === 'thinking' ? 0.4 : 1 }}>
+            <h1 className="text-headline-lg font-headline-md text-primary dark:text-[#F6EFF4] transition-opacity duration-500 font-serif" style={{ opacity: convState === 'thinking' ? 0.4 : 1 }}>
               {currentTitle}
             </h1>
 
-            <div className="flex flex-col items-center gap-2 w-full text-body-md md:text-body-lg font-body-md text-on-surface-variant min-h-[60px] md:min-h-[80px] max-h-[25vh] overflow-y-auto px-2">
-              <p className="font-medium text-on-surface-variant italic opacity-70">
-                {userTranscript ? `"${userTranscript}"` : ""}
-              </p>
-              <p className="font-medium text-primary dark:text-white/90">
-                {agentResponse}
-              </p>
+            <div className="flex flex-col items-center gap-2 w-full text-body-md md:text-body-lg font-body-md min-h-[60px] md:min-h-[80px] max-h-[25vh] overflow-y-auto px-4 py-2 rounded-2xl">
+              {userTranscript && (
+                <p className="font-medium italic text-on-surface-variant/80 dark:text-[#C5BCC4]">
+                  "{userTranscript}"
+                </p>
+              )}
+              {agentResponse && (
+                <p className="font-medium text-primary dark:text-[#F3ECF2] leading-relaxed">
+                  {agentResponse}
+                </p>
+              )}
             </div>
           </div>
         </main>
 
         {/* Controls Footer */}
-        <footer className="w-full pb-12 md:pb-16 pt-4 flex flex-col items-center z-20 fixed bottom-0 bg-gradient-to-t from-[#fff8f5] dark:from-black via-[#fff8f5]/90 dark:via-black/90 to-transparent transition-transform duration-600">
-          <div className="flex items-center gap-8 md:gap-16 justify-center">
-            <button onClick={toggleMute} disabled={isPaused} className="group flex flex-col items-center gap-2 disabled:opacity-50">
-              <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full border flex items-center justify-center transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm backdrop-blur-md ${isMuted ? 'border-error text-error bg-error/10' : 'border-outline/30 text-on-surface-variant group-hover:bg-white/60 group-hover:border-outline/50'}`}>
-                <span className="material-symbols-outlined text-[22px] md:text-[26px]" style={{ fontVariationSettings: isMuted ? "'FILL' 1" : "'FILL' 0" }}>
+        <footer className="w-full pb-10 md:pb-14 pt-6 flex flex-col items-center z-20 fixed bottom-0 bg-gradient-to-t from-[#FFFDF9] dark:from-[#0a080c] via-[#FFFDF9]/80 dark:via-[#0a080c]/80 to-transparent transition-transform duration-500 pointer-events-auto">
+          <div className="flex items-center gap-8 md:gap-14 justify-center">
+            {/* Mute Button */}
+            <button onClick={toggleMute} disabled={isPaused} className="group flex flex-col items-center gap-2 disabled:opacity-50 transition-transform active:scale-95" title={isMuted ? "Unmute" : "Mute"}>
+              <div className={`w-13 h-13 md:w-14 md:h-14 rounded-full border flex items-center justify-center transition-all duration-200 shadow-sm backdrop-blur-md ${isMuted ? 'border-error text-error bg-error/10 dark:bg-error/20 dark:border-error/40' : 'border-outline/30 dark:border-white/20 text-on-surface-variant dark:text-white/80 bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/15'}`}>
+                <span className="material-symbols-outlined text-[24px] md:text-[26px]" style={{ fontVariationSettings: isMuted ? "'FILL' 1" : "'FILL' 0" }}>
                   {isMuted ? 'mic_off' : 'mic'}
                 </span>
               </div>
             </button>
 
-            <button onClick={togglePause} className="group relative flex items-center justify-center mx-2 md:mx-0">
-              <div className="absolute inset-0 bg-primary opacity-5 rounded-full scale-125 md:scale-150 blur-xl transition-all group-hover:scale-150 md:group-hover:scale-[1.7]"></div>
-              <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-lg relative z-10 ${isPaused ? 'bg-transparent text-primary dark:text-white border-2 border-primary/50 dark:border-white/50' : 'bg-primary text-on-primary hover:bg-primary/90 shadow-primary/20'}`}>
-                <span className="material-symbols-outlined text-[28px] md:text-[36px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+            {/* Main Play / Pause Button */}
+            <button onClick={togglePause} className="group relative flex items-center justify-center mx-2 md:mx-0 transition-transform active:scale-95" title={isPaused ? "Resume" : "Pause"}>
+              <div className="absolute inset-0 bg-primary dark:bg-[#7A4A5F] opacity-20 dark:opacity-30 rounded-full scale-125 md:scale-150 blur-xl transition-all group-hover:scale-150 md:group-hover:scale-[1.7]"></div>
+              <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-200 shadow-xl relative z-10 ${isPaused ? 'bg-white/40 dark:bg-white/10 text-primary dark:text-[#D0BCFF] border-2 border-primary/50 dark:border-[#D0BCFF]/60 backdrop-blur-md' : 'bg-primary dark:bg-[#7A4A5F] text-white hover:bg-primary/90 dark:hover:bg-[#8D586F] shadow-primary/25 dark:shadow-[#7A4A5F]/40'}`}>
+                <span className="material-symbols-outlined text-[30px] md:text-[38px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                   {isPaused ? 'play_arrow' : 'pause'}
                 </span>
               </div>
             </button>
 
-            <button onClick={handleStopConversation} className="group flex flex-col items-center gap-2">
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-error/10 border border-error/20 flex items-center justify-center text-error hover:bg-error hover:text-on-error transition-transform duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm backdrop-blur-md">
-                <span className="material-symbols-outlined text-[22px] md:text-[26px]" style={{ fontVariationSettings: "'FILL' 1" }}>call_end</span>
+            {/* End Call Button */}
+            <button onClick={handleStopConversation} className="group flex flex-col items-center gap-2 transition-transform active:scale-95" title="End call and go to text chat">
+              <div className="w-13 h-13 md:w-14 md:h-14 rounded-full bg-error/10 dark:bg-error/20 border border-error/20 dark:border-error/30 flex items-center justify-center text-error hover:bg-error hover:text-white dark:hover:bg-error dark:hover:text-white transition-all duration-200 shadow-sm backdrop-blur-md">
+                <span className="material-symbols-outlined text-[24px] md:text-[26px]" style={{ fontVariationSettings: "'FILL' 1" }}>call_end</span>
               </div>
             </button>
           </div>
-          {/* Removed the hint text since idle state is not fully implemented in the same way, we just rely on pause/mute */}
         </footer>
       </div>
     </>
