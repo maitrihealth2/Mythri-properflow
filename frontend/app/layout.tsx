@@ -14,8 +14,28 @@ const literata = Literata({
 export const metadata: Metadata = {
   title: 'Mythri | Sanctuary',
   description: 'A safe, quiet space for reflection and healing. Built by Affyne Labs.',
-  keywords: 'mental health, AI companion, therapy, support, Affyne Labs, Mythri',
+  keywords: 'mental health, AI companion, therapy, support, Affyne Labs, Mythri, sanctuary',
   authors: [{ name: 'Affyne Labs', url: 'https://affynelabs.com' }],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Mythri',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: ['/favicon.ico'],
+  },
 }
 
 export const viewport: Viewport = {
@@ -23,6 +43,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fff8f5' },
+    { media: '(prefers-color-scheme: dark)', color: '#141218' },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

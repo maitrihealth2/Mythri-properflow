@@ -8,9 +8,11 @@ import { getProfile, updateProfile, logout } from '@/core/api'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
 import { useTheme } from 'next-themes'
+import { usePWAContext } from '@/shared/components/PWAProvider'
 
 export default function ProfilePage() {
     const router = useRouter()
+    const { isInstallable, isInstalled, isStandalone, promptInstall } = usePWAContext()
     const [mainMenuOpen, setMainMenuOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -664,6 +666,46 @@ export default function ProfilePage() {
                                         <button className="text-primary hover:underline ml-2 text-xs font-medium">Review</button>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progressive Web App / Standalone Installation Panel */}
+                    <div className="glass-panel-premium rounded-[2rem] p-6 lg:p-10 transition-all duration-300 hover:shadow-xl hover:-translate-y-[1px] hover:shadow-primary/5 group relative overflow-hidden">
+                        <div className="flex justify-between items-center mb-6 relative z-10">
+                            <div>
+                                <h3 className="text-headline-sm font-headline-md text-primary">Mythri Application</h3>
+                                <p className="text-xs font-label-md text-on-surface-variant uppercase tracking-widest mt-1 opacity-70">Desktop & Mobile App Experience</p>
+                            </div>
+                            <span className="material-symbols-outlined text-primary text-[26px]">install_mobile</span>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 p-5 rounded-2xl bg-white/40 dark:bg-black/20 border border-primary/10 relative z-10">
+                            <div className="flex-1">
+                                <h4 className="text-base font-headline-md text-primary mb-1">
+                                    {isStandalone || isInstalled ? 'Application Installed' : 'Install Mythri Sanctuary'}
+                                </h4>
+                                <p className="text-xs sm:text-sm font-body-sm text-on-surface-variant">
+                                    {isStandalone || isInstalled
+                                        ? 'You are running the official Mythri standalone application. Fast loading and offline shell enabled.'
+                                        : 'Install Mythri to your home screen or desktop for an app experience with quick access.'}
+                                </p>
+                            </div>
+                            <div>
+                                {isStandalone || isInstalled ? (
+                                    <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                                        <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                        <span>Installed</span>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => promptInstall()}
+                                        className="px-5 py-2.5 rounded-xl bg-primary text-white font-medium text-xs sm:text-sm hover:bg-primary/90 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">download</span>
+                                        <span>Install App</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>

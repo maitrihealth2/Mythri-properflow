@@ -1,0 +1,70 @@
+{
+  "name": "Mythri | Sanctuary",
+  "short_name": "Mythri",
+  "description": "A safe, quiet space for reflection and healing. Built by Affyne Labs.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#fff8f5",
+  "theme_color": "#603347",
+  "categories": ["health", "lifestyle", "medical"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Chat Consultation",
+      "short_name": "Chat",
+      "description": "Start a quiet chat session with Mythri",
+      "url": "/text-chat",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Voice Sanctuary",
+      "short_name": "Voice",
+      "description": "Speak freely in real-time voice mode",
+      "url": "/voice-chat",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mindful Exercises",
+      "short_name": "Exercises",
+      "description": "Guided breathing and grounding techniques",
+      "url": "/exercises",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Reflections",
+      "short_name": "History",
+      "description": "Review your past journal reflections",
+      "url": "/history",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

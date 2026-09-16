@@ -14,8 +14,10 @@ import {
   Menu, 
   X, 
   Compass,
+  Download,
   LucideIcon
 } from 'lucide-react'
+import { usePWAContext } from '@/shared/components/PWAProvider'
 
 interface NavItem {
   id: string
@@ -39,6 +41,7 @@ export default function RadialNav() {
   const router = useRouter()
   const pathname = usePathname()
   const containerRef = useRef<HTMLDivElement>(null)
+  const { isInstallable, isStandalone, promptInstall } = usePWAContext()
 
   // Auto-close on click outside or escape
   useEffect(() => {
@@ -130,6 +133,23 @@ export default function RadialNav() {
                   </button>
                 )
               })}
+
+              {/* Install App Option (shown only when installable & not already standalone) */}
+              {isInstallable && !isStandalone && (
+                <>
+                  <div className="my-1 border-t border-black/5 dark:border-white/10" />
+                  <button
+                    onClick={() => {
+                      setIsOpen(false)
+                      promptInstall()
+                    }}
+                    className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-left text-xs font-semibold text-primary dark:text-plum-light bg-primary/5 dark:bg-primary/10 hover:bg-primary/15 transition-colors"
+                  >
+                    <Download size={16} strokeWidth={2.2} className="flex-shrink-0 text-primary dark:text-plum-light" />
+                    <span className="flex-1 truncate">Install App</span>
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}

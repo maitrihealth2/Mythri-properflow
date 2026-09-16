@@ -5,6 +5,8 @@ import { ThemeProvider } from 'next-themes'
 import { FeatureFlagProvider } from '@/shared/components/contexts/FeatureFlagContext'
 import { MaintenanceGuard } from '@/shared/components/MaintenanceGuard'
 
+import { PWAProvider } from '@/shared/components/PWAProvider'
+
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -18,11 +20,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
-      <FeatureFlagProvider>
-        <MaintenanceGuard>
-          {children}
-        </MaintenanceGuard>
-      </FeatureFlagProvider>
+      <PWAProvider>
+        <FeatureFlagProvider>
+          <MaintenanceGuard>
+            {children}
+          </MaintenanceGuard>
+        </FeatureFlagProvider>
+      </PWAProvider>
     </ThemeProvider>
   )
 }
