@@ -8,7 +8,6 @@ import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
-import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import MythriAura, { AuraState } from '@/shared/components/MythriAura'
 
@@ -39,7 +38,6 @@ export default function VoiceModePage() {
   const [mainMenuOpen, setMainMenuOpen] = useState(false)
   const [exerciseMode, setExerciseMode] = useState<string | null>(null)
   const [currentLang, setCurrentLang] = useState<'en' | 'hi' | 'te' | 'ta'>('en')
-  const { theme } = useTheme()
 
   const initialized = useRef(false)
   const streamRef = useRef<MediaStream | null>(null)

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
 import RadialNav from './RadialNav'
+import ThemeToggle from './ThemeToggle'
 
 const LANGUAGES = [
   { code: 'en-IN', native: 'English' },
@@ -13,13 +13,10 @@ const LANGUAGES = [
 ]
 
 export default function TopNav() {
-  const [mounted, setMounted] = useState(false)
   const [language, setLanguage] = useState('en-IN')
-  const { theme, setTheme } = useTheme()
   const router = useRouter()
 
   useEffect(() => {
-    setMounted(true)
     const lang = localStorage.getItem('mb_language') || 'en-IN'
     setLanguage(lang)
   }, [])
@@ -61,17 +58,7 @@ export default function TopNav() {
           </select>
 
           {/* Theme Toggle */}
-          {mounted && (
-            <button 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-surface-container border border-outline-variant/50 hover:bg-surface-container-highest transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
-              title="Toggle Theme"
-            >
-              <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
-                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-              </span>
-            </button>
-          )}
+          <ThemeToggle />
 
           {/* New Chat Button */}
           <button 

@@ -25,8 +25,8 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
     try {
       const status = await getMaintenanceStatus()
       setMaintenance(status)
-    } catch (err) {
-      console.warn('[MaintenanceGuard] Could not fetch maintenance status', err)
+    } catch {
+      // Silent failover during server restart or temporary offline
     } finally {
       setLoading(false)
     }
