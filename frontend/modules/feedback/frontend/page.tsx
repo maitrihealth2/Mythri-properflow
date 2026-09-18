@@ -63,15 +63,15 @@ export default function FeedbackPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#fff8f5]/60 via-transparent to-[#fff8f5]/80 dark:from-black/60 dark:to-black/80"></div>
       </div>
 
-      {/* Navigation */}
-      <header className="fixed top-0 z-40 w-full px-5 md:px-8 py-4 lg:py-5 flex justify-between items-center transition-all animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-        <div className="flex items-center gap-3">
+      {/* Floating Navigation */}
+      <header className="fixed top-0 z-40 w-full px-4 sm:px-6 md:px-8 py-4 lg:py-5 flex justify-between items-center pointer-events-none transition-all animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <div className="flex items-center gap-3 pointer-events-auto">
           <RadialNav />
           <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 tracking-wide">Mythri</span>
         </div>
-        <div className="relative flex items-center gap-2">
+        <div className="relative flex items-center gap-2 pointer-events-auto">
           <ThemeToggle />
-          <button onClick={() => setMenuOpen(!menuOpen)} className="w-12 h-12 flex items-center justify-center rounded-full glass-panel text-primary dark:text-white/90 transition-all active:scale-95 z-50">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="w-11 h-11 flex items-center justify-center rounded-full glass-panel text-primary dark:text-white/90 transition-all active:scale-95 z-50">
             <span className="material-symbols-outlined text-[24px]">grid_view</span>
           </button>
           

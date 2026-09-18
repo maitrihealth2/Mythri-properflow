@@ -637,21 +637,21 @@ export default function ConsultationPage() {
         .animate-breathe { animation: breathe 2.5s ease-in-out infinite; }
       `}} suppressHydrationWarning />
 
-      {/* ── Desktop Header ── */}
-      <header className="hidden md:flex fixed top-0 z-40 justify-between items-center w-full px-margin-desktop py-4 pointer-events-none animate-fade-in-up bg-transparent" style={{ animationDelay: '0.1s' }}>
-        <div className="flex items-center gap-3 pointer-events-auto">
+      {/* ── Top Floating Navigation (Unified Mobile & Desktop) ── */}
+      <header className="fixed top-0 z-40 flex justify-between items-center w-full px-4 sm:px-6 md:px-margin-desktop py-3.5 sm:py-4 pointer-events-none transition-all">
+        <div className="flex items-center gap-2.5 sm:gap-3 pointer-events-auto">
           <RadialNav />
-          <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white/50 dark:border-white/20 p-2 rounded-full transition-all duration-150 hover:bg-white/80 dark:hover:bg-white/20 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
+          <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm">home</Link>
           <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 drop-shadow-md">Mythri</span>
         </div>
-        <div className="flex items-center gap-4 relative pointer-events-auto">
+        <div className="flex items-center gap-2 sm:gap-3 relative pointer-events-auto">
           <ThemeToggle />
 
-          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">add</button>
-          <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">language</button>
-          <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 bg-white/60 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/80 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/20">grid_view</button>
+          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all duration-150 active:scale-95 hover:scale-105">add</button>
+          <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all duration-150 active:scale-95 hover:scale-105">language</button>
+          <button onClick={() => { setMenuOpen(!menuOpen); setLangMenuOpen(false) }} className="hidden md:flex material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all duration-150 active:scale-95 hover:scale-105">grid_view</button>
 
-          {/* Dropdown */}
+          {/* Desktop Menu Dropdown */}
           <nav className={`absolute right-0 top-[100%] mt-2 w-56 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
             <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
@@ -685,28 +685,7 @@ export default function ConsultationPage() {
           </nav>
 
           {/* Language menu */}
-          <div className={`absolute right-12 top-[100%] mt-2 w-40 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
-            <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
-            <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>हिंदी (Hindi)</button>
-            <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>తెలుగు (Telugu)</button>
-            <button onClick={() => changeLanguage('ta-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'ta-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>தமிழ் (Tamil)</button>
-          </div>
-        </div>
-      </header>
-
-      {/* ── Mobile Header ── */}
-      <header className="flex md:hidden fixed top-0 z-40 justify-between items-center w-full px-4 py-3 bg-white/60 dark:bg-[#121212]/80 backdrop-blur-md border-b border-white/40 dark:border-white/10 shadow-sm pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <RadialNav />
-          <Link href="/home" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm">home</Link>
-          <span className="text-headline-md font-headline-md font-medium text-primary drop-shadow-md">Mythri</span>
-        </div>
-        <div className="flex items-center gap-2 relative pointer-events-auto mr-2">
-          <ThemeToggle />
-
-          <button onClick={handleNewChat} title="New Chat" className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">add</button>
-          <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="material-symbols-outlined text-primary bg-white/60 backdrop-blur-md border border-white/50 p-2 rounded-full transition-all duration-150 active:scale-[0.98] hover:scale-[1.02] shadow-sm dark:bg-white/10 dark:border-white/20">language</button>
-          <div className={`absolute right-0 top-[100%] mt-2 w-40 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
+          <div className={`absolute right-0 sm:right-12 top-[100%] mt-2 w-40 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-95 opacity-0 pointer-events-none'}`}>
             <button onClick={() => changeLanguage('en-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'en-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>English</button>
             <button onClick={() => changeLanguage('hi-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'hi-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>हिंदी (Hindi)</button>
             <button onClick={() => changeLanguage('te-IN')} className={`px-4 py-2 rounded-xl text-left font-label-md transition-colors ${language === 'te-IN' ? 'bg-white/80 dark:bg-white/20 text-primary font-bold' : 'text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10'}`}>తెలుగు (Telugu)</button>

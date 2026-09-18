@@ -31,8 +31,8 @@ export default function TopNav() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm transition-colors duration-300">
-      <div className="px-4 sm:px-6 py-3.5 flex justify-between items-center max-w-[1200px] mx-auto pointer-events-none">
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none transition-all duration-300">
+      <div className="px-4 sm:px-6 py-4 flex justify-between items-center max-w-[1200px] mx-auto pointer-events-none">
         
         {/* Left Area: Radial Menu & Brand Logo */}
         <div className="pointer-events-auto flex items-center gap-3">

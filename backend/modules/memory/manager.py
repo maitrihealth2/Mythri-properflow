@@ -25,6 +25,8 @@ from modules.memory.types import (
 from modules.memory.read_pipeline import MemoryReadPipeline
 from modules.memory.retrieval import MemoryRetrievalEngine
 from modules.memory.prompt_context import PromptContextEngine, PromptContext
+from modules.memory.short_term import short_term_engine
+from modules.memory.index import index_engine
 
 
 class MemoryManager:
@@ -51,8 +53,12 @@ class MemoryManager:
         self.pipeline = pipeline or MemoryPipeline()
         self.dispatcher = dispatcher or MemoryEventDispatcher()
         
-        # Initialize Read Path Integration
-        self.retrieval_engine = MemoryRetrievalEngine(repository=self.repository)
+        # Initialize Read Path Integration with active working memory and index engines
+        self.retrieval_engine = MemoryRetrievalEngine(
+            repository=self.repository,
+            short_term_engine=short_term_engine,
+            index_engine=index_engine,
+        )
         self.read_pipeline = MemoryReadPipeline(retrieval_engine=self.retrieval_engine)
         self.prompt_context_engine = PromptContextEngine()
 

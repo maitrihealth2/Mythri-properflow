@@ -25,8 +25,8 @@ class MemoryQualityPolicy:
         "ok", "okay", "fine", "yeah", "cool", "alright", "hmm", "k", "yep", "yes", "no", "nah", "idk"
     }
 
-    MIN_CHARACTER_LENGTH: int = 12
-    MIN_WORD_COUNT: int = 3
+    MIN_CHARACTER_LENGTH: int = 6
+    MIN_WORD_COUNT: int = 2
 
     @classmethod
     def should_extract(cls, user_message: str) -> bool:

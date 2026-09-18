@@ -66,9 +66,9 @@ class MemoryExtractor(MemoryExtractorProtocol):
     # Category Pattern Specifications: (Category, Regex Pattern, Importance Default)
     PATTERNS: List[Tuple[MemoryCategory, re.Pattern, float]] = [
         (
-            MemoryCategory.RELATIONSHIP,
+            MemoryCategory.FACT,
             re.compile(
-                r"\b(?:my\s+(?:brother|sister|mother|father|mom|dad|friend|boss|partner|wife|husband|doctor|therapist|colleague|teacher|son|daughter|girl|guy|crush|ex|boyfriend|girlfriend|person|classmate|roommate|neighbor|coworker|relative|uncle|aunt)|met\s+(?:a\s+)?(?:girl|guy|person|friend|[A-Z]\w+|\w+)|talking to\s+(?:a\s+)?(?:girl|guy|person|[A-Z]\w+|\w+)|there's a\s+(?:girl|guy|person))\b(?:\s+is|\s+named|\s+called|\s+who)?\s*(.*)",
+                r"\b(?:my\s+name\s+is|call\s+me|i\s+am\s+named|mera\s+naam\s+|i\s+(?:work\s+as|work\s+at|work\s+in|work\s+for|live\s+in|am\s+from|study\s+at|study|have\s+been\s+diagnosed\s+with|was\s+born\s+in|am\s+a|am\s+an|have|am))\s+(.*)",
                 re.IGNORECASE,
             ),
             0.85,
@@ -76,7 +76,7 @@ class MemoryExtractor(MemoryExtractorProtocol):
         (
             MemoryCategory.GOAL,
             re.compile(
-                r"\b(i\s+(?:want to|goal is to|hope to|am trying to|plan to|wish to|aim to|am working towards|my goal is))\s+(.*)",
+                r"\b(?:my\s+goal\s+is(?:\s+to)?|goal\s+is\s+to|i\s+(?:want\s+to|hope\s+to|am\s+trying\s+to|plan\s+to|wish\s+to|aim\s+to|am\s+working\s+towards))\s+(.*)",
                 re.IGNORECASE,
             ),
             0.80,
@@ -84,15 +84,15 @@ class MemoryExtractor(MemoryExtractorProtocol):
         (
             MemoryCategory.PREFERENCE,
             re.compile(
-                r"\b(i\s+(?:prefer|love|like|enjoy|hate|don't like|dislike|can't stand|feel better when)|my\s+(?:favourite|favorite)\s+\w+\s+is)\s+(.*)",
+                r"\b(?:my\s+(?:favourite|favorite)\s+\w+\s+is|i\s+(?:prefer|love|like|enjoy|hate|don't\s+like|dislike|can't\s+stand|feel\s+better\s+when))\s+(.*)",
                 re.IGNORECASE,
             ),
             0.75,
         ),
         (
-            MemoryCategory.FACT,
+            MemoryCategory.RELATIONSHIP,
             re.compile(
-                r"\b(i\s+(?:work as|live in|am a|study at|have been diagnosed with|was born in|work at|have|am|my name is))\s+(.*)",
+                r"\b(?:my\s+(?:brother|sister|mother|father|mom|dad|friend|boss|partner|wife|husband|doctor|therapist|colleague|teacher|son|daughter|girl|guy|crush|ex|boyfriend|girlfriend|person|classmate|roommate|neighbor|coworker|relative|uncle|aunt|dog|cat|pet)|meri\s+(?:dost|friend|behen|sister|mummy|maa)|mera\s+(?:dost|friend|bhai|brother|papa)|met\s+(?:a\s+)?(?:girl|guy|person|friend|[A-Z]\w+|\w+)|talking\s+to\s+(?:a\s+)?(?:girl|guy|person|[A-Z]\w+|\w+)|there's\s+a\s+(?:girl|guy|person))\b(?:\s+is|\s+named|\s+called|\s+who)?\s*(.*)",
                 re.IGNORECASE,
             ),
             0.85,
@@ -100,7 +100,7 @@ class MemoryExtractor(MemoryExtractorProtocol):
         (
             MemoryCategory.HABIT,
             re.compile(
-                r"\b(every\s+(?:day|week|morning|night|weekend)|i\s+usually|i\s+always|i\s+never)\s+(.*)",
+                r"\b(?:every\s+(?:day|week|morning|night|weekend|evening)|daily|i\s+(?:usually|always|never|often|regularly))\s+(.*)",
                 re.IGNORECASE,
             ),
             0.60,
@@ -108,7 +108,7 @@ class MemoryExtractor(MemoryExtractorProtocol):
         (
             MemoryCategory.TRIGGER,
             re.compile(
-                r"\b(makes me feel|i feel (?:anxious|overwhelmed|panicked|depressed|scared|upset) when|stresses me out|triggers my)\s+(.*)",
+                r"\b(?:makes\s+me\s+feel|i\s+feel\s+(?:anxious|overwhelmed|panicked|depressed|scared|upset|stressed)\s+when|stresses\s+me\s+out|triggers\s+my)\s+(.*)",
                 re.IGNORECASE,
             ),
             0.85,

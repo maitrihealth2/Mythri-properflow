@@ -7,6 +7,7 @@ import { startSession, getTranscript, logout, API_URL } from '@/core/api'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
+import RadialNav from '@/shared/components/RadialNav'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import MythriAura, { AuraState } from '@/shared/components/MythriAura'
@@ -730,14 +731,17 @@ export default function VoiceModePage() {
         {/* Center content mask to keep readability high */}
         <div className="absolute inset-x-[10%] inset-y-[5%] bg-white/[0.2] dark:bg-black/[0.1] blur-[80px] rounded-full pointer-events-none z-0" />
 
-        {/* TopAppBar */}
-        <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-margin-desktop py-4 md:py-6 bg-transparent animate-fade-in-up">
-          <div className="text-headline-md font-headline-md font-medium text-primary dark:text-[#F3ECF2] ml-2">Mythri</div>
-          <div className="flex gap-3 md:gap-4 items-center relative mr-2">
+        {/* Top Floating Navigation */}
+        <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-margin-desktop py-4 pointer-events-none transition-all">
+          <div className="flex items-center gap-3 pointer-events-auto">
+            <RadialNav />
+            <div className="text-headline-md font-headline-md font-medium text-primary dark:text-[#F3ECF2]">Mythri</div>
+          </div>
+          <div className="flex gap-2 sm:gap-3 items-center relative pointer-events-auto mr-2">
             <ThemeToggle />
-            <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMainMenuOpen(false) }} className="material-symbols-outlined text-on-surface-variant dark:text-white/80 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-colors">language</button>
-            <button onClick={() => { setMainMenuOpen(!mainMenuOpen); setLangMenuOpen(false) }} className="hidden md:block material-symbols-outlined text-on-surface-variant dark:text-white/80 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-colors">grid_view</button>
-            <button onClick={() => router.replace('/text-chat')} className="md:hidden material-symbols-outlined text-on-surface-variant dark:text-white/80 hover:bg-surface-container-high dark:hover:bg-white/10 p-2 rounded-full transition-colors">close</button>
+            <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMainMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105">language</button>
+            <button onClick={() => { setMainMenuOpen(!mainMenuOpen); setLangMenuOpen(false) }} className="hidden md:flex material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105">grid_view</button>
+            <button onClick={() => router.replace('/text-chat')} className="md:hidden material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105">close</button>
           </div>
 
           {/* Desktop Main Menu */}

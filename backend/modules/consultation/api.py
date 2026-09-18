@@ -85,6 +85,31 @@ async def start_session(
     # Initialize state tracker for this session
     tracker.init_session(session_id, is_first_session=is_first)
 
+    # ── Background check: Auto-summarize previous session if it closed without explicit end ──
+    if not is_first:
+        def _check_prior_session():
+            from core.database.models import SessionLocal, Session as DBSess, SessionSummary as DSS, Message as DBM
+            with SessionLocal() as sdb:
+                prior_sessions = sdb.query(DBSess).filter(
+                    DBSess.user_id == current_user.id,
+                    DBSess.id != session_id
+                ).order_by(DBSess.started_at.desc()).limit(3).all()
+                for ps in prior_sessions:
+                    has_sum = sdb.query(DSS).filter(DSS.session_id == ps.id).first() is not None
+                    if not has_sum:
+                        mcount = sdb.query(DBM).filter(DBM.session_id == ps.id).count()
+                        if mcount >= 2:
+                            return ps.id
+                return None
+        try:
+            prior_unsum_id = await asyncio.to_thread(_check_prior_session)
+            if prior_unsum_id:
+                from modules.memory.incremental_updater import update_living_context
+                asyncio.create_task(generate_session_summary(prior_unsum_id, current_user.id))
+                asyncio.create_task(update_living_context(current_user.id, prior_unsum_id))
+        except Exception as bg_sum_err:
+            print(f"[StartSession] Prior session summary check note: {bg_sum_err}")
+
     # ── Generate Dynamic Personalized Opening Message ────────────────────────
     try:
         from modules.memory.unified_context import UnifiedCognitiveContextEngine
@@ -608,15 +633,14 @@ async def send_message(
                 if total_user_msgs % 5 == 0 or total_user_msgs == 1:
                     await _update_persona_async(session.id, current_user.id, is_onboarding)
 
-            # ── Living context + session summary — only on meaningful turns ───
-            if turn_complexity in (TurnComplexity.MEANINGFUL, TurnComplexity.SENSITIVE):
-                if total_user_msgs % 3 == 0:
-                    try:
-                        from modules.memory.incremental_updater import update_living_context
-                        asyncio.create_task(update_living_context(current_user.id, session.id))
-                        asyncio.create_task(generate_session_summary(session.id, current_user.id))
-                    except Exception as sum_err:
-                        print(f"[PostProcess] Background incremental summary error: {sum_err}")
+            # ── Living context + session summary — update incrementally every 4 turns ───
+            if total_user_msgs >= 2 and total_user_msgs % 4 == 0:
+                try:
+                    from modules.memory.incremental_updater import update_living_context
+                    asyncio.create_task(update_living_context(current_user.id, session.id))
+                    asyncio.create_task(generate_session_summary(session.id, current_user.id))
+                except Exception as sum_err:
+                    print(f"[PostProcess] Background incremental summary error: {sum_err}")
 
             await _process_memory_write_path_async(current_user.id, req.message, session.id)
         except Exception as e:
@@ -845,10 +869,6 @@ async def _process_memory_write_path_async(user_id: int, user_message: str, sess
 
             if result.has_actionable_decisions:
                 CommandCenter.log_ai("MEMORY_WRITE", f"Extracted {len(result.candidates)} candidates, executed {len(actionable)} decisions for user {user_id}")
-
-            # Auto-clean working cache memory once written to DB
-            short_term_engine.clear_session(session_id)
-            print(f"[CACHE_CLEAN] Working memory cache cleaned for session {session_id} after DB persistence.")
         except Exception as err:
             CommandCenter.log_ai("MEMORY_ERROR", f"Memory background processing failed: {err}")
             print(f"[MEMORY_WRITE_ERROR] {err}")

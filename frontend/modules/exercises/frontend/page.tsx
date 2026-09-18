@@ -452,20 +452,20 @@ export default function ExercisesPage() {
         <div className="absolute inset-0 bg-grain opacity-[0.03] mix-blend-overlay"></div>
       </div>
 
-      {/* Top Header */}
-      <header className="fixed top-0 z-40 flex justify-between items-center w-full px-4 sm:px-6 md:px-8 py-3.5 sm:py-4 backdrop-blur-md bg-white/40 dark:bg-black/40 border-b border-white/40 dark:border-white/10 pointer-events-none transition-colors">
+      {/* Top Floating Navigation */}
+      <header className="fixed top-0 z-40 flex justify-between items-center w-full px-4 sm:px-6 md:px-8 py-4 sm:py-5 pointer-events-none transition-all">
         <div className="flex items-center gap-3 pointer-events-auto">
           <RadialNav />
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/home')}>
             <span className="material-symbols-outlined text-primary text-2xl sm:text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>spa</span>
-            <span className="font-headline text-xl sm:text-2xl font-bold tracking-tight text-on-background">Mythri</span>
+            <span className="text-headline-md font-headline-md font-medium text-primary tracking-wide">Mythri</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5 sm:gap-3 pointer-events-auto">
           <Link
             href="/home"
-            className="flex items-center gap-1.5 bg-white/60 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 text-on-surface px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-label-md border border-white/60 dark:border-white/10 shadow-xs transition-all active:scale-95"
+            className="flex items-center gap-1.5 glass-panel text-on-surface px-4 py-2 rounded-full text-xs sm:text-sm font-label-md transition-all active:scale-95 hover:text-primary"
           >
             <ArrowLeft size={15} />
             <span className="hidden sm:inline">Sanctuary Home</span>
@@ -481,20 +481,20 @@ export default function ExercisesPage() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-fade-in-up">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-0.5 rounded-full text-[11px] font-label-md font-bold uppercase tracking-wider bg-primary/10 text-primary dark:bg-white/10 dark:text-white">
+              <span className="px-3 py-0.5 rounded-full text-[11px] font-label-md font-bold uppercase tracking-wider bg-primary/10 text-primary">
                 Somatic & Cognitive Toolkit
               </span>
-              <span className="text-xs text-on-surface-variant/70 font-label-md">10 Evidence-Based Exercises</span>
+              <span className="text-xs text-on-surface-variant font-label-md">10 Evidence-Based Exercises</span>
             </div>
             <h1 className="text-display-sm sm:text-display-md font-headline font-bold text-primary tracking-tight">
               Grounding & Regulation Sanctuary
             </h1>
-            <p className="text-body-sm sm:text-body-md text-on-surface-variant/80 font-body mt-1">
+            <p className="text-body-sm sm:text-body-md text-on-surface-variant font-body mt-1">
               Select any exercise to view the neurological breakdown and instructions, or click <strong>Try for 2 min</strong> to start an interactive guided practice.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-white/60 dark:bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/60 dark:border-white/10 shadow-xs self-start sm:self-auto">
+          <div className="glass-panel px-4 py-2.5 rounded-2xl flex items-center gap-3 self-start sm:self-auto">
             <Activity size={18} className="text-primary" />
             <div className="text-xs font-label-md text-on-surface-variant">
               <span>Principle: </span>
@@ -509,10 +509,10 @@ export default function ExercisesPage() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-label-md font-semibold whitespace-nowrap transition-all duration-200 border ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-label-md font-semibold whitespace-nowrap transition-all duration-200 ${
                 selectedCategory === cat.id
-                  ? 'bg-[#603347] text-white border-[#603347] shadow-sm shadow-[#603347]/20 scale-[1.02]'
-                  : 'bg-white/60 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/15 text-on-surface border-white/60 dark:border-white/10'
+                  ? 'bg-primary text-on-primary shadow-sm scale-[1.02]'
+                  : 'glass-panel text-on-surface-variant hover:text-primary'
               }`}
             >
               {cat.label}
@@ -520,8 +520,62 @@ export default function ExercisesPage() {
           ))}
         </div>
 
-        {/* 10 Exercises Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        {/* MOBILE VIEW: Minimalist Interactive List Rows (Hidden on desktop) */}
+        <div className="flex md:hidden flex-col gap-2.5 max-w-4xl mx-auto w-full animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          {filteredExercises.map((exercise) => {
+            const Icon = exercise.icon
+            return (
+              <motion.div
+                key={exercise.id}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => setActiveExercise(exercise)}
+                className="glass-panel rounded-2xl p-3 flex items-center justify-between gap-3 cursor-pointer group hover:border-primary/40 transition-all duration-200"
+              >
+                {/* Left: Icon + Number + Title */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform flex-shrink-0">
+                    <Icon size={20} strokeWidth={2.2} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[10px] font-label-md font-bold text-primary/80 uppercase tracking-wider">
+                        #{exercise.number} • {exercise.categoryLabel}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-headline font-bold text-primary truncate group-hover:opacity-90 transition-opacity">
+                      {exercise.title}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Right: Quick Action Pill & Arrow */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStartPractice(exercise)
+                    }}
+                    className="flex items-center gap-1 bg-primary text-on-primary hover:opacity-90 px-3 py-1.5 rounded-full text-xs font-label-md font-semibold shadow-xs transition-all active:scale-95"
+                    title="Start 2-min practice"
+                  >
+                    <Play size={10} fill="currentColor" />
+                    <span>2 min</span>
+                  </button>
+
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-all">
+                    <ChevronRight size={15} />
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+
+        {/* DESKTOP VIEW: Rich Glass Cards Grid (Hidden on mobile) */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-5 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           {filteredExercises.map((exercise) => {
             const Icon = exercise.icon
             return (
@@ -530,30 +584,30 @@ export default function ExercisesPage() {
                 whileHover={{ y: -3 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => setActiveExercise(exercise)}
-                className="group relative bg-white/70 dark:bg-[#1E181D]/80 backdrop-blur-xl rounded-[28px] p-6 border border-white/60 dark:border-white/10 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer"
+                className="glass-panel rounded-3xl p-6 relative flex flex-col justify-between cursor-pointer group hover:border-primary/40 transition-all duration-300"
               >
                 <div>
                   {/* Card Top Row: Number & Category Badge */}
                   <div className="flex items-center justify-between gap-2 mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center text-primary dark:text-white font-headline font-bold text-xs">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-headline font-bold text-xs">
                         #{exercise.number}
                       </div>
-                      <span className="text-[11px] font-label-md font-bold text-on-surface-variant/70 uppercase tracking-wider">
+                      <span className="text-[11px] font-label-md font-bold text-on-surface-variant uppercase tracking-wider">
                         {exercise.categoryLabel}
                       </span>
                     </div>
 
-                    <div className="w-9 h-9 rounded-2xl bg-white/80 dark:bg-white/10 border border-white/60 dark:border-white/10 flex items-center justify-center text-primary dark:text-white group-hover:scale-110 transition-transform">
+                    <div className="w-9 h-9 rounded-2xl bg-white/50 dark:bg-white/10 border border-white dark:border-white/20 flex items-center justify-center text-primary group-hover:bg-white/80 dark:group-hover:bg-white/20 transition-colors">
                       <Icon size={18} strokeWidth={2.2} />
                     </div>
                   </div>
 
                   {/* Title & Tagline */}
-                  <h3 className="text-headline-xs sm:text-headline-sm font-headline font-bold text-primary dark:text-[#E8D4C8] group-hover:text-primary/90 dark:group-hover:text-white transition-colors">
+                  <h3 className="text-headline-xs font-headline font-bold text-primary group-hover:opacity-90 transition-opacity">
                     {exercise.title}
                   </h3>
-                  <p className="text-body-xs sm:text-body-sm text-on-surface font-medium opacity-90 mt-1 mb-3">
+                  <p className="text-body-xs sm:text-body-sm text-on-surface font-medium mt-1 mb-3">
                     {exercise.tagline}
                   </p>
 
@@ -564,8 +618,8 @@ export default function ExercisesPage() {
                 </div>
 
                 {/* Card Action Footer */}
-                <div className="pt-4 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-label-md text-primary dark:text-[#E8D4C8] font-semibold flex items-center gap-1 group-hover:underline">
+                <div className="pt-4 border-t border-outline-variant/30 flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-label-md text-primary font-semibold flex items-center gap-1 group-hover:underline">
                     View Steps & Details <ChevronRight size={14} />
                   </span>
 
@@ -574,7 +628,7 @@ export default function ExercisesPage() {
                       e.stopPropagation()
                       handleStartPractice(exercise)
                     }}
-                    className="flex items-center gap-1.5 bg-[#603347] text-white hover:bg-[#4E2839] dark:bg-[#E8D4C8] dark:text-[#28131F] dark:hover:bg-[#F3B5CE] px-3.5 py-1.5 rounded-full text-xs font-label-md font-semibold shadow-xs hover:shadow-md transition-all active:scale-95"
+                    className="flex items-center gap-1.5 bg-primary text-on-primary hover:opacity-90 px-3.5 py-1.5 rounded-full text-xs font-label-md font-semibold shadow-xs transition-all active:scale-95"
                   >
                     <Play size={12} fill="currentColor" />
                     <span>Try for 2 min</span>
@@ -597,7 +651,7 @@ export default function ExercisesPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setActiveExercise(null)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md"
             />
 
             {/* Modal Card */}
@@ -606,12 +660,12 @@ export default function ExercisesPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-2xl bg-white/95 dark:bg-[#1C141A]/95 backdrop-blur-2xl rounded-[32px] p-6 sm:p-8 shadow-2xl border border-white/80 dark:border-white/15 z-10 flex flex-col gap-6 my-8 max-h-[85vh] overflow-y-auto"
+              className="relative w-full max-w-2xl glass-panel rounded-[32px] p-6 sm:p-8 shadow-2xl z-10 flex flex-col gap-6 my-8 max-h-[85vh] overflow-y-auto"
             >
               {/* Close Button */}
               <button
                 onClick={() => setActiveExercise(null)}
-                className="absolute top-5 right-5 w-9 h-9 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 flex items-center justify-center text-on-surface transition-colors"
+                className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-on-surface hover:text-primary transition-colors"
                 aria-label="Close details"
               >
                 <X size={18} />
@@ -619,7 +673,7 @@ export default function ExercisesPage() {
 
               {/* Header Title */}
               <div className="flex items-start gap-4 pr-10">
-                <div className="w-12 h-12 rounded-2xl bg-[#603347] text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center flex-shrink-0 shadow-md">
                   {React.createElement(activeExercise.icon, { size: 24, strokeWidth: 2.2 })}
                 </div>
                 <div>
@@ -628,7 +682,7 @@ export default function ExercisesPage() {
                       Exercise #{activeExercise.number} • {activeExercise.categoryLabel}
                     </span>
                   </div>
-                  <h2 className="text-headline-sm sm:text-headline-md font-headline font-bold text-on-background">
+                  <h2 className="text-headline-sm sm:text-headline-md font-headline font-bold text-primary">
                     {activeExercise.title}
                   </h2>
                   <p className="text-body-sm text-on-surface-variant font-medium">
@@ -638,14 +692,14 @@ export default function ExercisesPage() {
               </div>
 
               {/* How to Perform Steps */}
-              <div className="bg-primary/5 dark:bg-white/5 rounded-2xl p-5 border border-primary/10 dark:border-white/10 flex flex-col gap-3">
+              <div className="glass-panel rounded-2xl p-5 flex flex-col gap-3">
                 <h4 className="text-xs font-label-md font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                   <Sparkle size={14} /> How:
                 </h4>
                 <div className="flex flex-col gap-2.5">
                   {activeExercise.steps.map((step, idx) => (
                     <div key={idx} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-primary/20 dark:bg-white/20 text-primary dark:text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5">
+                      <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5">
                         {idx + 1}
                       </div>
                       <p className="text-body-sm font-body text-on-surface leading-relaxed">
@@ -657,8 +711,8 @@ export default function ExercisesPage() {
               </div>
 
               {/* Psychological Principle */}
-              <div className="bg-[#8C7355]/10 dark:bg-[#8C7355]/20 rounded-2xl p-5 border border-[#8C7355]/20 flex flex-col gap-2">
-                <h4 className="text-xs font-label-md font-bold uppercase tracking-wider text-[#8C7355] dark:text-[#E8D4C8] flex items-center gap-1.5">
+              <div className="glass-panel rounded-2xl p-5 flex flex-col gap-2">
+                <h4 className="text-xs font-label-md font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                   <Brain size={15} /> Psychological Principle:
                 </h4>
                 <p className="text-body-sm font-body text-on-surface italic leading-relaxed">
@@ -668,7 +722,7 @@ export default function ExercisesPage() {
 
               {/* Modal Footer CTA */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                <div className="flex items-center gap-2 text-xs font-label-md text-on-surface-variant/70">
+                <div className="flex items-center gap-2 text-xs font-label-md text-on-surface-variant">
                   <Clock size={15} />
                   <span>Interactive 2-minute paced timer</span>
                 </div>
@@ -676,14 +730,14 @@ export default function ExercisesPage() {
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <button
                     onClick={() => setActiveExercise(null)}
-                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-full text-xs font-label-md font-semibold text-on-surface-variant hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-full text-xs font-label-md font-semibold text-on-surface-variant hover:text-primary transition-colors"
                   >
                     Close
                   </button>
 
                   <button
                     onClick={() => handleStartPractice(activeExercise)}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#603347] hover:bg-[#4E2839] text-white px-6 py-2.5 rounded-full text-sm font-label-md font-bold shadow-lg shadow-[#603347]/25 transition-all active:scale-95"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-on-primary px-6 py-2.5 rounded-full text-sm font-label-md font-bold shadow-lg transition-all active:scale-95"
                   >
                     <Play size={16} fill="currentColor" />
                     <span>Try for 2 min</span>
@@ -708,14 +762,14 @@ export default function ExercisesPage() {
             {/* Top Bar: Exercise Name, Time Badge & End Button */}
             <div className="w-full max-w-4xl mx-auto flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#603347] text-white flex items-center justify-center shadow-md">
+                <div className="w-10 h-10 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-md">
                   {React.createElement(activeExercise.icon, { size: 20, strokeWidth: 2.2 })}
                 </div>
                 <div>
                   <span className="text-[10px] font-label-md font-bold uppercase tracking-wider text-primary">
                     Guided 2-Minute Practice
                   </span>
-                  <h2 className="text-headline-xs sm:text-headline-sm font-headline font-bold text-on-background">
+                  <h2 className="text-headline-xs sm:text-headline-sm font-headline font-bold text-primary">
                     {activeExercise.title}
                   </h2>
                 </div>
@@ -738,7 +792,7 @@ export default function ExercisesPage() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white/80 dark:bg-[#1E141C]/90 rounded-[32px] p-8 border border-white/80 dark:border-white/10 shadow-2xl flex flex-col items-center gap-4 max-w-lg"
+                  className="glass-panel rounded-[32px] p-8 shadow-2xl flex flex-col items-center gap-4 max-w-lg"
                 >
                   <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     <CheckCircle2 size={36} />
@@ -758,7 +812,7 @@ export default function ExercisesPage() {
                     </button>
                     <button
                       onClick={handleEndPractice}
-                      className="px-6 py-2 rounded-full bg-primary text-white hover:bg-primary/90 text-xs font-label-md font-bold shadow-md transition-all"
+                      className="px-6 py-2 rounded-full bg-primary text-on-primary hover:opacity-90 text-xs font-label-md font-bold shadow-md transition-all"
                     >
                       Done
                     </button>
@@ -777,7 +831,7 @@ export default function ExercisesPage() {
                             opacity: sighPhase === 'exhale' ? 0.2 : 0.6,
                           }}
                           transition={{ duration: sighPhase === 'exhale' ? 5.5 : sighPhase === 'inhale2' ? 1.5 : 2.5, ease: 'easeInOut' }}
-                          className="absolute inset-0 rounded-full bg-[#8C7355]/25 filter blur-2xl"
+                          className="absolute inset-0 rounded-full bg-primary/30 filter blur-2xl"
                         />
 
                         {/* Central Animated Breathing Bubble */}
@@ -786,9 +840,9 @@ export default function ExercisesPage() {
                             scale: sighPhase === 'exhale' ? 0.7 : sighPhase === 'inhale2' ? 1.25 : 1.05,
                           }}
                           transition={{ duration: sighPhase === 'exhale' ? 5.5 : sighPhase === 'inhale2' ? 1.5 : 2.5, ease: 'easeInOut' }}
-                          className="w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-gradient-to-tr from-[#603347] to-[#8C7355] text-white flex flex-col items-center justify-center shadow-2xl p-4"
+                          className="w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex flex-col items-center justify-center shadow-2xl p-4"
                         >
-                          <span className="text-[11px] font-label-md font-bold uppercase tracking-widest text-white/80">
+                          <span className="text-[11px] font-label-md font-bold uppercase tracking-widest text-on-primary/80">
                             {sighPhase === 'inhale1' ? '1st Inhale (Nose)' : sighPhase === 'inhale2' ? '2nd Inhale (Top)' : 'Slow Exhale (Mouth)'}
                           </span>
                           <span className="text-headline-sm sm:text-headline-md font-headline font-bold mt-1">
@@ -797,7 +851,7 @@ export default function ExercisesPage() {
                         </motion.div>
                       </div>
 
-                      <div className="bg-white/60 dark:bg-white/5 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/60 dark:border-white/10 text-xs font-label-md text-on-surface-variant">
+                      <div className="glass-panel px-4 py-2 rounded-2xl text-xs font-label-md text-on-surface-variant">
                         Cycle #{sighCycle} • Follow the expanding & contracting orb
                       </div>
                     </div>
@@ -806,11 +860,11 @@ export default function ExercisesPage() {
                   {/* 2. 5-4-3-2-1 Sensory Interactive Checklist */}
                   {activeExercise.practiceType === 'sensory-54321' && (
                     <div className="w-full max-w-xl flex flex-col items-center gap-4">
-                      <div className="w-full bg-white/75 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 border border-white/60 dark:border-white/10 shadow-lg text-left">
+                      <div className="w-full glass-panel rounded-[28px] p-6 text-left">
                         <span className="text-[11px] font-label-md font-bold uppercase tracking-wider text-primary">
                           Sensory Checkpoint {groundingStep + 1} of 5
                         </span>
-                        <h3 className="text-headline-sm font-headline font-bold text-on-background mt-1 mb-2">
+                        <h3 className="text-headline-sm font-headline font-bold text-primary mt-1 mb-2">
                           {groundingStep === 0 && '👀 5 Things You Can SEE'}
                           {groundingStep === 1 && '✋ 4 Things You Can FEEL'}
                           {groundingStep === 2 && '👂 3 Things You Can HEAR'}
@@ -825,17 +879,17 @@ export default function ExercisesPage() {
                           {groundingStep === 4 && 'Identify 1 thing you can taste, or recall a soothing warm taste.'}
                         </p>
 
-                        <div className="flex items-center justify-between pt-3 border-t border-black/5 dark:border-white/10">
+                        <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30">
                           <button
                             disabled={groundingStep === 0}
                             onClick={() => setGroundingStep(s => Math.max(0, s - 1))}
-                            className="px-3.5 py-1.5 rounded-full text-xs font-label-md font-semibold text-on-surface-variant disabled:opacity-30 hover:bg-black/5 dark:hover:bg-white/10"
+                            className="px-3.5 py-1.5 rounded-full text-xs font-label-md font-semibold text-on-surface-variant disabled:opacity-30 hover:text-primary"
                           >
                             Previous
                           </button>
                           <button
                             onClick={() => setGroundingStep(s => (s + 1) % 5)}
-                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#603347] text-white text-xs font-label-md font-bold shadow-xs hover:bg-[#4E2839]"
+                            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-on-primary text-xs font-label-md font-bold shadow-xs hover:opacity-90"
                           >
                             <span>Next Step</span>
                             <ArrowRight size={13} />
@@ -847,9 +901,9 @@ export default function ExercisesPage() {
 
                   {/* 3. Name the Experience Interactive Labeling */}
                   {activeExercise.practiceType === 'labeling' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg text-left flex flex-col gap-4">
-                      <div className="bg-primary/10 dark:bg-white/10 rounded-2xl p-4 border border-primary/20 text-center">
-                        <p className="text-headline-xs sm:text-headline-sm font-headline font-bold text-primary dark:text-[#E8D4C8]">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 sm:p-8 text-left flex flex-col gap-4">
+                      <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20 text-center">
+                        <p className="text-headline-xs sm:text-headline-sm font-headline font-bold text-primary">
                           “My brain is detecting danger right now.<br/>I don’t have to solve everything this second.”
                         </p>
                       </div>
@@ -870,8 +924,8 @@ export default function ExercisesPage() {
                             onClick={() => setLabeledSensations(prev => ({ ...prev, [sens]: !prev[sens] }))}
                             className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                               labeledSensations[sens]
-                                ? 'bg-[#603347]/10 dark:bg-[#603347]/30 border-[#603347] text-primary dark:text-white font-medium'
-                                : 'bg-white/60 dark:bg-white/5 border-white/60 dark:border-white/10 text-on-surface'
+                                ? 'bg-primary/15 border-primary text-primary font-medium'
+                                : 'glass-panel text-on-surface hover:text-primary'
                             }`}
                           >
                             {labeledSensations[sens] ? <CheckSquare size={18} className="text-primary" /> : <Square size={18} className="opacity-50" />}
@@ -884,7 +938,7 @@ export default function ExercisesPage() {
 
                   {/* 4. Feet-on-Floor Orientation */}
                   {activeExercise.practiceType === 'somatic-feet' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg text-left flex flex-col gap-4">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 sm:p-8 text-left flex flex-col gap-4">
                       <div className="flex items-center gap-2">
                         <Compass size={18} className="text-primary" />
                         <span className="text-[11px] font-label-md font-bold uppercase tracking-wider text-primary">
@@ -905,17 +959,17 @@ export default function ExercisesPage() {
                             onClick={() => setSomaticChecks(prev => ({ ...prev, [item]: !prev[item] }))}
                             className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                               somaticChecks[item]
-                                ? 'bg-[#8C7355]/15 border-[#8C7355] text-primary dark:text-[#E8D4C8] font-medium'
-                                : 'bg-white/60 dark:bg-white/5 border-white/60 dark:border-white/10 text-on-surface'
+                                ? 'bg-primary/15 border-primary text-primary font-medium'
+                                : 'glass-panel text-on-surface hover:text-primary'
                             }`}
                           >
-                            {somaticChecks[item] ? <CheckSquare size={18} className="text-[#8C7355]" /> : <Square size={18} className="opacity-50" />}
+                            {somaticChecks[item] ? <CheckSquare size={18} className="text-primary" /> : <Square size={18} className="opacity-50" />}
                             <span className="text-body-sm">{item}</span>
                           </div>
                         ))}
                       </div>
 
-                      <div className="bg-[#8C7355]/10 dark:bg-[#8C7355]/20 rounded-2xl p-4 border border-[#8C7355]/20 mt-2 text-center">
+                      <div className="glass-panel rounded-2xl p-4 mt-2 text-center">
                         <p className="text-body-sm font-headline italic text-on-surface">
                           “I am sitting in my space. It is today. I am here, I am safe in this moment, and I don’t need to figure everything out right now.”
                         </p>
@@ -925,7 +979,7 @@ export default function ExercisesPage() {
 
                   {/* 5. Facts vs Predictions */}
                   {activeExercise.practiceType === 'fact-prediction' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 border border-white/60 dark:border-white/10 shadow-lg text-left flex flex-col gap-4">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 text-left flex flex-col gap-4">
                       <span className="text-[11px] font-label-md font-bold uppercase tracking-wider text-primary">
                         Cognitive Separation Divider
                       </span>
@@ -966,12 +1020,12 @@ export default function ExercisesPage() {
 
                   {/* 6. Worry Postponement Container */}
                   {activeExercise.practiceType === 'worry-postpone' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg text-left flex flex-col gap-4">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 sm:p-8 text-left flex flex-col gap-4">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-label-md font-bold uppercase tracking-wider text-primary">
                           Scheduled Container Box
                         </span>
-                        <div className="flex items-center gap-1.5 text-xs font-label-md text-[#8C7355]">
+                        <div className="flex items-center gap-1.5 text-xs font-label-md text-primary">
                           <Clock size={14} />
                           <span>Appt: {postponeTime} (15m)</span>
                         </div>
@@ -991,7 +1045,7 @@ export default function ExercisesPage() {
                           />
                           <button
                             onClick={() => setWorryPostponed(true)}
-                            className="w-full py-2.5 rounded-xl bg-[#603347] text-white font-label-md font-bold text-xs shadow-md hover:bg-[#4E2839] transition-all"
+                            className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold text-xs shadow-md hover:opacity-90 transition-all"
                           >
                             Postpone Worry to {postponeTime}
                           </button>
@@ -1012,7 +1066,7 @@ export default function ExercisesPage() {
 
                   {/* 7. Five-Minute Movement Reset */}
                   {activeExercise.practiceType === 'movement-walk' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg text-center flex flex-col items-center gap-6">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 sm:p-8 text-center flex flex-col items-center gap-6">
                       <span className="text-[11px] font-label-md font-bold uppercase tracking-wider text-primary">
                         Bilateral Somatic Movement
                       </span>
@@ -1024,8 +1078,8 @@ export default function ExercisesPage() {
                             scale: stepSide === 'left' ? 1.25 : 0.9,
                             opacity: stepSide === 'left' ? 1 : 0.35,
                           }}
-                          className={`w-24 h-24 rounded-3xl flex flex-col items-center justify-center font-headline font-bold text-lg shadow-xl ${
-                            stepSide === 'left' ? 'bg-[#603347] text-white' : 'bg-black/5 dark:bg-white/10 text-on-surface'
+                          className={`w-24 h-24 rounded-3xl flex flex-col items-center justify-center font-headline font-bold text-lg shadow-xl transition-all ${
+                            stepSide === 'left' ? 'bg-primary text-on-primary' : 'glass-panel text-on-surface'
                           }`}
                         >
                           <Footprints size={28} />
@@ -1041,8 +1095,8 @@ export default function ExercisesPage() {
                             scale: stepSide === 'right' ? 1.25 : 0.9,
                             opacity: stepSide === 'right' ? 1 : 0.35,
                           }}
-                          className={`w-24 h-24 rounded-3xl flex flex-col items-center justify-center font-headline font-bold text-lg shadow-xl ${
-                            stepSide === 'right' ? 'bg-[#8C7355] text-white' : 'bg-black/5 dark:bg-white/10 text-on-surface'
+                          className={`w-24 h-24 rounded-3xl flex flex-col items-center justify-center font-headline font-bold text-lg shadow-xl transition-all ${
+                            stepSide === 'right' ? 'bg-primary text-on-primary' : 'glass-panel text-on-surface'
                           }`}
                         >
                           <Footprints size={28} />
@@ -1058,21 +1112,21 @@ export default function ExercisesPage() {
 
                   {/* 8. Cognitive Defusion 3-Stage Stepper */}
                   {activeExercise.practiceType === 'defusion' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg text-left flex flex-col gap-4">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 sm:p-8 text-left flex flex-col gap-4">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-label-md font-bold uppercase tracking-wider text-primary">
                           Defusion Transformation Stage {defusionStage + 1} of 3
                         </span>
                       </div>
 
-                      <div className="bg-primary/5 dark:bg-white/5 rounded-2xl p-5 border border-primary/10 flex flex-col gap-3 text-center">
+                      <div className="bg-primary/5 rounded-2xl p-5 border border-primary/10 flex flex-col gap-3 text-center">
                         <span className="text-[10px] font-label-md uppercase tracking-wider text-on-surface-variant font-bold">
                           {defusionStage === 0 && 'Level 0: The Raw Catastrophic Thought'}
                           {defusionStage === 1 && 'Level 1: Adding Cognitive Distance'}
                           {defusionStage === 2 && 'Level 2: Neuro-Observation (ACT)'}
                         </span>
 
-                        <h3 className="text-headline-xs sm:text-headline-sm font-headline font-bold text-primary dark:text-[#E8D4C8]">
+                        <h3 className="text-headline-xs sm:text-headline-sm font-headline font-bold text-primary">
                           {defusionStage === 0 && `“${customDefusionThought}”`}
                           {defusionStage === 1 && `“I am having the thought that ${customDefusionThought.toLowerCase()}”`}
                           {defusionStage === 2 && `“My brain is producing a threat prediction right now.”`}
@@ -1083,13 +1137,13 @@ export default function ExercisesPage() {
                         <button
                           disabled={defusionStage === 0}
                           onClick={() => setDefusionStage(s => Math.max(0, s - 1))}
-                          className="px-4 py-2 rounded-full text-xs font-label-md font-semibold text-on-surface-variant disabled:opacity-30 hover:bg-black/5"
+                          className="px-4 py-2 rounded-full text-xs font-label-md font-semibold text-on-surface-variant disabled:opacity-30 hover:text-primary"
                         >
                           Previous
                         </button>
                         <button
                           onClick={() => setDefusionStage(s => (s + 1) % 3)}
-                          className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#603347] text-white text-xs font-label-md font-bold shadow-md hover:bg-[#4E2839]"
+                          className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-primary text-on-primary text-xs font-label-md font-bold shadow-md hover:opacity-90"
                         >
                           <span>{defusionStage === 2 ? 'Restart Defusion' : 'Next Defusion Level'}</span>
                           <ArrowRight size={13} />
@@ -1100,7 +1154,7 @@ export default function ExercisesPage() {
 
                   {/* 9. One Small Action Chooser */}
                   {activeExercise.practiceType === 'micro-action' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg text-left flex flex-col gap-4">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 sm:p-8 text-left flex flex-col gap-4">
                       <span className="text-[11px] font-label-md font-bold uppercase tracking-wider text-primary">
                         Select 1 Microscopic Action for this 2 Minutes
                       </span>
@@ -1121,8 +1175,8 @@ export default function ExercisesPage() {
                             onClick={() => setSelectedMicroAction(act)}
                             className={`p-3 rounded-xl border text-xs font-label-md cursor-pointer transition-all ${
                               selectedMicroAction === act
-                                ? 'bg-[#603347] text-white border-[#603347] shadow-sm font-bold'
-                                : 'bg-white/60 dark:bg-white/5 border-white/60 dark:border-white/10 text-on-surface hover:bg-white/80'
+                                ? 'bg-primary text-on-primary border-primary shadow-sm font-bold'
+                                : 'glass-panel text-on-surface hover:text-primary'
                             }`}
                           >
                             {act}
@@ -1140,25 +1194,25 @@ export default function ExercisesPage() {
 
                   {/* 10. “I Don’t Need to Solve Tonight” Checkpoint */}
                   {activeExercise.practiceType === 'defer-solve' && (
-                    <div className="w-full max-w-xl bg-white/80 dark:bg-[#1E141C]/85 backdrop-blur-xl rounded-[28px] p-6 sm:p-8 border border-white/60 dark:border-white/10 shadow-lg text-left flex flex-col gap-4">
-                      <div className="bg-[#8C7355]/15 rounded-2xl p-4 border border-[#8C7355]/30 text-center">
-                        <p className="text-headline-xs font-headline font-bold text-primary dark:text-[#E8D4C8]">
+                    <div className="w-full max-w-xl glass-panel rounded-[28px] p-6 sm:p-8 text-left flex flex-col gap-4">
+                      <div className="glass-panel rounded-2xl p-4 text-center">
+                        <p className="text-headline-xs font-headline font-bold text-primary">
                           “This problem may be important. But I don’t need to solve my entire life while my nervous system is overwhelmed.”
                         </p>
                       </div>
 
                       <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 text-xs">
+                        <div className="flex items-center justify-between p-3 rounded-xl glass-panel text-xs text-on-surface">
                           <span>1. Is there an immediate physical danger right now?</span>
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">NO</span>
                         </div>
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 text-xs">
+                        <div className="flex items-center justify-between p-3 rounded-xl glass-panel text-xs text-on-surface">
                           <span>2. Must something genuinely happen within 60 mins?</span>
                           <span className="font-bold text-emerald-600 dark:text-emerald-400">NO</span>
                         </div>
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-white/60 dark:bg-white/5 border border-white/60 dark:border-white/10 text-xs">
+                        <div className="flex items-center justify-between p-3 rounded-xl glass-panel text-xs text-on-surface">
                           <span>3. Can this wait until my brain is calm?</span>
-                          <span className="font-bold text-[#603347] dark:text-[#E8D4C8]">YES</span>
+                          <span className="font-bold text-primary">YES</span>
                         </div>
                       </div>
 
@@ -1175,10 +1229,10 @@ export default function ExercisesPage() {
             </div>
 
             {/* Bottom Controls Bar: Play/Pause, Timer & Reset */}
-            <div className="w-full max-w-md mx-auto flex items-center justify-between bg-white/80 dark:bg-[#1C141A]/90 backdrop-blur-2xl rounded-full px-6 py-3 border border-white/80 dark:border-white/10 shadow-xl">
+            <div className="w-full max-w-md mx-auto flex items-center justify-between glass-panel rounded-full px-6 py-3 shadow-xl">
               <button
                 onClick={handleResetTimer}
-                className="w-9 h-9 rounded-full flex items-center justify-center bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-on-surface transition-transform active:scale-95"
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-on-surface hover:text-primary transition-transform active:scale-95"
                 title="Restart Timer"
               >
                 <RotateCcw size={16} />
@@ -1188,14 +1242,14 @@ export default function ExercisesPage() {
                 <span className="text-headline-sm sm:text-headline-md font-headline font-bold text-primary tracking-tight">
                   {formatTime(timeLeft)}
                 </span>
-                <span className="text-[9px] font-label-md uppercase tracking-wider text-on-surface-variant/70">
+                <span className="text-[9px] font-label-md uppercase tracking-wider text-on-surface-variant">
                   {isTimerRunning ? '2-Min Pacing Active' : 'Paused'}
                 </span>
               </div>
 
               <button
                 onClick={() => setIsTimerRunning(!isTimerRunning)}
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-[#603347] hover:bg-[#4E2839] text-white shadow-md transition-transform active:scale-95"
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-primary hover:opacity-90 text-on-primary shadow-md transition-transform active:scale-95"
                 title={isTimerRunning ? 'Pause' : 'Resume'}
               >
                 {isTimerRunning ? <Pause size={18} /> : <Play size={18} fill="currentColor" />}

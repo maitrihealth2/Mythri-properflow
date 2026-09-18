@@ -37,7 +37,10 @@ from core.database.models import (
 class UnifiedCognitiveProfile:
     """
     Complete, aggregated cognitive profile representation of a user.
-    Single object supplied to both Analyst and Sarvam LLM layers.
+    Structured into three distinct cognitive tiers:
+    1. Episodic Memory (Current Session / Active Episode)
+    2. Short-Term Memory (Recent Times / Past 1-3 Sessions)
+    3. Long-Term Memory (Deep Past Spoken Content & Core Identity)
     """
     user_id: int
     preferred_name: str = "Friend"
@@ -51,26 +54,36 @@ class UnifiedCognitiveProfile:
     check_in_preference: str = ""
     onboarding_summary: str = ""
     
-    # Persona & Clinical Profile
+    # ── 1. EPISODIC MEMORY (Current Active Session) ──────────────────────────
+    current_session_id: Optional[int] = None
+    current_session_topics: List[str] = field(default_factory=list)
+    current_session_emotion: Optional[str] = None
+    current_session_working_facts: List[str] = field(default_factory=list)
+    current_session_goal: Optional[str] = None
+
+    # ── 2. SHORT-TERM MEMORY (Recent Times / Past 1-3 Sessions) ──────────────
+    recent_session_summaries: List[str] = field(default_factory=list)
+    recent_emotional_trend: Optional[str] = None
+    living_context_summary: Optional[str] = None
+    unresolved_topics: List[str] = field(default_factory=list)
+    active_goals: List[str] = field(default_factory=list)
+
+    # ── 3. LONG-TERM MEMORY (Core Profile & Deep Historical Spoken Content) ──
+    personal_facts: List[str] = field(default_factory=list)
+    relationships: List[str] = field(default_factory=list)
+    long_term_preferences: List[str] = field(default_factory=list)
+    habits_and_routines: List[str] = field(default_factory=list)
+    emotional_triggers: List[str] = field(default_factory=list)
     presenting_problem: str = ""
     coping_mechanisms: str = ""
     support_system: str = ""
     personality_traits: str = ""
     risk_level: str = "Low"
-
-    # Memory Categories
-    relationships: List[str] = field(default_factory=list)
-    personal_facts: List[str] = field(default_factory=list)
-    long_term_preferences: List[str] = field(default_factory=list)
-    active_goals: List[str] = field(default_factory=list)
-    habits_and_routines: List[str] = field(default_factory=list)
-    emotional_triggers: List[str] = field(default_factory=list)
+    historical_spoken_content: List[str] = field(default_factory=list)
 
     # Session & Emotional History
     total_sessions_count: int = 0
     last_session_time: Optional[str] = None
-    recent_session_summaries: List[str] = field(default_factory=list)
-    recent_emotional_trend: Optional[str] = None
     recent_user_utterances: List[str] = field(default_factory=list)
     journal_highlights: List[str] = field(default_factory=list)
 
@@ -79,94 +92,81 @@ class UnifiedCognitiveProfile:
     db_acquire_ms: float = 0.0
     query_total_ms: float = 0.0
 
-    def to_formatted_context_block(self, max_tokens: int = 500, is_greeting: bool = False) -> str:
+    def to_formatted_context_block(self, max_tokens: int = 600, is_greeting: bool = False) -> str:
         """
-        Formats the unified profile into a structured markdown block for AI prompts.
+        Formats the unified profile into a structured 3-tier markdown block for AI prompts.
         Guarantees token efficiency by deduplicating facts and capping line count.
         """
         sections = []
 
-        # 1. USER IDENTITY & PREFERENCES
+        # ── USER IDENTITY ───────────────────────────────────────────────────
         user_disp_name = self.preferred_name if self.preferred_name and self.preferred_name.lower() != "mythri" else "Friend"
         id_parts = [f"User's Name: {user_disp_name}", f"Language: {self.language}"]
         if self.conversation_style:
             id_parts.append(f"Style: {self.conversation_style}")
-        if self.communication_mode:
-            id_parts.append(f"Mode: {self.communication_mode}")
-        if self.check_in_preference:
-            id_parts.append(f"Check-ins: {self.check_in_preference}")
-        sections.append(f"[USER IDENTITY & PREFERENCES]\n• " + " | ".join(str(x) for x in id_parts) + f"\n• (Note: The user is {user_disp_name}. You are Mythri, their AI companion. NEVER call the user Mythri.)")
+        sections.append(
+            f"[USER IDENTITY]\n• " + " | ".join(str(x) for x in id_parts)
+            + f"\n• (Note: The user is {user_disp_name}. You are Mythri, their AI companion. NEVER call the user Mythri.)"
+        )
 
-        # 2. THERAPEUTIC GOALS & REASONS
-        goal_items = []
-        if self.primary_goal:
-            goal_items.append(f"Primary Goal/Vibe: {self.primary_goal}")
-        if self.goals:
-            goal_items.append(f"Goals: {', '.join(str(x) for x in self.goals)}")
-        if self.reasons_for_joining:
-            goal_items.append(f"Motivations: {', '.join(str(x) for x in self.reasons_for_joining)}")
-        if self.initial_emotion:
-            goal_items.append(f"Current Feeling: {self.initial_emotion}")
-        if self.onboarding_summary:
-            goal_items.append(f"Onboarding Context: {self.onboarding_summary}")
-        if goal_items:
-            sections.append(f"[THERAPEUTIC GOALS & MOTIVATIONS]\n• " + "\n• ".join(goal_items))
+        # ── TIER 1: EPISODIC MEMORY (Current Session - Live) ────────────────
+        episodic_items = []
+        if self.current_session_emotion:
+            episodic_items.append(f"Current Session Mood: {self.current_session_emotion}")
+        if self.current_session_topics:
+            episodic_items.append(f"Topics Discussed Today: {', '.join(str(t) for t in self.current_session_topics)}")
+        if self.current_session_working_facts:
+            episodic_items.append(f"Working Turn Notes: {'; '.join(str(f) for f in self.current_session_working_facts[:4])}")
+        if self.current_session_goal:
+            episodic_items.append(f"Session Focus: {self.current_session_goal}")
 
-        # 3. PERSONAL FACTS & RELATIONSHIPS
-        if self.relationships or self.personal_facts or self.long_term_preferences or self.habits_and_routines:
-            mem_items = []
-            if self.relationships:
-                mem_items.append(f"Relationships: {'; '.join(str(x) for x in self.relationships)}")
-            if self.personal_facts:
-                mem_items.append(f"Facts: {'; '.join(str(x) for x in self.personal_facts)}")
-            if self.long_term_preferences:
-                mem_items.append(f"Preferences: {'; '.join(str(x) for x in self.long_term_preferences)}")
-            if self.habits_and_routines:
-                mem_items.append(f"Habits: {'; '.join(str(x) for x in self.habits_and_routines)}")
-            
-            sections.append(f"[LONG-TERM MEMORY & FACTS]\n• " + "\n• ".join(mem_items))
+        if episodic_items:
+            sections.append(f"[EPISODIC MEMORY (CURRENT SESSION - LIVE)]\n• " + "\n• ".join(episodic_items))
 
-        # 4. CLINICAL & PERSONA PROFILE
-        persona_items = []
-        if self.presenting_problem:
-            persona_items.append(f"Presenting Challenge: {self.presenting_problem}")
-        if self.coping_mechanisms:
-            persona_items.append(f"Coping Strategies: {self.coping_mechanisms}")
-        if self.support_system:
-            persona_items.append(f"Support System: {self.support_system}")
-        if persona_items:
-            sections.append(f"[CLINICAL PROFILE & COPING]\n• " + "\n• ".join(persona_items))
-
-        # 4b. ACTIVE THERAPEUTIC GOALS
-        if self.active_goals:
-            goals_str = "; ".join(str(x) for x in self.active_goals[:3])
-            sections.append(f"[ACTIVE GOALS]\n• {goals_str}")
-
-        # 4c. INTERVENTION HISTORY & WHAT HELPS (always shown — critical for adaptive support)
-        # This includes exercise outcomes written to companion_memories (MemoryCategory.TRIGGER)
-        if self.emotional_triggers:
-            trigger_items = []
-            for t in self.emotional_triggers[:3]:  # cap at 3 most relevant
-                trigger_items.append(t)
-            sections.append(
-                f"[WHAT HAS HELPED / WHAT TRIGGERS DISTRESS]\n• " + "\n• ".join(trigger_items)
-            )
-
-        # 5. RECENT SESSION CONTEXT & EMOTIONAL TREND
-        hist_items = []
+        # ── TIER 2: SHORT-TERM MEMORY (Recent Times / Past Sessions) ─────────
+        st_items = []
         if self.recent_emotional_trend:
-            hist_items.append(f"Recent Emotion: {self.recent_emotional_trend}")
+            st_items.append(f"Recent Emotional Baseline: {self.recent_emotional_trend}")
+        if self.living_context_summary:
+            st_items.append(f"Ongoing Context: {self.living_context_summary}")
+        if self.active_goals:
+            st_items.append(f"Active Themes: {', '.join(str(g) for g in self.active_goals[:3])}")
+        if self.unresolved_topics:
+            st_items.append(f"Unresolved from Recent Sessions: {', '.join(str(u) for u in self.unresolved_topics[:3])}")
         if self.recent_session_summaries:
-            for s in self.recent_session_summaries[:2]:
-                hist_items.append(f"Recent Summary: {s}")
-        if self.journal_highlights:
-            hist_items.append(f"Journal Notes: {self.journal_highlights[0]}")
-        if hist_items:
-            sections.append(f"[RECENT SESSION CONTEXT & EMOTIONAL TREND]\n• " + "\n• ".join(hist_items))
+            st_items.append("Recent Sessions History:\n  " + "\n  ".join(f"• {s}" for s in self.recent_session_summaries[:3]))
+
+        if st_items:
+            sections.append(f"[SHORT-TERM MEMORY (RECENT TIMES & SESSIONS)]\n• " + "\n• ".join(st_items))
+
+        # ── TIER 3: LONG-TERM MEMORY (Core Profile & Deep Historical Spoken Content) ──
+        lt_items = []
+        if self.personal_facts:
+            lt_items.append(f"Personal Facts: {'; '.join(str(x) for x in self.personal_facts[:6])}")
+        if self.relationships:
+            lt_items.append(f"Relationships: {'; '.join(str(x) for x in self.relationships[:5])}")
+        if self.long_term_preferences:
+            lt_items.append(f"Preferences: {'; '.join(str(x) for x in self.long_term_preferences[:4])}")
+        if self.habits_and_routines:
+            lt_items.append(f"Habits & Routines: {'; '.join(str(x) for x in self.habits_and_routines[:3])}")
+        if self.emotional_triggers:
+            lt_items.append(f"Known Triggers: {'; '.join(str(x) for x in self.emotional_triggers[:3])}")
+        if self.presenting_problem:
+            lt_items.append(f"Core Challenge: {self.presenting_problem}")
+        if self.coping_mechanisms:
+            lt_items.append(f"What Helps: {self.coping_mechanisms}")
+
+        # Deep past user statements/stories retrieved via semantic search
+        if self.historical_spoken_content:
+            past_statements = "\n  ".join(f"• \"{stmt}\"" for stmt in self.historical_spoken_content[:3])
+            lt_items.append(f"Past Content Spoken Long Back (Deep Memory Recall):\n  {past_statements}")
+
+        if lt_items:
+            sections.append(f"[LONG-TERM MEMORY (HISTORICAL CONTENT & CORE PROFILE)]\n• " + "\n• ".join(lt_items))
 
         full_block = "\n\n".join(sections)
 
-        # Truncate string if estimated characters exceed max token budget (~4 chars per token)
+        # Token truncation protection (~4 chars per token)
         max_chars = max_tokens * 4
         if len(full_block) > max_chars:
             full_block = full_block[:max_chars] + "\n[...Context truncated for token budget]"
@@ -177,7 +177,10 @@ class UnifiedCognitiveProfile:
 class UnifiedCognitiveContextEngine:
     """
     Unified Context Aggregation Engine.
-    Queries all user database tables in a single batched operation per user turn.
+    Queries user database tables and working memory into a 3-Tier UnifiedCognitiveProfile:
+    - Tier 1: Episodic (Current Session / Active Episode)
+    - Tier 2: Short-Term (Recent Times / Past Sessions)
+    - Tier 3: Long-Term (Deep Past Spoken Content & Core Facts)
     """
 
     def build_context(
@@ -187,21 +190,21 @@ class UnifiedCognitiveContextEngine:
         session_id: Optional[int] = None,
         query: str = "",
     ) -> UnifiedCognitiveProfile:
-        """
-        Aggregates all user-related data into a UnifiedCognitiveProfile.
-        Enforces strict user_id isolation and deduplication.
-        """
         start_time = time.time()
-        profile = UnifiedCognitiveProfile(user_id=user_id)
+        profile = UnifiedCognitiveProfile(user_id=user_id, current_session_id=session_id)
 
         try:
-            from core.database.models import LivingUserContext, CompanionMemory, User, UserOnboarding, UserProfile
+            from core.database.models import (
+                LivingUserContext, CompanionMemory, User, UserOnboarding,
+                UserProfile, SessionSummary, Session as DBSession, Message as DBMessage
+            )
+            from modules.memory.short_term import short_term_engine
             
-            # 1. Fetch user basics
+            # ── 1. Fetch User Identity & Onboarding ─────────────────────────
             user = db.query(User).filter(User.id == user_id).first()
             if user:
                 profile.language = user.preferred_language or "en-IN"
-                profile.preferred_name = user.username # Default fallback
+                profile.preferred_name = user.username
             
             user_profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
             if user_profile and user_profile.preferred_name:
@@ -219,47 +222,62 @@ class UnifiedCognitiveContextEngine:
                     profile.communication_mode = onboarding.communication_mode
                 if onboarding.summary:
                     profile.onboarding_summary = onboarding.summary
+
+            # ── 2. TIER 1: Fetch Episodic Memory (Current Active Session) ───
+            if session_id:
+                st_session = short_term_engine.read_working_memory(session_id)
+                if st_session:
+                    profile.current_session_topics = list(st_session.active_topics)
+                    profile.current_session_emotion = st_session.current_emotion
+                    profile.current_session_working_facts = [
+                        item.content for item in st_session.active_items
+                        if item.user_id == user_id and not item.is_expired
+                    ]
+                
+                # Check current session record for goal / emotion
+                cur_sess_db = db.query(DBSession).filter(DBSession.id == session_id).first()
+                if cur_sess_db:
+                    if cur_sess_db.conversation_goal:
+                        profile.current_session_goal = cur_sess_db.conversation_goal
+                    if not profile.current_session_emotion and cur_sess_db.dominant_emotion:
+                        profile.current_session_emotion = cur_sess_db.dominant_emotion
+
+            # ── 3. TIER 2: Fetch Short-Term Memory (Recent Times / Past Sessions) ─
+            # Load up to 3 most recent session summaries (excluding current session)
+            summary_query = db.query(SessionSummary).filter(SessionSummary.user_id == user_id)
+            if session_id:
+                summary_query = summary_query.filter(SessionSummary.session_id != session_id)
             
-            # 2. Fetch Living User Context & Recent Session Summary
-            from core.database.models import SessionSummary
-            
-            latest_summary = db.query(SessionSummary).filter(
-                SessionSummary.user_id == user_id
-            ).order_by(SessionSummary.created_at.desc()).first()
-            if latest_summary:
-                topics_str = ", ".join(str(x) for x in latest_summary.main_topics) if latest_summary.main_topics else ""
-                unresolved_str = f" | Unresolved: {', '.join(str(x) for x in latest_summary.unresolved_topics)}" if latest_summary.unresolved_topics else ""
-                ctx_str = latest_summary.important_context or ""
-                summary_text = f"Prior session topics: {topics_str}. Notes: {ctx_str}{unresolved_str}".strip()
-                if summary_text:
-                    profile.recent_session_summaries.append(summary_text)
+            past_summaries = summary_query.order_by(SessionSummary.created_at.desc()).limit(3).all()
+            for s in past_summaries:
+                topics_str = ", ".join(str(x) for x in s.main_topics) if s.main_topics else "General conversation"
+                notes_str = s.important_context or ""
+                unres_str = f" | Follow-up: {', '.join(str(x) for x in s.unresolved_topics)}" if s.unresolved_topics else ""
+                created_str = s.created_at.strftime("%b %d") if s.created_at else "Earlier session"
+                summary_formatted = f"[{created_str}]: Topics: {topics_str}. Notes: {notes_str}{unres_str}".strip()
+                profile.recent_session_summaries.append(summary_formatted)
 
             living_ctx = db.query(LivingUserContext).filter(LivingUserContext.user_id == user_id).first()
             if living_ctx:
-                if living_ctx.compact_summary and living_ctx.compact_summary not in profile.recent_session_summaries:
-                    profile.recent_session_summaries.append(f"Ongoing context: {living_ctx.compact_summary}")
+                if living_ctx.compact_summary:
+                    profile.living_context_summary = living_ctx.compact_summary
                 if living_ctx.active_themes:
                     profile.active_goals.extend(living_ctx.active_themes)
                 if living_ctx.unresolved_topics:
-                    profile.goals.extend(living_ctx.unresolved_topics)
+                    profile.unresolved_topics.extend(living_ctx.unresolved_topics)
                 if living_ctx.emotional_baseline:
                     profile.recent_emotional_trend = living_ctx.emotional_baseline
-            elif not profile.recent_session_summaries:
-                profile.recent_session_summaries.append("New user context being built in background.")
-                
-            # 3. Fetch Dual-Channel Companion Memories (Recent + Core Long-Term)
-            # Channel A: Most recent memories (what was learned in recent turns/sessions)
+
+            # ── 4. TIER 3: Fetch Long-Term Memory (Facts, Traits & Deep History) ─
             recent_mems = db.query(CompanionMemory).filter(
                 CompanionMemory.user_id == user_id
-            ).order_by(CompanionMemory.created_at.desc()).limit(75).all()
+            ).order_by(CompanionMemory.created_at.desc()).limit(50).all()
 
-            # Channel B: Core high-importance memories (essential persistent facts)
             top_importance_mems = db.query(CompanionMemory).filter(
                 CompanionMemory.user_id == user_id
-            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(75).all()
+            ).order_by(CompanionMemory.importance_score.desc(), CompanionMemory.created_at.desc()).limit(50).all()
             
             seen_facts: Set[str] = set()
-            combined_mems = []
             for m in recent_mems + top_importance_mems:
                 content_clean = m.content.strip()
                 if not content_clean:
@@ -268,10 +286,7 @@ class UnifiedCognitiveContextEngine:
                 if norm_content in seen_facts:
                     continue
                 seen_facts.add(norm_content)
-                combined_mems.append(m)
 
-            for m in combined_mems:
-                content_clean = m.content.strip()
                 mtype = (m.memory_type or "").lower()
                 if "relationship" in mtype:
                     profile.relationships.append(content_clean)
@@ -285,9 +300,49 @@ class UnifiedCognitiveContextEngine:
                     profile.emotional_triggers.append(content_clean)
                 else:
                     profile.personal_facts.append(content_clean)
-                    
+
+            # ── 5. Deep Past Content Search (Historical Statements Spoken Long Back) ─
+            if query and len(query.strip()) > 3:
+                import re
+                clean_q = re.sub(r"[^\w\s]", " ", query.lower())
+                query_words = [w for w in clean_q.split() if len(w) >= 4 and w not in {
+                    "what", "when", "where", "which", "about", "there", "their", "remember", "think", "talked", "spoke"
+                }]
+                
+                if query_words:
+                    # Query user messages from older sessions
+                    msg_query = db.query(DBMessage).filter(
+                        DBMessage.role == "user"
+                    )
+                    if session_id:
+                        # Find messages from other sessions belonging to this user
+                        msg_query = msg_query.join(DBSession, DBMessage.session_id == DBSession.id).filter(
+                            DBSession.user_id == user_id,
+                            DBSession.id != session_id
+                        )
+                    else:
+                        msg_query = msg_query.join(DBSession, DBMessage.session_id == DBSession.id).filter(
+                            DBSession.user_id == user_id
+                        )
+
+                    past_user_msgs = msg_query.order_by(DBMessage.created_at.desc()).limit(60).all()
+                    scored_past_msgs = []
+                    for pm in past_user_msgs:
+                        pm_content = pm.content.strip()
+                        if len(pm_content) < 15:
+                            continue
+                        pm_lower = pm_content.lower()
+                        match_count = sum(1 for w in query_words if w in pm_lower)
+                        if match_count >= 1:
+                            scored_past_msgs.append((match_count, pm_content))
+
+                    scored_past_msgs.sort(key=lambda x: x[0], reverse=True)
+                    for _, content in scored_past_msgs[:3]:
+                        if content not in profile.historical_spoken_content:
+                            profile.historical_spoken_content.append(content)
+
         except Exception as e:
-            print(f"[UnifiedCognitiveContextEngine] Error building profile: {e}")
+            print(f"[UnifiedCognitiveContextEngine] Error building 3-tier profile: {e}")
 
         profile.assembly_duration_ms = round((time.time() - start_time) * 1000, 2)
         return profile

@@ -91,14 +91,14 @@ async def update_living_context(user_id: int, session_id: int, max_retries: int 
 
                 # Clean output
                 import re
-                clean_json = re.sub(r'```(?:json)?', '', response).strip('` \n')
+                match = re.search(r'\{.*\}', response, re.DOTALL)
+                clean_json = match.group(0) if match else re.sub(r'```(?:json)?', '', response).strip('` \n')
                 
                 try:
                     data = json.loads(clean_json)
                 except json.JSONDecodeError:
-                    logger.error(f"[LIVING_CONTEXT] Failed to parse LLM JSON: {clean_json}")
-                    # Revert status on parse fail
-                    living_context.processing_status = "error_parsing"
+                    logger.error(f"[LIVING_CONTEXT] Failed to parse LLM JSON: {clean_json[:200]}")
+                    living_context.processing_status = "ready"
                     db.commit()
                     return
 

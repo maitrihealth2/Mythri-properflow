@@ -188,13 +188,13 @@ class ContextItemScorer:
 
         topic_score = 0.0
         if signals.topic_keywords:
-            matched = sum(1 for kw in signals.topic_keywords if kw in value_lower)
+            matched = sum(1 for kw in signals.topic_keywords if kw in value_lower or any(kw in vt for vt in value_terms))
             topic_score = min(1.0, matched / max(1, len(signals.topic_keywords)))
         elif signals.all_content_terms:
             msg_terms = set(signals.all_content_terms)
             if msg_terms:
-                overlap = value_terms & msg_terms
-                topic_score = min(1.0, len(overlap) / max(1, len(msg_terms)))
+                overlap = sum(1 for mt in msg_terms if any(mt in vt or vt in mt for vt in value_terms if len(vt) >= 3 and len(mt) >= 3))
+                topic_score = min(1.0, overlap / max(1, len(msg_terms)))
         breakdown["topic_overlap"] = round(topic_score, 4)
 
         emotion_score = 0.0
@@ -217,15 +217,36 @@ class ContextItemScorer:
 
 @dataclass
 class SelectedContextBlock:
+    """
+    Selected, scored context block ready for prompt construction.
+    Organized into three distinct cognitive tiers:
+    - Tier 1: Episodic (Current Session - Live)
+    - Tier 2: Short-Term (Recent Times & Past Sessions)
+    - Tier 3: Long-Term (Core Profile & Deep Historical Spoken Content)
+    """
     selection_mode: str
     threshold_applied: float
     persona_minimal: str
+    
+    # ── Tier 1: Episodic (Current Session) ──────────────────────────────────
+    selected_live_emotion: Optional[str] = None
+    selected_live_topics: List[str] = field(default_factory=list)
+    selected_live_notes: List[str] = field(default_factory=list)
+    selected_session_goal: Optional[str] = None
+
+    # ── Tier 2: Short-Term (Recent Times / Past Sessions) ───────────────────
+    selected_session_summaries: List[str] = field(default_factory=list)
+    selected_emotional_history: List[str] = field(default_factory=list)
+    selected_living_context: Optional[str] = None
+
+    # ── Tier 3: Long-Term (Core Profile & Deep Past Spoken Content) ──────────
     selected_relationships: List[str] = field(default_factory=list)
     selected_facts: List[str] = field(default_factory=list)
     selected_goals: List[str] = field(default_factory=list)
-    selected_emotional_history: List[str] = field(default_factory=list)
-    selected_session_summary: Optional[str] = None
     selected_presenting_problem: Optional[str] = None
+    selected_historical_content: List[str] = field(default_factory=list)
+
+    # Telemetry
     items_before: int = 0
     items_after: int = 0
     chars_before: int = 0
@@ -236,51 +257,52 @@ class SelectedContextBlock:
 
     def to_prompt_block(self) -> str:
         parts: List[str] = []
-        parts.append(f"[USER] {self.persona_minimal}")
+        parts.append(f"[USER IDENTITY] {self.persona_minimal}")
 
-        # Always inject recent conversation / session context if available across all modes
-        if self.selected_session_summary:
-            parts.append(f"[RECENT CONVERSATION & CONTEXT] {self.selected_session_summary}")
+        # ── Tier 1: Episodic Memory (Current Session - Live) ────────────────
+        ep_items = []
+        if self.selected_live_emotion:
+            ep_items.append(f"Current Session Mood: {self.selected_live_emotion}")
+        if self.selected_live_topics:
+            ep_items.append(f"Live Topics: {', '.join(self.selected_live_topics)}")
+        if self.selected_live_notes:
+            ep_items.append(f"Turn Notes: {'; '.join(self.selected_live_notes[:3])}")
+        if self.selected_session_goal:
+            ep_items.append(f"Session Focus: {self.selected_session_goal}")
 
-        if self.selection_mode == "EXPLICIT_RECALL":
-            if self.selected_relationships:
-                parts.append(f"[RELATIONSHIPS] {'; '.join(self.selected_relationships)}")
-            if self.selected_facts:
-                parts.append(f"[FACTS] {'; '.join(self.selected_facts)}")
-            if self.selected_goals:
-                parts.append(f"[GOALS] {'; '.join(self.selected_goals)}")
-            if self.selected_emotional_history:
-                parts.append(f"[EMOTIONAL HISTORY] {'; '.join(self.selected_emotional_history)}")
-            if self.selected_presenting_problem:
-                parts.append(f"[PRESENTING CONCERN] {self.selected_presenting_problem}")
+        if ep_items:
+            parts.append(f"[EPISODIC MEMORY (CURRENT SESSION - LIVE)]\n• " + "\n• ".join(ep_items))
 
-        elif self.selection_mode == "EMOTIONAL":
-            if self.selected_emotional_history:
-                parts.append(f"[EMOTIONAL CONTEXT] {'; '.join(self.selected_emotional_history)}")
-            if self.selected_relationships:
-                parts.append(f"[RELEVANT PEOPLE] {'; '.join(self.selected_relationships[:3])}")
-            if self.selected_facts:
-                parts.append(f"[RELEVANT CONTEXT] {'; '.join(self.selected_facts[:3])}")
+        # ── Tier 2: Short-Term Memory (Recent Times / Past Sessions) ─────────
+        st_items = []
+        if self.selected_emotional_history:
+            st_items.append(f"Recent Emotional Baseline: {'; '.join(self.selected_emotional_history[:2])}")
+        if self.selected_living_context:
+            st_items.append(f"Ongoing Context: {self.selected_living_context}")
+        if self.selected_session_summaries:
+            st_items.append("Recent Past Sessions:\n  " + "\n  ".join(f"• {s}" for s in self.selected_session_summaries[:2]))
 
-        elif self.selection_mode == "GOAL_FOCUSED":
-            if self.selected_goals:
-                parts.append(f"[GOALS] {'; '.join(self.selected_goals)}")
-            if self.selected_facts:
-                parts.append(f"[RELEVANT CONTEXT] {'; '.join(self.selected_facts[:3])}")
-            if self.selected_relationships:
-                parts.append(f"[RELEVANT PEOPLE] {'; '.join(self.selected_relationships[:2])}")
+        if st_items:
+            parts.append(f"[SHORT-TERM MEMORY (RECENT TIMES & SESSIONS)]\n• " + "\n• ".join(st_items))
 
-        else:
-            if self.selected_relationships:
-                parts.append(f"[RELEVANT PEOPLE] {'; '.join(self.selected_relationships)}")
-            if self.selected_facts:
-                parts.append(f"[RELEVANT CONTEXT] {'; '.join(self.selected_facts)}")
-            if self.selected_goals:
-                parts.append(f"[ACTIVE GOALS] {'; '.join(self.selected_goals[:2])}")
-            if self.selected_emotional_history:
-                parts.append(f"[EMOTIONAL HISTORY] {'; '.join(self.selected_emotional_history[:2])}")
+        # ── Tier 3: Long-Term Memory (Core Profile & Deep History) ───────────
+        lt_items = []
+        if self.selected_presenting_problem:
+            lt_items.append(f"Core Focus: {self.selected_presenting_problem}")
+        if self.selected_relationships:
+            lt_items.append(f"Relationships: {'; '.join(self.selected_relationships[:4])}")
+        if self.selected_facts:
+            lt_items.append(f"Personal Facts: {'; '.join(self.selected_facts[:5])}")
+        if self.selected_goals:
+            lt_items.append(f"Goals: {'; '.join(self.selected_goals[:3])}")
+        if self.selected_historical_content:
+            past_stmts = "\n  ".join(f"• \"{stmt}\"" for stmt in self.selected_historical_content[:2])
+            lt_items.append(f"Past Content Spoken Long Back (Deep Recall):\n  {past_stmts}")
 
-        result = "\n".join(parts)
+        if lt_items:
+            parts.append(f"[LONG-TERM MEMORY (HISTORICAL CONTENT & CORE PROFILE)]\n• " + "\n• ".join(lt_items))
+
+        result = "\n\n".join(parts)
         self.chars_after = len(result)
         return result
 
@@ -319,12 +341,12 @@ class ContextRelevanceSelector:
 
     THRESHOLD_BY_MODE = {
         "EXPLICIT_RECALL":   0.00,
-        "EMOTIONAL":         0.55,   # but emotional_triggers+trend bypass threshold
-        "ASKING_FOR_ADVICE": 0.40,
-        "ENTITY_FOCUSED":    0.30,
-        "GOAL_FOCUSED":      0.35,
-        "TOPIC_FOCUSED":     0.20,   # direct topic keyword match in content
-        "GENERAL":           0.35,
+        "EMOTIONAL":         0.30,   # emotional_triggers+trend+relationships bypass threshold
+        "ASKING_FOR_ADVICE": 0.25,
+        "ENTITY_FOCUSED":    0.20,
+        "GOAL_FOCUSED":      0.25,
+        "TOPIC_FOCUSED":     0.15,   # direct topic keyword match in content
+        "GENERAL":           0.25,
     }
 
     def __init__(self):
@@ -339,7 +361,7 @@ class ContextRelevanceSelector:
 
         mode = self._resolve_mode(intent, message)
         signals = self._extractor.extract(message, known_entities=known_entities)
-        threshold = self.THRESHOLD_BY_MODE.get(mode, 0.35)
+        threshold = self.THRESHOLD_BY_MODE.get(mode, 0.25)
 
         full_block = profile.to_formatted_context_block(max_tokens=800)
         chars_before = len(full_block)
@@ -371,16 +393,18 @@ class ContextRelevanceSelector:
 
         # Mode-specific override rules:
         # 1. Session summary: ALWAYS pass so recent conversation context is available to the model
-        # 2. EMOTIONAL: always include emotional history items (triggers + trend)
+        # 2. EMOTIONAL: always include emotional history items (triggers + trend + relationships)
         # 3. TOPIC_FOCUSED: any item whose content contains a topic keyword from the message passes
         def _passes_threshold(item: ScoredItem) -> bool:
             if item.field_name == "session_summary":
                 return True
             if item.score >= threshold:
                 return True
-            if mode == "EMOTIONAL" and item.field_name in ("emotional_triggers", "emotional_trend"):
-                return True  # Emotional history always relevant in emotional turns
-            if mode in ("TOPIC_FOCUSED", "GENERAL") and signals.topic_keywords:
+            if mode == "EMOTIONAL" and item.field_name in ("emotional_triggers", "emotional_trend", "relationships"):
+                return True  # Emotional history and relationships always relevant in emotional turns
+            if signals.emotion_group and item.field_name in ("emotional_triggers", "emotional_trend"):
+                return True  # Any emotion present in message passes emotional triggers & trend
+            if mode in ("TOPIC_FOCUSED", "GENERAL", "ENTITY_FOCUSED") and signals.topic_keywords:
                 # Direct keyword match in content = pass even if score is low
                 val_lower = item.value.lower()
                 if any(kw in val_lower for kw in signals.topic_keywords):
@@ -394,6 +418,12 @@ class ContextRelevanceSelector:
             selection_mode=mode,
             threshold_applied=threshold,
             persona_minimal=persona_minimal,
+            selected_live_emotion=profile.current_session_emotion,
+            selected_live_topics=list(profile.current_session_topics),
+            selected_live_notes=list(profile.current_session_working_facts),
+            selected_session_goal=profile.current_session_goal,
+            selected_living_context=profile.living_context_summary,
+            selected_historical_content=list(profile.historical_spoken_content),
             items_before=items_before,
             items_after=len(passed),
             chars_before=chars_before,
@@ -415,14 +445,15 @@ class ContextRelevanceSelector:
             elif fname in ("emotional_triggers", "emotional_trend"):
                 block.selected_emotional_history.append(item.value)
             elif fname == "session_summary":
-                if not block.selected_session_summary:
-                    block.selected_session_summary = item.value
-                else:
-                    block.selected_session_summary += f" | {item.value}"
+                block.selected_session_summaries.append(item.value)
             elif fname == "presenting_problem":
                 block.selected_presenting_problem = item.value
-            elif fname == "preferences" and item.score >= 0.55:
+            elif fname == "preferences" and item.score >= 0.25:
                 block.selected_facts.append(item.value)
+
+        # Fallback to profile session summaries if none passed threshold
+        if not block.selected_session_summaries and profile.recent_session_summaries:
+            block.selected_session_summaries = list(profile.recent_session_summaries[:2])
 
         if mode == "EXPLICIT_RECALL":
             if profile.presenting_problem and not block.selected_presenting_problem:

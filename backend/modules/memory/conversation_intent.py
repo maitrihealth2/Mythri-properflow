@@ -40,20 +40,25 @@ class ConversationSpeechActEngine:
     """
 
     RECALL_TRIGGERS = [
-        "do you remember", "what do you remember", "what do you know about",
-        "who is", "who was", "tell me about", "what are my goals",
-        "what is my", "what are my", "did i tell you"
+        "do you remember", "what do you remember", "what do you know",
+        "do you know", "who is", "who was", "tell me about", "what are my goals",
+        "what is my", "what are my", "what's my", "did i tell you",
+        "where do i", "where am i", "who am i", "what do i", "my name",
+        "my favorite", "my favourite", "my job", "my work", "my goal"
     ]
 
     EMOTION_TRIGGERS = [
         "i feel", "i'm feeling", "i am feeling", "feeling down", "feeling lonely",
         "feeling sad", "feeling anxious", "feeling lost", "feeling overwhelmed",
-        "i am sad", "i am lonely", "i'm sad", "i'm lonely", "i'm scared", "i hate this"
+        "i am sad", "i am lonely", "i'm sad", "i'm lonely", "i'm scared", "i hate this",
+        "i am stressed", "i'm stressed", "depressed", "anxious", "anxiety", "upset",
+        "stress", "panic", "fear", "nervous", "worried", "struggling", "overwhelmed"
     ]
 
     ADVICE_TRIGGERS = [
         "what should i do", "how do i handle", "how should i deal",
-        "give me advice", "what do you suggest", "any tips"
+        "give me advice", "what do you suggest", "any tips", "help me with",
+        "how can i"
     ]
 
     def analyze(self, message: str, known_entities: Optional[List[str]] = None) -> ConversationIntentAnalysis:
@@ -71,22 +76,22 @@ class ConversationSpeechActEngine:
                 reasoning="User explicitly asked for memory recall."
             )
 
-        # 2. Emotional Expression Check
+        # 2. Emotional Expression Check - Enable supporting emotional/coping memory
         if any(trig in msg_clean for trig in self.EMOTION_TRIGGERS):
             return ConversationIntentAnalysis(
                 speech_act=SpeechAct.EXPRESSING_EMOTION,
-                is_memory_needed=False,
+                is_memory_needed=True,
                 is_explicit_recall=False,
-                reasoning="User is expressing current emotional state. Current message 50% priority. Zero memory dump."
+                reasoning="User is expressing current emotional state. Injecting silent supportive emotional history."
             )
 
-        # 3. Advice Request Check
+        # 3. Advice Request Check - Enable supporting goal/situational memory
         if any(trig in msg_clean for trig in self.ADVICE_TRIGGERS):
             return ConversationIntentAnalysis(
                 speech_act=SpeechAct.ASKING_FOR_ADVICE,
-                is_memory_needed=False,
+                is_memory_needed=True,
                 is_explicit_recall=False,
-                reasoning="User is asking for advice. Focus on current message context."
+                reasoning="User is asking for advice. Injecting relevant goal and background context."
             )
 
         # 4. Known Entity Continuation or Update Check
@@ -103,9 +108,10 @@ class ConversationSpeechActEngine:
             )
 
         # 5. General Sharing / Chat Default
+        is_sharing = len(msg_clean.split()) > 3
         return ConversationIntentAnalysis(
-            speech_act=SpeechAct.SHARING_INFO if len(msg_clean.split()) > 3 else SpeechAct.GENERAL_CHAT,
-            is_memory_needed=False,
+            speech_act=SpeechAct.SHARING_INFO if is_sharing else SpeechAct.GENERAL_CHAT,
+            is_memory_needed=is_sharing,
             is_explicit_recall=False,
-            reasoning="General message. No memory injection required."
+            reasoning="Informational user utterance. Supplying relevant background context if applicable."
         )
