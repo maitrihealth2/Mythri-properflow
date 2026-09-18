@@ -315,6 +315,41 @@ export default function ConsultationPage() {
     }
   }, [])
 
+  // ─── Natural Assistant Content Segmenter ──────────────────────────────────
+  const segmentAssistantContent = (content: string): string[] => {
+    if (!content) return []
+    const trimmed = content.trim()
+    if (!trimmed) return []
+
+    // 1. Explicit paragraph breaks (\n\n or more)
+    if (/\n\s*\n/.test(trimmed)) {
+      const parts = trimmed.split(/\n\s*\n/).map(s => s.trim()).filter(s => s.length > 0)
+      if (parts.length > 1) {
+        return parts.flatMap(p => segmentAssistantContent(p))
+      }
+    }
+
+    // 2. Explicit line breaks (bullet points or multiline notes)
+    if (trimmed.includes('\n')) {
+      const lines = trimmed.split('\n').map(s => s.trim()).filter(s => s.length > 0)
+      if (lines.length > 1) {
+        return lines.flatMap(l => segmentAssistantContent(l))
+      }
+    }
+
+    // 3. Natural first sentence boundary matching live stream responsiveness
+    const sentenceMatch = trimmed.match(/^([^\n.!?]{15,140}[.!?])\s+([\s\S]+)$/)
+    if (sentenceMatch) {
+      const firstSentence = sentenceMatch[1].trim()
+      const remainder = sentenceMatch[2].trim()
+      if (firstSentence && remainder) {
+        return [firstSentence, ...segmentAssistantContent(remainder)]
+      }
+    }
+
+    return [trimmed]
+  }
+
   // ─── Session init ─────────────────────────────────────────────────────────
   const initSession = async () => {
     try {
@@ -324,12 +359,33 @@ export default function ConsultationPage() {
           const data = await getTranscript(existingSessionId)
           setSessionId(existingSessionId)
           if (data.messages && data.messages.length > 0) {
-            // Restore history, splitting assistant messages by \n\n to match live bubble segmentation
+            // Check if localStorage already has the exact live bubble segmentation
+            const savedRaw = localStorage.getItem('mb_chat_history_' + existingSessionId)
+            let cachedMessages: Message[] | null = null
+            if (savedRaw) {
+              try {
+                const parsed = JSON.parse(savedRaw)
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  cachedMessages = parsed
+                }
+              } catch (_) {}
+            }
+
+            const dbUserCount = data.messages.filter((m: any) => m.role === 'user').length
+            const cachedUserCount = cachedMessages ? cachedMessages.filter(m => m.role === 'user').length : 0
+
+            if (cachedMessages && cachedMessages.length > 0 && cachedUserCount === dbUserCount) {
+              // Cache matches full transcript; preserve the exact multi-bubble layout without collapsing
+              setMessages(cachedMessages)
+              return
+            }
+
+            // Otherwise (fresh device, cache cleared, or new turns), restore history with natural bubble segmentation
             const expandedMessages: Message[] = []
             
             for (const m of data.messages) {
               if (m.role === 'assistant' && m.content) {
-                const chunks = m.content.split(/\n\s*\n/).filter((c: string) => c.trim().length > 0)
+                const chunks = segmentAssistantContent(m.content)
                 chunks.forEach((chunk: string, index: number) => {
                   const isLast = index === chunks.length - 1
                   expandedMessages.push({
@@ -362,7 +418,7 @@ export default function ConsultationPage() {
 
       const welcome = data.message
       if (welcome && welcome !== 'Session started.') {
-        const chunks = welcome.split(/\n\s*\n/).filter((c: string) => c.trim().length > 0)
+        const chunks = segmentAssistantContent(welcome)
         const bubbles: BubbleItem[] = chunks.map((chunk: string, index: number) => ({
           content: chunk.trim(),
           is_last_in_group: index === chunks.length - 1,
