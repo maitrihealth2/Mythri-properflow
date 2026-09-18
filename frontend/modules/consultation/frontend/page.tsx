@@ -701,7 +701,7 @@ export default function ConsultationPage() {
       >
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto pt-4 pb-48 md:pb-36 flex flex-col gap-3 hide-scrollbar pr-2"
+          className="flex-1 overflow-y-auto pt-4 pb-24 md:pb-28 flex flex-col gap-3 hide-scrollbar pr-2"
           onClick={() => { setMenuOpen(false); setLangMenuOpen(false) }}
         >
           {/* ── Committed messages ── */}
@@ -775,7 +775,7 @@ export default function ConsultationPage() {
       </main>
 
       {/* ── Floating Composer ── */}
-      <div className={`fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center px-margin-mobile md:px-8 lg:px-12 pb-20 md:pb-8 pointer-events-none transition-all duration-700 ${exerciseMode ? 'opacity-30 pointer-events-none' : ''}`}>
+      <div className={`fixed bottom-0 left-0 right-0 z-[60] flex flex-col items-center px-margin-mobile md:px-8 lg:px-12 pb-3 sm:pb-4 md:pb-6 pointer-events-none transition-all duration-700 ${exerciseMode ? 'opacity-30 pointer-events-none' : ''}`}>
         <div className="w-full max-w-[1200px] md:w-[94vw] lg:w-[90vw] xl:w-[88vw] mx-auto flex flex-col items-center pointer-events-auto">
           <div className={`relative flex items-center gap-2 md:gap-4 glass-input rounded-[2rem] p-2 md:p-2.5 pl-6 md:pl-8 transition-all duration-300 w-full`}>
             <textarea
