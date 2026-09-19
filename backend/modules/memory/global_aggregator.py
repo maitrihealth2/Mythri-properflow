@@ -170,11 +170,11 @@ class WholeDBUserAggregator:
         persona = db.query(UserPersonaProfile).filter(UserPersonaProfile.user_id == user_id).first()
         if persona:
             persona_dict = {
-                "presenting_problem": persona.presenting_problem,
-                "coping_mechanisms": persona.coping_mechanisms,
-                "support_system": persona.support_system,
-                "personality_traits": persona.personality_traits,
-                "risk_level": persona.risk_level,
+                "initial_presenting_topic": getattr(persona, "initial_presenting_topic", None),
+                "communication_style": getattr(persona, "communication_style", None),
+                "processing_preference": getattr(persona, "processing_preference", None),
+                "life_focus_areas": getattr(persona, "life_focus_areas", None),
+                "emotional_range": getattr(persona, "emotional_range", None),
             }
 
         # 4. Fetch All Sessions with Messages & Emotions
