@@ -383,8 +383,24 @@ export default function ConsultationPage() {
             // Otherwise (fresh device, cache cleared, or new turns), restore history with natural bubble segmentation
             const expandedMessages: Message[] = []
             
-            for (const m of data.messages) {
+            for (let idx = 0; idx < data.messages.length; idx++) {
+              const m = data.messages[idx]
               if (m.role === 'assistant' && m.content) {
+                // If it is the initial greeting at the very beginning of the session, keep as one block
+                if (idx === 0) {
+                  expandedMessages.push({
+                    ...m,
+                    content: m.content.trim(),
+                    is_new: false,
+                    is_last_in_group: true,
+                    is_crisis: m.is_crisis,
+                    helplines: m.helplines,
+                    rag_used: m.rag_used,
+                    exercise_trigger: m.exercise_trigger
+                  })
+                  continue
+                }
+
                 const chunks = segmentAssistantContent(m.content)
                 chunks.forEach((chunk: string, index: number) => {
                   const isLast = index === chunks.length - 1
@@ -418,12 +434,11 @@ export default function ConsultationPage() {
 
       const welcome = data.message
       if (welcome && welcome !== 'Session started.') {
-        const chunks = segmentAssistantContent(welcome)
-        const bubbles: BubbleItem[] = chunks.map((chunk: string, index: number) => ({
-          content: chunk.trim(),
-          is_last_in_group: index === chunks.length - 1,
-        }))
-        setBubbleQueue(bubbles)
+        // Initial greeting rendered as one single block
+        setBubbleQueue([{
+          content: welcome.trim(),
+          is_last_in_group: true,
+        }])
       }
     } catch (_) {
       // silent — user stays on page
