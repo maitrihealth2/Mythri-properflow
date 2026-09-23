@@ -26,7 +26,7 @@ async def send_message(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    asyncio.create_task(broadcast_event("TEXT_START", "Client Keyboard -> FastAPI", {"text": req.message}))
+    asyncio.create_task(broadcast_event("TEXT_START", "Client Keyboard -> FastAPI", {"status": "received"}))
     CommandCenter.log_ai("TEXT_START", f"User Input: {req.message[:50]}...")
 
     crisis = check_for_crisis(req.message)

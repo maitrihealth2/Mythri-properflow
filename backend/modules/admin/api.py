@@ -32,6 +32,8 @@ def require_admin(credentials: HTTPAuthorizationCredentials = Depends(admin_bear
     except Exception:
         raise HTTPException(status_code=403, detail="Invalid admin token")
 
+import secrets
+
 class AdminLoginRequest(BaseModel):
     email: str
     password: str
@@ -39,9 +41,12 @@ class AdminLoginRequest(BaseModel):
 @router.post("/login")
 def admin_login(req: AdminLoginRequest):
     admin_email = os.getenv("ADMIN_EMAIL", "admin@mythri.org")
-    admin_pass = os.getenv("ADMIN_PASSWORD", "Mythri2026")
+    admin_pass = os.getenv("ADMIN_PASSWORD")
     
-    if req.email == admin_email and req.password == admin_pass:
+    if not admin_pass:
+        raise HTTPException(status_code=500, detail="Admin credentials not configured")
+        
+    if secrets.compare_digest(req.email, admin_email) and secrets.compare_digest(req.password, admin_pass):
         now = datetime.now(timezone.utc)
         payload = {
             "role": "admin",

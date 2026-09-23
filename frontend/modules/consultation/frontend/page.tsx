@@ -149,11 +149,11 @@ export default function ConsultationPage() {
 
   const inputPlaceholder = INPUT_PLACEHOLDERS[language] || INPUT_PLACEHOLDERS['en-IN']
 
-  // ─── WebSocket side-channel ───────────────────────────────────────────────
   useEffect(() => {
     if (!sessionId) return
     const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
-    const wsUrl = API_URL.replace(/^http/, "ws") + `/api/consultation/ws/events?session_id=${sessionId}`
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    const wsUrl = API_URL.replace(/^http/, "ws") + `/api/consultation/ws/events?session_id=${sessionId}${token ? `&token=${encodeURIComponent(token)}` : ''}`
     
     const ws = new WebSocket(wsUrl)
     ws.onmessage = (event) => {

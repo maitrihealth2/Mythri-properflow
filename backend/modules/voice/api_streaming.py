@@ -17,19 +17,53 @@ _BASE = pathlib.Path(__file__).resolve().parent.parent.parent
 load_dotenv(_BASE / ".env")
 load_dotenv(_BASE / ".env.local", override=True)
 
+from security.authentication.service import decode_token
+
 router = APIRouter(prefix="/api/streaming", tags=["streaming"])
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 
 @router.websocket("/ws/stream/{session_id}")
-async def streaming_stt(websocket: WebSocket, session_id: str):
+async def streaming_stt(websocket: WebSocket, session_id: str, token: str = None):
     headers = dict(websocket.headers)
     origin = headers.get("origin", "No Origin")
     host = headers.get("host", "No Host")
     print(f"[WS] Attempting connection. Session: {session_id}, Origin: {origin}, Host: {host}")
     
+    # ── Authenticate Token ──
+    raw_token = token or websocket.query_params.get("token")
+    payload = decode_token(raw_token) if raw_token else None
+    if not payload or not payload.get("user_id"):
+        print(f"[WS] Unauthorized WebSocket connection attempt for session: {session_id}")
+        await websocket.close(code=1008, reason="Authentication failed")
+        return
+        
+    auth_user_id = payload.get("user_id")
+
+    # ── Verify Session Ownership ──
+    def _lookup_user_and_session():
+        generator = get_db()
+        db = next(generator)
+        try:
+            db_session = db.query(DBSession).filter(
+                (DBSession.session_token == session_id) | (DBSession.id == (int(session_id) if session_id.isdigit() else -1))
+            ).first()
+            if not db_session or db_session.user_id != auth_user_id:
+                return None, None
+            user = db.query(User).get(auth_user_id)
+            return user, db_session
+        finally:
+            try: next(generator) 
+            except StopIteration: pass
+            
+    current_user, db_session = await asyncio.to_thread(_lookup_user_and_session)
+    if not current_user or not db_session:
+        print(f"[WS] Forbidden: User {auth_user_id} does not own session {session_id}")
+        await websocket.close(code=1008, reason="Unauthorized session access")
+        return
+    
     try:
         await websocket.accept()
-        print(f"[WS] Handshake successful: {session_id}")
+        print(f"[WS] Handshake successful: {session_id} (User: {current_user.id})")
     except Exception as e:
         print(f"[WS] Handshake failed for {session_id}: {e}")
         return
@@ -53,19 +87,6 @@ async def streaming_stt(websocket: WebSocket, session_id: str):
             # ── Session State ──
             config_sent = True  # Config is already established via URL
             last_transcript = "" 
-            
-            # Lookup user from session for handle_voice_turn
-            def _lookup_user():
-                generator = get_db()
-                db = next(generator)
-                try:
-                    db_session = db.query(DBSession).filter(DBSession.session_token == session_id).first()
-                    return db.query(User).get(db_session.user_id) if db_session else None
-                finally:
-                    try: next(generator) 
-                    except StopIteration: pass
-                    
-            current_user = await asyncio.to_thread(_lookup_user)
 
             async def receive_from_sarvam():
                 """Relay transcripts from Sarvam back to Browser."""
@@ -79,7 +100,7 @@ async def streaming_stt(websocket: WebSocket, session_id: str):
                             
                             if is_final:
                                 last_transcript = text
-                                await broadcast_event("STT_DONE", f"Transcribed text", {"text": text})
+                                await broadcast_event("STT_DONE", "Audio transcribed", {"status": "done"})
                                 
                             print(f"[Sarvam -> Browser] {text[:30]}... (final={is_final})")
                             await websocket.send_json({

@@ -14,7 +14,17 @@ _BASE = pathlib.Path(__file__).resolve().parent.parent.parent
 load_dotenv(_BASE / ".env")
 load_dotenv(_BASE / ".env.local", override=True)
 
-SECRET_KEY = os.getenv("SECRET_KEY", "changethis_dev_secret")
+import secrets
+import warnings
+
+_RAW_SECRET = os.getenv("SECRET_KEY")
+if not _RAW_SECRET or _RAW_SECRET in ("1234", "changethis_dev_secret", "secret", "default_secret"):
+    if os.getenv("ENVIRONMENT") == "production":
+        raise ValueError("CRITICAL SECURITY ERROR: Strong SECRET_KEY must be configured in environment variables for production!")
+    warnings.warn("[SECURITY WARNING] SECRET_KEY is missing or insecure! Using generated secure secret.")
+    SECRET_KEY = _RAW_SECRET if _RAW_SECRET and len(_RAW_SECRET) >= 32 else secrets.token_hex(32)
+else:
+    SECRET_KEY = _RAW_SECRET
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 REFRESH_TOKEN_EXPIRE_DAYS = 7

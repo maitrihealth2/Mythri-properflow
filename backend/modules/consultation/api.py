@@ -220,7 +220,7 @@ async def send_message(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    asyncio.create_task(broadcast_event("TEXT_START", "Client Keyboard -> FastAPI", {"text": req.message}))
+    asyncio.create_task(broadcast_event("TEXT_START", "Client Keyboard -> FastAPI", {"status": "received"}))
     CommandCenter.log_ai("TEXT_START", f"User Input: {req.message[:50]}...")
 
     crisis = check_for_crisis(req.message)
@@ -1130,9 +1130,31 @@ def get_session_analysis(
     }
 
 from ai_engine.proactive_engine import manager
+from security.authentication.service import decode_token
 
 @router.websocket("/ws/events")
-async def websocket_events(websocket: WebSocket, session_id: str):
+async def websocket_events(websocket: WebSocket, session_id: str, token: str = None):
+    # Validate auth token
+    raw_token = token or websocket.query_params.get("token")
+    payload = decode_token(raw_token) if raw_token else None
+    if not payload or not payload.get("user_id"):
+        await websocket.close(code=1008, reason="Authentication failed")
+        return
+
+    # Validate session ownership
+    def _verify_session_owner():
+        from core.database.models import SessionLocal
+        with SessionLocal() as sdb:
+            db_session = sdb.query(DBSession).filter(
+                (DBSession.session_token == session_id) | (DBSession.id == (int(session_id) if session_id.isdigit() else -1))
+            ).first()
+            return db_session and db_session.user_id == payload.get("user_id")
+
+    is_valid_owner = await asyncio.to_thread(_verify_session_owner)
+    if not is_valid_owner:
+        await websocket.close(code=1008, reason="Unauthorized session access")
+        return
+
     await manager.connect(session_id, websocket)
     try:
         while True:

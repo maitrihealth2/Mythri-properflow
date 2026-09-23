@@ -117,7 +117,7 @@ async def handle_voice_turn(
             yield json.dumps({"type": "text", "text": ""}) + "\n"
         return StreamingResponse(silence_stream(), media_type="application/x-ndjson")
         
-    await broadcast_event("STT_DONE", f"Transcribed text", {"text": transcript})
+    await broadcast_event("STT_DONE", "Audio transcribed", {"status": "done"})
 
     # ── Delegate to Existing Consultation Pipeline ────────────────────────────
     print(f"[VOICE] Routing text through centralized consultation pipeline...")
