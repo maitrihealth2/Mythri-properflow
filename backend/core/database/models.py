@@ -478,6 +478,7 @@ class RiskLog(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), index=True, nullable=False)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="SET NULL"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     trigger_phrase = Column(Text, nullable=False)
     system_response = Column(Text, nullable=False)
@@ -486,6 +487,7 @@ class RiskLog(Base):
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     session = relationship("Session", back_populates="risk_logs")
+    message = relationship("Message")
 class UserFeedback(Base):
     __tablename__ = "user_feedback"
     __table_args__ = {'comment': 'User feedback and feature requests'}
@@ -574,6 +576,7 @@ def init_db():
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "cognitive_signals" JSON;',
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "response_strategy" VARCHAR(50);',
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW();',
+        'ALTER TABLE "risk_logs" ADD COLUMN IF NOT EXISTS "message_id" INTEGER REFERENCES messages(id) ON DELETE SET NULL;',
     ]
     if "postgres" in DATABASE_URL:
         from sqlalchemy import text

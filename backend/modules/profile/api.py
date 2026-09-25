@@ -11,14 +11,9 @@ router = APIRouter(prefix="/api/user", tags=["user"])
 
 class OnboardingData(BaseModel):
     preferred_name: Optional[str] = None
-    language: Optional[str] = None
-    conversation_style: Optional[str] = None
-    communication_mode: Optional[str] = None
-    initial_emotion: Optional[str] = None
-    primary_goal: Optional[str] = None
-    check_in_preference: Optional[str] = None
-    goals: List[str] = []
-    reasons: List[str] = []
+    age: Optional[int] = None
+    language: Optional[str] = "en-IN"
+    conversation_style: Optional[str] = "auto_adaptive"
     consent: Optional[Dict[str, Any]] = None
 
 @router.post("/onboarding")
@@ -27,7 +22,7 @@ def save_onboarding(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    print(f"[ONBOARDING] Saving onboarding for User ID={current_user.id} ({current_user.username})...")
+    print(f"[ONBOARDING] Saving streamlined onboarding for User ID={current_user.id} ({current_user.username})...")
     try:
         # 1. Update or create UserOnboarding record
         onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
@@ -36,58 +31,65 @@ def save_onboarding(
             onboarding = UserOnboarding(user_id=current_user.id)
             db.add(onboarding)
             
-        onboarding.preferred_name = data.preferred_name
-        onboarding.language = data.language
-        onboarding.conversation_style = data.conversation_style
-        onboarding.communication_mode = data.communication_mode
-        onboarding.initial_emotion = data.initial_emotion
-        onboarding.primary_goal = data.primary_goal
-        onboarding.check_in_preference = data.check_in_preference
-        onboarding.goals = data.goals
-        onboarding.reasons = data.reasons
+        onboarding.preferred_name = data.preferred_name or current_user.username
+        onboarding.language = data.language or "en-IN"
+        onboarding.conversation_style = "auto_adaptive"
         
-        # Generate detailed summary
+        # Generate clean summary
         summary = (
             f"User prefers to be called {data.preferred_name or current_user.username}. "
             f"They communicate primarily in {data.language or 'English'}. "
-            f"Their preferred conversation style is {data.conversation_style or 'balanced'}, "
-            f"and their mode of communication is {data.communication_mode or 'mixed'}. "
         )
-        if data.initial_emotion:
-            summary += f"They arrived feeling {data.initial_emotion}. "
-        if data.primary_goal:
-            summary += f"Their primary goal is: {data.primary_goal}. "
-        if data.goals:
-            summary += f"Additional goals: {', '.join(data.goals)}. "
-        if data.reasons:
-            summary += f"Reasons for seeking help: {', '.join(data.reasons)}. "
+        if data.age:
+            summary += f"Age: {data.age}. "
+        summary += "Communication tone is set to auto-adapt organically to their emotional state and needs."
         
         onboarding.summary = summary
         onboarding.raw_responses = data.model_dump()
         onboarding.is_completed = True
         onboarding.completed_at = func.now()
 
-        # 2. Atomically sync UserPersonaProfile
+        # 2. Sync UserProfile (age & preferred_name)
+        profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+        if not profile:
+            profile = UserProfile(
+                user_id=current_user.id,
+                preferred_name=data.preferred_name or current_user.username,
+                age=data.age
+            )
+            db.add(profile)
+        else:
+            profile.preferred_name = data.preferred_name or profile.preferred_name or current_user.username
+            if data.age:
+                profile.age = data.age
+
+        # 3. Update User preferred language
+        if data.language:
+            current_user.preferred_language = data.language
+            db.add(current_user)
+
+        # 4. Atomically sync UserPersonaProfile
         persona = db.query(UserPersonaProfile).filter(UserPersonaProfile.user_id == current_user.id).first()
         if not persona:
             persona = UserPersonaProfile(
                 user_id=current_user.id,
                 onboarding_complete=True,
-                initial_presenting_topic=data.primary_goal or (data.reasons[0] if data.reasons else "onboarding"),
-                communication_style=data.conversation_style or "balanced"
+                initial_presenting_topic="General Well-being & Check-in",
+                communication_style="auto_adaptive"
             )
             db.add(persona)
         else:
             persona.onboarding_complete = True
-            if data.primary_goal:
-                persona.initial_presenting_topic = data.primary_goal
+            persona.communication_style = "auto_adaptive"
 
-        # 3. Commit transaction
+        # 5. Commit transaction
         db.commit()
-        print(f"[ONBOARDING] Transaction commit successful for User {current_user.id}: is_completed=True, persona.onboarding_complete=True")
+        print(f"[ONBOARDING] Onboarding committed for User {current_user.id}: is_completed=True, lang={data.language}, name={data.preferred_name}")
         return {"status": "success", "message": "Onboarding data saved successfully"}
     except Exception as e:
         db.rollback()
+        print(f"[ONBOARDING_ERROR] Transaction commit failed for User {current_user.id}, rolled back: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save onboarding data: {str(e)}")
         print(f"[ONBOARDING_ERROR] Transaction commit failed for User {current_user.id}, rolled back: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to save onboarding data: {str(e)}")
 

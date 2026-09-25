@@ -77,8 +77,29 @@ export default function VoiceModePage() {
       else setCurrentLang('en')
     }
 
-    handleLangChange()
-    window.addEventListener('mb_language_changed', handleLangChange)
+    const triggerAutoEndSession = () => {
+      const currentSid = sessionIdRef.current
+      if (!currentSid) return
+      const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
+      const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+      const endUrl = `${API_URL}/api/consultation/${currentSid}/end${token ? `?token=${encodeURIComponent(token)}` : ''}`
+
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(endUrl)
+      } else {
+        fetch(endUrl, {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          keepalive: true,
+        }).catch(() => {})
+      }
+    }
+
+    const handleBeforeUnload = () => {
+      triggerAutoEndSession()
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
 
     if (!initialized.current) {
       initialized.current = true
@@ -87,6 +108,8 @@ export default function VoiceModePage() {
 
     return () => {
       window.removeEventListener('mb_language_changed', handleLangChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      triggerAutoEndSession()
       stopVoice()
     }
   }, [router])

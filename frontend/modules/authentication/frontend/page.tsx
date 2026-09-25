@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { login, register, googleLogin } from '@/core/api'
+import { login, register, googleLogin, forgotPassword } from '@/core/api'
 import { auth, googleProvider } from '@/core/firebase'
 import { signInWithPopup, sendPasswordResetEmail } from 'firebase/auth'
 import { motion } from 'framer-motion'
@@ -167,7 +167,12 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("Google Auth Error:", err)
-      setError(err?.response?.data?.detail || err.message || "Google Sign-In failed.")
+      const detail = err?.response?.data?.detail || err.userMessage || err.message
+      if (typeof detail === 'string' && detail.toLowerCase().includes('not allowed to access')) {
+        setError("You are not allowed to access right now")
+      } else {
+        setError(detail || "Google Sign-In failed.")
+      }
       setAuthPhase('idle')
       setLoading(false)
     }
@@ -185,7 +190,11 @@ export default function LoginPage() {
       setLoading(true);
       setError('');
       setSuccessMessage('');
-      await sendPasswordResetEmail(auth, form.email);
+      try {
+        await forgotPassword(form.email.trim());
+      } catch {
+        await sendPasswordResetEmail(auth, form.email.trim());
+      }
       setSuccessMessage('Password reset email sent! Please check your inbox.');
     } catch (err: any) {
       console.error("Password reset error:", err);
@@ -246,11 +255,13 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error("API Error:", err)
-      let errorMessage = err?.response?.data?.detail || err.message || "Something didn't quite work. Please check your details."
+      let errorMessage = err?.response?.data?.detail || err.userMessage || err.message || "Something didn't quite work. Please check your details."
       
       if (typeof errorMessage === 'string') {
         const lowerError = errorMessage.toLowerCase();
-        if (lowerError.includes('invalid_login_credentials') || lowerError.includes('invalid-credential') || lowerError.includes('wrong-password') || lowerError.includes('user-not-found')) {
+        if (lowerError.includes('not allowed to access')) {
+          errorMessage = "You are not allowed to access right now";
+        } else if (lowerError.includes('invalid_login_credentials') || lowerError.includes('invalid-credential') || lowerError.includes('wrong-password') || lowerError.includes('user-not-found')) {
           errorMessage = "Invalid credentials. Please check your email and password.";
         } else if (lowerError.includes('email-already-in-use') || lowerError.includes('email_exists')) {
           errorMessage = "An account with this email already exists.";

@@ -10,7 +10,11 @@ import {
   getAdminUserSessions,
   getAdminSessionMessages,
   exportAdminUserData,
+  exportAdminSessionData,
   deleteAdminUsers,
+  updateAdminUserStatus,
+  bulkUpdateAdminUserStatus,
+  updateAllUsersStatus,
   getAdminMaintenanceStatus,
   setAdminMaintenanceMode,
   disableAdminMaintenanceMode,
@@ -323,6 +327,77 @@ function MaintenanceModal({
   )
 }
 
+// ── Global Status Confirm Modal ──────────────────────────────────────────────
+function GlobalStatusModal({
+  isOpen,
+  action,
+  totalCount,
+  loading,
+  onClose,
+  onConfirm
+}: {
+  isOpen: boolean
+  action: 'block_all' | 'unblock_all'
+  totalCount: number
+  loading: boolean
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  if (!isOpen) return null
+  const isBlock = action === 'block_all'
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div
+        className="relative bg-surface-container-lowest rounded-3xl shadow-2xl w-full max-w-md p-6 border border-outline-variant/30 flex flex-col items-center text-center z-10"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
+          isBlock ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-300' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300'
+        }`}>
+          <span className="material-symbols-outlined text-3xl">
+            {isBlock ? 'block' : 'lock_open_right'}
+          </span>
+        </div>
+
+        <h2 className="text-xl font-headline-md font-serif text-on-surface mb-2">
+          {isBlock ? 'Block All Users?' : 'Unblock All Users?'}
+        </h2>
+
+        <p className="text-sm text-on-surface-variant mb-6 leading-relaxed">
+          {isBlock
+            ? `Are you sure you want to block ALL users in the database? No user will be able to access the sanctuary until unblocked.`
+            : `Are you sure you want to restore access to ALL users in the database? Everyone will be allowed back into the sanctuary.`}
+        </p>
+
+        <div className="flex items-center gap-3 w-full">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-full border border-outline-variant text-sm font-medium text-on-surface-variant hover:bg-surface-variant transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className={`flex-1 py-2.5 rounded-full text-white text-sm font-semibold shadow-md transition-all flex items-center justify-center gap-2 ${
+              isBlock
+                ? 'bg-rose-600 hover:bg-rose-700'
+                : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
+          >
+            {loading && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+            <span>{isBlock ? 'Yes, Block All' : 'Yes, Unblock All'}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -344,10 +419,16 @@ export default function AdminDashboard() {
   const [feedbacks, setFeedbacks] = useState<FeedbackRecord[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Multi-select + delete
+  // Multi-select + delete / status
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set())
   const [deleting, setDeleting] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [statusLoadingUser, setStatusLoadingUser] = useState<number | null>(null)
+  const [bulkStatusLoading, setBulkStatusLoading] = useState<boolean>(false)
+
+  // Global All-Users Block/Unblock State
+  const [globalStatusModal, setGlobalStatusModal] = useState<{ open: boolean; action: 'block_all' | 'unblock_all' }>({ open: false, action: 'block_all' })
+  const [globalStatusLoading, setGlobalStatusLoading] = useState(false)
   
   // Drill-down State
   const [activeUser, setActiveUser] = useState<UserDetailRecord | null>(null)
@@ -532,6 +613,59 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleToggleUserStatus = async (userId: number, currentActive: boolean, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setStatusLoadingUser(userId)
+    try {
+      await updateAdminUserStatus(userId, !currentActive)
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: !currentActive } : u))
+      if (activeUser && activeUser.id === userId) {
+        setActiveUser(prev => prev ? { ...prev, is_active: !currentActive } : null)
+      }
+    } catch (err) {
+      console.error("Failed to update user access status", err)
+      alert("Failed to update user access status")
+    } finally {
+      setStatusLoadingUser(null)
+    }
+  }
+
+  const handleBulkStatusChange = async (makeActive: boolean) => {
+    if (selectedUsers.size === 0) return
+    setBulkStatusLoading(true)
+    try {
+      const userIds = Array.from(selectedUsers)
+      await bulkUpdateAdminUserStatus(userIds, makeActive)
+      setUsers(prev => prev.map(u => selectedUsers.has(u.id) ? { ...u, is_active: makeActive } : u))
+      setSelectedUsers(new Set())
+    } catch (err) {
+      console.error("Bulk status change failed", err)
+      alert("Failed to update user access status")
+    } finally {
+      setBulkStatusLoading(false)
+    }
+  }
+
+  const handleGlobalStatusAction = async () => {
+    const isBlock = globalStatusModal.action === 'block_all'
+    const makeActive = !isBlock
+    setGlobalStatusLoading(true)
+    try {
+      await updateAllUsersStatus(makeActive)
+      setUsers(prev => prev.map(u => ({ ...u, is_active: makeActive })))
+      if (activeUser) {
+        setActiveUser(prev => prev ? { ...prev, is_active: makeActive } : null)
+      }
+      setGlobalStatusModal({ open: false, action: 'block_all' })
+      await loadData('users')
+    } catch (err) {
+      console.error("Global status update failed", err)
+      alert("Failed to update status for all users")
+    } finally {
+      setGlobalStatusLoading(false)
+    }
+  }
+
   const handleExportCSV = async () => {
     if (!activeUser) return
     try {
@@ -545,6 +679,24 @@ export default function AdminDashboard() {
       document.body.removeChild(link)
     } catch (err) {
       console.error("Export failed", err)
+      alert("Failed to export user CSV")
+    }
+  }
+
+  const handleExportSessionCSV = async (sessionId: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    try {
+      const res = await exportAdminSessionData(sessionId)
+      const url = window.URL.createObjectURL(new Blob([res.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `mythri_session_${sessionId}_${new Date().toISOString().split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (err) {
+      console.error("Export session failed", err)
+      alert("Failed to export session CSV")
     }
   }
 
@@ -581,7 +733,16 @@ export default function AdminDashboard() {
             <button onClick={() => setActiveSession(null)} className="text-on-surface-variant hover:text-on-surface font-label-md flex items-center gap-2">
               ← Back to Profile
             </button>
-            <span className="font-label-md text-primary">Session from {new Date(activeSession.started_at).toLocaleString()}</span>
+            <div className="flex items-center gap-3">
+              <span className="font-label-md text-primary hidden sm:inline">Session from {new Date(activeSession.started_at).toLocaleString()}</span>
+              <button
+                onClick={() => handleExportSessionCSV(activeSession.id)}
+                className="px-3.5 py-1.5 bg-primary text-white text-xs font-semibold rounded-full hover:bg-primary/90 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                title="Download this session messages as CSV"
+              >
+                <span>📥 Export Session CSV</span>
+              </button>
+            </div>
           </div>
           
           <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
@@ -616,14 +777,40 @@ export default function AdminDashboard() {
             <button onClick={() => { setActiveUser(null); setActiveUserSessions([]) }} className="text-on-surface-variant hover:text-on-surface font-label-md flex items-center gap-2">
               ← Back to Users
             </button>
-            <button onClick={handleExportCSV} className="bg-primary text-white px-5 py-2 rounded-full font-label-md hover:bg-primary/90 flex items-center gap-2">
-              Export CSV
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => handleToggleUserStatus(activeUser.id, activeUser.is_active, e)}
+                disabled={statusLoadingUser === activeUser.id}
+                className={`px-4 py-2 rounded-full font-label-md text-xs sm:text-sm font-semibold flex items-center gap-2 border transition-all shadow-sm ${
+                  activeUser.is_active
+                    ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                }`}
+              >
+                {statusLoadingUser === activeUser.id && (
+                  <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                )}
+                <span>{activeUser.is_active ? '🚫 Block Access' : '✅ Allow Access / Unblock'}</span>
+              </button>
+              <button onClick={handleExportCSV} className="bg-primary text-white px-5 py-2 rounded-full font-label-md hover:bg-primary/90 flex items-center gap-2">
+                Export CSV
+              </button>
+            </div>
           </div>
           
           <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/30 p-6 flex flex-col md:flex-row gap-8">
             <div className="flex-1">
-              <h2 className="text-2xl font-headline-md text-primary mb-1">{activeUser.username}</h2>
+              <div className="flex items-center gap-3 mb-1">
+                <h2 className="text-2xl font-headline-md text-primary">{activeUser.username}</h2>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                  activeUser.is_active
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
+                    : 'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-200'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${activeUser.is_active ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+                  <span>{activeUser.is_active ? 'Active' : 'Blocked'}</span>
+                </span>
+              </div>
               <p className="text-on-surface-variant font-body-sm">{activeUser.email} • {activeUser.preferred_language}</p>
               <div className="mt-6 grid grid-cols-2 gap-4">
                 <div>
@@ -673,6 +860,7 @@ export default function AdminDashboard() {
                       <th className="p-4">Time</th>
                       <th className="p-4 text-center">Messages</th>
                       <th className="p-4 text-center">Channel</th>
+                      <th className="p-4 text-right">Export</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -690,6 +878,15 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-4 text-center font-medium">{sess.message_count}</td>
                         <td className="p-4 text-center uppercase text-xs">{sess.channel}</td>
+                        <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => handleExportSessionCSV(sess.id, e)}
+                            className="px-3 py-1 bg-surface border border-outline-variant/60 hover:bg-surface-variant text-on-surface rounded-full text-xs font-medium transition-colors shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+                            title="Export this specific session as CSV"
+                          >
+                            <span>📥 CSV</span>
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -715,6 +912,14 @@ export default function AdminDashboard() {
           loading={maintenanceLoading}
         />
       )}
+      <GlobalStatusModal
+        isOpen={globalStatusModal.open}
+        action={globalStatusModal.action}
+        totalCount={totalUsers}
+        loading={globalStatusLoading}
+        onClose={() => setGlobalStatusModal({ open: false, action: 'block_all' })}
+        onConfirm={handleGlobalStatusAction}
+      />
 
       <div className="h-full bg-background text-on-background flex flex-col transition-colors duration-300 overflow-hidden">
         <header className="border-b border-outline-variant/30 bg-surface-container-lowest px-8 py-4 flex justify-between items-center flex-shrink-0 shadow-sm z-10">
@@ -774,14 +979,34 @@ export default function AdminDashboard() {
               ))}
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {activeTab === 'users' && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setGlobalStatusModal({ open: true, action: 'block_all' })}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300 transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
+                    title="Block all users in the system"
+                  >
+                    <span>🚫 Block All</span>
+                  </button>
+
+                  <button
+                    onClick={() => setGlobalStatusModal({ open: true, action: 'unblock_all' })}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-full border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-900 dark:text-emerald-300 transition-colors flex items-center gap-1 shadow-sm cursor-pointer"
+                    title="Unblock all users in the system"
+                  >
+                    <span>✅ Unblock All</span>
+                  </button>
+                </div>
+              )}
+
               <div className="relative group">
                 <input
                   type="text"
                   placeholder="Search…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-4 pr-10 py-2.5 text-sm bg-surface-container-lowest border border-outline-variant/50 rounded-full focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-sm text-on-surface w-64 shadow-sm transition-all"
+                  className="pl-4 pr-10 py-2 text-sm bg-surface-container-lowest border border-outline-variant/50 rounded-full focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-sm text-on-surface w-48 sm:w-56 shadow-sm transition-all"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 group-focus-within:text-primary transition-colors">
                   🔍
@@ -801,39 +1026,58 @@ export default function AdminDashboard() {
               {activeTab === 'users' && (
                 <div className="h-full flex flex-col gap-3">
 
-                  {/* ── Bulk delete bar ── */}
+                  {/* ── Bulk actions bar ── */}
                   {selectedUsers.size > 0 && (
-                    <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-5 py-3 shadow-sm">
-                      <span className="text-sm font-medium text-red-700">
+                    <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-container-low border border-outline-variant/40 rounded-xl px-5 py-3 shadow-sm">
+                      <span className="text-sm font-medium text-on-surface">
                         {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''} selected
                       </span>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center flex-wrap gap-2.5">
                         <button
                           onClick={() => setSelectedUsers(new Set())}
-                          className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
+                          className="text-sm text-on-surface-variant hover:text-on-surface transition-colors px-2 py-1"
                         >
                           Clear
                         </button>
+                        
+                        <button
+                          onClick={() => handleBulkStatusChange(false)}
+                          disabled={bulkStatusLoading}
+                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm"
+                        >
+                          {bulkStatusLoading ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
+                          <span>🚫 Block Selected</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleBulkStatusChange(true)}
+                          disabled={bulkStatusLoading}
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm"
+                        >
+                          {bulkStatusLoading ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
+                          <span>✅ Allow Selected</span>
+                        </button>
+
                         {!deleteConfirm ? (
                           <button
                             onClick={() => setDeleteConfirm(true)}
-                            className="px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-full hover:bg-red-700 transition-colors"
+                            className="px-3.5 py-1.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-red-700 transition-colors shadow-sm"
                           >
                             🗑 Delete Selected
                           </button>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-red-700 font-medium">Are you sure?</span>
+                            <span className="text-sm text-red-700 font-medium">Delete forever?</span>
                             <button
                               onClick={handleBulkDelete}
                               disabled={deleting}
-                              className="px-4 py-1.5 bg-red-700 text-white text-sm font-medium rounded-full hover:bg-red-800 transition-colors disabled:opacity-50"
+                              className="px-3.5 py-1.5 bg-red-700 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-red-800 transition-colors disabled:opacity-50"
                             >
                               {deleting ? 'Deleting…' : 'Yes, Delete'}
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(false)}
-                              className="px-4 py-1.5 border border-outline-variant rounded-full text-sm hover:bg-surface transition-colors"
+                              className="px-3 py-1.5 border border-outline-variant rounded-full text-xs sm:text-sm hover:bg-surface transition-colors"
                             >
                               Cancel
                             </button>
@@ -844,7 +1088,7 @@ export default function AdminDashboard() {
                   )}
 
                   <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
-                    <table className="w-full text-left border-collapse min-w-[700px]">
+                    <table className="w-full text-left border-collapse min-w-[750px]">
                       <thead className="sticky top-0 z-10 bg-surface-container-low font-label-md text-on-surface-variant border-b border-outline-variant/30 shadow-sm">
                         <tr>
                           <th className="p-4 w-10">
@@ -858,8 +1102,10 @@ export default function AdminDashboard() {
                           </th>
                           <th className="p-4">User</th>
                           <th className="p-4">Email</th>
+                          <th className="p-4 text-center">Status</th>
                           <th className="p-4 text-center">Sessions</th>
-                          <th className="p-4 text-right">Joined Date</th>
+                          <th className="p-4 text-center">Joined Date</th>
+                          <th className="p-4 text-right">Access Control</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -886,15 +1132,44 @@ export default function AdminDashboard() {
                             </td>
                             <td className="p-4 text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>{u.email}</td>
                             <td className="p-4 text-center cursor-pointer" onClick={() => handleUserClick(u.id)}>
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                u.is_active
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                                <span>{u.is_active ? 'Active' : 'Blocked'}</span>
+                              </span>
+                            </td>
+                            <td className="p-4 text-center cursor-pointer" onClick={() => handleUserClick(u.id)}>
                               <span className="bg-surface-variant px-2.5 py-1 rounded-full text-xs font-medium text-on-surface-variant">
                                 {u.session_count}
                               </span>
                             </td>
-                            <td className="p-4 text-right text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>{new Date(u.created_at).toLocaleDateString()}</td>
+                            <td className="p-4 text-center text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>
+                              {new Date(u.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={(e) => handleToggleUserStatus(u.id, u.is_active, e)}
+                                disabled={statusLoadingUser === u.id}
+                                title={u.is_active ? "Block user from accessing website" : "Unblock user to allow access"}
+                                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all inline-flex items-center gap-1.5 border shadow-sm cursor-pointer ${
+                                  u.is_active
+                                    ? 'bg-surface border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 dark:border-rose-900/40 dark:text-rose-300 dark:hover:bg-rose-950/30'
+                                    : 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
+                                }`}
+                              >
+                                {statusLoadingUser === u.id && (
+                                  <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                )}
+                                <span>{u.is_active ? '🚫 Block' : '✅ Allow'}</span>
+                              </button>
+                            </td>
                           </tr>
                         ))}
                         {users.length === 0 && (
-                          <tr><td colSpan={5} className="p-8 text-center text-on-surface-variant">No users found.</td></tr>
+                          <tr><td colSpan={7} className="p-8 text-center text-on-surface-variant">No users found.</td></tr>
                         )}
                       </tbody>
                     </table>

@@ -42,7 +42,18 @@ class FirebaseClient:
             data = response.json()
             if not response.is_success:
                 error_msg = data.get("error", {}).get("message", "Authentication failed")
-                raise HTTPException(status_code=401, detail=f"Firebase Error: {error_msg}")
+    async def send_password_reset(self, email: str):
+        url = f"{self.base_url}:sendOobCode?key={self.api_key}"
+        payload = {
+            "requestType": "PASSWORD_RESET",
+            "email": email
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload)
+            data = response.json()
+            if not response.is_success:
+                error_msg = data.get("error", {}).get("message", "Failed to send reset email")
+                raise HTTPException(status_code=400, detail=f"Firebase Error: {error_msg}")
             return data
 
 firebase_client = FirebaseClient()

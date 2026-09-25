@@ -47,6 +47,8 @@ def get_current_user(
     user = db.query(User).filter(User.id == payload.get("user_id")).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="You are not allowed to access right now")
     return user
 
 def set_refresh_cookie(response: Response, refresh_token: str):
@@ -73,6 +75,7 @@ async def register(req: RegisterRequest, response: Response, db: Session = Depen
         username=req.username, email=req.email,
         hashed_password="firebase_managed",
         preferred_language=req.preferred_language,
+        is_active=True
     )
     db.add(user); db.commit(); db.refresh(user)
     
@@ -91,6 +94,8 @@ async def login(req: LoginRequest, response: Response, db: Session = Depends(get
     user = db.query(User).filter(User.email == req.email).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="You are not allowed to access right now")
         
     token = create_access_token({"user_id": user.id, "username": user.username})
     refresh_token = create_refresh_token({"user_id": user.id, "username": user.username})
@@ -123,6 +128,9 @@ async def google_login(req: GoogleLoginRequest, response: Response, db: Session 
             
         user = db.query(User).filter(User.email == email).first()
         
+        if user and not user.is_active:
+            raise HTTPException(status_code=403, detail="You are not allowed to access right now")
+        
         if not user:
             base_username = display_name.replace(" ", "").lower()
             if not base_username:
@@ -138,7 +146,8 @@ async def google_login(req: GoogleLoginRequest, response: Response, db: Session 
                 username=username,
                 email=email,
                 hashed_password="firebase_google_managed",
-                preferred_language="en-IN"
+                preferred_language="en-IN",
+                is_active=True
             )
             db.add(user)
             db.commit()
@@ -164,6 +173,8 @@ def refresh_access_token(request: __import__('fastapi').Request, db: Session = D
     user = db.query(User).filter(User.id == payload.get("user_id")).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="You are not allowed to access right now")
         
     new_token = create_access_token({"user_id": user.id, "username": user.username})
     return TokenResponse(access_token=new_token, username=user.username)
@@ -175,4 +186,30 @@ def logout(response: Response):
 
 @router.get("/me")
 def get_me(current_user: User = Depends(get_current_user)):
-    return {"id": current_user.id, "username": current_user.username, "email": current_user.email, "preferred_language": current_user.preferred_language}
+    return {
+        "id": current_user.id, 
+        "username": current_user.username, 
+        "email": current_user.email, 
+        "preferred_language": current_user.preferred_language,
+        "is_active": current_user.is_active
+    }
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+@router.post("/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    from providers.firebase.firebase_rest import firebase_client
+    # Verify user exists in local DB or silently succeed for privacy
+    user = db.query(User).filter(User.email == req.email).first()
+    if user:
+        try:
+            await firebase_client.send_password_reset(req.email)
+        except Exception as e:
+            print(f"[AUTH] Firebase password reset notice: {e}")
+            
+    return {
+        "status": "success",
+        "message": "If this email is registered with us, a password reset link has been sent to your inbox."
+    }
+

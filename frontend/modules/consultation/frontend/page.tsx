@@ -146,6 +146,48 @@ export default function ConsultationPage() {
   const initialized = useRef(false)
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null)
   const sendingRef = useRef(false)
+  const sessionIdRef = useRef<string | null>(null)
+  const messageCountRef = useRef(0)
+
+  useEffect(() => {
+    sessionIdRef.current = sessionId
+  }, [sessionId])
+
+  useEffect(() => {
+    messageCountRef.current = messages.length
+  }, [messages.length])
+
+  // ── Auto-close & Summarize Session on Tab Exit or Component Unmount ──
+  useEffect(() => {
+    const triggerAutoEndSession = () => {
+      const currentSid = sessionIdRef.current
+      if (!currentSid || messageCountRef.current < 2) return
+      
+      const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
+      const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+      const endUrl = `${API_URL}/api/consultation/${currentSid}/end${token ? `?token=${encodeURIComponent(token)}` : ''}`
+
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(endUrl)
+      } else {
+        fetch(endUrl, {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          keepalive: true,
+        }).catch(() => {})
+      }
+    }
+
+    const handleBeforeUnload = () => {
+      triggerAutoEndSession()
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      triggerAutoEndSession()
+    }
+  }, [])
 
   const inputPlaceholder = INPUT_PLACEHOLDERS[language] || INPUT_PLACEHOLDERS['en-IN']
 

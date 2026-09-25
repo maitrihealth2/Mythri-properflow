@@ -2,10 +2,12 @@ import uuid
 import asyncio
 import re
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect, Request, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from security.authentication.service import decode_token
 
 from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, MessageAnalysis, ResponseMetadata, RiskLog, User, ExerciseLog, UserPersonaProfile, UserOnboarding
 from providers.sarvam.sarvam_client import stream_chat_with_mythri
@@ -140,31 +142,42 @@ async def start_session(
         summary_block = f"\n[LAST SESSION SUMMARY]\nMain Topics: {last_summary.main_topics}\nEmotional Progression: {last_summary.emotional_progression}\nUnresolved: {last_summary.unresolved_topics}\n" if last_summary else ""
 
         if is_first:
-            system_prompt = f"""You are Mythri, a warm, conversational, and highly attuned friend.
-Your tone is calm, grounded, and deeply non-judgmental.
+            system_prompt = f"""You are Mythri, a warm, grounded, and deeply compassionate companion.
+Your presence is calming, safe, and completely non-judgmental.
 
-You are generating the very FIRST welcome message to a user who just completed onboarding and opened the app.
-Greet them warmly by name ({profile.preferred_name}).
-Acknowledge what brought them here naturally, but DO NOT sound like a clinical intake form or a database dump. 
-Make them feel: "I don't have to perform here, I can talk normally."
-Keep it brief (40-80 words max, 2-3 sentences). Keep it natural, welcoming, and relaxed. You DO NOT need to constantly say "I'm here for you" or ask "What's on your mind".
-IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
+You are generating the very FIRST welcome message to {profile.preferred_name} who just completed onboarding and entered their sanctuary.
+1. Welcome them warmly and gently by their preferred name ({profile.preferred_name}).
+2. Create immediate comfort and safety: make them feel they can completely relax, slow down, and don't have to perform or explain themselves.
+3. Keep it warm, comforting, and concise (35-65 words max, 2-3 short sentences).
+4. End with a soft, open invitation (e.g. "Take a moment to settle in. Whenever you're ready, how is your day feeling so far?").
+5. Do NOT sound like an intake form, bot, or robotic questionnaire."""
         else:
-            system_prompt = f"""You are Mythri, a warm, perceptive, and highly attuned friend.
-Your tone is calm, grounded, and deeply non-judgmental.
+            recent_context_desc = ""
+            if last_summary:
+                topics_str = ", ".join(last_summary.main_topics) if isinstance(last_summary.main_topics, list) else str(last_summary.main_topics or "")
+                recent_context_desc = f"\nRECENT MEMORY CONTEXT FROM PREVIOUS CHAT:\n• Topics discussed: {topics_str}\n"
+                if last_summary.important_context:
+                    recent_context_desc += f"• Key context: {last_summary.important_context}\n"
+                if last_summary.emotional_progression:
+                    recent_context_desc += f"• Emotional state: {last_summary.emotional_progression}\n"
+            elif profile.living_context_summary:
+                recent_context_desc = f"\nRECENT MEMORY CONTEXT: {profile.living_context_summary}\n"
 
-You are generating the very first message to a user who just opened the app for a new session.
-Greet them warmly by name ({profile.preferred_name}).
-Naturally reference their recent progress or last conversation topic if available, but keep it incredibly subtle and human.
-DO NOT use therapy jargon like "holding space", "heavy things", or "take a breath". Just talk to them like a real friend checking in.
-Keep it completely natural, concise, and conversational.
-Keep it brief (40-80 words max, 2-3 sentences). You DO NOT have to ask a question. Let them lead.
-IMPORTANT: Keep your internal reasoning extremely brief and output the greeting quickly."""
+            system_prompt = f"""You are Mythri, a warm, genuine, and deeply caring companion.
+Your tone is calm, grounded, and comforting.
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"USER PROFILE:\n{unified_ctx_block}{summary_block}\n\n[The user has just opened the app. Please send your first welcome message.]"}
-        ]
+You are generating the opening welcome message to {profile.preferred_name} as they return for a new session.
+1. Greet them warmly and lovingly by their preferred name ({profile.preferred_name}).
+2. Thoughtfully and naturally weave in a soft, caring nod to their recent conversation context or how they were doing in your last chat ({recent_context_desc.strip() if recent_context_desc else 'their recent journey'}).
+   - Keep it subtle, natural, and empathetic (e.g., "Good to see you, [Name]. I was thinking about you and hoping things have felt a bit lighter since we last talked. How are you feeling today?").
+   - Do NOT sound robotic or recite clinical bullet points. Speak like a real, attentive friend checking back in.
+3. Keep it brief, comforting, and conversational (40-70 words max, 2-3 sentences).
+4. End with a gentle, open invitation to see how they are right now."""
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"USER NAME: {profile.preferred_name}{recent_context_desc}\n\n[Generate the personalized, comforting opening greeting for this returning session.]"}
+            ]
         
         print('[DEBUG] Calling LLM generate...', flush=True)
         initial_message = await llm_router.generate(messages, max_tokens=150, temperature=0.7)
@@ -225,12 +238,9 @@ async def send_message(
 
     crisis = check_for_crisis(req.message)
     if crisis.is_crisis:
-        db.add(RiskLog(
-            session_id=session.id, user_id=current_user.id,
-            trigger_phrase=crisis.trigger_phrase or req.message[:200],
-            system_response="AI intervened with extreme comfort.", helpline_shown=True,
-        ))
         session.is_crisis_flagged = True
+        session.risk_level = "critical"
+        session.risk_score = 1.0
         db.commit()
 
     # ── Cheap turn complexity classification (deterministic, zero LLM) ──────
@@ -470,14 +480,36 @@ async def send_message(
         from core.database.models import SessionLocal
         bg_db = SessionLocal()
         try:
-            user_msg = Message(session_id=session.id, role="user", content=req.message, language=req.language)
+            user_msg = Message(
+                session_id=session.id,
+                role="user",
+                content=req.message,
+                language=req.language,
+                is_crisis_flagged=bool(crisis.is_crisis)
+            )
             bg_db.add(user_msg)
             bg_db.flush()
+            
+            if crisis.is_crisis:
+                bg_db.add(RiskLog(
+                    session_id=session.id,
+                    message_id=user_msg.id,
+                    user_id=current_user.id,
+                    trigger_phrase=crisis.trigger_phrase or req.message[:200],
+                    system_response="AI intervened with extreme comfort.",
+                    helpline_shown=True,
+                ))
             
             if emotion and emotion.label:
                 bg_db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
                 
-            ai_msg = Message(session_id=session.id, role="assistant", content=final_text, language=req.language)
+            ai_msg = Message(
+                session_id=session.id,
+                role="assistant",
+                content=final_text,
+                language=req.language,
+                is_crisis_flagged=False
+            )
             bg_db.add(ai_msg)
             bg_db.flush()
             
@@ -603,6 +635,7 @@ async def send_message(
                     bg_db.add(MessageAnalysis(
                         message_id=user_msg.id,
                         session_id=session.id,
+                        user_id=current_user.id,
                         speaker="user",
                         emotion=core_params.get("emotion", emotion.label if emotion else "neutral"),
                         emotion_intensity=core_params.get("intensity", 0.0),
@@ -612,8 +645,8 @@ async def send_message(
                         topic_sensitivity_score=core_params.get("sensitivity", 0.0),
                         engagement_score=core_params.get("engagement", 0.0),
                         primary_concern=ranked.get("primary_concern", ""),
-                        risk_level=core_params.get("risk_level", "Low"),
-                        risk_score=core_params.get("risk_score", 0.0),
+                        risk_level="CRITICAL" if crisis.is_crisis else core_params.get("risk_level", "Low"),
+                        risk_score=1.0 if crisis.is_crisis else core_params.get("risk_score", 0.0),
                         baseline_deviation=deviations.get("overall_deviation_score", 0.0),
                         cognitive_signals=bg_case_file.get("cognitive_patterns", []),
                         response_strategy=bg_case_file.get("runtime_state", {}).get("response_strategy", "LISTEN")
@@ -623,8 +656,31 @@ async def send_message(
                     print(f"[Background Assessor] Error: {repr(e)}")
                     bg_db.rollback()
             else:
-                # Assessor skipped — carry forward unchanged case_file
+                # Assessor skipped — record baseline MessageAnalysis
                 print(f"[TurnGate] Assessor skipped (complexity={turn_complexity.value})")
+                try:
+                    bg_db.add(MessageAnalysis(
+                        message_id=user_msg.id,
+                        session_id=session.id,
+                        user_id=current_user.id,
+                        speaker="user",
+                        emotion=emotion.label if emotion else "neutral",
+                        emotion_intensity=0.0,
+                        distress_score=0.0,
+                        conversation_intent="",
+                        arousal_score=0.0,
+                        topic_sensitivity_score=0.0,
+                        engagement_score=0.0,
+                        primary_concern="",
+                        risk_level="CRITICAL" if crisis.is_crisis else "Low",
+                        risk_score=1.0 if crisis.is_crisis else 0.0,
+                        baseline_deviation=0.0,
+                        cognitive_signals=[],
+                        response_strategy="LISTEN"
+                    ))
+                    bg_db.commit()
+                except Exception as ma_err:
+                    print(f"[PostProcess] Baseline MessageAnalysis error: {ma_err}")
 
                 
             # ── Persona update — only when turn has meaningful content ────────
@@ -1060,26 +1116,47 @@ Output ONLY valid JSON. Keep each string field under 150 chars. Arrays max 3 ite
 def end_session(
     session_id: str,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    request: Request,
     db: Session = Depends(get_db),
+    token: Optional[str] = Query(None),
 ):
+    # Determine user identity from Bearer token, query token, or cookie
+    auth_header = request.headers.get("authorization")
+    raw_token = token
+    if auth_header and auth_header.startswith("Bearer "):
+        raw_token = auth_header.split(" ", 1)[1]
+    if not raw_token:
+        raw_token = request.cookies.get("mb_token")
+
+    user_id = None
+    if raw_token:
+        payload = decode_token(raw_token, expected_type="access")
+        if payload:
+            user_id = payload.get("user_id")
+
     session = db.query(DBSession).filter(
-        DBSession.session_token == session_id,
-        DBSession.user_id == current_user.id
+        DBSession.session_token == session_id
     ).first()
+    
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
         
-    session.session_status = "completed"
-    session.ended_at = datetime.utcnow()
-    db.commit()
-    
-    # Trigger the async summarizer tasks
-    from modules.memory.incremental_updater import update_living_context
-    background_tasks.add_task(generate_session_summary, session.id, current_user.id)
-    background_tasks.add_task(update_living_context, current_user.id, session.id)
-    
+    if user_id and session.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    if session.session_status != "completed":
+        session.session_status = "completed"
+        session.ended_at = datetime.utcnow()
+        db.commit()
+        
+        # Trigger the async summarizer tasks
+        from modules.memory.incremental_updater import update_living_context
+        background_tasks.add_task(generate_session_summary, session.id, session.user_id)
+        background_tasks.add_task(update_living_context, session.user_id, session.id)
+        print(f"[SESSION_END] Session {session.id} ({session_id}) closed & background summary scheduled.")
+        
     return {"status": "ended", "session_id": session_id}
+
 
 
 @router.get("/{session_id}/analysis")

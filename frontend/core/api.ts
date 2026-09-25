@@ -88,6 +88,14 @@ api.interceptors.response.use(
       }
     }
     
+    if (error.response?.status === 403 && typeof window !== 'undefined') {
+      const detail = error.response?.data?.detail;
+      if (typeof detail === 'string' && detail.toLowerCase().includes('not allowed to access')) {
+        localStorage.setItem('mb_user_blocked', 'true');
+        window.dispatchEvent(new CustomEvent('mythri:user_blocked', { detail }));
+      }
+    }
+    
     // Add empathetic error translation for other errors
     error.userMessage = translateApiError(error)
     return Promise.reject(error)
@@ -97,6 +105,11 @@ api.interceptors.response.use(
 function translateApiError(error: any): string {
   if (!error.response) {
     return "Mythri is having trouble connecting right now. Let's try again in a moment."
+  }
+  
+  const detail = error.response.data?.detail
+  if (typeof detail === 'string' && detail.trim().length > 0) {
+    return detail
   }
   
   const status = error.response.status
@@ -156,6 +169,11 @@ export async function logout() {
   }
 }
 
+export async function forgotPassword(email: string) {
+  const res = await api.post('/api/auth/forgot-password', { email })
+  return res.data
+}
+
 export async function getOnboardingStatus() {
   const res = await api.get('/api/user/onboarding/status')
   return res.data
@@ -175,6 +193,17 @@ export async function sendMessage(session_id: string, message: string, language 
   const res = await api.post('/api/consultation/message', { session_id, message, language })
   return res.data
 }
+
+export async function endSession(sessionId: string) {
+  try {
+    const res = await api.post(`/api/consultation/${sessionId}/end`)
+    return res.data
+  } catch (err) {
+    console.warn('[END_SESSION_ERR]', err)
+    return null
+  }
+}
+
 
 export async function getHistory() {
   const res = await api.get('/api/consultation/history')
@@ -281,8 +310,30 @@ export const exportAdminUserData = async (userId: number) => {
   return response
 }
 
+export const exportAdminSessionData = async (sessionId: number) => {
+  const response = await api.get(`/api/admin/sessions/${sessionId}/export`, {
+    responseType: 'blob'
+  })
+  return response
+}
+
 export const deleteAdminUsers = async (userIds: number[]) => {
   const response = await api.post('/api/admin/users/bulk-delete', { user_ids: userIds })
+  return response.data
+}
+
+export const updateAdminUserStatus = async (userId: number, isActive: boolean) => {
+  const response = await api.put(`/api/admin/users/${userId}/status`, { is_active: isActive })
+  return response.data
+}
+
+export const bulkUpdateAdminUserStatus = async (userIds: number[], isActive: boolean) => {
+  const response = await api.post('/api/admin/users/bulk-status', { user_ids: userIds, is_active: isActive })
+  return response.data
+}
+
+export const updateAllUsersStatus = async (isActive: boolean) => {
+  const response = await api.post('/api/admin/users/all-status', { is_active: isActive })
   return response.data
 }
 

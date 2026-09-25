@@ -1,5 +1,2 @@
-import OnboardingFlow from '@/modules/new-onboarding/frontend/OnboardingFlow'
-
-export default function NewOnboardingPage() {
-  return <OnboardingFlow />
-}
+import Page from '@/modules/onboarding/frontend/page';
+export default Page;

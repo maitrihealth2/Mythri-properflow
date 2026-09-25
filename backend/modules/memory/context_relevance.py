@@ -451,10 +451,6 @@ class ContextRelevanceSelector:
             elif fname == "preferences" and item.score >= 0.25:
                 block.selected_facts.append(item.value)
 
-        # Fallback to profile session summaries if none passed threshold
-        if not block.selected_session_summaries and profile.recent_session_summaries:
-            block.selected_session_summaries = list(profile.recent_session_summaries[:2])
-
         if mode == "EXPLICIT_RECALL":
             if profile.presenting_problem and not block.selected_presenting_problem:
                 block.selected_presenting_problem = profile.presenting_problem

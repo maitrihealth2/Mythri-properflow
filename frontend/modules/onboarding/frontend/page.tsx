@@ -1,30 +1,56 @@
 'use client'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getOnboardingStatus } from '@/core/api'
+import { getOnboardingStatus, submitOnboarding } from '@/core/api'
+import ThemeToggle from '@/shared/components/ThemeToggle'
 
-type ConsentData = {
+interface ConsentState {
   eligibility: boolean
-  collect_text: boolean
-  collect_usage: boolean
-  collect_feedback: boolean
-  model_training: boolean
-  data_retention: boolean
-  nda_agreement: boolean
+  disclaimer: boolean
+  privacy: boolean
 }
+
+const LANGUAGES = [
+  { code: 'en-IN', name: 'English (India)', native: 'English', region: 'Pan-India' },
+  { code: 'hi-IN', name: 'Hindi', native: 'हिन्दी', region: 'North / Central India' },
+  { code: 'te-IN', name: 'Telugu', native: 'తెలుగు', region: 'Andhra & Telangana' },
+  { code: 'ta-IN', name: 'Tamil', native: 'தமிழ்', region: 'Tamil Nadu' },
+  { code: 'kn-IN', name: 'Kannada', native: 'ಕನ್ನಡ', region: 'Karnataka' },
+  { code: 'mr-IN', name: 'Marathi', native: 'मराठी', region: 'Maharashtra' },
+  { code: 'bn-IN', name: 'Bengali', native: 'বাংলা', region: 'West Bengal' },
+  { code: 'gu-IN', name: 'Gujarati', native: 'ગુજરાતી', region: 'Gujarat' },
+  { code: 'ml-IN', name: 'Malayalam', native: 'മലയാളം', region: 'Kerala' },
+  { code: 'pa-IN', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', region: 'Punjab' },
+  { code: 'od-IN', name: 'Odia', native: 'ଓଡ଼ିଆ', region: 'Odisha' },
+]
+
+const QUICK_AGE_BRACKETS = [
+  { label: '18–24', min: 18, max: 24, defaultAge: 21 },
+  { label: '25–34', min: 25, max: 34, defaultAge: 28 },
+  { label: '35–49', min: 35, max: 49, defaultAge: 40 },
+  { label: '50+', min: 50, max: 99, defaultAge: 55 },
+]
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [consent, setConsent] = useState<ConsentData>({
-    eligibility: false,
-    collect_text: false,
-    collect_usage: false,
-    collect_feedback: false,
-    model_training: false,
-    data_retention: false,
-    nda_agreement: false,
-  })
 
+  // Steps: 0 = Consent, 1 = Name, 2 = Age, 3 = Language, 4 = Finalizing
+  const [currentStep, setCurrentStep] = useState<number>(0)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = useState<string>('')
+
+  // Form State
+  const [consent, setConsent] = useState<ConsentState>({
+    eligibility: false,
+    disclaimer: false,
+    privacy: false,
+  })
+  const [preferredName, setPreferredName] = useState<string>('')
+  const [age, setAge] = useState<string>('')
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en-IN')
+
+  // Check auth and existing onboarding status
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
     if (!token) {
@@ -32,185 +58,454 @@ export default function OnboardingPage() {
       return
     }
 
-    getOnboardingStatus().then(status => {
-      if (status && status.completed) {
-        router.replace('/home')
-      }
-    }).catch(err => {
-      console.error('[ONBOARDING_ERROR] Failed to check onboarding status on mount:', err)
-    })
+    const storedUsername = localStorage.getItem('mb_username')
+    if (storedUsername && !preferredName) {
+      setPreferredName(storedUsername)
+    }
+
+    getOnboardingStatus()
+      .then((status) => {
+        if (status && status.completed) {
+          router.replace('/home')
+        }
+      })
+      .catch((err) => {
+        console.error('[ONBOARDING_STATUS_ERR]', err)
+      })
   }, [router])
 
-  const canProceed = consent.eligibility && consent.nda_agreement && consent.collect_text
+  // Consent validation
+  const isConsentValid = consent.eligibility && consent.disclaimer && consent.privacy
 
-  const handleAgree = () => {
-    if (!canProceed) return
-    router.push('/onboarding/chat')
+  const handleNextStep = () => {
+    setErrorMessage('')
+    if (currentStep === 0) {
+      if (!isConsentValid) {
+        setErrorMessage('Please accept all required agreements to continue.')
+        return
+      }
+      setCurrentStep(1)
+    } else if (currentStep === 1) {
+      if (!preferredName.trim()) {
+        setErrorMessage('Please enter what Mythri should call you.')
+        return
+      }
+      setCurrentStep(2)
+    } else if (currentStep === 2) {
+      const parsedAge = parseInt(age, 10)
+      if (!age || isNaN(parsedAge) || parsedAge < 13 || parsedAge > 120) {
+        setErrorMessage('Please enter a valid age (13 or older).')
+        return
+      }
+      setCurrentStep(3)
+    } else if (currentStep === 3) {
+      handleSubmit()
+    }
+  }
+
+  const handlePrevStep = () => {
+    setErrorMessage('')
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1)
+    }
+  }
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    setErrorMessage('')
+
+    try {
+      const payload = {
+        preferred_name: preferredName.trim(),
+        age: parseInt(age, 10),
+        language: selectedLanguage,
+        conversation_style: 'auto_adaptive',
+        consent: {
+          ...consent,
+          timestamp: new Date().toISOString(),
+          version: '2.0',
+        },
+      }
+
+      await submitOnboarding(payload)
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('mb_username', preferredName.trim())
+        localStorage.setItem('mb_language', selectedLanguage)
+      }
+
+      // Transition animation step
+      setCurrentStep(4)
+      setTimeout(() => {
+        router.replace('/home')
+      }, 1600)
+    } catch (err: any) {
+      console.error('[SUBMIT_ONBOARDING_ERR]', err)
+      setErrorMessage(err?.response?.data?.detail || 'Failed to save preferences. Please try again.')
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <div className="min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-6 md:p-8 bg-surface dark:bg-background relative overflow-y-auto">
-      {/* Background Ambience */}
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-surface to-surface-variant/20 pointer-events-none z-0"></div>
+    <div className="min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#fff8f5] dark:bg-black text-on-surface dark:text-white relative overflow-x-hidden select-none">
+      {/* Dynamic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/10 dark:bg-primary/20 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-secondary/10 dark:bg-secondary/20 blur-[120px]" />
+      </div>
 
-      <main className="relative z-10 w-full max-w-[560px] my-auto">
-        <div className="w-full bg-surface/95 dark:bg-surface-container/95 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-outline-variant/30 shadow-xl p-4 sm:p-6 md:p-8 flex flex-col max-h-[92dvh] overflow-hidden">
+      {/* Top Controls */}
+      <header className="fixed top-0 left-0 right-0 p-4 sm:p-6 flex justify-between items-center z-40 max-w-5xl mx-auto w-full">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+            M
+          </div>
+          <span className="font-headline-md font-bold tracking-wide text-primary">Mythri</span>
+        </div>
+        <ThemeToggle />
+      </header>
+
+      {/* Main Container */}
+      <main className="relative z-10 w-full max-w-[620px] my-auto pt-14 pb-6">
+        <div className="bg-white/80 dark:bg-[#141414]/90 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl transition-all duration-300">
           
-          {/* Header */}
-          <div className="text-center pb-3 border-b border-outline-variant/20 shrink-0">
-            <h1 className="text-primary font-headline-md text-xl sm:text-2xl tracking-wider uppercase font-bold">AFFYNE LABS</h1>
-            <h2 className="text-on-surface font-headline-sm text-base sm:text-lg mt-0.5">Consent, Terms &amp; NDA</h2>
-            <p className="text-on-surface-variant font-body-sm text-xs italic mt-0.5">Mythri — AI Psychological Companion</p>
-          </div>
-
-          {/* Scrollable Terms Body */}
-          <div className="overflow-y-auto flex-1 py-3.5 space-y-3 pr-1 text-on-surface font-body-sm text-xs sm:text-sm">
-            <p className="text-on-surface-variant leading-relaxed">
-              This screen governs your access to Mythri, built by <strong>Affyne Labs</strong>. You must read and explicitly agree to the required sections below before proceeding.
-            </p>
-
-            {/* Section 1: Eligibility */}
-            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1.5">
-              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">1. Eligibility &amp; Age (Mandatory)</h3>
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
-                  checked={consent.eligibility}
-                  onChange={(e) => setConsent({ ...consent, eligibility: e.target.checked })}
+          {/* Progress Indicator (Steps 1 to 3) */}
+          {currentStep >= 1 && currentStep <= 3 && (
+            <div className="mb-8">
+              <div className="flex justify-between items-center text-xs font-semibold text-on-surface-variant dark:text-white/60 mb-2">
+                <span>Step {currentStep} of 3</span>
+                <span>{currentStep === 1 ? 'Your Name' : currentStep === 2 ? 'Your Age' : 'Language'}</span>
+              </div>
+              <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
+                  style={{ width: `${(currentStep / 3) * 100}%` }}
                 />
-                <span className="leading-snug">
-                  I confirm that I am 18 years of age or older.
-                  <span className="block text-[11px] text-on-surface-variant mt-0.5">
-                    (Participation is limited to adults. If under 18, you may not proceed.)
-                  </span>
-                </span>
-              </label>
+              </div>
             </div>
+          )}
 
-            {/* Section 2: NDA */}
-            <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 space-y-1.5">
-              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">2. Non-Disclosure Agreement (Mandatory)</h3>
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+          {/* STEP 0: Consent & Terms Gate */}
+          {currentStep === 0 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center space-y-1.5 pb-2">
+                <span className="text-xs font-bold tracking-widest text-primary uppercase">Affyne Labs</span>
+                <h1 className="text-2xl sm:text-3xl font-headline-md font-bold text-primary dark:text-white">
+                  Welcome to Mythri
+                </h1>
+                <p className="text-sm text-on-surface-variant dark:text-white/70 max-w-md mx-auto">
+                  A compassionate, culturally attuned space for your mental wellness.
+                </p>
+              </div>
+
+              <div className="space-y-3.5 text-xs sm:text-sm">
+                {/* 1. Age Eligibility */}
+                <div
+                  onClick={() => setConsent((prev) => ({ ...prev, eligibility: !prev.eligibility }))}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                    consent.eligibility
+                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10'
+                      : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-black/20'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={consent.eligibility}
+                    onChange={() => {}}
+                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0"
+                  />
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-on-surface dark:text-white">1. Age Eligibility</p>
+                    <p className="text-on-surface-variant dark:text-white/60 leading-relaxed text-xs">
+                      I confirm that I am 18 years of age or older (or of legal digital consent age).
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. AI Companion & Medical Disclaimer */}
+                <div
+                  onClick={() => setConsent((prev) => ({ ...prev, disclaimer: !prev.disclaimer }))}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                    consent.disclaimer
+                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10'
+                      : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-black/20'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={consent.disclaimer}
+                    onChange={() => {}}
+                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0"
+                  />
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-on-surface dark:text-white">2. Medical &amp; Emergency Disclaimer</p>
+                    <p className="text-on-surface-variant dark:text-white/60 leading-relaxed text-xs">
+                      I understand Mythri is an AI companion for emotional reflection and wellness support — not a licensed medical professional or replacement for emergency crisis care.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. Privacy & Data Use */}
+                <div
+                  onClick={() => setConsent((prev) => ({ ...prev, privacy: !prev.privacy }))}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                    consent.privacy
+                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10'
+                      : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-black/20'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={consent.privacy}
+                    onChange={() => {}}
+                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0"
+                  />
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-on-surface dark:text-white">3. Privacy &amp; Data Security</p>
+                    <p className="text-on-surface-variant dark:text-white/60 leading-relaxed text-xs">
+                      I consent to my conversation and audio data being processed securely to deliver tailored responses. My data is strictly protected and will never be sold.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {errorMessage && (
+                <p className="text-xs text-red-500 dark:text-red-400 text-center font-medium">{errorMessage}</p>
+              )}
+
+              <button
+                onClick={handleNextStep}
+                disabled={!isConsentValid}
+                className={`w-full py-4 rounded-2xl font-headline-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                  isConsentValid
+                    ? 'bg-primary text-on-primary shadow-lg shadow-primary/25 hover:brightness-105 active:scale-[0.99]'
+                    : 'bg-black/10 dark:bg-white/10 text-on-surface-variant/40 dark:text-white/30 cursor-not-allowed'
+                }`}
+              >
+                <span>I Agree &amp; Continue</span>
+                <span className="material-symbols-outlined text-lg">arrow_forward</span>
+              </button>
+            </div>
+          )}
+
+          {/* STEP 1: Name / Nickname */}
+          {currentStep === 1 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="space-y-2 text-center">
+                <span className="inline-block p-3 rounded-2xl bg-primary/10 text-primary mb-1">
+                  <span className="material-symbols-outlined text-2xl">badge</span>
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-headline-md font-bold text-on-surface dark:text-white">
+                  What should Mythri call you?
+                </h2>
+                <p className="text-sm text-on-surface-variant dark:text-white/70">
+                  Pick a first name, nickname, or whatever feels comfortable.
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <input
-                  type="checkbox"
-                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
-                  checked={consent.nda_agreement}
-                  onChange={(e) => setConsent({ ...consent, nda_agreement: e.target.checked })}
+                  type="text"
+                  value={preferredName}
+                  onChange={(e) => setPreferredName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
+                  placeholder="e.g., Fareed, Alex, Sunshine..."
+                  autoFocus
+                  maxLength={40}
+                  className="w-full text-center text-xl sm:text-2xl font-semibold py-4 px-6 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/10 dark:border-white/15 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                 />
-                <span className="leading-snug font-medium text-on-surface">
-                  I agree to keep all system architecture, prompt engineering techniques, and internal workings of Mythri / Affyne Labs strictly confidential. I will NOT disclose, publish, reverse-engineer, or share them with any third party.
+              </div>
+
+              {errorMessage && (
+                <p className="text-xs text-red-500 dark:text-red-400 text-center font-medium">{errorMessage}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handlePrevStep}
+                  className="px-5 py-3.5 rounded-2xl font-semibold text-sm border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleNextStep}
+                  disabled={!preferredName.trim()}
+                  className="flex-1 py-3.5 rounded-2xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/25 hover:brightness-105 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <span>Continue</span>
+                  <span className="material-symbols-outlined text-base">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: Age */}
+          {currentStep === 2 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="space-y-2 text-center">
+                <span className="inline-block p-3 rounded-2xl bg-primary/10 text-primary mb-1">
+                  <span className="material-symbols-outlined text-2xl">calendar_today</span>
                 </span>
-              </label>
-            </div>
+                <h2 className="text-2xl sm:text-3xl font-headline-md font-bold text-on-surface dark:text-white">
+                  How old are you, {preferredName}?
+                </h2>
+                <p className="text-sm text-on-surface-variant dark:text-white/70">
+                  This helps Mythri tune reflections and context to your life stage.
+                </p>
+              </div>
 
-            {/* Section 3: Nature of Product */}
-            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1">
-              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">3. Nature of the Product</h3>
-              <p className="text-on-surface-variant leading-snug">
-                Mythri is an AI companion created by Affyne Labs, not a licensed therapist or doctor. It does not diagnose or treat medical conditions and does not replace professional clinical healthcare.
-              </p>
-            </div>
-
-            {/* Section 4: Data Processing */}
-            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-2">
-              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">4. Data Processing (Mandatory)</h3>
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              {/* Direct Number Input */}
+              <div className="max-w-[200px] mx-auto">
                 <input
-                  type="checkbox"
-                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
-                  checked={consent.collect_text}
-                  onChange={(e) => setConsent({ ...consent, collect_text: e.target.checked })}
+                  type="number"
+                  min={13}
+                  max={120}
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
+                  placeholder="Age (e.g. 24)"
+                  autoFocus
+                  className="w-full text-center text-3xl font-bold py-3.5 px-4 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/10 dark:border-white/15 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                 />
-                <span className="leading-snug">
-                  I agree that Affyne Labs may collect and securely process conversation text and voice to provide empathetic responses.
-                </span>
-              </label>
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
-                  checked={consent.collect_usage}
-                  onChange={(e) => setConsent({ ...consent, collect_usage: e.target.checked })}
-                />
-                <span className="leading-snug">
-                  I agree to basic usage metrics (session duration, feature interactions).
-                </span>
-              </label>
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
-                  checked={consent.collect_feedback}
-                  onChange={(e) => setConsent({ ...consent, collect_feedback: e.target.checked })}
-                />
-                <span className="leading-snug">
-                  I agree to feedback and rating collection to improve quality.
-                </span>
-              </label>
+              </div>
+
+              {/* Quick Age Selectors */}
+              <div className="space-y-2">
+                <p className="text-xs text-center font-medium text-on-surface-variant dark:text-white/50">
+                  Or select your age bracket:
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {QUICK_AGE_BRACKETS.map((bracket) => (
+                    <button
+                      key={bracket.label}
+                      type="button"
+                      onClick={() => setAge(String(bracket.defaultAge))}
+                      className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                        parseInt(age, 10) >= bracket.min && parseInt(age, 10) <= bracket.max
+                          ? 'bg-primary text-on-primary border-primary shadow-sm'
+                          : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-primary/40'
+                      }`}
+                    >
+                      {bracket.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {errorMessage && (
+                <p className="text-xs text-red-500 dark:text-red-400 text-center font-medium">{errorMessage}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handlePrevStep}
+                  className="px-5 py-3.5 rounded-2xl font-semibold text-sm border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleNextStep}
+                  disabled={!age || parseInt(age, 10) < 13}
+                  className="flex-1 py-3.5 rounded-2xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/25 hover:brightness-105 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <span>Continue</span>
+                  <span className="material-symbols-outlined text-base">arrow_forward</span>
+                </button>
+              </div>
             </div>
+          )}
 
-            {/* Section 5: Model Improvement */}
-            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1.5">
-              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">5. Anonymized Improvement</h3>
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
-                  checked={consent.model_training}
-                  onChange={(e) => setConsent({ ...consent, model_training: e.target.checked })}
-                />
-                <span className="leading-snug">
-                  I agree that fully anonymized data (stripped of all personal identifiers) may be used to refine AI accuracy.
+          {/* STEP 3: Preferred Language (Final Step) */}
+          {currentStep === 3 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="space-y-2 text-center">
+                <span className="inline-block p-3 rounded-2xl bg-primary/10 text-primary mb-1">
+                  <span className="material-symbols-outlined text-2xl">translate</span>
                 </span>
-              </label>
+                <h2 className="text-2xl sm:text-3xl font-headline-md font-bold text-on-surface dark:text-white">
+                  Which language feels most natural?
+                </h2>
+                <p className="text-sm text-on-surface-variant dark:text-white/70">
+                  Mythri adapts voice and text conversations to your primary tongue.
+                </p>
+              </div>
+
+              {/* Language Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[280px] overflow-y-auto pr-1">
+                {LANGUAGES.map((lang) => {
+                  const isSelected = selectedLanguage === lang.code
+                  return (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => setSelectedLanguage(lang.code)}
+                      className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-primary/10 border-primary text-primary shadow-sm dark:bg-primary/20 dark:text-white'
+                          : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="text-xs font-bold">{lang.name}</span>
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-primary text-base">check_circle</span>
+                        )}
+                      </div>
+                      <span className="text-base font-semibold mt-1 opacity-90">{lang.native}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {errorMessage && (
+                <p className="text-xs text-red-500 dark:text-red-400 text-center font-medium">{errorMessage}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handlePrevStep}
+                  disabled={isSubmitting}
+                  className="px-5 py-3.5 rounded-2xl font-semibold text-sm border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-all disabled:opacity-40"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleNextStep}
+                  disabled={isSubmitting}
+                  className="flex-1 py-3.5 rounded-2xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/25 hover:brightness-105 active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Saving your preferences...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Complete Setup</span>
+                      <span className="material-symbols-outlined text-base">sparkles</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+          )}
 
-            {/* Section 6: Data Retention */}
-            <div className="p-3 bg-surface-variant/20 rounded-xl border border-outline-variant/20 space-y-1.5">
-              <h3 className="font-label-md font-bold text-primary text-xs sm:text-sm">6. Privacy Rights &amp; Retention</h3>
-              <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary shrink-0"
-                  checked={consent.data_retention}
-                  onChange={(e) => setConsent({ ...consent, data_retention: e.target.checked })}
-                />
-                <span className="leading-snug">
-                  I understand Affyne Labs will not sell my personal data. I can request account deletion at any time via hello@affynelabs.com.
-                </span>
-              </label>
+          {/* STEP 4: Calming Completion Transition */}
+          {currentStep === 4 && (
+            <div className="py-10 text-center space-y-5 animate-fade-in">
+              <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-xl shadow-primary/20 animate-pulse">
+                <span className="material-symbols-outlined text-4xl">spa</span>
+              </div>
+              <div className="space-y-1.5">
+                <h2 className="text-2xl font-headline-md font-bold text-primary dark:text-white">
+                  Welcome home, {preferredName}
+                </h2>
+                <p className="text-sm text-on-surface-variant dark:text-white/70">
+                  Mythri is personalizing your quiet sanctuary...
+                </p>
+              </div>
             </div>
-
-            {/* Section 7: Crisis Notice */}
-            <div className="p-3 bg-error-container/20 rounded-xl border border-error/20 space-y-1">
-              <h3 className="font-label-md font-bold text-error text-xs sm:text-sm">7. Crisis Notice</h3>
-              <p className="text-[11px] sm:text-xs text-on-surface-variant leading-snug">
-                If in an acute crisis or experiencing self-harm thoughts, please call emergency services (112 in India) or a national crisis line immediately.
-              </p>
-            </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="pt-3 border-t border-outline-variant/20 shrink-0 flex flex-col sm:flex-row gap-2.5">
-            <button
-              type="button"
-              onClick={() => router.push('/login')}
-              className="w-full sm:w-1/3 py-2.5 sm:py-3 bg-surface hover:bg-surface-variant text-on-surface border border-outline-variant/50 rounded-xl font-label-md text-xs sm:text-sm transition-colors text-center"
-            >
-              Decline
-            </button>
-            <button
-              type="button"
-              onClick={handleAgree}
-              disabled={!canProceed}
-              className="w-full sm:w-2/3 py-2.5 sm:py-3 bg-primary text-white rounded-xl font-label-md text-xs sm:text-sm transition-all hover:opacity-90 disabled:opacity-40 shadow-md flex items-center justify-center gap-1.5"
-            >
-              <span>I Agree &amp; Proceed</span>
-              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </button>
-          </div>
-
+          )}
         </div>
       </main>
     </div>

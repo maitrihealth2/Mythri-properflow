@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { ThemeProvider } from 'next-themes'
 import { FeatureFlagProvider } from '@/shared/components/contexts/FeatureFlagContext'
 import { MaintenanceGuard } from '@/shared/components/MaintenanceGuard'
+import { BlockedGuard } from '@/shared/components/BlockedGuard'
 
 import { PWAProvider } from '@/shared/components/PWAProvider'
 
@@ -23,7 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <PWAProvider>
         <FeatureFlagProvider>
           <MaintenanceGuard>
-            {children}
+            <BlockedGuard>
+              {children}
+            </BlockedGuard>
           </MaintenanceGuard>
         </FeatureFlagProvider>
       </PWAProvider>

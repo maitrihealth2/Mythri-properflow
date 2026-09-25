@@ -206,26 +206,43 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
     
     writer.writerow([
         "user_id", "username", "email", "preferred_language", "created_at",
-        "session_id", "session_started_at", "session_ended_at",
-        "message_id", "sender", "timestamp", "message"
+        "session_id", "session_crisis_flagged", "session_risk_level",
+        "session_started_at", "session_ended_at",
+        "message_id", "sender", "timestamp",
+        "message_risk_level", "message_risk_score", "is_crisis_message",
+        "message"
     ])
     
     sessions = db.query(DBSession).filter(DBSession.user_id == user_id).order_by(DBSession.started_at.asc()).all()
     
     for sess in sessions:
+        session_crisis_str = "Yes" if sess.is_crisis_flagged else "No"
+        session_risk_lvl = sess.risk_level or "low"
         messages = db.query(Message).filter(Message.session_id == sess.id).order_by(Message.created_at.asc()).all()
         if not messages:
             writer.writerow([
                 user.id, user.username, user.email, user.preferred_language, user.created_at.isoformat() if user.created_at else "",
-                sess.id, sess.started_at.isoformat() if sess.started_at else "", sess.ended_at.isoformat() if sess.ended_at else "",
-                "", "", "", ""
+                sess.id, session_crisis_str, session_risk_lvl,
+                sess.started_at.isoformat() if sess.started_at else "", sess.ended_at.isoformat() if sess.ended_at else "",
+                "", "", "", "", "", "", ""
             ])
         else:
             for msg in messages:
+                is_user = (msg.role == "user")
+                is_crisis_msg = "Yes" if (is_user and msg.is_crisis_flagged) else "No"
+                if is_user:
+                    msg_risk_level = msg.analysis.risk_level if (msg.analysis and msg.analysis.risk_level) else ("CRITICAL" if msg.is_crisis_flagged else "Low")
+                    msg_risk_score = msg.analysis.risk_score if (msg.analysis and msg.analysis.risk_score is not None) else (1.0 if msg.is_crisis_flagged else 0.0)
+                else:
+                    msg_risk_level = ""
+                    msg_risk_score = ""
                 writer.writerow([
                     user.id, user.username, user.email, user.preferred_language, user.created_at.isoformat() if user.created_at else "",
-                    sess.id, sess.started_at.isoformat() if sess.started_at else "", sess.ended_at.isoformat() if sess.ended_at else "",
-                    msg.id, msg.role, msg.created_at.isoformat() if msg.created_at else "", msg.content
+                    sess.id, session_crisis_str, session_risk_lvl,
+                    sess.started_at.isoformat() if sess.started_at else "", sess.ended_at.isoformat() if sess.ended_at else "",
+                    msg.id, msg.role, msg.created_at.isoformat() if msg.created_at else "",
+                    msg_risk_level, msg_risk_score, is_crisis_msg,
+                    msg.content
                 ])
                 
     response = Response(content=output.getvalue(), media_type="text/csv")
@@ -234,6 +251,83 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
     
     admin_email = admin.get("email", "admin")
     CommandCenter.log_db("ADMIN", f"Admin {admin_email} exported CSV for user {user_id}")
+    return response
+
+@router.get("/sessions/{session_id}/export")
+def export_session_data(session_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    """Export a specific single session and all its messages to CSV."""
+    from core.logger.terminal import CommandCenter
+    session = db.query(DBSession).filter(DBSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    user = db.query(User).filter(User.id == session.user_id).first()
+    
+    output = StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+    
+    writer.writerow([
+        "session_id", "session_token", "user_id", "username", "email",
+        "channel", "session_crisis_flagged", "session_risk_level", "session_risk_score",
+        "session_started_at", "session_ended_at",
+        "message_id", "sender", "timestamp",
+        "message_risk_level", "message_risk_score", "is_crisis_message",
+        "emotion", "message"
+    ])
+    
+    messages = db.query(Message).filter(Message.session_id == session.id).order_by(Message.created_at.asc()).all()
+    
+    username = user.username if user else "Unknown"
+    email = user.email if user else ""
+    user_id = user.id if user else session.user_id
+    session_crisis_str = "Yes" if session.is_crisis_flagged else "No"
+    session_risk_lvl = session.risk_level or "low"
+    session_risk_scr = session.risk_score if session.risk_score is not None else 0.0
+    
+    if not messages:
+        writer.writerow([
+            session.id, session.session_token, user_id, username, email,
+            session.channel, session_crisis_str, session_risk_lvl, session_risk_scr,
+            session.started_at.isoformat() if session.started_at else "",
+            session.ended_at.isoformat() if session.ended_at else "",
+            "", "", "", "", "", "", "", ""
+        ])
+    else:
+        for msg in messages:
+            emotion_lbl = msg.emotion.emotion_label if msg.emotion else ""
+            is_user = (msg.role == "user")
+            is_crisis_msg = "Yes" if (is_user and msg.is_crisis_flagged) else "No"
+            
+            if is_user:
+                if msg.analysis and msg.analysis.risk_level:
+                    msg_risk_level = msg.analysis.risk_level
+                else:
+                    msg_risk_level = "CRITICAL" if msg.is_crisis_flagged else "Low"
+                    
+                if msg.analysis and msg.analysis.risk_score is not None:
+                    msg_risk_score = msg.analysis.risk_score
+                else:
+                    msg_risk_score = 1.0 if msg.is_crisis_flagged else 0.0
+            else:
+                msg_risk_level = ""
+                msg_risk_score = ""
+                
+            writer.writerow([
+                session.id, session.session_token, user_id, username, email,
+                session.channel, session_crisis_str, session_risk_lvl, session_risk_scr,
+                session.started_at.isoformat() if session.started_at else "",
+                session.ended_at.isoformat() if session.ended_at else "",
+                msg.id, msg.role, msg.created_at.isoformat() if msg.created_at else "",
+                msg_risk_level, msg_risk_score, is_crisis_msg,
+                emotion_lbl, msg.content
+            ])
+            
+    response = Response(content=output.getvalue(), media_type="text/csv")
+    date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    response.headers["Content-Disposition"] = f"attachment; filename=mythri_session_{session_id}_{date_str}.csv"
+    
+    admin_email = admin.get("email", "admin")
+    CommandCenter.log_db("ADMIN", f"Admin {admin_email} exported CSV for session {session_id}")
     return response
 
 
@@ -298,4 +392,80 @@ async def bulk_delete_users(req: BulkDeleteRequest, admin=Depends(require_admin)
         "deleted": deleted,
         "errors": errors,
         "message": f"Deleted {len(deleted)} user(s). {len(errors)} error(s)."
+    }
+
+
+class UserStatusRequest(BaseModel):
+    is_active: bool
+
+@router.put("/users/{user_id}/status")
+def update_user_status(user_id: int, req: UserStatusRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    """Block or unblock a user."""
+    from core.logger.terminal import CommandCenter
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user.is_active = req.is_active
+    db.commit()
+    db.refresh(user)
+    
+    admin_email = admin.get("email", "admin")
+    action_str = "unblocked" if req.is_active else "blocked"
+    CommandCenter.log_db("ADMIN", f"Admin {admin_email} {action_str} user {user_id} ({user.email})")
+    
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_active": user.is_active,
+        "message": f"User successfully {action_str}"
+    }
+
+
+class BulkStatusRequest(BaseModel):
+    user_ids: list[int]
+    is_active: bool
+
+@router.post("/users/bulk-status")
+def bulk_update_user_status(req: BulkStatusRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    """Bulk block or unblock multiple users."""
+    from core.logger.terminal import CommandCenter
+    if not req.user_ids:
+        raise HTTPException(status_code=400, detail="No user IDs provided")
+    
+    users = db.query(User).filter(User.id.in_(req.user_ids)).all()
+    for user in users:
+        user.is_active = req.is_active
+    db.commit()
+    
+    admin_email = admin.get("email", "admin")
+    action_str = "unblocked" if req.is_active else "blocked"
+    CommandCenter.log_db("ADMIN", f"Admin {admin_email} bulk {action_str} {len(users)} user(s)")
+    
+    return {
+        "updated_count": len(users),
+        "is_active": req.is_active,
+        "message": f"Successfully {action_str} {len(users)} user(s)"
+    }
+
+
+class AllUsersStatusRequest(BaseModel):
+    is_active: bool
+
+@router.post("/users/all-status")
+def update_all_users_status(req: AllUsersStatusRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    """Block or unblock ALL users in the system."""
+    from core.logger.terminal import CommandCenter
+    updated_count = db.query(User).update({User.is_active: req.is_active})
+    db.commit()
+    
+    admin_email = admin.get("email", "admin")
+    action_str = "unblocked" if req.is_active else "blocked"
+    CommandCenter.log_db("ADMIN", f"Admin {admin_email} {action_str} ALL {updated_count} users")
+    
+    return {
+        "updated_count": updated_count,
+        "is_active": req.is_active,
+        "message": f"Successfully {action_str} all {updated_count} users"
     }

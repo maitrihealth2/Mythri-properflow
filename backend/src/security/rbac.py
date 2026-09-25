@@ -20,7 +20,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     if not user:
         raise HTTPException(status_code=401, detail="User not found or deleted.")
     if not user.is_active:
-        raise HTTPException(status_code=403, detail="User account is inactive.")
+        raise HTTPException(status_code=403, detail="You are not allowed to access right now")
         
     return user
 
