@@ -144,10 +144,11 @@ class MasterMemorySynthesizer:
                 {"role": "user", "content": user_prompt}
             ]
 
-            response = await llm_router.generate(
+            response = await llm_router.generate_summary(
                 api_messages=api_messages,
                 max_tokens=1500,
-                temperature=0.2  # Low temperature for deterministic extraction accuracy
+                temperature=0.2,  # Low temperature for deterministic extraction accuracy
+                task_name="master_synthesizer",
             )
 
             if not response:

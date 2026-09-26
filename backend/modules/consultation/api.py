@@ -1064,13 +1064,14 @@ Generate a concise session summary as JSON. Be specific — use actual content f
 
 Output ONLY valid JSON. Keep each string field under 150 chars. Arrays max 3 items."""
 
-        result = await llm_router.generate(
+        result = await llm_router.generate_summary(
             api_messages=[
                 {"role": "system", "content": "You are a clinical session summarizer. Output only valid JSON. Be specific, not generic."},
                 {"role": "user", "content": summary_prompt}
             ],
             max_tokens=400,
-            temperature=0.2
+            temperature=0.2,
+            task_name="session_summary",
         )
 
         if not result:
