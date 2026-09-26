@@ -13,6 +13,8 @@ load_dotenv(_BASE / ".env.local", override=True)
 
 # Expects postgresql://...
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./affyne_mythri.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 engine_kwargs = {
     "pool_pre_ping": True,
