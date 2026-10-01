@@ -35,41 +35,6 @@ function OrigamiBackground() {
       <polygon points="100%,0 100%,280 60%,0" fill="#603347" opacity="0.04" />
       <polygon points="0,100% 320,100% 0,60%" fill="#EEDCD8" opacity="0.25" />
 
-      {/* Scattered origami crane silhouettes — various sizes, positions */}
-      {/* Crane 1 — large, top-right */}
-      <g transform="translate(72%, 8%) scale(2.2) rotate(-12)" opacity="0.09">
-        <path d="M16 4 L26 14 L22 16 L28 22 L16 18 L4 22 L10 16 L6 14 Z" fill="#603347" />
-        <path d="M16 18 L16 28 L13 24 M16 28 L19 24" stroke="#603347" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      </g>
-      {/* Crane 2 — mid-right */}
-      <g transform="translate(82%, 35%) scale(1.4) rotate(8)" opacity="0.07">
-        <path d="M16 4 L26 14 L22 16 L28 22 L16 18 L4 22 L10 16 L6 14 Z" fill="#8C7355" />
-        <path d="M16 18 L16 28 L13 24 M16 28 L19 24" stroke="#8C7355" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      </g>
-      {/* Crane 3 — small, top-left */}
-      <g transform="translate(8%, 12%) scale(0.9) rotate(-5)" opacity="0.06">
-        <path d="M16 4 L26 14 L22 16 L28 22 L16 18 L4 22 L10 16 L6 14 Z" fill="#603347" />
-        <path d="M16 18 L16 28 L13 24 M16 28 L19 24" stroke="#603347" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      </g>
-      {/* Crane 4 — tiny, scattered */}
-      <g transform="translate(55%, 72%) scale(0.7) rotate(20)" opacity="0.05">
-        <path d="M16 4 L26 14 L22 16 L28 22 L16 18 L4 22 L10 16 L6 14 Z" fill="#8C7355" />
-        <path d="M16 18 L16 28 L13 24 M16 28 L19 24" stroke="#8C7355" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      </g>
-      {/* Crane 5 — medium, left-bottom */}
-      <g transform="translate(15%, 68%) scale(1.6) rotate(-18)" opacity="0.06">
-        <path d="M16 4 L26 14 L22 16 L28 22 L16 18 L4 22 L10 16 L6 14 Z" fill="#603347" />
-        <path d="M16 18 L16 28 L13 24 M16 28 L19 24" stroke="#603347" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      </g>
-
-      {/* Decorative origami fold lines emanating from top-right corner */}
-      <line x1="100%" y1="0" x2="60%" y2="40%" stroke="#8C7355" strokeWidth="0.6" opacity="0.10" strokeDasharray="6 8" />
-      <line x1="100%" y1="0" x2="45%" y2="55%" stroke="#603347" strokeWidth="0.5" opacity="0.07" strokeDasharray="4 10" />
-      <line x1="100%" y1="0" x2="75%" y2="60%" stroke="#8C7355" strokeWidth="0.4" opacity="0.08" strokeDasharray="3 12" />
-
-      {/* Decorative fold from bottom-left */}
-      <line x1="0" y1="100%" x2="35%" y2="50%" stroke="#8C7355" strokeWidth="0.5" opacity="0.08" strokeDasharray="5 9" />
-
       {/* Small geometric diamond accents */}
       <polygon points="88%,18% 90%,15% 92%,18% 90%,21%" fill="#8C7355" opacity="0.12" />
       <polygon points="12%,45% 14%,42% 16%,45% 14%,48%" fill="#603347" opacity="0.10" />
