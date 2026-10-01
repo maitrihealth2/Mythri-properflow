@@ -605,8 +605,8 @@
 
 /* ── Tablet Breakpoint (640px – 1023px) ──────────────────────────── */
 @media (min-width: 640px) and (max-width: 1023px) {
-  /* Widen the mobile content column on tablets */
-  main {
+  /* Widen the mobile content column on tablets — scoped to app pages only */
+  main:not(.landing-main) {
       max-width: 680px !important;
   }
 
@@ -620,4 +620,10 @@
       width: 3rem;
       height: 3rem;
   }
+}
+
+/* Landing page always full-width regardless of breakpoint */
+.landing-main {
+  max-width: 100% !important;
+  width: 100% !important;
 }
