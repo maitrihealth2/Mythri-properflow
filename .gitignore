@@ -119,10 +119,7 @@ captures/
 *.jks
 *.idsig
 
-# --- Excluded Landing Page & Baseline Shift ---
-frontend/app/landing/
-frontend/modules/landing/
-frontend/public/landing/
+# --- Excluded Baseline Shifts ---
 frontend/app/progress/
 frontend/modules/progress/
 
