@@ -3,35 +3,60 @@ import type { NextRequest } from 'next/server'
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get('mb_token')?.value
+  const { pathname } = request.nextUrl
 
-  // List of paths that require authentication
-  const protectedPaths = ['/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/onboarding']
-  
-  // List of auth paths that should redirect to home if already logged in
-  const authPaths = ['/login']
-
-  const isProtectedPath = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
-  const isAuthPath = authPaths.some(path => request.nextUrl.pathname === path)
-
-  if (isProtectedPath && !token) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  if (isAuthPath && token) {
-    return NextResponse.redirect(new URL('/home', request.url))
-  }
-
-  if (request.nextUrl.pathname === '/') {
+  // ── Root URL: show landing page, or send logged-in users to /home ──
+  if (pathname === '/') {
     if (token) {
       return NextResponse.redirect(new URL('/home', request.url))
-    } else {
-      return NextResponse.redirect(new URL('/login', request.url))
     }
+    return NextResponse.next() // render landing page
+  }
+
+  // ── /login: accessible always; redirect to /home if already logged in ──
+  if (pathname === '/login') {
+    if (token) {
+      return NextResponse.redirect(new URL('/home', request.url))
+    }
+    return NextResponse.next()
+  }
+
+  // ── Protected routes: require a valid token ──
+  const protectedPaths = [
+    '/home',
+    '/history',
+    '/text-chat',
+    '/voice-chat',
+    '/profile',
+    '/feedback',
+    '/exercises',
+    '/onboarding',
+    '/new-onboarding',
+    '/progress',
+  ]
+
+  const isProtected = protectedPaths.some((p) => pathname.startsWith(p))
+
+  if (isProtected && !token) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/', '/home', '/history', '/text-chat', '/voice-chat', '/profile', '/feedback', '/exercises', '/onboarding', '/login'],
+  matcher: [
+    '/',
+    '/home/:path*',
+    '/history/:path*',
+    '/text-chat/:path*',
+    '/voice-chat/:path*',
+    '/profile/:path*',
+    '/feedback/:path*',
+    '/exercises/:path*',
+    '/onboarding/:path*',
+    '/new-onboarding/:path*',
+    '/progress/:path*',
+    '/login',
+  ],
 }
