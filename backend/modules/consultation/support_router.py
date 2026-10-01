@@ -45,15 +45,20 @@ def route(case_file: dict, is_crisis: bool, exercise_state: str, current_message
     # but the user is currently feeling positive/motivated or explicitly rejecting it.
     positives = ["motivation", "joy", "relief", "excitement", "calm"]
     rejects = ["no", "don't", "stop", "nevermind", "actually no", "im fine", "i'm fine", "not now"]
+    accepts = ["yes", "yeah", "yep", "sure", "ok", "okay", "alright", "let's do it", "lets do it", "please", "pls", "do it"]
     
+    msg_clean = current_message.strip().lower()
     is_positive = current_emotion.lower() in positives
-    is_reject = any(r in current_message.lower() for r in rejects)
+    is_reject = any(r in msg_clean for r in rejects)
+    is_accept = any(msg_clean == a or a in msg_clean.split() for a in accepts)
     
     if strategy in ("GROUND", "PROPOSE_EXERCISE"):
         if is_positive:
             strategy = "CELEBRATE"
         elif is_reject:
             strategy = "CONVERSE"
+        elif strategy == "PROPOSE_EXERCISE" and is_accept:
+            strategy = "GROUND"
 
     core_params = case_file.get("core_parameters", {})
     risk       = core_params.get("risk_level", case_file.get("conversation_state", {}).get("risk_level", "low")).lower()

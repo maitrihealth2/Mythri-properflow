@@ -419,9 +419,9 @@ async def send_message(
         msg_clean = req.message.strip().lower()
         greetings = ["hi", "hey", "hello", "yo", "sup", "good morning", "good night", "hola"]
         if "runtime_state" not in case_file: case_file["runtime_state"] = {}
-        if any(g in msg_clean for g in greetings) and len(msg_clean.split()) <= 4:
+        if any(g in msg_clean for g in greetings) and len(msg_clean.split()) <= 4 and len(past) <= 1:
             case_file["runtime_state"]["response_strategy"] = "GREETING"
-        else:
+        elif not case_file.get("runtime_state", {}).get("response_strategy"):
             case_file["runtime_state"]["response_strategy"] = "LISTEN"
 
     t_assessor = time.time()

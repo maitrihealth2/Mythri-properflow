@@ -197,10 +197,15 @@ def _has_named_entity(message: str) -> bool:
 
 
 def history_limit_for(complexity: TurnComplexity) -> int:
-    """Return the number of history messages to include for a given complexity."""
+    """
+    Return the number of history messages to include for a given complexity.
+    Even TRIVIAL turns (e.g. 'yes', 'ok', 'sure', 'haha') require recent context (6 msgs)
+    so the assistant understands what the user is replying to.
+    """
     return {
-        TurnComplexity.TRIVIAL:    0,
-        TurnComplexity.CASUAL:     8,
+        TurnComplexity.TRIVIAL:    6,
+        TurnComplexity.CASUAL:     12,
         TurnComplexity.MEANINGFUL: 20,
         TurnComplexity.SENSITIVE:  20,
     }[complexity]
+
