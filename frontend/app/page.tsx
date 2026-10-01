@@ -1,5 +1,3 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 import { Navbar } from '@/modules/landing/frontend/components/Navbar'
 import { HeroSection } from '@/modules/landing/frontend/components/HeroSection'
 import { IntroSection } from '@/modules/landing/frontend/components/IntroSection'
@@ -13,13 +11,8 @@ import { PhilosophySection } from '@/modules/landing/frontend/components/Philoso
 import { FinalCTA } from '@/modules/landing/frontend/components/FinalCTA'
 import { ScrollManager } from '@/modules/landing/frontend/components/ScrollManager'
 
-export default async function RootPage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('mb_token')?.value
-  if (token) {
-    redirect('/home')
-  }
-
+// Auth redirect (/ → /home when logged in) is handled by middleware.ts
+export default function RootPage() {
   return (
     <main className="landing-main relative min-h-screen" style={{ background: '#fff8f5' }}>
       <ScrollManager />
@@ -39,4 +32,3 @@ export default async function RootPage() {
     </main>
   )
 }
-
