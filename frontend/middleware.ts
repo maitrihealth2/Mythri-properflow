@@ -21,11 +21,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── /landing: always accessible (fallback URL) ──
-  if (pathname.startsWith('/landing')) {
-    return NextResponse.next()
-  }
-
   // ── Protected routes: require a valid token ──
   const protectedPaths = [
     '/home',
@@ -63,6 +58,5 @@ export const config = {
     '/new-onboarding/:path*',
     '/progress/:path*',
     '/login',
-    '/landing/:path*',
   ],
 }
