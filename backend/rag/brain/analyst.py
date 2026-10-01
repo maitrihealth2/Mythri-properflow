@@ -157,6 +157,8 @@ async def assess_turn(
             raise ValueError("Empty LLM response")
 
         extracted_data = json.loads(clean_content)
+        if not isinstance(extracted_data, dict):
+            raise ValueError(f"Assessor LLM returned non-dict JSON (type={type(extracted_data).__name__}): {clean_content[:120]}")
         
         # 1. Extract 10 parameters
         state_dict = extracted_data.get("state", {})

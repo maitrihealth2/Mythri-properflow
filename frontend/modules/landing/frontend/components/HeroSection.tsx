@@ -170,8 +170,39 @@ export function HeroSection() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="paper-pin" style={{ background: 'radial-gradient(circle at 38% 35%, #c4cce8, #354a87 70%)' }} />
-                  Multilingual Native Support
+                  4 Indian Languages
                 </span>
+              </motion.div>
+
+              {/* Language script ticker */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 1.3 }}
+                className="mt-6 flex items-center gap-4 overflow-hidden"
+                aria-hidden="true"
+              >
+                {[
+                  { script: 'English', sub: 'EN' },
+                  { script: 'हिन्दी', sub: 'HI' },
+                  { script: 'తెలుగు', sub: 'TE' },
+                  { script: 'தமிழ்', sub: 'TA' },
+                ].map((lang, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    {i > 0 && <span style={{ color: 'rgba(140,115,85,0.25)', fontSize: '0.6rem' }}>✦</span>}
+                    <span
+                      style={{
+                        fontSize: '0.9rem',
+                        fontFamily: 'var(--font-headline-md)',
+                        color: 'rgba(74,43,56,0.22)',
+                        fontWeight: 600,
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      {lang.script}
+                    </span>
+                  </div>
+                ))}
               </motion.div>
             </motion.div>
 

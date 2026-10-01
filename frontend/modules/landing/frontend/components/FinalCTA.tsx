@@ -79,7 +79,25 @@ export function FinalCTA() {
         }}
       />
 
-      <div className="max-w-5xl mx-auto relative z-10">
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Decorative language scripts — left side fill */}
+        <div
+          className="absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none hidden xl:flex flex-col gap-2"
+          aria-hidden="true"
+          style={{ userSelect: 'none' }}
+        >
+          <span style={{ fontSize: '5rem', lineHeight: 1, color: 'rgba(96,51,71,0.06)', fontFamily: 'var(--font-headline-md)', fontWeight: 700 }}>తె</span>
+          <span style={{ fontSize: '3.5rem', lineHeight: 1, color: 'rgba(140,115,85,0.05)', fontFamily: 'var(--font-headline-md)', fontWeight: 700 }}>த</span>
+        </div>
+        {/* Decorative language scripts — right side fill */}
+        <div
+          className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none hidden xl:flex flex-col gap-2 items-end"
+          aria-hidden="true"
+          style={{ userSelect: 'none' }}
+        >
+          <span style={{ fontSize: '3rem', lineHeight: 1, color: 'rgba(96,51,71,0.06)', fontFamily: 'Georgia, serif', fontWeight: 700 }}>Aa</span>
+          <span style={{ fontSize: '4.5rem', lineHeight: 1, color: 'rgba(140,115,85,0.05)', fontFamily: 'var(--font-headline-md)', fontWeight: 700 }}>हि</span>
+        </div>
         {/* Chapter label */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}

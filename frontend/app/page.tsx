@@ -1,5 +1,6 @@
 import { Navbar } from '@/modules/landing/frontend/components/Navbar'
 import { HeroSection } from '@/modules/landing/frontend/components/HeroSection'
+import { StatsStrip } from '@/modules/landing/frontend/components/StatsStrip'
 import { IntroSection } from '@/modules/landing/frontend/components/IntroSection'
 import { VoiceSection } from '@/modules/landing/frontend/components/VoiceSection'
 import { MemorySection } from '@/modules/landing/frontend/components/MemorySection'
@@ -19,6 +20,7 @@ export default function RootPage() {
       <Navbar />
       <div className="relative z-10">
         <HeroSection />
+        <StatsStrip />
         <IntroSection />
         <VoiceSection />
         <MemorySection />

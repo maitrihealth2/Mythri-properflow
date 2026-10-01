@@ -597,6 +597,14 @@ async def send_message(
                     from ai_engine.baseline_engine import BaselineEngine
                     from core.database.models import LivingUserContext, MessageAnalysis
 
+                    # Safety guard: assess_turn must return a dict. If the LLM output
+                    # was malformed and both the success and fallback paths failed,
+                    # skip phase 2 cleanly rather than crashing with AttributeError.
+                    if not isinstance(bg_case_file, dict):
+                        raise ValueError(
+                            f"assess_turn returned non-dict (type={type(bg_case_file).__name__}); skipping phase 2"
+                        )
+
                     living_ctx = bg_db.query(LivingUserContext).filter_by(user_id=current_user.id).first()
                     if not living_ctx:
                         living_ctx = LivingUserContext(user_id=current_user.id)
@@ -604,6 +612,7 @@ async def send_message(
                         bg_db.flush()
 
                     core_params = bg_case_file.get("core_parameters", {})
+
                     baseline_state = {
                         "baseline_distress": living_ctx.baseline_distress,
                         "baseline_arousal": living_ctx.baseline_arousal,

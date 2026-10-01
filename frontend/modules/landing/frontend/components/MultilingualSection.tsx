@@ -5,28 +5,40 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 
 const languages = [
   {
-    script: 'తెలుగు',
-    name: 'Telugu',
-    romanized: 'Telugu',
-    note: 'South India\'s most spoken tongue',
-    rotation: '-2deg',
+    script: 'Aa',
+    name: 'English',
+    romanized: 'English',
+    note: 'The bridge that connects every heart',
+    rotation: '1deg',
     offset: '0',
-  },
-  {
-    script: 'தமிழ்',
-    name: 'Tamil',
-    romanized: 'Tamil',
-    note: 'One of the world\'s oldest living languages',
-    rotation: '1.5deg',
-    offset: '0.5rem',
+    scriptStyle: { fontFamily: 'Georgia, serif', letterSpacing: '-0.02em' },
   },
   {
     script: 'हिन्दी',
     name: 'Hindi',
     romanized: 'Hindi',
     note: 'The language of 600 million hearts',
-    rotation: '-1deg',
+    rotation: '-1.5deg',
+    offset: '0.5rem',
+    scriptStyle: {},
+  },
+  {
+    script: 'తెలుగు',
+    name: 'Telugu',
+    romanized: 'Telugu',
+    note: "South India's most spoken tongue",
+    rotation: '2deg',
     offset: '0',
+    scriptStyle: {},
+  },
+  {
+    script: 'தமிழ்',
+    name: 'Tamil',
+    romanized: 'Tamil',
+    note: "One of the world's oldest living languages",
+    rotation: '-1deg',
+    offset: '0.75rem',
+    scriptStyle: {},
   },
 ]
 
@@ -41,14 +53,17 @@ export function MultilingualSection() {
   const y1 = useTransform(scrollYProgress, [0, 0.4], [60, 0])
   const y2 = useTransform(scrollYProgress, [0.1, 0.5], [60, 0])
   const y3 = useTransform(scrollYProgress, [0.2, 0.6], [60, 0])
+  const y4 = useTransform(scrollYProgress, [0.3, 0.7], [60, 0])
   const op1 = useTransform(scrollYProgress, [0, 0.4], [0, 1])
   const op2 = useTransform(scrollYProgress, [0.1, 0.5], [0, 1])
   const op3 = useTransform(scrollYProgress, [0.2, 0.6], [0, 1])
+  const op4 = useTransform(scrollYProgress, [0.3, 0.7], [0, 1])
 
   const motionProps = [
     { y: y1, opacity: op1 },
     { y: y2, opacity: op2 },
     { y: y3, opacity: op3 },
+    { y: y4, opacity: op4 },
   ]
 
   return (
@@ -66,6 +81,38 @@ export function MultilingualSection() {
         }}
       />
 
+      {/* Large decorative script characters — fills left/right dead space */}
+      <div
+        className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none hidden xl:block"
+        aria-hidden="true"
+        style={{
+          fontSize: '11rem',
+          fontFamily: 'var(--font-headline-md)',
+          color: 'rgba(96,51,71,0.04)',
+          fontWeight: 700,
+          lineHeight: 1,
+          userSelect: 'none',
+          transform: 'translateY(-50%) rotate(-6deg)',
+        }}
+      >
+        हि
+      </div>
+      <div
+        className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none hidden xl:block"
+        aria-hidden="true"
+        style={{
+          fontSize: '11rem',
+          fontFamily: 'var(--font-headline-md)',
+          color: 'rgba(96,51,71,0.04)',
+          fontWeight: 700,
+          lineHeight: 1,
+          userSelect: 'none',
+          transform: 'translateY(-50%) rotate(5deg)',
+        }}
+      >
+        த
+      </div>
+
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Chapter label */}
         <motion.div
@@ -78,7 +125,7 @@ export function MultilingualSection() {
           <span className="chapter-label">Chapter 06 — Language</span>
         </motion.div>
 
-        {/* Section header */}
+        {/* Section header — full width split */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -87,7 +134,7 @@ export function MultilingualSection() {
             transition={{ duration: 0.7, delay: 0.1 }}
           >
             <h2
-              className="font-headline-md text-[#4A2B38] leading-[1.2] max-w-sm"
+              className="font-headline-md text-[#4A2B38] leading-[1.2]"
               style={{ fontSize: 'clamp(1.6rem, 4vw, 2.25rem)', fontWeight: 600 }}
             >
               Speak the language
@@ -114,12 +161,13 @@ export function MultilingualSection() {
             className="text-[#4A2B38]/60 leading-relaxed max-w-sm"
             style={{ fontSize: '0.9375rem', fontFamily: 'var(--font-body-lg)' }}
           >
-            True empathy crosses linguistic boundaries. Mythri natively understands and speaks Indian languages — capturing cultural nuances that literal translation misses.
+            True empathy crosses linguistic boundaries. Mythri natively understands and speaks in your
+            language — capturing cultural nuances that literal translation always misses.
           </motion.p>
         </div>
 
-        {/* Language paper slips — scattered */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-4 max-w-3xl mx-auto">
+        {/* Language paper slips — 4-column full width grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
           {languages.map((lang, i) => (
             <motion.div
               key={i}
@@ -127,7 +175,7 @@ export function MultilingualSection() {
               className="group"
             >
               <div
-                className="paper-card rounded-2xl p-6 relative flex flex-col items-center text-center"
+                className="paper-card rounded-2xl p-6 relative flex flex-col items-center text-center h-full"
                 style={{
                   transform: `rotate(${lang.rotation})`,
                   transition: 'transform 0.4s ease, box-shadow 0.4s ease',
@@ -164,13 +212,14 @@ export function MultilingualSection() {
                 <div
                   className="font-headline-md mb-2 group-hover:scale-105 transition-transform duration-300"
                   style={{
-                    fontSize: '2.75rem',
+                    fontSize: '2.5rem',
                     lineHeight: 1.1,
                     background: 'linear-gradient(135deg, #603347, #8C7355)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
                     fontWeight: 600,
+                    ...lang.scriptStyle,
                   }}
                 >
                   {lang.script}
@@ -211,7 +260,7 @@ export function MultilingualSection() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="text-center mt-10 text-xs text-[#4A2B38]/40 font-label-md tracking-widest uppercase"
         >
-          + More languages coming · Kannada · Malayalam · Marathi
+          + More languages coming soon · Kannada · Malayalam · Marathi
         </motion.p>
       </div>
     </section>

@@ -74,7 +74,45 @@ export function PhilosophySection() {
         style={{ borderLeft: '1px solid rgba(140,115,85,0.10)' }}
       />
 
-      <motion.div style={{ opacity, y }} className="max-w-4xl mx-auto relative z-10">
+      {/* Giant decorative quote mark — fills left dead space on wide screens */}
+      <div
+        className="absolute pointer-events-none hidden lg:block"
+        aria-hidden="true"
+        style={{
+          left: '2%',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          fontSize: '22rem',
+          lineHeight: 1,
+          color: 'rgba(96,51,71,0.04)',
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          userSelect: 'none',
+          fontWeight: 700,
+        }}
+      >
+        &ldquo;
+      </div>
+
+      {/* Vertical label — right rail */}
+      <div
+        className="absolute right-6 top-1/2 pointer-events-none hidden xl:flex items-center"
+        aria-hidden="true"
+        style={{
+          transform: 'translateY(-50%) rotate(90deg)',
+          transformOrigin: 'center center',
+          fontSize: '0.6rem',
+          letterSpacing: '0.28em',
+          color: 'rgba(140,115,85,0.18)',
+          fontFamily: 'var(--font-label-md)',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          fontWeight: 600,
+        }}
+      >
+        08 &mdash; Philosophy &mdash; What We Believe
+      </div>
+
+      <motion.div style={{ opacity, y }} className="max-w-6xl mx-auto relative z-10">
         {/* Chapter label */}
         <div className="mb-8">
           <span className="chapter-label">Chapter 08 — Our Philosophy</span>
