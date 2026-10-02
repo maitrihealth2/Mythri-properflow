@@ -26,7 +26,7 @@ if not _RAW_SECRET or _RAW_SECRET in ("1234", "changethis_dev_secret", "secret",
 else:
     SECRET_KEY = _RAW_SECRET
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 10080
+ACCESS_TOKEN_EXPIRE_MINUTES = 30          # SHORT-LIVED — intentional; refresh via /auth/refresh
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 ISSUER = "affynelabs-auth"
 AUDIENCE = "affynelabs-users"
@@ -76,17 +76,19 @@ def create_refresh_token(data: dict) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_token(token: str, expected_type: str = "access") -> dict | None:
+    """
+    Validates a JWT using native PyJWT issuer + audience enforcement.
+    verify_aud / verify_iss are NOT disabled — the library enforces them.
+    Legacy 'mindbridge-auth' issuer is intentionally no longer accepted.
+    """
     try:
         payload = jwt.decode(
-            token, 
-            SECRET_KEY, 
+            token,
+            SECRET_KEY,
             algorithms=[ALGORITHM],
-            options={"verify_aud": False, "verify_iss": False}
+            issuer=ISSUER,
+            audience=AUDIENCE,
         )
-        if payload.get("iss") not in (ISSUER, "mindbridge-auth"):
-            return None
-        if payload.get("aud") not in (AUDIENCE, "mindbridge-users"):
-            return None
         if payload.get("type") != expected_type:
             return None
         return payload

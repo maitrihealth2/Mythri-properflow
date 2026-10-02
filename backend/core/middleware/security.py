@@ -7,12 +7,39 @@ import logging
 
 logger = logging.getLogger("security")
 
-# Simple In-Memory Rate Limiter (Token Bucket / Fixed Window)
-# Format: {ip_address: (count, reset_time)}
+# ---------------------------------------------------------------------------
+# Distributed rate limiting NOTE:
+# This in-process store is intentionally left for single-worker / dev use.
+# Phase 4 will replace this with a Redis-backed distributed limiter.
+# Real client IP is now extracted correctly from Cloudflare headers.
+# ---------------------------------------------------------------------------
 RATE_LIMIT_STORE: Dict[str, Tuple[int, float]] = {}
-DEFAULT_RATE_LIMIT = 100  # requests per minute
-AUTH_RATE_LIMIT = 60      # requests per minute for auth routes
-RATE_LIMIT_WINDOW = 60    # 60 seconds
+
+# Per-minute limits (single-window fixed)
+RATE_LIMITS = {
+    "auth_login":    10,   # login / register (was 60 — too permissive)
+    "admin_login":    5,   # admin login (strict — 5 per 15 min window)
+    "auth_general":  20,   # other /auth/* routes
+    "default":      100,   # everything else
+}
+ADMIN_WINDOW   = 15 * 60   # 15-minute window for admin brute-force protection
+DEFAULT_WINDOW = 60        # 60-second window for everything else
+
+
+def _get_real_ip(request: Request) -> str:
+    """
+    Extract the real client IP in a Cloudflare-proxied environment.
+    Priority: CF-Connecting-IP > X-Forwarded-For[0] > request.client.host
+    Only trusts these headers because TrustedHostMiddleware is applied first.
+    """
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip.strip()
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
 
 class SecurityMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, max_payload_bytes: int = 10 * 1024 * 1024):
@@ -20,52 +47,88 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         self.max_payload_bytes = max_payload_bytes
 
     async def dispatch(self, request: Request, call_next):
-        # 1. Payload Size Limit
+        # 1. Payload size limit
         content_length = request.headers.get("content-length")
         if content_length:
             try:
                 if int(content_length) > self.max_payload_bytes:
                     return JSONResponse(
                         status_code=413,
-                        content={"detail": "Payload too large. Maximum size is 10MB."}
+                        content={"detail": "Payload too large. Maximum allowed size is 10MB."}
                     )
             except ValueError:
                 pass
-        
-        # 2. Rate Limiting
+
+        # 2. Rate limiting (process-local; Phase 4 will migrate to Redis)
         if request.method != "OPTIONS":
-            client_ip = request.client.host if request.client else "unknown"
+            client_ip = _get_real_ip(request)
             path = request.url.path
-            
             current_time = time.time()
-            
-            # Select limit based on path
-            limit = AUTH_RATE_LIMIT if path.startswith("/api/auth/") else DEFAULT_RATE_LIMIT
-            
-            # Clean up old entries to prevent memory leak (simplified for in-memory)
-            # In a real distributed prod, we'd use Redis
-            if client_ip in RATE_LIMIT_STORE:
-                count, reset_time = RATE_LIMIT_STORE[client_ip]
-                if current_time > reset_time:
-                    RATE_LIMIT_STORE[client_ip] = (1, current_time + RATE_LIMIT_WINDOW)
-                else:
-                    if count >= limit:
-                        logger.warning(f"Rate limit exceeded for IP: {client_ip} on path {path}")
-                        return JSONResponse(
-                            status_code=429,
-                            content={"detail": "Too many requests. Please try again later."}
-                        )
-                    RATE_LIMIT_STORE[client_ip] = (count + 1, reset_time)
+
+            # Classify endpoint for rate-limit bucket
+            if path == "/api/admin/login":
+                limit  = RATE_LIMITS["admin_login"]
+                window = ADMIN_WINDOW
+                bucket = f"admin|{client_ip}"
+            elif path in ("/api/auth/login", "/api/auth/register", "/api/auth/forgot-password"):
+                limit  = RATE_LIMITS["auth_login"]
+                window = DEFAULT_WINDOW
+                bucket = f"auth|{client_ip}"
+            elif path.startswith("/api/auth/"):
+                limit  = RATE_LIMITS["auth_general"]
+                window = DEFAULT_WINDOW
+                bucket = f"authgen|{client_ip}"
             else:
-                RATE_LIMIT_STORE[client_ip] = (1, current_time + RATE_LIMIT_WINDOW)
-        
-        # 3. Process Request
+                limit  = RATE_LIMITS["default"]
+                window = DEFAULT_WINDOW
+                bucket = f"default|{client_ip}"
+
+            if bucket in RATE_LIMIT_STORE:
+                count, reset_time = RATE_LIMIT_STORE[bucket]
+                if current_time > reset_time:
+                    RATE_LIMIT_STORE[bucket] = (1, current_time + window)
+                elif count >= limit:
+                    logger.warning(
+                        "rate_limit_exceeded",
+                        extra={"ip": client_ip, "path": path, "bucket": bucket}
+                    )
+                    return JSONResponse(
+                        status_code=429,
+                        headers={"Retry-After": str(int(reset_time - current_time))},
+                        content={"detail": "Too many requests. Please try again later."}
+                    )
+                else:
+                    RATE_LIMIT_STORE[bucket] = (count + 1, reset_time)
+            else:
+                RATE_LIMIT_STORE[bucket] = (1, current_time + window)
+
+        # 3. Process request
         response = await call_next(request)
-        
-        # 4. Inject Security Headers
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        
+
+        # 4. Security headers — full suite
+        h = response.headers
+
+        # Transport
+        h["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+        # Content sniffing / framing
+        h["X-Content-Type-Options"] = "nosniff"
+        h["X-Frame-Options"]         = "DENY"
+
+        # Referrer / permissions
+        h["Referrer-Policy"]   = "strict-origin-when-cross-origin"
+        h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+
+        # Cross-origin isolation policies
+        h["Cross-Origin-Opener-Policy"]   = "same-origin"
+        h["Cross-Origin-Resource-Policy"] = "same-site"
+
+        # Content-Security-Policy (API server — tighten further on frontend)
+        h["Content-Security-Policy"] = (
+            "default-src 'none'; "
+            "frame-ancestors 'none';"
+        )
+
+        # NOTE: X-XSS-Protection intentionally omitted — deprecated; CSP is the modern control
+
         return response

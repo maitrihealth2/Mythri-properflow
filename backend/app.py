@@ -16,11 +16,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 
-sentry_sdk.init(
-    dsn="https://745686ad2b61b972ce0225326e2afed4@o4511751388725248.ingest.us.sentry.io/4511751653425152",
-    # Add data like request headers and IP for users,
-    send_default_pii=True,
-)
+# ---------------------------------------------------------------------------
+# Sentry — DSN from environment only; PII collection disabled
+# ---------------------------------------------------------------------------
+_sentry_dsn = os.getenv("SENTRY_DSN", "")
+if _sentry_dsn:
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        send_default_pii=False,   # NEVER send PII — wellbeing platform
+        traces_sample_rate=0.1,
+    )
 
 from contextlib import asynccontextmanager
 import traceback
@@ -122,11 +127,17 @@ async def lifespan(app: FastAPI):
     print("[SHUTDOWN] Cleanup complete.")
 
 
+_is_production = os.getenv("ENVIRONMENT", "").lower() in ("production", "prod")
+
 app = FastAPI(
     title="Mythri API — by Affyne Labs",
     description="AI Mental Health Support — Voice + Text — Built by Affyne Labs, Powered by Sarvam AI",
     version="3.0.0",
     lifespan=lifespan,
+    # Disable interactive docs in production — they expose the full API schema publicly
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
+    openapi_url=None if _is_production else "/openapi.json",
 )
 
 cors_origins_env = os.getenv("CORS_ORIGINS", "")
@@ -151,10 +162,13 @@ app.add_middleware(AuditLoggerMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"https://.*\.onrender\.com|https://.*\.affynelabs\.com|https://.*\.vercel\.app|https://.*\.trycloudflare\.com|http://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+",
+    # Explicit production domains only; removed *.vercel.app and broad private-IP ranges
+    allow_origin_regex=r"https://[\w-]+\.onrender\.com|https://[\w-]+\.affynelabs\.com",
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # Explicit method allowlist — no wildcard
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    # Explicit header allowlist — no wildcard
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With", "X-Trace-Id"],
 )
 
 @app.middleware("http")
@@ -173,7 +187,8 @@ async def monitor_requests(request: Request, call_next):
     except Exception as exc:
         duration = (time.time() - start_time) * 1000
         CommandCenter.log_error(f"Middleware uncaught exception: {exc}")
-        return JSONResponse(status_code=500, content={"detail": "Internal Server Error", "message": str(exc)})
+        # CRIT-08: Never expose internal exception detail to clients
+        return JSONResponse(status_code=500, content={"detail": "An internal error occurred. Please try again."})
     finally:
         CommandCenter.increment_active_requests(-1)
 
@@ -205,9 +220,8 @@ async def favicon():
     from fastapi import Response
     return Response(status_code=204)
 
-@app.get("/sentry-debug")
-async def trigger_error():
-    division_by_zero = 1 / 0
+# /sentry-debug endpoint intentionally removed.
+# Unauthenticated error triggers must never exist in production.
 
 @app.get("/health")
 def health():

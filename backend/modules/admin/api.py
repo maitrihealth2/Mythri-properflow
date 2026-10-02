@@ -40,12 +40,13 @@ class AdminLoginRequest(BaseModel):
 
 @router.post("/login")
 def admin_login(req: AdminLoginRequest):
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@mythri.org")
-    admin_pass = os.getenv("ADMIN_PASSWORD")
-    
-    if not admin_pass:
-        raise HTTPException(status_code=500, detail="Admin credentials not configured")
-        
+    admin_email = os.getenv("ADMIN_EMAIL")   # No default — must be explicitly configured
+    admin_pass  = os.getenv("ADMIN_PASSWORD")
+
+    # Both must be explicitly set; never fall back to a predictable default
+    if not admin_email or not admin_pass:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
     if secrets.compare_digest(req.email, admin_email) and secrets.compare_digest(req.password, admin_pass):
         now = datetime.now(timezone.utc)
         payload = {
@@ -93,6 +94,8 @@ def get_feedback(admin=Depends(require_admin), db: Session = Depends(get_db)):
 
 @router.get("/users")
 def get_users(admin=Depends(require_admin), db: Session = Depends(get_db), search: str = "", skip: int = 0, limit: int = 50):
+    # MED-07: Cap maximum page size to prevent full-table dump
+    limit = min(limit, 100)
     base_query = db.query(User)
     if search:
         search_term = f"%{search}%"
