@@ -145,7 +145,9 @@ allowed_origins = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
-    "https://test.affynelabs.com",
+    "https://test.affynelabs.com"
+    "https://*.affynelabs.com"
+    "https://app.affynelabs.in",
 ]
 if cors_origins_env:
     allowed_origins.extend([o.strip() for o in cors_origins_env.split(",") if o.strip()])
