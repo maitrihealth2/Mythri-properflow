@@ -333,20 +333,25 @@ async def stream_chat_with_mythri(
     # ── Build user-turn content: actual message + optional context suffix ─────
     # Context (memory, case_file state, RAG) goes here — NOT in system —
     # keeping model instructions separate from per-turn data.
-    context_parts: list[str] = []
+    if rag_context and rag_context.strip():
+        system_parts.append(
+            "─── CLINICAL KNOWLEDGE (Reference Only) ───\n"
+            "Use this psychological understanding naturally to inform your empathy.\n"
+            "STRICT PROHIBITION: Never quote citations, source headers, or read this text verbatim aloud.\n\n"
+            f"{rag_context.strip()}"
+        )
 
     if memory_context and memory_context.strip():
         if memory_usage_mode == "EXPLICIT_RECALL":
-            context_parts.append(
-                "[MEMORY — EXPLICIT RECALL REQUESTED]\n"
-                "Answer the user's question directly and warmly from the memories below.\n"
-                "Do NOT give generic check-ins.\n"
+            system_parts.append(
+                "─── MEMORY (Explicit Recall Requested) ───\n"
+                "Answer the user's question directly and warmly from the memories below:\n"
                 f"{memory_context.strip()}"
             )
         else:
-            context_parts.append(
-                "[SILENT BACKGROUND CONTEXT — DO NOT MENTION UNPROMPTED]\n"
-                "The following is passive background awareness. Never bring up unprompted old problems out of nowhere, but always maintain immediate natural continuity with the ongoing chat.\n"
+            system_parts.append(
+                "─── SILENT BACKGROUND MEMORY (Passive Awareness) ───\n"
+                "Never bring up unprompted old problems out of nowhere. Maintain immediate natural continuity with the ongoing chat:\n"
                 f"{memory_context.strip()}"
             )
 
@@ -390,25 +395,18 @@ async def stream_chat_with_mythri(
                 "Output a JSON block: <EXERCISE>{\"title\": \"...\", \"description\": \"...\", "
                 "\"steps\": [\"step 1\", ...]}</EXERCISE>"
             )
-        context_parts.append(state_block)
-
-    if rag_context:
-        context_parts.append(f"[KNOWLEDGE — use naturally, do not quote verbatim]\n{rag_context}")
+        system_parts.append(state_block)
 
     if compact_context:
-        context_parts.append(compact_context)
+        system_parts.append(compact_context)
 
-    # Assemble final user message
-    if context_parts:
-        user_content = active_prompt + "\n\n─── CONTEXT ───\n" + "\n\n".join(context_parts)
-    else:
-        user_content = active_prompt
+    system = "\n\n".join(system_parts)
 
     # ── Assemble API messages ─────────────────────────────────────────────────
     api_messages: list[dict] = [{"role": "system", "content": system}]
     for msg in past_history[-history_limit:] if history_limit > 0 else []:
         api_messages.append({"role": msg["role"], "content": msg["content"]})
-    api_messages.append({"role": "user", "content": user_content})
+    api_messages.append({"role": "user", "content": active_prompt})
 
     from providers.llm.router import llm_router
     import re

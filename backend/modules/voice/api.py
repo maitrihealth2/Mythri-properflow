@@ -135,18 +135,24 @@ async def handle_voice_turn(
         sentence_buffer = ""
         emotion_label = "Neutral"
 
-        # Helper to synthesize and yield audio
+        # Helper to synthesize and yield audio with tag stripping
         async def process_and_yield_audio(text_chunk):
-            if not text_chunk.strip(): return
+            if not text_chunk: return
+            # Strip <EXERCISE>...</EXERCISE> and JSON artifacts so voice never speaks raw JSON/tags
+            clean_text = re.sub(r'<EXERCISE>.*?</EXERCISE>', '', text_chunk, flags=re.DOTALL | re.IGNORECASE)
+            clean_text = re.sub(r'<EXERCISE>.*', '', clean_text, flags=re.DOTALL | re.IGNORECASE)
+            clean_text = re.sub(r'[*#_~`]', '', clean_text)
+            clean_text = clean_text.replace('  ', ' ').strip()
+            if not clean_text or len(clean_text) < 2: return
             try:
-                audio = await synthesize_speech(text_chunk, language, emotion=emotion_label)
+                audio = await synthesize_speech(clean_text, language, emotion=emotion_label)
                 # Skip pitch optimization for non-English to prevent "AI" robotic distortion
                 if audio and language == "en-IN":
                     audio = await asyncio.to_thread(optimize_pitch, audio, emotion_label)
                 
                 if audio:
                     audio_b64 = base64.b64encode(audio).decode()
-                    yield json.dumps({"type": "audio", "audio_b64": audio_b64, "text": text_chunk}) + "\n"
+                    yield json.dumps({"type": "audio", "audio_b64": audio_b64, "text": clean_text}) + "\n"
             except Exception as e:
                 print(f"[VOICE] TTS chunk error: {e}")
 

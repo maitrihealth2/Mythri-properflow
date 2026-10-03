@@ -164,14 +164,25 @@ async def streaming_stt(websocket: WebSocket, session_id: str, token: str = None
                                         db=turn_db
                                     )
                                     
-                                    # Send full response back over WebSocket
-                                    await websocket.send_json({
-                                        "type": "response",
-                                        "data": response_data
-                                    })
+                                    # Stream response packets (transcript, metadata, text, audio) in real time
+                                    async for raw_chunk in response_data.body_iterator:
+                                        lines = raw_chunk.decode("utf-8") if isinstance(raw_chunk, bytes) else raw_chunk
+                                        for line in lines.split("\n"):
+                                            line = line.strip()
+                                            if not line:
+                                                continue
+                                            try:
+                                                payload = json.loads(line)
+                                                await websocket.send_json(payload)
+                                            except Exception:
+                                                pass
+
+                                    # Run background tasks if attached to response
+                                    if hasattr(response_data, "background") and response_data.background:
+                                        await response_data.background()
+
                                     last_transcript = "" # Reset for next turn
                                 finally:
-                                    # We run the cleanup in thread to prevent blocking
                                     def _close_gen():
                                         try: next(gen)
                                         except StopIteration: pass
