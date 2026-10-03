@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get('mb_token')?.value
+  const token = request.cookies.get('refresh_token')?.value
   const { pathname } = request.nextUrl
 
   // ── Root URL: show landing page, or send logged-in users to /home ──
@@ -57,6 +57,8 @@ export const config = {
     '/onboarding/:path*',
     '/new-onboarding/:path*',
     '/progress/:path*',
+    '/admin',
+    '/admin/:path*',
     '/login',
   ],
 }

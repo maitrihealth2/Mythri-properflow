@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getOnboardingStatus, submitOnboarding } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 
 interface ConsentState {
@@ -34,6 +35,7 @@ const QUICK_AGE_BRACKETS = [
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { token, user, loading: authLoading } = useAuth()
 
   // Steps: 0 = Consent, 1 = Name, 2 = Age, 3 = Language, 4 = Finalizing
   const [currentStep, setCurrentStep] = useState<number>(0)
@@ -52,15 +54,19 @@ export default function OnboardingPage() {
 
   // Check auth and existing onboarding status
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    if (authLoading) return
     if (!token) {
       router.replace('/login')
       return
     }
 
-    const storedUsername = localStorage.getItem('mb_username')
-    if (storedUsername && !preferredName) {
-      setPreferredName(storedUsername)
+    if (user?.username && !preferredName) {
+      setPreferredName(user.username)
+    } else {
+      const storedUsername = localStorage.getItem('mb_username')
+      if (storedUsername && !preferredName) {
+        setPreferredName(storedUsername)
+      }
     }
 
     getOnboardingStatus()

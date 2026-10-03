@@ -13,18 +13,23 @@ const FeatureFlagContext = createContext<FeatureFlagContextType>({
   loading: true
 })
 
+import { useAuth } from './AuthContext'
+
 export function FeatureFlagProvider({ children }: { children: React.ReactNode }) {
   const [features, setFeatures] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const { token, loading: authLoading } = useAuth()
 
   useEffect(() => {
+    if (authLoading) return
+    if (!token) {
+      setFeatures([])
+      setLoading(false)
+      return
+    }
+
     const fetchFeatures = async () => {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
-        if (!token) {
-          setLoading(false)
-          return
-        }
         const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
         const res = await fetch(`${API_URL}/api/features/my-flags`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -44,7 +49,7 @@ export function FeatureFlagProvider({ children }: { children: React.ReactNode })
       }
     }
     fetchFeatures()
-  }, [])
+  }, [token, authLoading])
 
   const hasFeature = (featureName: string) => features.includes(featureName)
 

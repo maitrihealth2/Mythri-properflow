@@ -393,8 +393,18 @@ async def send_message(
     memory_context = selection.to_prompt_block() if selection else ""
     memory_usage_mode = selection.selection_mode if selection else "SILENT_BACKGROUND"
 
+    # PII Scrubbing & Prompt Injection Defense
+    from security.pii_scrubber import scrub_pii
+    from security.prompt_guard import scan_user_input
+
+    prompt_scan = scan_user_input(req.message)
+    if not prompt_scan.is_safe:
+        print(f"[PROMPT_GUARD] {prompt_scan.reason}")
+
+    scrubbed_message, _ = scrub_pii(req.message)
+
     history = past.copy() if past else []
-    history.append({"role": "user", "content": req.message})
+    history.append({"role": "user", "content": scrubbed_message})
 
     tracker.update_emotion(session.id, emotion.label)
     tracker.record_message_length(session.id, len(req.message))
@@ -503,10 +513,17 @@ async def send_message(
             if emotion and emotion.label:
                 bg_db.add(MessageEmotion(message_id=user_msg.id, emotion_label=emotion.label, score=emotion.score))
                 
+            from security.prompt_guard import scan_model_output
+            leak_check = scan_model_output(final_text)
+            safe_final_text = final_text
+            if not leak_check.is_safe:
+                print(f"[SYSTEM_LEAK_PREVENTED] {leak_check.reason}")
+                safe_final_text = "I am here to listen and support you. How can I best help you right now?"
+
             ai_msg = Message(
                 session_id=session.id,
                 role="assistant",
-                content=final_text,
+                content=safe_final_text,
                 language=req.language,
                 is_crisis_flagged=False
             )
@@ -1144,6 +1161,9 @@ def end_session(
         if payload:
             user_id = payload.get("user_id")
 
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required to end session")
+
     session = db.query(DBSession).filter(
         DBSession.session_token == session_id
     ).first()
@@ -1151,7 +1171,7 @@ def end_session(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
         
-    if user_id and session.user_id != user_id:
+    if session.user_id != user_id:
         raise HTTPException(status_code=403, detail="Unauthorized")
 
     if session.session_status != "completed":
@@ -1220,11 +1240,20 @@ from ai_engine.proactive_engine import manager
 from security.authentication.service import decode_token
 
 @router.websocket("/ws/events")
-async def websocket_events(websocket: WebSocket, session_id: str, token: str = None):
-    # Validate auth token
-    raw_token = token or websocket.query_params.get("token")
-    payload = decode_token(raw_token) if raw_token else None
-    if not payload or not payload.get("user_id"):
+async def websocket_events(websocket: WebSocket, session_id: str, ticket: str = None, token: str = None):
+    # CRIT-04: Validate via short-lived single-use ticket or fallback token
+    raw_ticket = ticket or websocket.query_params.get("ticket")
+    auth_user_id = None
+
+    if raw_ticket:
+        from security.authentication.api import consume_ws_ticket
+        auth_user_id = consume_ws_ticket(raw_ticket)
+    elif token or websocket.query_params.get("token"):
+        raw_token = token or websocket.query_params.get("token")
+        payload = decode_token(raw_token) if raw_token else None
+        auth_user_id = payload.get("user_id") if payload else None
+
+    if not auth_user_id:
         await websocket.close(code=1008, reason="Authentication failed")
         return
 
@@ -1235,7 +1264,7 @@ async def websocket_events(websocket: WebSocket, session_id: str, token: str = N
             db_session = sdb.query(DBSession).filter(
                 (DBSession.session_token == session_id) | (DBSession.id == (int(session_id) if session_id.isdigit() else -1))
             ).first()
-            return db_session and db_session.user_id == payload.get("user_id")
+            return db_session and db_session.user_id == auth_user_id
 
     is_valid_owner = await asyncio.to_thread(_verify_session_owner)
     if not is_valid_owner:
@@ -1249,7 +1278,8 @@ async def websocket_events(websocket: WebSocket, session_id: str, token: str = N
             data = await websocket.receive_text()
             if data == "ping":
                 await websocket.send_text("pong")
-                manager.update_activity(session_id)
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
+        pass
+    finally:
         manager.disconnect(session_id)
 

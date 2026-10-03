@@ -98,8 +98,15 @@ fareed_logs/
 # --- Agents ---
 .agents/
 
-# --- Documentation (Internal) ---
+# --- Security Documentation (Internal / Sensitive) ---
 security_protocols.md
+docs/security/
+*security*.md
+*SECURITY*.md
+*SECURITY_*.md
+*Security*.md
+backend/*report.md
+
 
 # --- Android & Mobile (Capacitor / APK / Gradle) ---
 *.apk

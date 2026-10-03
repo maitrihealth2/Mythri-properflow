@@ -3,22 +3,24 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { submitFeedback, logout } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
 
 export default function FeedbackPage() {
   const router = useRouter()
+  const { token, loading: authLoading } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    if (authLoading) return
     if (!token) {
       router.replace('/login')
     }
-  }, [router])
+  }, [token, authLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

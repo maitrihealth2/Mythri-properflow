@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 from core.database.models import get_db, User, UserOnboarding, UserPersonaProfile, UserProfile, func
@@ -10,9 +10,9 @@ from .schemas import ProfileResponse, ProfileUpdate
 router = APIRouter(prefix="/api/user", tags=["user"])
 
 class OnboardingData(BaseModel):
-    preferred_name: Optional[str] = None
-    age: Optional[int] = None
-    language: Optional[str] = "en-IN"
+    preferred_name: Optional[str] = Field(None, max_length=50)
+    age: Optional[int] = Field(None, ge=1, le=120)
+    language: Optional[str] = Field(default="en-IN", max_length=15)
     conversation_style: Optional[str] = "auto_adaptive"
     consent: Optional[Dict[str, Any]] = None
 
@@ -89,9 +89,7 @@ def save_onboarding(
     except Exception as e:
         db.rollback()
         print(f"[ONBOARDING_ERROR] Transaction commit failed for User {current_user.id}, rolled back: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to save onboarding data: {str(e)}")
-        print(f"[ONBOARDING_ERROR] Transaction commit failed for User {current_user.id}, rolled back: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to save onboarding data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save onboarding data. Please try again.")
 
 @router.get("/onboarding/status")
 def get_onboarding_status(
@@ -172,4 +170,4 @@ def update_user_profile(
     except Exception as e:
         db.rollback()
         print(f"[PROFILE_ERROR] Update failed for User {current_user.id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update profile. Please try again.")

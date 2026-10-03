@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.sql import func
+from security.encryption import EncryptedText
 import os
 from dotenv import load_dotenv
 import pathlib
@@ -80,7 +81,31 @@ class User(Base):
     exercise_logs = relationship("ExerciseLog", back_populates="user", cascade="all, delete-orphan")
     onboarding_data = relationship("UserOnboarding", back_populates="user", uselist=False, cascade="all, delete-orphan")
     living_context = relationship("LivingUserContext", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    # Security: server-side refresh token store for rotation + revocation
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
 
+
+class RefreshToken(Base):
+    """
+    Server-side refresh token registry — enables:
+    - Token rotation (each refresh issues a new token, invalidates old)
+    - Reuse detection (stolen token detected when old JTI reused)
+    - Family revocation (entire session wiped when reuse detected)
+    - Explicit logout revocation
+    """
+    __tablename__ = "refresh_tokens"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    jti        = Column(String(36), unique=True, index=True, nullable=False, comment="JWT ID — must match token claim")
+    family     = Column(String(36), index=True, nullable=False, comment="Token family UUID — links rotation chain")
+    user_id    = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    issued_at  = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    revoked    = Column(Boolean, default=False, nullable=False, index=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    revoke_reason = Column(String(50), nullable=True, comment="logout | reuse_detected | expired | admin")
+
+    user = relationship("User", back_populates="refresh_tokens")
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
@@ -88,7 +113,7 @@ class UserProfile(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
-    bio = Column(Text, nullable=True, comment="User-provided biographical context")
+    bio = Column(EncryptedText, nullable=True, comment="User-provided biographical context (FLE AES-256-GCM)")
     age = Column(Integer, nullable=True)
     preferred_name = Column(String(50), nullable=True, comment="Name the AI should use to address the user")
     full_name = Column(String(100), nullable=True, comment="User's full real name")
@@ -115,7 +140,7 @@ class UserOnboarding(Base):
     check_in_preference = Column(String(50), nullable=True)
     goals = Column(JSON, nullable=True)
     reasons = Column(JSON, nullable=True)
-    summary = Column(Text, nullable=True, comment="LLM-generated detailed summary of onboarding")
+    summary = Column(EncryptedText, nullable=True, comment="LLM-generated detailed summary of onboarding (FLE AES-256-GCM)")
     raw_responses = Column(JSON, nullable=True, comment="Raw flexible JSON dump of all onboarding data")
     version = Column(String(20), default="v1")
     completed_at = Column(DateTime(timezone=True), default=func.now())
@@ -215,7 +240,7 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), index=True, nullable=False)
     role = Column(String(20), nullable=False, comment="Speaker role: user, assistant, system")
-    content = Column(Text, nullable=False)
+    content = Column(EncryptedText, nullable=False, comment="Message content encrypted at rest via AES-256-GCM")
     created_at = Column(DateTime(timezone=True), default=func.now())
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     language = Column(String(10), default="en-IN")

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -26,8 +26,8 @@ class ProfileResponse(BaseModel):
     conversation_style: Optional[str] = None
 
 class ProfileUpdate(BaseModel):
-    full_name: Optional[str] = None
-    preferred_name: Optional[str] = None
-    age: Optional[int] = None
-    profession: Optional[str] = None
-    preferred_language: Optional[str] = None
+    full_name: Optional[str] = Field(None, max_length=100)
+    preferred_name: Optional[str] = Field(None, max_length=50)
+    age: Optional[int] = Field(None, ge=1, le=120)
+    profession: Optional[str] = Field(None, max_length=100)
+    preferred_language: Optional[str] = Field(None, max_length=15)

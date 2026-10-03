@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { ThemeProvider } from 'next-themes'
+import { AuthProvider } from '@/shared/components/contexts/AuthContext'
 import { FeatureFlagProvider } from '@/shared/components/contexts/FeatureFlagContext'
 import { MaintenanceGuard } from '@/shared/components/MaintenanceGuard'
 import { BlockedGuard } from '@/shared/components/BlockedGuard'
@@ -21,15 +22,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
-      <PWAProvider>
-        <FeatureFlagProvider>
-          <MaintenanceGuard>
-            <BlockedGuard>
-              {children}
-            </BlockedGuard>
-          </MaintenanceGuard>
-        </FeatureFlagProvider>
-      </PWAProvider>
+      {/* CRIT-03: AuthProvider must be outermost — all children depend on token */}
+      <AuthProvider>
+        <PWAProvider>
+          <FeatureFlagProvider>
+            <MaintenanceGuard>
+              <BlockedGuard>
+                {children}
+              </BlockedGuard>
+            </MaintenanceGuard>
+          </FeatureFlagProvider>
+        </PWAProvider>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

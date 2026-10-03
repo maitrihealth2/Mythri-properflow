@@ -5,7 +5,7 @@ import jwt
 from fastapi import APIRouter, Request, Query, HTTPException, status
 from sse_starlette.sse import EventSourceResponse
 
-from security.authentication.service import SECRET_KEY, ALGORITHM
+from security.authentication.service import SECRET_KEY, ALGORITHM, ISSUER, AUDIENCE
 
 router = APIRouter(prefix="/api/telemetry", tags=["telemetry"])
 
@@ -46,8 +46,13 @@ async def broadcast_event(event_type: str, message: str = "", data: dict = None)
     # We serialize it to JSON for the SSE data payload
     event_payload = json.dumps(payload)
     
-    for queue in _clients:
+    for queue in list(_clients):
         try:
+            if queue.full():
+                try:
+                    queue.get_nowait()
+                except Exception:
+                    pass
             await queue.put({"data": event_payload})
         except Exception as e:
             print(f"[TELEMETRY] Error putting event in queue: {e}")
@@ -55,6 +60,7 @@ async def broadcast_event(event_type: str, message: str = "", data: dict = None)
 def _verify_telemetry_access(request: Request, token: str = None):
     """
     Validate that telemetry stream request comes from an authenticated user or admin.
+    Enforces strict ISSUER and AUDIENCE claims.
     """
     raw_token = token
     if not raw_token:
@@ -62,8 +68,9 @@ def _verify_telemetry_access(request: Request, token: str = None):
         if auth_header and auth_header.startswith("Bearer "):
             raw_token = auth_header.split(" ", 1)[1]
             
-    # In local development without strict auth configured, allow localhost if explicitly specified
-    allow_unauth_dev = os.getenv("ALLOW_DEV_TELEMETRY", "false").lower() == "true"
+    # In local development without strict auth configured, allow localhost only if explicitly enabled
+    is_prod = os.getenv("ENVIRONMENT", "").lower() in ("production", "prod")
+    allow_unauth_dev = not is_prod and os.getenv("ALLOW_DEV_TELEMETRY", "false").lower() == "true"
     client_host = request.client.host if request.client else ""
     if allow_unauth_dev and client_host in ("127.0.0.1", "::1", "localhost"):
         return {"role": "dev_local"}
@@ -79,7 +86,8 @@ def _verify_telemetry_access(request: Request, token: str = None):
             raw_token,
             SECRET_KEY,
             algorithms=[ALGORITHM],
-            options={"verify_aud": False, "verify_iss": False}
+            issuer=ISSUER,
+            audience=AUDIENCE
         )
         if payload.get("role") == "admin" or payload.get("type") in ("admin_access", "access"):
             return payload
@@ -95,11 +103,17 @@ def _verify_telemetry_access(request: Request, token: str = None):
 async def stream(request: Request, token: str = Query(None)):
     """
     SSE Endpoint for real-time visualization.
-    Protected with token authentication.
+    Protected with token authentication and bounded queue capacity.
     """
     _verify_telemetry_access(request, token)
     
-    q = asyncio.Queue()
+    if len(_clients) >= 20:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Maximum active telemetry streams reached."
+        )
+    
+    q = asyncio.Queue(maxsize=100)
     _clients.append(q)
     print(f"[TELEMETRY] New authorized client connected. Total clients: {len(_clients)}")
     

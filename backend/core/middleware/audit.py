@@ -8,24 +8,30 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
+import os
+from logging.handlers import RotatingFileHandler
+from core.middleware.security import _get_real_ip
+
 # Configure structured audit logger
 audit_logger = logging.getLogger("audit")
 audit_logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler("audit.log")
+
+_log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "audit.log")
+file_handler = RotatingFileHandler(_log_path, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8")
 file_handler.setFormatter(logging.Formatter("%(message)s"))
 if not audit_logger.handlers:
     audit_logger.addHandler(file_handler)
 audit_logger.propagate = False
 
 # Sensitive fields to redact from logs
-PII_FIELDS = [r"password", r"idToken", r"access_token"]
+PII_FIELDS = [r"password", r"idToken", r"access_token", r"ticket", r"refresh_token"]
 REDACT_STRING = "***REDACTED***"
 
 class AuditLoggerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable):
         start_time = time.time()
         trace_id = str(uuid.uuid4())
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = _get_real_ip(request)
         
         # We cannot easily log the body in Starlette middleware without consuming the stream,
         # so we log method, path, and IP
@@ -35,7 +41,7 @@ class AuditLoggerMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
         except Exception as e:
-            error_msg = str(e)
+            error_msg = f"{type(e).__name__}"
             raise e
         finally:
             process_time = time.time() - start_time

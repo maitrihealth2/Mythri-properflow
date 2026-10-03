@@ -3,19 +3,28 @@ import uuid
 from datetime import datetime, timedelta, timezone
 import csv
 from io import StringIO
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 
 from core.database.models import get_db, User, UserOnboarding, UserFeedback, UserProfile, Session as DBSession, Message, MessageEmotion
 from security.authentication.service import SECRET_KEY, ALGORITHM, ISSUER, AUDIENCE
 
+def _sanitize_csv_cell(value):
+    """CWE-1236: Neutralize formula injection in CSV exports."""
+    if isinstance(value, str) and value:
+        if value[0] in ('=', '+', '-', '@', '\t', '\r', '|', '%'):
+            return f"'{value}"
+    return value
+
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 admin_bearer = HTTPBearer()
+
+_REVOKED_ADMIN_JTIS: set = set()
 
 def require_admin(credentials: HTTPAuthorizationCredentials = Depends(admin_bearer)):
     try:
@@ -28,9 +37,21 @@ def require_admin(credentials: HTTPAuthorizationCredentials = Depends(admin_bear
         )
         if payload.get("type") != "admin_access" or payload.get("role") != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
+        jti = payload.get("jti")
+        if jti and jti in _REVOKED_ADMIN_JTIS:
+            raise HTTPException(status_code=403, detail="Admin session revoked")
         return payload
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=403, detail="Invalid admin token")
+
+@router.post("/logout")
+def admin_logout(admin=Depends(require_admin)):
+    jti = admin.get("jti")
+    if jti:
+        _REVOKED_ADMIN_JTIS.add(jti)
+    return {"status": "success", "message": "Admin session terminated"}
 
 import secrets
 
@@ -39,7 +60,7 @@ class AdminLoginRequest(BaseModel):
     password: str
 
 @router.post("/login")
-def admin_login(req: AdminLoginRequest):
+def admin_login(request: Request, req: AdminLoginRequest):
     admin_email = os.getenv("ADMIN_EMAIL")   # No default — must be explicitly configured
     admin_pass  = os.getenv("ADMIN_PASSWORD")
 
@@ -49,10 +70,11 @@ def admin_login(req: AdminLoginRequest):
 
     if secrets.compare_digest(req.email, admin_email) and secrets.compare_digest(req.password, admin_pass):
         now = datetime.now(timezone.utc)
+        # HIGH-02: Constrain admin token lifetime to 2 hours (was 12 hours)
         payload = {
             "role": "admin",
             "email": req.email,
-            "exp": now + timedelta(hours=12),
+            "exp": now + timedelta(hours=2),
             "iat": now,
             "nbf": now,
             "iss": ISSUER,
@@ -62,6 +84,11 @@ def admin_login(req: AdminLoginRequest):
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         return {"token": token}
+
+    from security.sentinel import sentinel
+    from core.middleware.security import _get_real_ip
+    client_ip = _get_real_ip(request)
+    sentinel.record_event(client_ip, "ADMIN_LOGIN_FAILED", req.email)
     raise HTTPException(status_code=401, detail="Invalid admin credentials")
 
 @router.get("/consents")
@@ -206,8 +233,10 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
         
     output = StringIO()
     writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+    def write_row_sanitized(row):
+        writer.writerow([_sanitize_csv_cell(c) for c in row])
     
-    writer.writerow([
+    write_row_sanitized([
         "user_id", "username", "email", "preferred_language", "created_at",
         "session_id", "session_crisis_flagged", "session_risk_level",
         "session_started_at", "session_ended_at",
@@ -223,7 +252,7 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
         session_risk_lvl = sess.risk_level or "low"
         messages = db.query(Message).filter(Message.session_id == sess.id).order_by(Message.created_at.asc()).all()
         if not messages:
-            writer.writerow([
+            write_row_sanitized([
                 user.id, user.username, user.email, user.preferred_language, user.created_at.isoformat() if user.created_at else "",
                 sess.id, session_crisis_str, session_risk_lvl,
                 sess.started_at.isoformat() if sess.started_at else "", sess.ended_at.isoformat() if sess.ended_at else "",
@@ -239,7 +268,7 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
                 else:
                     msg_risk_level = ""
                     msg_risk_score = ""
-                writer.writerow([
+                write_row_sanitized([
                     user.id, user.username, user.email, user.preferred_language, user.created_at.isoformat() if user.created_at else "",
                     sess.id, session_crisis_str, session_risk_lvl,
                     sess.started_at.isoformat() if sess.started_at else "", sess.ended_at.isoformat() if sess.ended_at else "",
@@ -268,8 +297,10 @@ def export_session_data(session_id: int, admin=Depends(require_admin), db: Sessi
     
     output = StringIO()
     writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+    def write_row_sanitized(row):
+        writer.writerow([_sanitize_csv_cell(c) for c in row])
     
-    writer.writerow([
+    write_row_sanitized([
         "session_id", "session_token", "user_id", "username", "email",
         "channel", "session_crisis_flagged", "session_risk_level", "session_risk_score",
         "session_started_at", "session_ended_at",
@@ -288,7 +319,7 @@ def export_session_data(session_id: int, admin=Depends(require_admin), db: Sessi
     session_risk_scr = session.risk_score if session.risk_score is not None else 0.0
     
     if not messages:
-        writer.writerow([
+        write_row_sanitized([
             session.id, session.session_token, user_id, username, email,
             session.channel, session_crisis_str, session_risk_lvl, session_risk_scr,
             session.started_at.isoformat() if session.started_at else "",
@@ -315,7 +346,7 @@ def export_session_data(session_id: int, admin=Depends(require_admin), db: Sessi
                 msg_risk_level = ""
                 msg_risk_score = ""
                 
-            writer.writerow([
+            write_row_sanitized([
                 session.id, session.session_token, user_id, username, email,
                 session.channel, session_crisis_str, session_risk_lvl, session_risk_scr,
                 session.started_at.isoformat() if session.started_at else "",
@@ -335,7 +366,7 @@ def export_session_data(session_id: int, admin=Depends(require_admin), db: Sessi
 
 
 class BulkDeleteRequest(BaseModel):
-    user_ids: list[int]
+    user_ids: list[int] = Field(..., min_length=1, max_length=100)
 
 @router.post("/users/bulk-delete")
 async def bulk_delete_users(req: BulkDeleteRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
@@ -427,7 +458,7 @@ def update_user_status(user_id: int, req: UserStatusRequest, admin=Depends(requi
 
 
 class BulkStatusRequest(BaseModel):
-    user_ids: list[int]
+    user_ids: list[int] = Field(..., min_length=1, max_length=100)
     is_active: bool
 
 @router.post("/users/bulk-status")
@@ -455,10 +486,21 @@ def bulk_update_user_status(req: BulkStatusRequest, admin=Depends(require_admin)
 
 class AllUsersStatusRequest(BaseModel):
     is_active: bool
+    confirmation_phrase: str
 
 @router.post("/users/all-status")
 def update_all_users_status(req: AllUsersStatusRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
-    """Block or unblock ALL users in the system."""
+    """
+    HIGH-03: Block or unblock ALL users in the system.
+    Requires explicit confirmation_phrase to prevent catastrophic accidental or automated lockouts.
+    """
+    expected_phrase = "CONFIRM_UNBLOCK_ALL_USERS" if req.is_active else "CONFIRM_BLOCK_ALL_USERS"
+    if req.confirmation_phrase != expected_phrase:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Safety check failed. To modify all users at once, confirmation_phrase must be '{expected_phrase}'."
+        )
+
     from core.logger.terminal import CommandCenter
     updated_count = db.query(User).update({User.is_active: req.is_active})
     db.commit()
@@ -472,3 +514,23 @@ def update_all_users_status(req: AllUsersStatusRequest, admin=Depends(require_ad
         "is_active": req.is_active,
         "message": f"Successfully {action_str} all {updated_count} users"
     }
+
+
+# ── Threat Sentinel Security Telemetry Endpoints ────────────────────────────
+
+@router.get("/security/threat-summary")
+def get_threat_summary(admin=Depends(require_admin)):
+    """Provides real-time visibility into active IP quarantines and elevated risk hosts."""
+    from security.sentinel import sentinel
+    return sentinel.get_threat_summary()
+
+
+class UnbanRequest(BaseModel):
+    ip: str
+
+@router.post("/security/unban")
+def unban_host(req: UnbanRequest, admin=Depends(require_admin)):
+    """Allows administrators to manually lift an automated IP quarantine."""
+    from security.sentinel import sentinel
+    unbanned = sentinel.manual_unban(req.ip)
+    return {"status": "success", "unbanned": unbanned, "ip": req.ip}

@@ -3,44 +3,37 @@
 import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { getMe, logout } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 
 export function BlockedGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { token } = useAuth()
   const [isBlocked, setIsBlocked] = useState<boolean>(false)
   const [blockedMessage, setBlockedMessage] = useState<string>('You are not allowed to access right now')
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false)
 
-  // Allow admin routes always
   const isAdminRoute = pathname?.startsWith('/admin')
 
   useEffect(() => {
-    // Check local flag
-    if (typeof window !== 'undefined') {
-      if (localStorage.getItem('mb_user_blocked') === 'true') {
-        setIsBlocked(true)
-      }
-    }
+    // CRIT-07: Block state is NEVER read from localStorage.
+    // The server is the source of truth. We check via getMe() and
+    // listen for the mythri:user_blocked event dispatched by the API interceptor.
 
-    // Listen for custom block event from API interceptors
+    // Listen for block events from API interceptors
     const handleBlockedEvent = (e: any) => {
       const msg = e?.detail || 'You are not allowed to access right now'
       setBlockedMessage(msg)
       setIsBlocked(true)
     }
-
     window.addEventListener('mythri:user_blocked', handleBlockedEvent)
 
-    // Check backend status if user is logged in
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    // Check backend status when we have a token and are not on admin route
     if (token && !isAdminRoute) {
       getMe()
         .then((user) => {
           if (user && user.is_active === false) {
             setIsBlocked(true)
-            localStorage.setItem('mb_user_blocked', 'true')
           } else {
-            // User is active, ensure block flag is removed
-            localStorage.removeItem('mb_user_blocked')
             setIsBlocked(false)
           }
         })
@@ -50,7 +43,6 @@ export function BlockedGuard({ children }: { children: React.ReactNode }) {
             if (typeof detail === 'string' && detail.toLowerCase().includes('not allowed to access')) {
               setBlockedMessage(detail)
               setIsBlocked(true)
-              localStorage.setItem('mb_user_blocked', 'true')
             }
           }
         })
@@ -59,16 +51,13 @@ export function BlockedGuard({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener('mythri:user_blocked', handleBlockedEvent)
     }
-  }, [pathname, isAdminRoute])
+  }, [pathname, isAdminRoute, token])
 
   const handleSignOut = async () => {
     setIsLoggingOut(true)
     try {
-      localStorage.removeItem('mb_user_blocked')
       await logout()
     } catch {
-      localStorage.clear()
-      sessionStorage.clear()
       window.location.href = '/login'
     }
   }

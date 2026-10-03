@@ -9,7 +9,7 @@ import asyncio
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.database.models import get_db, Session as DBSession, Message, MessageEmotion, RiskLog, User
 from providers.sarvam.voice_client import synthesize_speech, get_language_prompt, get_supported_languages
@@ -21,6 +21,22 @@ from security.crisis_handler import check_for_crisis
 from rag.brain.state_tracker import tracker
 from security.authentication.api import get_current_user
 from modules.dashboard.api import broadcast_event
+
+MAX_AUDIO_BYTES = 15 * 1024 * 1024  # 15MB hard upload limit
+
+async def _safe_read_audio(audio: UploadFile) -> bytes:
+    chunk_size = 1024 * 1024
+    total = 0
+    buffer = bytearray()
+    while True:
+        chunk = await audio.read(chunk_size)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > MAX_AUDIO_BYTES:
+            raise HTTPException(status_code=413, detail="Audio file too large. Maximum size is 15MB.")
+        buffer.extend(chunk)
+    return bytes(buffer)
 
 try:
     from rag.knowledge.retriever import retrieve_context, is_knowledge_base_ready
@@ -38,8 +54,8 @@ def list_languages():
 
 
 class SpeakRequest(BaseModel):
-    text: str
-    language: str = "en-IN"
+    text: str = Field(..., min_length=1, max_length=2000)
+    language: str = Field(default="en-IN", max_length=15)
 
 
 @router.post("/speak")
@@ -54,7 +70,7 @@ async def speak(
         return Response(content=audio_bytes, media_type="audio/wav")
     except Exception as e:
         print(f"[VOICE] Speak failed: {type(e).__name__} - {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to synthesize speech. Please try again.")
 
 
 @router.post("/transcribe")
@@ -63,7 +79,7 @@ async def transcribe(
     language: str = Form(default="en-IN"),
     current_user: User = Depends(get_current_user),
 ):
-    audio_bytes = await audio.read()
+    audio_bytes = await _safe_read_audio(audio)
     print(f"[TRANSCRIBE] size={len(audio_bytes)} lang={language}")
     if len(audio_bytes) < 500:
         return {"transcript": "", "language": language}
@@ -72,7 +88,7 @@ async def transcribe(
         return {"transcript": transcript, "language": language}
     except Exception as e:
         print(f"[VOICE] Transcribe failed: {type(e).__name__} - {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Audio transcription failed. Please try again.")
 
 
 async def handle_voice_turn(
@@ -214,7 +230,7 @@ async def voice_conversation(
     print(f"[VOICE] POST Request session={session_id} lang={language}")
 
     # ── Read audio ────────────────────────────────────────────────────────────
-    audio_bytes = await audio.read()
+    audio_bytes = await _safe_read_audio(audio)
     if len(audio_bytes) < 500:
         print("[VOICE] Audio too short or empty, treating as silence")
         return await handle_voice_turn("[Silence]", session_id, language, current_user, db)
@@ -244,7 +260,7 @@ async def voice_conversation(
                     yield json.dumps({"type": "audio", "audio_b64": err_b64, "text": msg}) + "\n"
             return StreamingResponse(err_stream(), media_type="application/x-ndjson")
         print(f"[VOICE] STT failed: {type(e).__name__} - {err_str}")
-        raise HTTPException(status_code=500, detail={"message": f"STT failed: {err_str}"})
+        raise HTTPException(status_code=500, detail="Voice processing failed. Please try again.")
 
     return await handle_voice_turn(transcript, session_id, language, current_user, db)
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getHistory, getTranscript, logout } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import RadialNav from '@/shared/components/RadialNav'
 
 interface Session {
@@ -21,6 +22,7 @@ interface Message {
 
 export default function HistoryPage() {
   const router = useRouter()
+  const { token, loading: authLoading } = useAuth()
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   
@@ -32,7 +34,7 @@ export default function HistoryPage() {
   const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    if (authLoading) return
     if (!token) {
       router.replace('/login')
       return

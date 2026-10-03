@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getDashboardStats, getOnboardingStatus, logout } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
 
@@ -22,18 +23,23 @@ const getMoodIcon = (mood: string) => {
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { token, user, loading: authLoading } = useAuth()
   const [username, setUsername] = useState('Seeker')
   const [menuOpen, setMenuOpen] = useState(false)
   const [greeting, setGreeting] = useState('Good morning')
   const [stats, setStats] = useState<any>(null)
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    if (authLoading) return
     if (!token) {
       router.replace('/login')
     } else {
-      const storedName = localStorage.getItem('mb_username')
-      if (storedName) setUsername(storedName)
+      if (user?.username) {
+        setUsername(user.username)
+      } else {
+        const storedName = localStorage.getItem('mb_username')
+        if (storedName) setUsername(storedName)
+      }
       
       // Check onboarding status
       getOnboardingStatus().then(status => {

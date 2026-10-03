@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from core.database.models import get_db, User, UserFeedback
@@ -8,7 +8,7 @@ from security.authentication.api import get_current_user
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
 class FeedbackRequest(BaseModel):
-    content: str
+    content: str = Field(..., min_length=1, max_length=5000)
 
 @router.post("/submit")
 def submit_feedback(request: FeedbackRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

@@ -6,6 +6,23 @@ if (!API_URL) {
   throw new Error("NEXT_PUBLIC_API_URL is not defined.");
 }
 
+// ---------------------------------------------------------------------------
+// CRIT-03: In-memory access token store
+// The access token is NEVER written to localStorage or a non-httponly cookie.
+// It lives only in this module-level variable. AuthContext updates it on
+// login/refresh. On page reload, AuthContext restores it via /api/auth/refresh
+// (which uses the httponly refresh token cookie automatically).
+// ---------------------------------------------------------------------------
+let _accessToken: string | null = null;
+
+export function setInMemoryToken(token: string | null): void {
+  _accessToken = token;
+}
+
+export function getInMemoryToken(): string | null {
+  return _accessToken;
+}
+
 const api = axios.create({ baseURL: API_URL, timeout: 0, withCredentials: true })
 
 let isRefreshing = false;
@@ -19,7 +36,6 @@ const processQueue = (error: any, token: string | null = null) => {
       prom.resolve(token);
     }
   });
-  
   failedQueue = [];
 }
 
@@ -31,7 +47,8 @@ api.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${adminToken}`
       }
     } else {
-      const token = localStorage.getItem('mb_token')
+      // Read from in-memory store — NOT localStorage
+      const token = _accessToken
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -60,26 +77,26 @@ api.interceptors.response.use(
         
         originalRequest._retry = true;
         isRefreshing = true;
-        
+
         try {
           const { data } = await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
-          
+
           const new_token = data.access_token;
-          localStorage.setItem('mb_token', new_token);
+          // CRIT-03: store in memory ONLY — never localStorage
+          setInMemoryToken(new_token);
           if (data.username) localStorage.setItem('mb_username', data.username);
-          
+
           api.defaults.headers.common['Authorization'] = `Bearer ${new_token}`;
           originalRequest.headers.Authorization = `Bearer ${new_token}`;
-          
+
           processQueue(null, new_token);
           return api(originalRequest);
         } catch (err) {
           processQueue(err, null);
-          localStorage.removeItem('mb_token')
+          setInMemoryToken(null);
           localStorage.removeItem('mb_username')
           localStorage.removeItem('mb_language')
           sessionStorage.removeItem('mb_session_id')
-          document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
           window.location.href = '/login'
           return Promise.reject(err);
         } finally {
@@ -91,7 +108,8 @@ api.interceptors.response.use(
     if (error.response?.status === 403 && typeof window !== 'undefined') {
       const detail = error.response?.data?.detail;
       if (typeof detail === 'string' && detail.toLowerCase().includes('not allowed to access')) {
-        localStorage.setItem('mb_user_blocked', 'true');
+        // CRIT-07: Do NOT store block state in localStorage — dispatch event only.
+        // BlockedGuard listens for this event and sets component state.
         window.dispatchEvent(new CustomEvent('mythri:user_blocked', { detail }));
       }
     }
@@ -155,10 +173,13 @@ export async function logout() {
     console.error('Logout API failed', err)
   } finally {
     if (typeof window !== 'undefined') {
-      localStorage.clear()
+      // CRIT-03: clear in-memory token
+      setInMemoryToken(null);
+      // Clear only non-sensitive preference keys, not security state
+      localStorage.removeItem('mb_username')
+      localStorage.removeItem('mb_language')
+      localStorage.removeItem('mb_chat_draft')
       sessionStorage.clear()
-      document.cookie = 'mb_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0'
-      document.cookie = `mb_token=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0`
       try {
         const { auth } = await import('@/core/firebase')
         const { signOut } = await import('firebase/auth')
@@ -215,13 +236,18 @@ export async function getTranscript(sessionId: string) {
   return res.data
 }
 
+export async function getWsTicket(): Promise<string> {
+  const res = await api.post('/api/auth/ws-ticket')
+  return res.data?.ticket
+}
+
 export async function sendVoiceMessage(sessionId: string, formData: FormData) {
   const MAX_RETRIES = 3
   const RETRY_DELAY_MS = 2000
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+      const token = getInMemoryToken()
       const headers: Record<string, string> = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 

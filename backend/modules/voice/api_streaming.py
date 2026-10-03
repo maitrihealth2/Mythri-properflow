@@ -23,21 +23,27 @@ router = APIRouter(prefix="/api/streaming", tags=["streaming"])
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 
 @router.websocket("/ws/stream/{session_id}")
-async def streaming_stt(websocket: WebSocket, session_id: str, token: str = None):
+async def streaming_stt(websocket: WebSocket, session_id: str, ticket: str = None):
     headers = dict(websocket.headers)
     origin = headers.get("origin", "No Origin")
     host = headers.get("host", "No Host")
     print(f"[WS] Attempting connection. Session: {session_id}, Origin: {origin}, Host: {host}")
-    
-    # ── Authenticate Token ──
-    raw_token = token or websocket.query_params.get("token")
-    payload = decode_token(raw_token) if raw_token else None
-    if not payload or not payload.get("user_id"):
-        print(f"[WS] Unauthorized WebSocket connection attempt for session: {session_id}")
+
+    # ── CRIT-04: Authenticate via short-lived single-use ticket ──
+    # Ticket is obtained by the client via POST /api/auth/ws-ticket (requires valid access token).
+    # The ticket lives only 30 seconds and is single-use — safe to pass in URL.
+    raw_ticket = ticket or websocket.query_params.get("ticket")
+    if not raw_ticket:
+        print(f"[WS] Rejected: no ticket provided for session {session_id}")
+        await websocket.close(code=1008, reason="Authentication required")
+        return
+
+    from security.authentication.api import consume_ws_ticket
+    auth_user_id = consume_ws_ticket(raw_ticket)
+    if not auth_user_id:
+        print(f"[WS] Unauthorized: invalid or expired ticket for session {session_id}")
         await websocket.close(code=1008, reason="Authentication failed")
         return
-        
-    auth_user_id = payload.get("user_id")
 
     # ── Verify Session Ownership ──
     def _lookup_user_and_session():
@@ -178,9 +184,7 @@ async def streaming_stt(websocket: WebSocket, session_id: str, token: str = None
                                     await asyncio.to_thread(_close_gen)
                                 
                             except Exception as e:
-                                print(f"[WS] Error in handle_voice_turn: {e}")
-                                traceback.print_exc()
-                                await websocket.send_json({"type": "error", "message": str(e)})
+                                await websocket.send_json({"type": "error", "message": "Voice processing encountered a temporary error. Please try again."})
 
                 except WebSocketDisconnect:
                     print(f"[WS] Client disconnected: {session_id}")

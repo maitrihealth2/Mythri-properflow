@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { login, register, googleLogin, forgotPassword } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { auth, googleProvider } from '@/core/firebase'
 import { signInWithPopup, sendPasswordResetEmail } from 'firebase/auth'
 import { motion } from 'framer-motion'
@@ -113,6 +114,7 @@ function SanctuaryWisp() {
 
 export default function LoginPage() {
   const router = useRouter()
+  const { token, setToken } = useAuth()
   const [mode, setMode] = useState<'signin' | 'create'>('signin')
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
@@ -125,12 +127,12 @@ export default function LoginPage() {
 
   const [agreeTerms, setAgreeTerms] = useState(false)
 
+  // CRIT-03: Use in-memory token from AuthContext, not localStorage
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null;
     if (token) {
       router.replace('/home');
     }
-  }, [router]);
+  }, [token, router]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -145,10 +147,9 @@ export default function LoginPage() {
       setAuthPhase('verifying')
       
       const data = await googleLogin(idToken)
-      localStorage.setItem('mb_token', data.access_token)
-      localStorage.setItem('mb_username', data.username)
+      // CRIT-03: Store token in memory via AuthContext, not localStorage
+      setToken(data.access_token, data.username)
       localStorage.setItem('mb_language', 'en-IN')
-      document.cookie = `mb_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`
       sessionStorage.removeItem('mb_session_id')
       if (typeof window !== 'undefined' && (window as any).gtag) {
         (window as any).gtag('event', 'login', { method: 'Google' })
@@ -236,10 +237,9 @@ export default function LoginPage() {
         ? await login(form.email, form.password)
         : await register(form.name, form.email, form.password, 'en-IN')
         
-      localStorage.setItem('mb_token', data.access_token)
-      localStorage.setItem('mb_username', data.username)
+      // CRIT-03: Store token in memory via AuthContext, not localStorage
+      setToken(data.access_token, data.username)
       localStorage.setItem('mb_language', 'en-IN')
-      document.cookie = `mb_token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`
       sessionStorage.removeItem('mb_session_id')
       
       setAuthPhase('success')

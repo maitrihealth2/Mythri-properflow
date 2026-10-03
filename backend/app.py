@@ -62,9 +62,9 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(global_async_exception_handler)
     
-    # PHASE 3: Fix ThreadPool Exhaustion
+    # HIGH-07: Constrain ThreadPoolExecutor to prevent memory exhaustion on resource-limited hosts
     import concurrent.futures
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=300)
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=64)
     loop.set_default_executor(executor)
     
     app.state.shutdown_event = asyncio.Event()
@@ -162,8 +162,7 @@ app.add_middleware(AuditLoggerMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    # Explicit production domains only; removed *.vercel.app and broad private-IP ranges
-    allow_origin_regex=r"https://[\w-]+\.onrender\.com|https://[\w-]+\.affynelabs\.com",
+    allow_origin_regex=r"^https://([\w-]+\.)*(onrender\.com|affynelabs\.com)$",
     allow_credentials=True,
     # Explicit method allowlist — no wildcard
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -225,28 +224,25 @@ async def favicon():
 
 @app.get("/health")
 def health():
-    return {
+    resp = {
         "status": "ok",
-        "service": "Affyne Labs  -  Mythri",
-        "version": "3.0.0",
-        "features": ["text-chat", "voice-stt", "voice-tts", "rag", "emotion-detection"],
-        "ai": "sarvam-105b + saarika + bulbul",
+        "service": "Affyne Labs - Mythri",
     }
+    if not _is_production:
+        resp["version"] = "3.0.0"
+    return resp
     
 @app.head("/health")
 async def health_head():
-    return {
-        "status": "ok",
-        "service": "Affyne Labs  -  Mythri",
-        "version": "3.0.0",
-        "features": ["text-chat", "voice-stt", "voice-tts", "rag", "emotion-detection"],
-        "ai": "sarvam-105b + saarika + bulbul",
-    }
+    return health()
 
 
 @app.get("/")
 def root():
-    return {"message": "Affyne Labs  -  Mythri API v3 running", "docs": "/docs"}
+    info = {"message": "Affyne Labs  -  Mythri API v3 running"}
+    if not _is_production:
+        info["docs"] = "/docs"
+    return info
 
 
 from fastapi.responses import HTMLResponse
@@ -258,8 +254,12 @@ telemetry_dir = os.path.join(os.path.dirname(__file__), "modules", "telemetry_ui
 if os.path.exists(telemetry_dir):
     app.mount("/telemetry_ui", StaticFiles(directory=telemetry_dir, html=True), name="telemetry_ui")
 
-@app.get("/architecture", response_class=HTMLResponse)
+@app.get("/architecture", response_class=HTMLResponse, include_in_schema=False)
 def architecture_view():
+    # MED-06: Never expose internal system topology diagrams publicly in production
+    if _is_production:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Not found")
     path = os.path.join(os.path.dirname(__file__), "architecture_flow.html")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:

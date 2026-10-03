@@ -2,7 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { startSession, sendMessage, getTranscript, logout, getProfile } from '@/core/api'
+import api, { startSession, sendMessage, getTranscript, logout, getProfile, getInMemoryToken, getWsTicket } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
@@ -113,6 +114,7 @@ const AmbientBackground = ({ isAiActive }: { isAiActive: boolean }) => {
 
 export default function ConsultationPage() {
   const router = useRouter()
+  const { token, loading: authLoading } = useAuth()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -164,18 +166,18 @@ export default function ConsultationPage() {
       if (!currentSid || messageCountRef.current < 2) return
       
       const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
-      const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
-      const endUrl = `${API_URL}/api/consultation/${currentSid}/end${token ? `?token=${encodeURIComponent(token)}` : ''}`
+      const authToken = getInMemoryToken()
+      const endUrl = `${API_URL}/api/consultation/${currentSid}/end`
 
-      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        navigator.sendBeacon(endUrl)
-      } else {
-        fetch(endUrl, {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          keepalive: true,
-        }).catch(() => {})
-      }
+      fetch(endUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        credentials: 'include',
+        keepalive: true,
+      }).catch(() => {})
     }
 
     const handleBeforeUnload = () => {
@@ -191,52 +193,67 @@ export default function ConsultationPage() {
 
   const inputPlaceholder = INPUT_PLACEHOLDERS[language] || INPUT_PLACEHOLDERS['en-IN']
 
+  // ── WebSocket with ticket authentication (CRIT-04) ──────────────────────
   useEffect(() => {
     if (!sessionId) return
-    const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
-    const wsUrl = API_URL.replace(/^http/, "ws") + `/api/consultation/ws/events?session_id=${sessionId}${token ? `&token=${encodeURIComponent(token)}` : ''}`
-    
-    const ws = new WebSocket(wsUrl)
-    ws.onmessage = (event) => {
-      if (event.data === "pong") return
+    let ws: WebSocket | null = null
+    let interval: NodeJS.Timeout | null = null
+    let isCancelled = false
+
+    const connectWs = async () => {
       try {
-        const data = JSON.parse(event.data)
-        if (data.type === "typing_start") {
-          setIsTyping(true)
-        } else if (data.type === "typing_stop") {
-          setIsTyping(false)
+        const ticket = await getWsTicket()
+        if (isCancelled) return
+        const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
+        const wsUrl = API_URL.replace(/^http/, "ws") + `/api/consultation/ws/events?session_id=${sessionId}&ticket=${encodeURIComponent(ticket)}`
+        
+        ws = new WebSocket(wsUrl)
+        ws.onmessage = (event) => {
+          if (event.data === "pong") return
+          try {
+            const data = JSON.parse(event.data)
+            if (data.type === "typing_start") {
+              setIsTyping(true)
+            } else if (data.type === "typing_stop") {
+              setIsTyping(false)
+            }
+          } catch (e) {}
         }
-      } catch (e) {}
-    }
-    wsRef.current = ws
-    
-    const interval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send("ping")
+        wsRef.current = ws
+        
+        interval = setInterval(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send("ping")
+          }
+        }, 30000)
+      } catch (err) {
+        console.warn('[WS] Failed to connect events socket:', err)
       }
-    }, 30000)
-    
+    }
+
+    connectWs()
+
     return () => {
-      clearInterval(interval)
-      ws.close()
+      isCancelled = true
+      if (interval) clearInterval(interval)
+      if (ws) ws.close()
     }
   }, [sessionId])
 
   // ─── Auth + language + session init ───────────────────────────────────────
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    if (authLoading) return
     if (!token) { router.replace('/login'); return }
 
     const savedLanguage = typeof window !== 'undefined' ? localStorage.getItem('mb_language') : null
     if (savedLanguage) setLanguage(savedLanguage)
 
-    const savedDraft = typeof window !== 'undefined' ? localStorage.getItem('mb_chat_draft') : null
+    const savedDraft = typeof window !== 'undefined' ? sessionStorage.getItem('mb_chat_draft') : null
     if (savedDraft) setInput(savedDraft)
 
     const existingSessionId = sessionStorage.getItem('mb_session_id')
     if (existingSessionId) {
-      const savedMessages = localStorage.getItem('mb_chat_history_' + existingSessionId)
+      const savedMessages = sessionStorage.getItem('mb_chat_history_' + existingSessionId)
       if (savedMessages && messages.length === 0) {
         try { setMessages(JSON.parse(savedMessages)) } catch (_) {}
       }
@@ -271,19 +288,19 @@ export default function ConsultationPage() {
           scrollContainerRef.current.scrollTo({ top: scrollHeight, behavior: 'smooth' })
         }
       }
-      localStorage.setItem('mb_chat_history_' + sessionId, JSON.stringify(messages))
+      sessionStorage.setItem('mb_chat_history_' + sessionId, JSON.stringify(messages))
       
       // Auto-prune stale session cache keys to prevent memory accumulation
       try {
         const historyKeys: string[] = []
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i)
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const k = sessionStorage.key(i)
           if (k && k.startsWith('mb_chat_history_') && k !== 'mb_chat_history_' + sessionId) {
             historyKeys.push(k)
           }
         }
         if (historyKeys.length > 3) {
-          historyKeys.slice(0, historyKeys.length - 3).forEach(k => localStorage.removeItem(k))
+          historyKeys.slice(0, historyKeys.length - 3).forEach(k => sessionStorage.removeItem(k))
         }
       } catch (_) {}
     }
@@ -401,8 +418,8 @@ export default function ConsultationPage() {
           const data = await getTranscript(existingSessionId)
           setSessionId(existingSessionId)
           if (data.messages && data.messages.length > 0) {
-            // Check if localStorage already has the exact live bubble segmentation
-            const savedRaw = localStorage.getItem('mb_chat_history_' + existingSessionId)
+            // Check if sessionStorage already has the exact live bubble segmentation
+            const savedRaw = sessionStorage.getItem('mb_chat_history_' + existingSessionId)
             let cachedMessages: Message[] | null = null
             if (savedRaw) {
               try {
@@ -513,21 +530,21 @@ export default function ConsultationPage() {
 
     try {
       const doFetch = async (isRetry = false): Promise<Response> => {
-        const token = localStorage.getItem('mb_token') || ''
+        const authToken = getInMemoryToken() || ''
         const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
         const res = await fetch(`${apiUrl}/api/consultation/message`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
+          credentials: 'include',
           body: JSON.stringify({ session_id: sessionId, message: msg, language }),
         })
 
         if (res.status === 401 && !isRetry) {
           try {
-            const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
-            await fetch(`${apiUrl}/api/auth/me`, { headers: { Authorization: `Bearer ${localStorage.getItem('mb_token') || ''}` } }) // Trigger token refresh
+            await api.get('/api/auth/me') // Trigger token refresh through axios interceptor
           } catch {
             throw new Error('AUTH_FAILED')
           }
@@ -540,7 +557,7 @@ export default function ConsultationPage() {
 
       if (res.status === 404) {
         sessionStorage.removeItem('mb_session_id')
-        localStorage.removeItem('mb_chat_history_' + sessionId)
+        sessionStorage.removeItem('mb_chat_history_' + sessionId)
         initialized.current = false
         setMessages([])
         await initSession()
@@ -658,7 +675,7 @@ export default function ConsultationPage() {
         })
       }
 
-      localStorage.removeItem('mb_chat_draft')
+      sessionStorage.removeItem('mb_chat_draft')
 
     } catch (err: any) {
       if (err.message === 'AUTH_FAILED') return // Interceptor will redirect to login
@@ -695,7 +712,7 @@ export default function ConsultationPage() {
   // ─── Textarea auto-resize ─────────────────────────────────────────────────
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
-    localStorage.setItem('mb_chat_draft', e.target.value)
+    sessionStorage.setItem('mb_chat_draft', e.target.value)
     e.target.style.height = 'auto'
     e.target.style.height = `${e.target.scrollHeight}px`
   }

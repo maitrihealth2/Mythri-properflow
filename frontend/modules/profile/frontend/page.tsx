@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 import { getProfile, updateProfile, logout } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
 import { usePWAContext } from '@/shared/components/PWAProvider'
 
 export default function ProfilePage() {
     const router = useRouter()
+    const { token, loading: authLoading } = useAuth()
     const { isInstallable, isInstalled, isStandalone, promptInstall } = usePWAContext()
     const [mainMenuOpen, setMainMenuOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
@@ -47,7 +49,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         setMounted(true)
-        const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+        if (authLoading) return
         if (!token) {
             router.replace('/login')
             return

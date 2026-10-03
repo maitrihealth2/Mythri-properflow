@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { startSession, getTranscript, logout, API_URL } from '@/core/api'
+import { startSession, getTranscript, logout, API_URL, getInMemoryToken } from '@/core/api'
+import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
@@ -25,6 +26,7 @@ const translations = {
 
 export default function VoiceModePage() {
   const router = useRouter()
+  const { token, loading: authLoading } = useAuth()
 
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [convState, setConvState] = useState<ConvState>('listening')
@@ -62,7 +64,7 @@ export default function VoiceModePage() {
   const mitraStore = useMitraStore()
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
+    if (authLoading) return
     if (!token) {
       router.replace('/login')
       return
@@ -81,18 +83,18 @@ export default function VoiceModePage() {
       const currentSid = sessionIdRef.current
       if (!currentSid) return
       const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
-      const token = typeof window !== 'undefined' ? localStorage.getItem('mb_token') : null
-      const endUrl = `${API_URL}/api/consultation/${currentSid}/end${token ? `?token=${encodeURIComponent(token)}` : ''}`
+      const authToken = getInMemoryToken()
+      const endUrl = `${API_URL}/api/consultation/${currentSid}/end`
 
-      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        navigator.sendBeacon(endUrl)
-      } else {
-        fetch(endUrl, {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          keepalive: true,
-        }).catch(() => {})
-      }
+      fetch(endUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        credentials: 'include',
+        keepalive: true,
+      }).catch(() => {})
     }
 
     const handleBeforeUnload = () => {
@@ -258,13 +260,14 @@ export default function VoiceModePage() {
     formData.append('session_id', sid)
 
     try {
-      const token = localStorage.getItem('mb_token')
+      const token = getInMemoryToken()
       const headers: Record<string, string> = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 
       const res = await fetch(`${API_URL}/api/voice/conversation`, {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: formData,
       })
 
