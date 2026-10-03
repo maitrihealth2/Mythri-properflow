@@ -165,7 +165,7 @@ app.add_middleware(
     allow_origin_regex=r"^https://([\w-]+\.)*(onrender\.com|affynelabs\.com)$",
     allow_credentials=True,
     # Explicit method allowlist — no wildcard
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["HEAD","GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     # Explicit header allowlist — no wildcard
     allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With", "X-Trace-Id"],
 )
