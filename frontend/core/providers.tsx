@@ -9,15 +9,14 @@ import { BlockedGuard } from '@/shared/components/BlockedGuard'
 
 import { PWAProvider } from '@/shared/components/PWAProvider'
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
+import { getActiveApiUrl } from '@/core/api'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Silently wake up the Render backend on app load to avoid cold-start
+    // Silently wake up the backend instances on app load to avoid cold-start
     // timeouts when the user hits login. Fire-and-forget — errors are ignored.
-    fetch(`${API_URL}/health`).catch(() => {})
-
-
+    const url = getActiveApiUrl();
+    fetch(`${url}/health`).catch(() => {})
   }, [])
 
   return (

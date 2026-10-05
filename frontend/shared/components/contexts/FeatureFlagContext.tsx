@@ -1,5 +1,7 @@
 'use client'
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { fetchWithFailover } from '@/core/api'
+import { useAuth } from './AuthContext'
 
 interface FeatureFlagContextType {
   features: string[]
@@ -12,8 +14,6 @@ const FeatureFlagContext = createContext<FeatureFlagContextType>({
   hasFeature: () => false,
   loading: true
 })
-
-import { useAuth } from './AuthContext'
 
 export function FeatureFlagProvider({ children }: { children: React.ReactNode }) {
   const [features, setFeatures] = useState<string[]>([])
@@ -30,8 +30,7 @@ export function FeatureFlagProvider({ children }: { children: React.ReactNode })
 
     const fetchFeatures = async () => {
       try {
-        const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
-        const res = await fetch(`${API_URL}/api/features/my-flags`, {
+        const res = await fetchWithFailover('/api/features/my-flags', {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => null)
 

@@ -14,18 +14,21 @@ load_dotenv(_BACKEND_DIR / ".env.local", override=True)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import sentry_sdk
-
 # ---------------------------------------------------------------------------
 # Sentry — DSN from environment only; PII collection disabled
 # ---------------------------------------------------------------------------
 _sentry_dsn = os.getenv("SENTRY_DSN", "")
 if _sentry_dsn:
-    sentry_sdk.init(
-        dsn=_sentry_dsn,
-        send_default_pii=False,   # NEVER send PII — wellbeing platform
-        traces_sample_rate=0.1,
-    )
+    try:
+        import sentry_sdk
+        sentry_sdk.init(
+            dsn=_sentry_dsn,
+            send_default_pii=False,   # NEVER send PII — wellbeing platform
+            traces_sample_rate=0.1,
+        )
+    except ImportError:
+        pass
+
 
 from contextlib import asynccontextmanager
 import traceback
@@ -145,8 +148,8 @@ allowed_origins = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
-    "https://test.affynelabs.com"
-    "https://*.affynelabs.com"
+    "https://test.affynelabs.com",
+    "https://*.affynelabs.com",
     "https://app.affynelabs.in",
 ]
 if cors_origins_env:

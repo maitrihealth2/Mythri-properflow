@@ -1,10 +1,8 @@
 import axios from 'axios'
+import { serverPool, getActiveApiUrl, getWebSocketUrl, fetchWithFailover } from './serverPool'
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-
-if (!API_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL is not defined.");
-}
+export { serverPool, getActiveApiUrl, getWebSocketUrl, fetchWithFailover }
+export const API_URL = getActiveApiUrl();
 
 // ---------------------------------------------------------------------------
 // CRIT-03: In-memory access token store
@@ -23,7 +21,7 @@ export function getInMemoryToken(): string | null {
   return _accessToken;
 }
 
-const api = axios.create({ baseURL: API_URL, timeout: 0, withCredentials: true })
+const api = axios.create({ baseURL: getActiveApiUrl(), timeout: 0, withCredentials: true })
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -40,6 +38,10 @@ const processQueue = (error: any, token: string | null = null) => {
 }
 
 api.interceptors.request.use((config) => {
+  // Always attach active healthy server base URL
+  if (!config.baseURL || config.baseURL.startsWith('http://localhost') || config.baseURL.startsWith('http://127.0.0.1')) {
+    config.baseURL = serverPool.getActiveUrl();
+  }
   if (typeof window !== 'undefined') {
     if (config.url?.startsWith('/api/admin/') && !config.url?.includes('/api/admin/login')) {
       const adminToken = sessionStorage.getItem('mb_admin_token')
@@ -58,9 +60,31 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.config?.baseURL) {
+      serverPool.markHealthy(response.config.baseURL);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
+
+    // ── High-Availability Multi-Server Failover Retry ──
+    const isNetworkOrServerError = !error.response || [502, 503, 504].includes(error.response.status);
+    if (originalRequest && isNetworkOrServerError) {
+      const allServers = serverPool.getAllServers();
+      originalRequest._failoverCount = (originalRequest._failoverCount || 0);
+
+      if (originalRequest._failoverCount < allServers.length - 1) {
+        originalRequest._failoverCount += 1;
+        const nextServer = serverPool.rotateToNextServer(error.message || 'Server unavailable');
+        originalRequest.baseURL = nextServer;
+        
+        // Small exponential delay before next server retry
+        await new Promise(res => setTimeout(res, 100));
+        return api(originalRequest);
+      }
+    }
     
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (typeof window !== 'undefined' && !originalRequest.url?.includes('/api/auth/')) {
@@ -79,7 +103,8 @@ api.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          const { data } = await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
+          const currentUrl = serverPool.getActiveUrl();
+          const { data } = await axios.post(`${currentUrl}/api/auth/refresh`, {}, { withCredentials: true });
 
           const new_token = data.access_token;
           // CRIT-03: store in memory ONLY — never localStorage

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { startSession, getTranscript, logout, API_URL, getInMemoryToken } from '@/core/api'
+import { startSession, getTranscript, logout, API_URL, getInMemoryToken, getActiveApiUrl, fetchWithFailover } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
@@ -82,7 +82,7 @@ export default function VoiceModePage() {
     const triggerAutoEndSession = () => {
       const currentSid = sessionIdRef.current
       if (!currentSid) return
-      const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
+      const API_URL = getActiveApiUrl()
       const authToken = getInMemoryToken()
       const endUrl = `${API_URL}/api/consultation/${currentSid}/end`
 
@@ -264,7 +264,7 @@ export default function VoiceModePage() {
       const headers: Record<string, string> = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 
-      const res = await fetch(`${API_URL}/api/voice/conversation`, {
+      const res = await fetchWithFailover('/api/voice/conversation', {
         method: 'POST',
         headers,
         credentials: 'include',

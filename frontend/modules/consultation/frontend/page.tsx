@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import api, { startSession, sendMessage, getTranscript, logout, getProfile, getInMemoryToken, getWsTicket } from '@/core/api'
+import api, { startSession, sendMessage, getTranscript, logout, getProfile, getInMemoryToken, getWsTicket, getActiveApiUrl, getWebSocketUrl, fetchWithFailover } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
@@ -165,7 +165,7 @@ export default function ConsultationPage() {
       const currentSid = sessionIdRef.current
       if (!currentSid || messageCountRef.current < 2) return
       
-      const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
+      const API_URL = getActiveApiUrl()
       const authToken = getInMemoryToken()
       const endUrl = `${API_URL}/api/consultation/${currentSid}/end`
 
@@ -204,8 +204,7 @@ export default function ConsultationPage() {
       try {
         const ticket = await getWsTicket()
         if (isCancelled) return
-        const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"
-        const wsUrl = API_URL.replace(/^http/, "ws") + `/api/consultation/ws/events?session_id=${sessionId}&ticket=${encodeURIComponent(ticket)}`
+        const wsUrl = getWebSocketUrl(`/api/consultation/ws/events?session_id=${sessionId}&ticket=${encodeURIComponent(ticket)}`)
         
         ws = new WebSocket(wsUrl)
         ws.onmessage = (event) => {
@@ -531,8 +530,7 @@ export default function ConsultationPage() {
     try {
       const doFetch = async (isRetry = false): Promise<Response> => {
         const authToken = getInMemoryToken() || ''
-        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '')
-        const res = await fetch(`${apiUrl}/api/consultation/message`, {
+        const res = await fetchWithFailover('/api/consultation/message', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
