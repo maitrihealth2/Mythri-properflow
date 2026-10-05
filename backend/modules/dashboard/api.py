@@ -59,8 +59,8 @@ async def broadcast_event(event_type: str, message: str = "", data: dict = None)
 
 def _verify_telemetry_access(request: Request, token: str = None):
     """
-    Validate that telemetry stream request comes from an authenticated user or admin.
-    Enforces strict ISSUER and AUDIENCE claims.
+    Validate that telemetry stream request comes from an authenticated admin.
+    Enforces strict ISSUER, AUDIENCE, admin role claims, and revoked JTI checking.
     """
     raw_token = token
     if not raw_token:
@@ -82,6 +82,7 @@ def _verify_telemetry_access(request: Request, token: str = None):
         )
         
     try:
+        from modules.admin.api import _REVOKED_ADMIN_JTIS
         payload = jwt.decode(
             raw_token,
             SECRET_KEY,
@@ -89,8 +90,13 @@ def _verify_telemetry_access(request: Request, token: str = None):
             issuer=ISSUER,
             audience=AUDIENCE
         )
-        if payload.get("role") == "admin" or payload.get("type") in ("admin_access", "access"):
+        if payload.get("role") == "admin" or payload.get("type") == "admin_access":
+            jti = payload.get("jti")
+            if jti and jti in _REVOKED_ADMIN_JTIS:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin session revoked")
             return payload
+    except HTTPException:
+        raise
     except Exception:
         pass
         

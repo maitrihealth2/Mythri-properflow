@@ -3,6 +3,7 @@ import logging
 import json
 import uuid
 import re
+import hashlib
 from typing import Callable
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -23,18 +24,33 @@ if not audit_logger.handlers:
     audit_logger.addHandler(file_handler)
 audit_logger.propagate = False
 
-# Sensitive fields to redact from logs
-PII_FIELDS = [r"password", r"idToken", r"access_token", r"ticket", r"refresh_token"]
+# Sensitive query fields to redact from request URLs
+PII_FIELDS = [
+    r"password", r"idToken", r"access_token", r"ticket", r"refresh_token",
+    r"token", r"key", r"secret", r"authorization", r"code", r"admin_key"
+]
 REDACT_STRING = "***REDACTED***"
+
+_IP_SALT = os.getenv("SECRET_KEY", "mythri_audit_salt")[:16].encode("utf-8")
+
+def _pseudonymize_ip(ip: str) -> str:
+    """
+    P1-33: Pseudonymize client IP using salted SHA-256 truncation.
+    Preserves audit correlation while protecting individual user identity.
+    """
+    if not ip or ip in ("127.0.0.1", "::1", "localhost", "unknown"):
+        return ip
+    return hashlib.sha256(_IP_SALT + ip.encode("utf-8")).hexdigest()[:16]
 
 class AuditLoggerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable):
         start_time = time.time()
         trace_id = str(uuid.uuid4())
-        client_ip = _get_real_ip(request)
+        raw_ip = _get_real_ip(request)
+        masked_ip = _pseudonymize_ip(raw_ip)
         
         # We cannot easily log the body in Starlette middleware without consuming the stream,
-        # so we log method, path, and IP
+        # so we log method, path, and pseudonymized IP
         
         response: Response = None
         error_msg = None
@@ -50,14 +66,14 @@ class AuditLoggerMiddleware(BaseHTTPMiddleware):
             # Redact path query parameters if needed (e.g. ?token=...)
             safe_url = str(request.url)
             for field in PII_FIELDS:
-                safe_url = re.sub(rf"({field})=[^&]+", rf"\1={REDACT_STRING}", safe_url, flags=re.IGNORECASE)
+                safe_url = re.sub(rf"([?&]{field})=([^&]*)", rf"\1={REDACT_STRING}", safe_url, flags=re.IGNORECASE)
                 
             log_data = {
                 "trace_id": trace_id,
                 "timestamp": time.time(),
                 "method": request.method,
                 "url": safe_url,
-                "client_ip": client_ip,
+                "client_ip": masked_ip,
                 "status_code": status_code,
                 "process_time_ms": round(process_time * 1000, 2),
             }

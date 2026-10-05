@@ -167,7 +167,7 @@ app.add_middleware(AuditLoggerMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"^https://([\w-]+\.)*(onrender\.com|affynelabs\.com)$",
+    allow_origin_regex=r"^https://([\w-]+\.)*(onrender\.com|affynelabs\.com|vercel\.app)$",
     allow_credentials=True,
     # Explicit method allowlist — no wildcard
     allow_methods=["HEAD","GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

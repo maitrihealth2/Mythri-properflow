@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { serverPool, getActiveApiUrl, getWebSocketUrl, fetchWithFailover } from './serverPool'
+import { serverPool, getActiveApiUrl, getWebSocketUrl, fetchWithFailover, wakeAllServers } from './serverPool'
 
-export { serverPool, getActiveApiUrl, getWebSocketUrl, fetchWithFailover }
+export { serverPool, getActiveApiUrl, getWebSocketUrl, fetchWithFailover, wakeAllServers }
 export const API_URL = getActiveApiUrl();
 
 // ---------------------------------------------------------------------------
@@ -267,40 +267,23 @@ export async function getWsTicket(): Promise<string> {
 }
 
 export async function sendVoiceMessage(sessionId: string, formData: FormData) {
-  const MAX_RETRIES = 3
-  const RETRY_DELAY_MS = 2000
+  const token = getInMemoryToken()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const token = getInMemoryToken()
-      const headers: Record<string, string> = {}
-      if (token) headers['Authorization'] = `Bearer ${token}`
+  const res = await fetchWithFailover('/api/voice/conversation', {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: formData,
+  })
 
-      const res = await fetch(`${API_URL}/api/voice/conversation`, {
-        method: 'POST',
-        headers,
-        body: formData,
-      })
-
-      if (!res.ok) {
-        const errText = await res.text()
-        throw new Error(`Fetch failed with status ${res.status}: ${errText}`)
-      }
-
-      return await res.json()
-    } catch (err: any) {
-      // Only retry on pure network errors (server sleeping / unreachable).
-      // HTTP errors (4xx/5xx) are real errors — don't retry those.
-      const isNetworkError = err.message === 'Failed to fetch'
-      if (isNetworkError && attempt < MAX_RETRIES) {
-        console.warn(`[Voice] Network error on attempt ${attempt}/${MAX_RETRIES}, retrying in ${RETRY_DELAY_MS}ms...`)
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS))
-        continue
-      }
-      console.error('FETCH ERROR DETAILED:', err.message)
-      throw err
-    }
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Fetch failed with status ${res.status}: ${errText}`)
   }
+
+  return await res.json()
 }
 
 export async function getDashboardStats() {

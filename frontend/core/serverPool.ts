@@ -1,7 +1,9 @@
 /**
  * High-Availability Multi-Server Failover Pool Manager
- * Manages 5 production backend instances (1 Primary + 4 Fallback instances)
- * Automatically detects server downtime and provides zero-delay instant failover.
+ * 
+ * - In LOCAL development: Uses single local instance (http://localhost:8000), avoiding dummy port failovers.
+ * - In PRODUCTION: Manages 5 production backend instances (1 Primary + 4 Render Fallback instances).
+ *   Automatically detects downtime / load failure (502, 503, 504, network drops) and provides instant zero-delay failover.
  */
 
 export interface ServerInstance {
@@ -20,8 +22,12 @@ class ServerPoolManager {
     this.initializeServers();
   }
 
+  private isLocalhostUrl(url: string): boolean {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url);
+  }
+
   /**
-   * Initializes the 5 server URLs from environment variables or defaults.
+   * Initializes the server pool.
    * Priority:
    * 1. NEXT_PUBLIC_API_SERVERS (comma-separated list of up to 5 URLs)
    * 2. NEXT_PUBLIC_API_URL (Primary) + NEXT_PUBLIC_API_URL_FALLBACK_1..4
@@ -40,7 +46,7 @@ class ServerPoolManager {
       });
     }
 
-    // Check individual environment variables
+    // Check primary environment variable
     const primary = (process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/$/, "");
     if (primary && !serverList.includes(primary)) {
       serverList.push(primary);
@@ -62,12 +68,22 @@ class ServerPoolManager {
       }
     });
 
-    // Fallback default if nothing configured
+    // Default if nothing configured
     if (serverList.length === 0) {
       serverList.push("http://localhost:8000");
     }
 
-    this.servers = serverList.map(url => ({
+    // In local development: if all configured URLs are localhost/127.0.0.1 and no production URLs exist,
+    // restrict to the single primary instance so we don't try to rotate to non-existent local ports.
+    const isDev = process.env.NODE_ENV !== 'production';
+    const hasProductionServer = serverList.some(url => !this.isLocalhostUrl(url));
+    
+    let finalServers = serverList;
+    if (isDev && !hasProductionServer) {
+      finalServers = [serverList[0]];
+    }
+
+    this.servers = finalServers.map(url => ({
       url,
       isHealthy: true,
       failedAttempts: 0,
@@ -81,6 +97,20 @@ class ServerPoolManager {
    */
   public getAllServers(): string[] {
     return this.servers.map(s => s.url);
+  }
+
+  /**
+   * Returns the count of configured servers.
+   */
+  public getServerCount(): number {
+    return this.servers.length;
+  }
+
+  /**
+   * Returns true if multi-server failover pool is active (production mode with 2+ instances).
+   */
+  public isFailoverEnabled(): boolean {
+    return this.servers.length > 1;
   }
 
   /**
@@ -119,14 +149,13 @@ class ServerPoolManager {
 
     const previousIndex = this.activeIndex;
     
-    // Find next server in pool
+    // Find next healthy or cooldown-recovered server in pool
     let nextIndex = (this.activeIndex + 1) % this.servers.length;
     let found = false;
     const now = Date.now();
 
     for (let i = 0; i < this.servers.length; i++) {
       const candidate = this.servers[nextIndex];
-      // Check if healthy or past cooldown
       if (candidate.isHealthy || (candidate.lastFailureTime && (now - candidate.lastFailureTime > this.failureCooldownMs))) {
         candidate.isHealthy = true;
         this.activeIndex = nextIndex;
@@ -137,7 +166,7 @@ class ServerPoolManager {
     }
 
     if (!found) {
-      // If all servers are marked failed, reset all to healthy and take the next one
+      // If all servers are marked failed, reset all to healthy and take the next round-robin server
       this.servers.forEach(s => { s.isHealthy = true; s.failedAttempts = 0; });
       this.activeIndex = (previousIndex + 1) % this.servers.length;
     }
@@ -172,6 +201,16 @@ class ServerPoolManager {
   }
 
   /**
+   * Wakes up all configured backend servers in parallel on startup to eliminate cold start delays.
+   */
+  public wakeAllServers(): void {
+    if (typeof window === 'undefined') return;
+    this.servers.forEach(server => {
+      fetch(`${server.url}/health`, { method: 'GET', keepalive: true }).catch(() => {});
+    });
+  }
+
+  /**
    * High-availability fetch with automatic instant multi-server failover.
    */
   public async fetchWithFailover(
@@ -179,7 +218,7 @@ class ServerPoolManager {
     init?: RequestInit,
     maxAttempts?: number
   ): Promise<Response> {
-    const attemptsLimit = maxAttempts || Math.max(this.servers.length, 3);
+    const attemptsLimit = maxAttempts || Math.max(this.servers.length, 1);
     const cleanPath = endpointPath.startsWith('/') ? endpointPath : `/${endpointPath}`;
     let lastError: any = null;
 
@@ -192,8 +231,8 @@ class ServerPoolManager {
       try {
         const response = await fetch(targetUrl, init);
         
-        // 502, 503, 504 are server gateway/instance down codes
-        if ([502, 503, 504].includes(response.status) && attempt < attemptsLimit - 1) {
+        // 502, 503, 504 are server down / overload codes -> rotate and retry
+        if ([502, 503, 504].includes(response.status) && attempt < attemptsLimit - 1 && this.servers.length > 1) {
           this.rotateToNextServer(`HTTP ${response.status}`);
           continue;
         }
@@ -202,8 +241,8 @@ class ServerPoolManager {
         return response;
       } catch (err: any) {
         lastError = err;
-        // Network errors or connection refused
-        if (attempt < attemptsLimit - 1) {
+        // Network errors or connection dropped -> rotate and retry
+        if (attempt < attemptsLimit - 1 && this.servers.length > 1) {
           this.rotateToNextServer(err?.message || 'Network fetch error');
           continue;
         }
@@ -218,3 +257,4 @@ export const serverPool = new ServerPoolManager();
 export const getActiveApiUrl = () => serverPool.getActiveUrl();
 export const getWebSocketUrl = (path: string) => serverPool.getWebSocketUrl(path);
 export const fetchWithFailover = (path: string, init?: RequestInit) => serverPool.fetchWithFailover(path, init);
+export const wakeAllServers = () => serverPool.wakeAllServers();

@@ -205,6 +205,7 @@ def get_user_sessions(user_id: int, admin=Depends(require_admin), db: Session = 
 @router.get("/sessions/{session_id}")
 def get_session_messages(session_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
     from core.logger.terminal import CommandCenter
+    from security.pii_scrubber import scrub_pii
     session = db.query(DBSession).filter(DBSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -212,10 +213,12 @@ def get_session_messages(session_id: int, admin=Depends(require_admin), db: Sess
     messages = db.query(Message).filter(Message.session_id == session_id).order_by(Message.created_at.asc()).all()
     results = []
     for msg in messages:
+        # PII Minimization: Scrub sensitive PII in admin inspection
+        clean_content, _ = scrub_pii(msg.content)
         results.append({
             "id": msg.id,
             "role": msg.role,
-            "content": msg.content,
+            "content": clean_content,
             "created_at": msg.created_at,
             "emotion": msg.emotion.emotion_label if msg.emotion else None
         })
@@ -227,6 +230,7 @@ def get_session_messages(session_id: int, admin=Depends(require_admin), db: Sess
 @router.get("/users/{user_id}/export")
 def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
     from core.logger.terminal import CommandCenter
+    from security.pii_scrubber import scrub_pii
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -268,13 +272,14 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
                 else:
                     msg_risk_level = ""
                     msg_risk_score = ""
+                clean_content, _ = scrub_pii(msg.content)
                 write_row_sanitized([
                     user.id, user.username, user.email, user.preferred_language, user.created_at.isoformat() if user.created_at else "",
                     sess.id, session_crisis_str, session_risk_lvl,
                     sess.started_at.isoformat() if sess.started_at else "", sess.ended_at.isoformat() if sess.ended_at else "",
                     msg.id, msg.role, msg.created_at.isoformat() if msg.created_at else "",
                     msg_risk_level, msg_risk_score, is_crisis_msg,
-                    msg.content
+                    clean_content
                 ])
                 
     response = Response(content=output.getvalue(), media_type="text/csv")
@@ -289,6 +294,7 @@ def export_user_data(user_id: int, admin=Depends(require_admin), db: Session = D
 def export_session_data(session_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
     """Export a specific single session and all its messages to CSV."""
     from core.logger.terminal import CommandCenter
+    from security.pii_scrubber import scrub_pii
     session = db.query(DBSession).filter(DBSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -346,6 +352,7 @@ def export_session_data(session_id: int, admin=Depends(require_admin), db: Sessi
                 msg_risk_level = ""
                 msg_risk_score = ""
                 
+            clean_content, _ = scrub_pii(msg.content)
             write_row_sanitized([
                 session.id, session.session_token, user_id, username, email,
                 session.channel, session_crisis_str, session_risk_lvl, session_risk_scr,
@@ -353,7 +360,7 @@ def export_session_data(session_id: int, admin=Depends(require_admin), db: Sessi
                 session.ended_at.isoformat() if session.ended_at else "",
                 msg.id, msg.role, msg.created_at.isoformat() if msg.created_at else "",
                 msg_risk_level, msg_risk_score, is_crisis_msg,
-                emotion_lbl, msg.content
+                emotion_lbl, clean_content
             ])
             
     response = Response(content=output.getvalue(), media_type="text/csv")

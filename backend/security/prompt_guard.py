@@ -31,8 +31,8 @@ INJECTION_PATTERNS = [
     r'(?i)\bpretend\s+you\s+have\s+no\s+(rules|guidelines|safety|filters)\b',
     
     # Prompt extraction & secret probing
-    r'(?i)\b(repeat|print|display|output|show)\s+(me\s+)?(your\s+)?(exact\s+|full\s+|complete\s+|raw\s+|original\s+)?(system\s+prompt|initial\s+prompt|initial\s+instructions|system\s+instructions)\b',
-    r'(?i)\bwhat\s+are\s+your\s+(exact\s+|full\s+|raw\s+)?(system\s+prompts|system\s+instructions|secret\s+instructions)\b',
+    r'(?i)\b(repeat|print|display|output|show|reveal|leak)\s+(me\s+)?(your\s+)?(exact\s+|full\s+|complete\s+|raw\s+|original\s+|hidden\s+|secret\s+)?(system\s+prompt|initial\s+prompt|initial\s+instructions|system\s+instructions|internal\s+prompts)\b',
+    r'(?i)\bwhat\s+are\s+your\s+(exact\s+|full\s+|raw\s+|hidden\s+)?(system\s+prompts|system\s+instructions|secret\s+instructions|internal\s+directives)\b',
     r'(?i)\brepeat\s+everything\s+above\s+(this\s+line|here)\b',
     r'(?i)\bprint\s+(the\s+)?environment\s+variables\b',
     

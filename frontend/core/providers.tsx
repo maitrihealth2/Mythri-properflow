@@ -9,14 +9,13 @@ import { BlockedGuard } from '@/shared/components/BlockedGuard'
 
 import { PWAProvider } from '@/shared/components/PWAProvider'
 
-import { getActiveApiUrl } from '@/core/api'
+import { wakeAllServers } from '@/core/api'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Silently wake up the backend instances on app load to avoid cold-start
     // timeouts when the user hits login. Fire-and-forget — errors are ignored.
-    const url = getActiveApiUrl();
-    fetch(`${url}/health`).catch(() => {})
+    wakeAllServers();
   }, [])
 
   return (

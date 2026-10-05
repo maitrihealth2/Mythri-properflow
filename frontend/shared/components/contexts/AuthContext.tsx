@@ -21,8 +21,7 @@ import React, {
   useRef,
   ReactNode,
 } from 'react'
-import axios from 'axios'
-import { setInMemoryToken, API_URL } from '@/core/api'
+import api, { setInMemoryToken, getActiveApiUrl } from '@/core/api'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,11 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const restore = async () => {
       try {
-        const { data } = await axios.post(
-          `${API_URL}/api/auth/refresh`,
-          {},
-          { withCredentials: true }
-        )
+        const { data } = await api.post('/api/auth/refresh', {})
         if (data.access_token) {
           setToken(data.access_token, data.username)
         }
@@ -107,10 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) { setUser(null); return }
     let cancelled = false
-    axios.get(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true,
-    }).then(({ data }) => { if (!cancelled) setUser(data) })
+    api.get('/api/auth/me')
+      .then(({ data }) => { if (!cancelled) setUser(data) })
       .catch(() => {})
     return () => { cancelled = true }
   }, [token])

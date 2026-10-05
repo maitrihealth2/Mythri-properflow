@@ -1,12 +1,13 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, JSON
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, JSON, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.sql import func
 from security.encryption import EncryptedText
 import os
-from dotenv import load_dotenv
+import time
 import pathlib
+from dotenv import load_dotenv
 
 _BASE = pathlib.Path(__file__).resolve().parent.parent.parent
 load_dotenv(_BASE / ".env")
@@ -48,11 +49,24 @@ from sqlalchemy import event
 @event.listens_for(engine, "before_cursor_execute")
 def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
     try:
+        conn.info.setdefault('query_start_time', []).append(time.time())
         from core.logger.terminal import CommandCenter
         # Extract a short preview of the SQL query for the terminal
         short_query = statement.strip().replace('\n', ' ')[:80] + "..."
         action = "READ" if statement.strip().upper().startswith("SELECT") else "WRITE"
         CommandCenter.log_db(action, short_query)
+    except Exception:
+        pass
+
+@event.listens_for(engine, "after_cursor_execute")
+def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    try:
+        start_times = conn.info.get('query_start_time', [])
+        if start_times:
+            duration = time.time() - start_times.pop()
+            if duration > 0.250:  # Observability warning threshold for slow queries (>250ms)
+                from core.logger.terminal import CommandCenter
+                CommandCenter.log_db("SLOW_QUERY", f"{duration*1000:.1f}ms: {statement.strip()[:70]}...")
     except Exception:
         pass
 
@@ -94,6 +108,10 @@ class RefreshToken(Base):
     - Explicit logout revocation
     """
     __tablename__ = "refresh_tokens"
+    __table_args__ = (
+        Index("ix_refresh_tokens_user_revoked", "user_id", "revoked"),
+        {'comment': 'Server-side refresh token registry'}
+    )
 
     id         = Column(Integer, primary_key=True, index=True)
     jti        = Column(String(36), unique=True, index=True, nullable=False, comment="JWT ID — must match token claim")
@@ -195,7 +213,10 @@ class UserJournal(Base):
 
 class Session(Base):
     __tablename__ = "sessions"
-    __table_args__ = {'comment': 'Conversation sessions between user and the companion'}
+    __table_args__ = (
+        Index("ix_sessions_user_started", "user_id", "started_at"),
+        {'comment': 'Conversation sessions between user and the companion'}
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
@@ -235,7 +256,10 @@ class Session(Base):
 
 class Message(Base):
     __tablename__ = "messages"
-    __table_args__ = {'comment': 'Individual messages within a conversation session'}
+    __table_args__ = (
+        Index("ix_messages_session_created", "session_id", "created_at"),
+        {'comment': 'Individual messages within a conversation session'}
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id", ondelete="CASCADE"), index=True, nullable=False)
@@ -372,7 +396,10 @@ class LivingUserContext(Base):
 
 class CompanionMemory(Base):
     __tablename__ = "companion_memories"
-    __table_args__ = {'comment': 'Extracted context that the AI should remember over time'}
+    __table_args__ = (
+        Index("ix_companion_memories_user_type", "user_id", "memory_type"),
+        {'comment': 'Extracted context that the AI should remember over time'}
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
@@ -604,6 +631,10 @@ def init_db():
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "response_strategy" VARCHAR(50);',
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW();',
         'ALTER TABLE "risk_logs" ADD COLUMN IF NOT EXISTS "message_id" INTEGER REFERENCES messages(id) ON DELETE SET NULL;',
+        'CREATE INDEX IF NOT EXISTS "ix_refresh_tokens_user_revoked" ON "refresh_tokens" ("user_id", "revoked");',
+        'CREATE INDEX IF NOT EXISTS "ix_sessions_user_started" ON "sessions" ("user_id", "started_at");',
+        'CREATE INDEX IF NOT EXISTS "ix_messages_session_created" ON "messages" ("session_id", "created_at");',
+        'CREATE INDEX IF NOT EXISTS "ix_companion_memories_user_type" ON "companion_memories" ("user_id", "memory_type");',
     ]
     if "postgres" in DATABASE_URL:
         from sqlalchemy import text

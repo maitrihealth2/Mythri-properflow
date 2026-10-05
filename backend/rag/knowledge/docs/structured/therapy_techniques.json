@@ -3,12 +3,18 @@
     "id": "cbt_01",
     "concept": "cognitive_distortion",
     "technique": "box_breathing",
+    "source_citation": "Beck Institute for Cognitive Behavior Therapy (2021); Linehan DBT Protocol",
+    "clinical_review_status": "verified",
+    "reviewed_date": "2026-10-01",
     "text": "If the user is experiencing panic or overwhelming anxiety, guide them gently through box breathing: Inhale for 4 seconds, hold for 4 seconds, exhale for 4 seconds, and hold for 4 seconds."
   },
   {
     "id": "dbt_01",
     "concept": "emotional_dysregulation",
     "technique": "radical_acceptance",
+    "source_citation": "Linehan, M. M. (2014) DBT Skills Training Manual (2nd ed.)",
+    "clinical_review_status": "verified",
+    "reviewed_date": "2026-10-01",
     "text": "When the user is fighting against an unchangeable reality, gently introduce radical acceptance. Acknowledge the pain is valid, but remind them that fighting reality only creates more suffering."
   }
 ]

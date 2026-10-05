@@ -1,3 +1,5 @@
+import uuid
+import time
 from fastapi import APIRouter, Depends, HTTPException, Response, Request as FastAPIRequest
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -84,21 +86,29 @@ async def register(req: RegisterRequest, response: Response, db: Session = Depen
     from providers.firebase.firebase_rest import firebase_client
     await firebase_client.register(req.email, req.password)
 
-    user = User(
-        username=req.username, email=req.email,
-        hashed_password="firebase_managed",
-        preferred_language=req.preferred_language,
-        is_active=True
-    )
-    db.add(user); db.commit(); db.refresh(user)
+    try:
+        user = User(
+            username=req.username, email=req.email,
+            hashed_password="firebase_managed",
+            preferred_language=req.preferred_language,
+            is_active=True
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-    token = create_access_token({"user_id": user.id, "username": user.username})
-    refresh_str, refresh_jti, refresh_family = create_refresh_token({"user_id": user.id, "username": user.username})
-    store_refresh_token(db, user.id, refresh_jti, refresh_family)
-    set_refresh_cookie(response, refresh_str)
+        token = create_access_token({"user_id": user.id, "username": user.username})
+        refresh_str, refresh_jti, refresh_family = create_refresh_token({"user_id": user.id, "username": user.username})
+        store_refresh_token(db, user.id, refresh_jti, refresh_family)
+        set_refresh_cookie(response, refresh_str)
 
-    needs_onboarding = check_needs_onboarding(db, user.id)
-    return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
+        needs_onboarding = check_needs_onboarding(db, user.id)
+        return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
+    except Exception as e:
+        db.rollback()
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail="Registration failed. Please try again.")
 
 @router.post("/login", response_model=TokenResponse)
 async def login(request: FastAPIRequest, req: LoginRequest, response: Response, db: Session = Depends(get_db)):

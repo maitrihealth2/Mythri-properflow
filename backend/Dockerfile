@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system-level dependencies needed by native packages (libsndfile1, ffmpeg, build tools)
+# Install system-level dependencies needed by native packages (libsndfile1, ffmpeg, build tools, curl)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
@@ -34,6 +34,8 @@ RUN chown -R appuser:appuser /app
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     HF_HOME=/app/.cache/huggingface \
+    ENVIRONMENT=production \
+    SHOW_TERMINAL_FEED=false \
     PORT=8000
 
 USER appuser
@@ -41,5 +43,5 @@ USER appuser
 # Expose default port
 EXPOSE 8000
 
-# Run uvicorn using exec shell form to support dynamic platform PORT env variables (e.g. Render, Railway, Cloud Run)
-CMD ["sh", "-c", "exec uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run production runner
+CMD ["python", "run_prod.py"]

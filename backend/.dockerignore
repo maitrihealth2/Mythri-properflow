@@ -8,3 +8,9 @@ venv
 *.md
 tests/
 *.db
+training/
+*.jsonl
+*.safetensors
+backend/finetuning/
+rag/finetuning/
+*.log

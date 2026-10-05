@@ -1,3 +1,4 @@
+import os
 import time
 import asyncio
 import threading
@@ -44,6 +45,13 @@ class _CommandCenter:
         self.startup_time = time.time()
         self._last_snapshot_time = time.time()
         
+    @property
+    def is_production(self) -> bool:
+        env = os.getenv("ENVIRONMENT", "").lower()
+        is_prod_env = env in ("production", "prod")
+        no_feed = os.getenv("SHOW_TERMINAL_FEED", "").lower() == "false"
+        return is_prod_env or no_feed
+
     def _ts(self):
         return datetime.now().strftime("%H:%M:%S")
 
@@ -58,16 +66,24 @@ class _CommandCenter:
 
     def start_dashboard(self):
         """Prints the initial header banner."""
-        uptime = int(time.time() - self.startup_time)
-        header = Text(f"MYTHRI V5 - DEVELOPER COMMAND CENTER (STREAMING MODE)", style="bold cyan", justify="center")
+        if self.is_production:
+            print("[CommandCenter] Production backend initialized and ready.")
+            return
+        header = Text("MYTHRI V5 - DEVELOPER COMMAND CENTER", style="bold cyan", justify="center")
         console.print(Panel(header, style="cyan"))
         self._print_snapshot()
 
     def stop_dashboard(self):
+        if self.is_production:
+            print("[CommandCenter] Backend shut down cleanly.")
+            return
         console.print(Panel("[bold red]Shutting down Backend...[/bold red]", border_style="red"))
 
     def _print_snapshot(self):
         """Prints a horizontal summary table of Health, Performance, and Token Usage."""
+        if self.is_production:
+            return
+
         table = Table(show_header=True, header_style="bold magenta", expand=True)
         table.add_column("System Health", style="cyan")
         table.add_column("Performance Metrics", style="green")
@@ -99,8 +115,6 @@ class _CommandCenter:
 
     def log_tokens(self, call_type: str, prompt_tokens: int, completion_tokens: int, duration_ms: float = 0.0, details: str = ""):
         """Logs exact token usage in real-time to the terminal."""
-        import os
-        show_tokens = os.getenv("SHOW_TOKEN_USAGE", "true").lower() in ("true", "1", "yes")
         total_tokens = prompt_tokens + completion_tokens
 
         with self._lock:
@@ -111,7 +125,8 @@ class _CommandCenter:
             self.token_stats["Last Call Tokens"] = f"{prompt_tokens:,} In / {completion_tokens:,} Out ({total_tokens:,})"
             session_cumulative = self.token_stats["Total Tokens"]
 
-        if not show_tokens:
+        show_tokens = os.getenv("SHOW_TOKEN_USAGE", "true").lower() in ("true", "1", "yes")
+        if self.is_production or not show_tokens:
             return
 
         try:
@@ -138,20 +153,24 @@ class _CommandCenter:
 
     def _check_snapshot(self):
         """Prints a snapshot every 60 seconds automatically."""
-        # Check without lock first for performance, then lock in _print_snapshot
+        if self.is_production:
+            return
         if time.time() - self._last_snapshot_time > 60:
             self._print_snapshot()
 
     def log_api(self, method: str, endpoint: str, status: int, duration_ms: float):
         try:
-            self._check_snapshot()
             with self._lock:
                 self.perf_stats["Total Requests"] += 1
                 self._total_response_time += duration_ms
                 self.perf_stats["Avg Response (ms)"] = self._total_response_time / self.perf_stats["Total Requests"]
                 if "/api/consultation/message" in endpoint:
                     self.perf_stats["Last Chat Latency (ms)"] = duration_ms
-            
+
+            if self.is_production:
+                return
+
+            self._check_snapshot()
             color = "green" if status < 400 else "red"
             text = Text()
             text.append(f"[{self._ts()}] ", style="dim")
@@ -166,10 +185,13 @@ class _CommandCenter:
 
     def log_db(self, action: str, query: str):
         try:
-            self._check_snapshot()
             with self._lock:
                 self.perf_stats["Total DB Queries"] += 1
             
+            if self.is_production:
+                return
+
+            self._check_snapshot()
             text = Text()
             text.append(f"[{self._ts()}] ", style="dim")
             text.append(f"DB {action} ", style="bold yellow")
@@ -180,8 +202,10 @@ class _CommandCenter:
 
     def log_ai(self, phase: str, details: str):
         try:
+            if self.is_production:
+                return
+
             self._check_snapshot()
-            
             text = Text()
             text.append(f"[{self._ts()}] ", style="dim")
             text.append(f"AI {str(phase):>15} | ", style="bold magenta")
@@ -191,7 +215,8 @@ class _CommandCenter:
             print(f"[LOG_AI_ERROR] {e}")
 
     def log_error(self, msg: str, exc: Exception = None):
-        self._check_snapshot()
+        if not self.is_production:
+            self._check_snapshot()
         
         file_path = "Unknown"
         line = "?"
@@ -225,13 +250,17 @@ class _CommandCenter:
                 pass
                 
         func_text = f" (in {func})" if func and func != "<module>" else ""
-        content = (
-            f"[bold white]File:[/bold white]    [cyan]{file_path}[/cyan]\n"
-            f"[bold white]Line:[/bold white]    [yellow]{line}{func_text}[/yellow]\n"
-            f"[bold white]Problem:[/bold white] [bold red]{problem}[/bold red]"
-        )
-
-        console.print(Panel(content, title=f"[bold red]ERROR at {self._ts()}[/bold red]", border_style="red", expand=False))
+        
+        if self.is_production:
+            print(f"[ERROR {self._ts()}] {file_path}:{line}{func_text} - {problem}", flush=True)
+        else:
+            content = (
+                f"[bold white]File:[/bold white]    [cyan]{file_path}[/cyan]\n"
+                f"[bold white]Line:[/bold white]    [yellow]{line}{func_text}[/yellow]\n"
+                f"[bold white]Problem:[/bold white] [bold red]{problem}[/bold red]"
+            )
+            console.print(Panel(content, title=f"[bold red]ERROR at {self._ts()}[/bold red]", border_style="red", expand=False))
+        
         try:
             from modules.dashboard.api import broadcast_event
             loop = asyncio.get_running_loop()
@@ -240,14 +269,15 @@ class _CommandCenter:
             pass
 
     def create_progress(self):
-        """Creates a Progress bar for the boot sequence (runs before dashboard)"""
+        """Creates a Progress bar for the boot sequence (disabled in production)"""
         return Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
-            console=console
+            console=console,
+            disable=self.is_production
         )
 
 # Global singleton
