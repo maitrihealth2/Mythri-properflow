@@ -5,12 +5,12 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('refresh_token')?.value
   const { pathname } = request.nextUrl
 
-  // ── Root URL: show landing page, or send logged-in users to /home ──
+  // ── Root URL: redirect directly to /home if logged in, otherwise to /login ──
   if (pathname === '/') {
     if (token) {
       return NextResponse.redirect(new URL('/home', request.url))
     }
-    return NextResponse.next() // render landing page
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // ── /login: accessible always; redirect to /home if already logged in ──
