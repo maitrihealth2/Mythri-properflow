@@ -18,6 +18,8 @@ import {
   getAdminMaintenanceStatus,
   setAdminMaintenanceMode,
   disableAdminMaintenanceMode,
+  getAdminFeedbackMode,
+  setAdminFeedbackMode,
   MaintenanceStatus
 } from '@/core/api'
 
@@ -35,6 +37,10 @@ interface FeedbackRecord {
   username: string
   email: string
   content: string
+  rating?: number
+  ratings?: Record<string, number>
+  session_id?: number | null
+  feedback_type?: string
   created_at: string
 }
 
@@ -442,6 +448,33 @@ export default function AdminDashboard() {
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false)
   const [maintenanceLoading, setMaintenanceLoading] = useState(false)
 
+  // Feedback Flow State
+  const [feedbackMode, setFeedbackMode] = useState<'new' | 'old'>('new')
+  const [feedbackModeLoading, setFeedbackModeLoading] = useState(false)
+
+  const loadFeedbackMode = async () => {
+    try {
+      const res = await getAdminFeedbackMode()
+      setFeedbackMode(res.mode || 'new')
+    } catch (e) {
+      console.error('Failed to load feedback mode', e)
+    }
+  }
+
+  const handleToggleFeedbackMode = async (targetMode: 'new' | 'old') => {
+    if (feedbackMode === targetMode) return
+    setFeedbackModeLoading(true)
+    try {
+      const res = await setAdminFeedbackMode(targetMode)
+      setFeedbackMode(res.mode)
+    } catch (e) {
+      console.error('Failed to update feedback mode', e)
+      alert('Failed to update feedback mode')
+    } finally {
+      setFeedbackModeLoading(false)
+    }
+  }
+
   const loadMaintenanceStatus = async () => {
     try {
       const status = await getAdminMaintenanceStatus()
@@ -485,13 +518,17 @@ export default function AdminDashboard() {
       setIsAuthenticated(true)
       loadData(activeTab)
       loadMaintenanceStatus()
+      loadFeedbackMode()
     }
   }, [])
 
   useEffect(() => {
     if (isAuthenticated) {
       loadMaintenanceStatus()
-      const interval = setInterval(loadMaintenanceStatus, 10000)
+      loadFeedbackMode()
+      const interval = setInterval(() => {
+        loadMaintenanceStatus()
+      }, 10000)
       return () => clearInterval(interval)
     }
   }, [isAuthenticated])
@@ -521,6 +558,8 @@ export default function AdminDashboard() {
       sessionStorage.setItem('mb_admin_token', res.token)
       setIsAuthenticated(true)
       loadData('users')
+      loadFeedbackMode()
+      loadMaintenanceStatus()
     } catch {
       setLoginError('Invalid credentials')
     }
@@ -547,6 +586,7 @@ export default function AdminDashboard() {
       } else if (tab === 'feedback') {
         const res = await getAdminFeedback()
         setFeedbacks(res.feedbacks)
+        await loadFeedbackMode()
       }
     } catch (err) {
       console.error(err)
@@ -1229,20 +1269,188 @@ export default function AdminDashboard() {
 
               {/* Feedback Tab */}
               {activeTab === 'feedback' && (
-                <div className="h-full flex flex-col">
-                  <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-white shadow-sm">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
-                      <thead className="sticky top-0 z-10 bg-surface-dim font-label-md text-on-surface-variant border-b border-outline-variant/30">
-                        <tr><th className="p-4 w-1/4">User</th><th className="p-4 w-1/5">Date</th><th className="p-4">Feedback</th></tr>
+                <div className="h-full flex flex-col gap-4">
+                  {/* Feedback Flow Mode Controller Banner */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-surface-container-low border border-outline-variant/30 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-[20px]">tune</span>
+                        <h3 className="text-sm sm:text-base font-bold text-on-surface">Feedback Flow Version</h3>
+                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                          feedbackMode === 'new' 
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' 
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                        }`}>
+                          {feedbackMode === 'new' ? '✨ New Flow Active' : '🏛️ Old Flow Active'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-on-surface-variant max-w-xl">
+                        {feedbackMode === 'new'
+                          ? 'New Flow: Automatically prompts users for multi-question 1–5 star ratings (Empathy, Clarity, Fluency, Support) when exiting chat or voice sessions.'
+                          : 'Old Flow: Standard manual navigation to feedback page with classic text submission.'}
+                      </p>
+                    </div>
+
+                    {/* Toggle Button Group */}
+                    <div className="flex items-center p-1 rounded-xl bg-surface-container-highest border border-outline-variant/30 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFeedbackMode('new')}
+                        disabled={feedbackModeLoading}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                          feedbackMode === 'new'
+                            ? 'bg-primary text-on-primary shadow-sm'
+                            : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40'
+                        }`}
+                      >
+                        {feedbackModeLoading && feedbackMode !== 'new' && (
+                          <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        )}
+                        <span>✨ New Flow (Exit Prompt)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFeedbackMode('old')}
+                        disabled={feedbackModeLoading}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                          feedbackMode === 'old'
+                            ? 'bg-primary text-on-primary shadow-sm'
+                            : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40'
+                        }`}
+                      >
+                        {feedbackModeLoading && feedbackMode !== 'old' && (
+                          <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        )}
+                        <span>🏛️ Old Flow (Classic)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Feedback Summary Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+                      <span className="text-xs font-medium text-on-surface-variant block">Total Submissions</span>
+                      <span className="text-xl font-bold text-on-surface mt-1 block">{filteredFeedbacks.length}</span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+                      <span className="text-xs font-medium text-on-surface-variant block">Average Star Rating</span>
+                      <span className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                        ⭐ {(() => {
+                          const rated = filteredFeedbacks.filter(f => typeof f.rating === 'number' && f.rating > 0)
+                          if (!rated.length) return 'N/A'
+                          const avg = rated.reduce((acc, f) => acc + (f.rating || 0), 0) / rated.length
+                          return avg.toFixed(1) + ' / 5.0'
+                        })()}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+                      <span className="text-xs font-medium text-on-surface-variant block">Post-Session Exit</span>
+                      <span className="text-xl font-bold text-primary mt-1 block">
+                        {filteredFeedbacks.filter(f => f.feedback_type === 'post_session_exit').length}
+                      </span>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 shadow-sm">
+                      <span className="text-xs font-medium text-on-surface-variant block">General / Manual</span>
+                      <span className="text-xl font-bold text-on-surface mt-1 block">
+                        {filteredFeedbacks.filter(f => f.feedback_type !== 'post_session_exit').length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Feedback Table */}
+                  <div className="flex-1 overflow-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm">
+                    <table className="w-full text-left border-collapse min-w-[850px]">
+                      <thead className="sticky top-0 z-10 bg-surface-container-low font-label-md text-on-surface-variant border-b border-outline-variant/30 shadow-sm">
+                        <tr>
+                          <th className="p-4 w-48">User &amp; Contact</th>
+                          <th className="p-4 w-52">Ratings &amp; Scores</th>
+                          <th className="p-4 w-36">Type</th>
+                          <th className="p-4">Written Thoughts</th>
+                          <th className="p-4 w-36 text-right">Date</th>
+                        </tr>
                       </thead>
                       <tbody>
-                        {filteredFeedbacks.map((f, i) => (
-                          <tr key={i} className="border-b last:border-0 hover:bg-surface-dim/50 font-body-sm">
-                            <td className="p-4"><div className="font-medium text-on-surface">{f.username}</div><div className="text-xs text-on-surface-variant mt-0.5">{f.email}</div></td>
-                            <td className="p-4 text-on-surface-variant">{new Date(f.created_at).toLocaleString()}</td>
-                            <td className="p-4 whitespace-pre-wrap text-on-surface">{f.content}</td>
+                        {filteredFeedbacks.map((f, i) => {
+                          const overallRating = f.rating || (f.ratings?.overall) || null
+                          const empathy = f.ratings?.empathy
+                          const helpfulness = f.ratings?.helpfulness
+                          const fluency = f.ratings?.fluency
+
+                          return (
+                            <tr key={i} className="border-b last:border-0 hover:bg-surface-variant/40 font-body-sm transition-colors">
+                              <td className="p-4 align-top">
+                                <div className="font-semibold text-on-surface">{f.username}</div>
+                                <div className="text-xs text-on-surface-variant mt-0.5">{f.email}</div>
+                                {f.session_id && (
+                                  <div className="text-[10px] text-primary mt-1 font-mono">
+                                    Session #{f.session_id}
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="p-4 align-top">
+                                {overallRating ? (
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center gap-1 font-bold text-xs text-amber-600 dark:text-amber-400">
+                                      <span>{'★'.repeat(Math.min(5, Math.max(1, Math.round(overallRating))))}</span>
+                                      <span className="text-on-surface ml-1">{overallRating}/5</span>
+                                    </div>
+                                    {f.ratings && (
+                                      <div className="flex flex-wrap gap-1 text-[10px]">
+                                        {empathy && (
+                                          <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                                            Empathy: {empathy}★
+                                          </span>
+                                        )}
+                                        {helpfulness && (
+                                          <span className="px-1.5 py-0.5 rounded bg-secondary/10 text-secondary">
+                                            Clarity: {helpfulness}★
+                                          </span>
+                                        )}
+                                        {fluency && (
+                                          <span className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-on-surface-variant">
+                                            Fluency: {fluency}★
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-on-surface-variant italic">No rating scale</span>
+                                )}
+                              </td>
+
+                              <td className="p-4 align-top">
+                                <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                                  f.feedback_type === 'post_session_exit'
+                                    ? 'bg-primary/10 text-primary border border-primary/20'
+                                    : 'bg-black/5 dark:bg-white/10 text-on-surface-variant'
+                                }`}>
+                                  {f.feedback_type === 'post_session_exit' ? 'Post-Session' : 'General'}
+                                </span>
+                              </td>
+
+                              <td className="p-4 align-top">
+                                <p className="whitespace-pre-wrap text-on-surface text-xs leading-relaxed max-w-lg">
+                                  {f.content ? f.content : <span className="text-on-surface-variant/60 italic">No additional comments provided.</span>}
+                                </p>
+                              </td>
+
+                              <td className="p-4 align-top text-right text-xs text-on-surface-variant">
+                                {new Date(f.created_at).toLocaleDateString()}<br />
+                                <span className="text-[11px] opacity-70">{new Date(f.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </td>
+                            </tr>
+                          )
+                        })}
+
+                        {filteredFeedbacks.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="p-8 text-center text-on-surface-variant">
+                              No feedback submissions found.
+                            </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>

@@ -291,9 +291,48 @@ export async function getDashboardStats() {
   return res.data
 }
 
-export async function submitFeedback(content: string) {
-  const res = await api.post('/api/feedback/submit', { content })
+export interface FeedbackPayload {
+  content?: string
+  rating?: number
+  ratings?: Record<string, number>
+  session_id?: number | string | null
+  feedback_type?: 'general' | 'post_session_exit' | 'voice_session' | string
+}
+
+export interface FeedbackModeResponse {
+  feedback_mode: 'new' | 'old'
+  mode: 'new' | 'old'
+  label?: string
+  description?: string
+  updated_at?: string
+}
+
+export async function submitFeedback(data: string | FeedbackPayload) {
+  const payload = typeof data === 'string' ? { content: data, rating: 5, feedback_type: 'general' } : data
+  const res = await api.post('/api/feedback/submit', payload)
   return res.data
+}
+
+export async function getFeedbackMode(): Promise<FeedbackModeResponse> {
+  try {
+    const res = await api.get('/api/config/feedback_mode')
+    const m = res.data?.mode || res.data?.feedback_mode || 'new'
+    return { feedback_mode: m, mode: m }
+  } catch {
+    return { feedback_mode: 'new', mode: 'new' }
+  }
+}
+
+export async function getAdminFeedbackMode(): Promise<FeedbackModeResponse> {
+  const res = await api.get('/api/admin/feedback/mode')
+  const m = res.data?.mode || res.data?.feedback_mode || 'new'
+  return { feedback_mode: m, mode: m }
+}
+
+export async function setAdminFeedbackMode(mode: 'new' | 'old'): Promise<FeedbackModeResponse> {
+  const res = await api.post('/api/admin/feedback/mode', { mode })
+  const m = res.data?.mode || res.data?.feedback_mode || mode
+  return { feedback_mode: m, mode: m }
 }
 
 export async function getBaselineShiftAnalytics() {
@@ -424,3 +463,4 @@ export const disableAdminMaintenanceMode = async (): Promise<MaintenanceStatus> 
   const response = await api.post('/api/admin/maintenance/disable')
   return response.data
 }
+

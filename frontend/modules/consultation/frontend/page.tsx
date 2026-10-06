@@ -1,8 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import api, { startSession, sendMessage, getTranscript, logout, getProfile, getInMemoryToken, getWsTicket, getActiveApiUrl, getWebSocketUrl, fetchWithFailover } from '@/core/api'
+import api, { startSession, sendMessage, getTranscript, logout, getProfile, getInMemoryToken, getWsTicket, getActiveApiUrl, getWebSocketUrl, fetchWithFailover, getFeedbackMode } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
@@ -740,6 +739,28 @@ export default function ConsultationPage() {
     return () => window.removeEventListener('shortcut:new-chat', handler)
   }, [handleNewChat])
 
+  // ─── Exit Navigation (Feedback intercept) ─────────────────────────────────
+  const handleExitNavigation = async (targetHref: string) => {
+    setMenuOpen(false)
+    setLangMenuOpen(false)
+    if (targetHref === '/feedback') {
+      router.push(targetHref)
+      return
+    }
+
+    try {
+      const modeRes = await getFeedbackMode()
+      if (modeRes.mode === 'new') {
+        const sid = sessionId || sessionStorage.getItem('mb_session_id') || ''
+        router.push(`/feedback?from=exit&session_id=${sid}&target=${encodeURIComponent(targetHref)}`)
+        return
+      }
+    } catch {
+      // fallback
+    }
+    router.push(targetHref)
+  }
+
   // ─── Main UI ───────────────────────────────────────────────────────────────
   return (
     <div className="relative flex flex-col min-h-[100dvh] w-full">
@@ -769,7 +790,7 @@ export default function ConsultationPage() {
       <header className="fixed top-0 z-40 flex justify-between items-center w-full px-4 sm:px-6 md:px-margin-desktop py-3.5 sm:py-4 pointer-events-none transition-all">
         <div className="flex items-center gap-2.5 sm:gap-3 pointer-events-auto">
           <RadialNav />
-          <Link href="/home" className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm">home</Link>
+          <button onClick={() => handleExitNavigation('/home')} className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all duration-150 hover:scale-105 active:scale-95 shadow-sm" title="Return to Sanctuary">home</button>
           <span className="text-headline-md font-headline-md font-medium text-primary dark:text-white/90 drop-shadow-md">Mythri</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 relative pointer-events-auto">
@@ -781,21 +802,21 @@ export default function ConsultationPage() {
 
           {/* Desktop Menu Dropdown */}
           <nav className={`absolute right-0 top-[100%] mt-2 w-56 glass-menu rounded-2xl flex flex-col p-2 gap-1 origin-top transition-all duration-300 ${menuOpen ? 'scale-y-100 opacity-100 pointer-events-auto' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <button onClick={() => handleExitNavigation('/home')} className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
-            </Link>
-            <Link href="/history" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/history')} className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">history</span> Reflections
-            </Link>
-            <Link href="/exercises" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/exercises')} className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">self_improvement</span> Mind Gym
-            </Link>
-            <Link href="/profile" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/profile')} className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
-            </Link>
-            <Link href="/feedback" className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/feedback')} className="text-on-surface-variant hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">rate_review</span> Feedback
-            </Link>
+            </button>
             <div className="h-px bg-outline-variant/30 my-1" />
             <button
               onClick={async () => {

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 
-from core.database.models import get_db, User, UserOnboarding, UserFeedback, UserProfile, Session as DBSession, Message, MessageEmotion
+from core.database.models import get_db, User, UserOnboarding, UserFeedback, UserProfile, Session as DBSession, Message, MessageEmotion, AppConfiguration
 from security.authentication.service import SECRET_KEY, ALGORITHM, ISSUER, AUDIENCE
 
 def _sanitize_csv_cell(value):
@@ -105,16 +105,41 @@ def get_consents(admin=Depends(require_admin), db: Session = Depends(get_db)):
         })
     return {"consents": consents}
 
+class FeedbackModeUpdate(BaseModel):
+    mode: str = Field(..., pattern="^(new|old)$")
+
+@router.get("/feedback/mode")
+def get_admin_feedback_mode(admin=Depends(require_admin), db: Session = Depends(get_db)):
+    config = db.query(AppConfiguration).filter(AppConfiguration.config_key == "feedback_flow_version").first()
+    mode = config.config_value if config else "new"
+    return {"feedback_mode": mode, "mode": mode}
+
+@router.post("/feedback/mode")
+def set_admin_feedback_mode(payload: FeedbackModeUpdate, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    config = db.query(AppConfiguration).filter(AppConfiguration.config_key == "feedback_flow_version").first()
+    if not config:
+        config = AppConfiguration(config_key="feedback_flow_version", config_value=payload.mode)
+        db.add(config)
+    else:
+        config.config_value = payload.mode
+    db.commit()
+    return {"status": "success", "feedback_mode": config.config_value, "mode": config.config_value}
+
 @router.get("/feedback")
 def get_feedback(admin=Depends(require_admin), db: Session = Depends(get_db)):
-    results = db.query(UserFeedback, User).join(User, UserFeedback.user_id == User.id).all()
+    results = db.query(UserFeedback, User).join(User, UserFeedback.user_id == User.id).order_by(UserFeedback.created_at.desc()).all()
     feedbacks = []
     for feedback, user in results:
         feedbacks.append({
+            "id": feedback.id,
             "user_id": user.id,
             "username": user.username,
             "email": user.email,
             "content": feedback.content,
+            "rating": feedback.rating or 5,
+            "ratings": feedback.ratings,
+            "feedback_type": feedback.feedback_type or "general",
+            "session_id": feedback.session_id,
             "created_at": feedback.created_at,
         })
     return {"feedbacks": feedbacks}

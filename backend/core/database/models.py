@@ -544,14 +544,19 @@ class RiskLog(Base):
     message = relationship("Message")
 class UserFeedback(Base):
     __tablename__ = "user_feedback"
-    __table_args__ = {'comment': 'User feedback and feature requests'}
+    __table_args__ = {'comment': 'User feedback, ratings, and feature requests'}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    content = Column(Text, nullable=False)
+    content = Column(Text, nullable=True)
+    rating = Column(Integer, default=5, nullable=True, comment="Overall score from 1 to 5")
+    ratings = Column(JSON, nullable=True, comment="Multi-question rating breakdown: overall, empathy, helpfulness, fluency")
+    session_id = Column(Integer, ForeignKey("sessions.id", ondelete="SET NULL"), nullable=True, index=True)
+    feedback_type = Column(String(50), default="general", comment="post_session_exit | general | classic")
     created_at = Column(DateTime(timezone=True), default=func.now())
 
     user = relationship("User")
+    session = relationship("Session")
 
 
 class FeatureFlag(Base):

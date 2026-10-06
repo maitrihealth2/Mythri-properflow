@@ -10,6 +10,7 @@ interface ConsentState {
   eligibility: boolean
   disclaimer: boolean
   privacy: boolean
+  terms: boolean
 }
 
 const LANGUAGES = [
@@ -47,6 +48,7 @@ export default function OnboardingPage() {
     eligibility: false,
     disclaimer: false,
     privacy: false,
+    terms: false,
   })
   const [preferredName, setPreferredName] = useState<string>('')
   const [age, setAge] = useState<string>('')
@@ -81,7 +83,17 @@ export default function OnboardingPage() {
   }, [router])
 
   // Consent validation
-  const isConsentValid = consent.eligibility && consent.disclaimer && consent.privacy
+  const isConsentValid = consent.eligibility && consent.disclaimer && consent.privacy && consent.terms
+
+  const toggleAllConsent = () => {
+    const nextState = !isConsentValid
+    setConsent({
+      eligibility: nextState,
+      disclaimer: nextState,
+      privacy: nextState,
+      terms: nextState,
+    })
+  }
 
   const handleNextStep = () => {
     setErrorMessage('')
@@ -129,7 +141,7 @@ export default function OnboardingPage() {
         consent: {
           ...consent,
           timestamp: new Date().toISOString(),
-          version: '2.0',
+          version: '2.5',
         },
       }
 
@@ -172,8 +184,8 @@ export default function OnboardingPage() {
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 w-full max-w-[620px] my-auto pt-14 pb-6">
-        <div className="bg-white/80 dark:bg-[#141414]/90 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl transition-all duration-300">
+      <main className="relative z-10 w-full max-w-[680px] my-auto pt-14 pb-6">
+        <div className="bg-white/90 dark:bg-[#141414]/95 backdrop-blur-2xl border border-black/5 dark:border-white/10 rounded-[2rem] p-6 sm:p-8 md:p-10 shadow-2xl transition-all duration-300">
           
           {/* Progress Indicator (Steps 1 to 3) */}
           {currentStep >= 1 && currentStep <= 3 && (
@@ -191,92 +203,173 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 0: Consent & Terms Gate */}
+          {/* STEP 0: Professional Crisp Consent & Digital Sanctuary Agreement */}
           {currentStep === 0 && (
             <div className="space-y-6 animate-fade-in">
-              <div className="text-center space-y-1.5 pb-2">
-                <span className="text-xs font-bold tracking-widest text-primary uppercase">Affyne Labs</span>
-                <h1 className="text-2xl sm:text-3xl font-headline-md font-bold text-primary dark:text-white">
-                  Welcome to Mythri
+              {/* Header */}
+              <div className="text-center space-y-2 pb-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-label-md font-semibold tracking-wide">
+                  <span className="material-symbols-outlined text-[15px]">verified_user</span>
+                  <span>Informed Digital Consent &amp; Privacy Agreement</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-headline-md font-bold text-primary dark:text-white tracking-tight">
+                  Welcome to Mythri Sanctuary
                 </h1>
-                <p className="text-sm text-on-surface-variant dark:text-white/70 max-w-md mx-auto">
-                  A compassionate, culturally attuned space for your mental wellness.
+                <p className="text-xs sm:text-sm text-on-surface-variant dark:text-white/70 max-w-lg mx-auto leading-relaxed">
+                  Before we begin, please review and confirm these essential clinical boundaries, privacy guarantees, and ethical care commitments.
                 </p>
               </div>
 
-              <div className="space-y-3.5 text-xs sm:text-sm">
-                {/* 1. Age Eligibility */}
+              {/* Quick Select All Toggle Bar */}
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5 text-xs">
+                <span className="text-on-surface-variant dark:text-white/70 font-medium">
+                  {isConsentValid ? '✓ All 4 required consents accepted' : '4 required acknowledgments'}
+                </span>
+                <button
+                  type="button"
+                  onClick={toggleAllConsent}
+                  className="text-primary hover:underline font-bold transition-all text-xs"
+                >
+                  {isConsentValid ? 'Deselect All' : 'Select All & Accept'}
+                </button>
+              </div>
+
+              {/* Consent Cards Grid */}
+              <div className="space-y-3 text-xs sm:text-sm">
+                
+                {/* 1. Age Eligibility & Legal Capacity */}
                 <div
                   onClick={() => setConsent((prev) => ({ ...prev, eligibility: !prev.eligibility }))}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                  className={`p-4 sm:p-4.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
                     consent.eligibility
-                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10'
-                      : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-black/20'
+                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10 shadow-sm'
+                      : 'bg-black/[0.015] dark:bg-white/[0.025] border-black/10 dark:border-white/10 hover:border-black/20'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={consent.eligibility}
                     onChange={() => {}}
-                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0"
+                    className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0 cursor-pointer"
                   />
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-on-surface dark:text-white">1. Age Eligibility</p>
-                    <p className="text-on-surface-variant dark:text-white/60 leading-relaxed text-xs">
-                      I confirm that I am 18 years of age or older (or of legal digital consent age).
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-on-surface dark:text-white flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[17px] text-primary">person_check</span>
+                        1. Age Eligibility &amp; Legal Capacity
+                      </p>
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 text-on-surface-variant dark:text-white/70">
+                        18+ Verified
+                      </span>
+                    </div>
+                    <p className="text-on-surface-variant dark:text-white/70 leading-relaxed text-xs">
+                      I confirm that I am 18 years of age or older (or accessing under parental/guardian supervision) and legally competent to grant informed digital consent.
                     </p>
                   </div>
                 </div>
 
-                {/* 2. AI Companion & Medical Disclaimer */}
+                {/* 2. Non-Clinical AI Wellness & Emergency Helplines */}
                 <div
                   onClick={() => setConsent((prev) => ({ ...prev, disclaimer: !prev.disclaimer }))}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                  className={`p-4 sm:p-4.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
                     consent.disclaimer
-                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10'
-                      : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-black/20'
+                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10 shadow-sm'
+                      : 'bg-black/[0.015] dark:bg-white/[0.025] border-black/10 dark:border-white/10 hover:border-black/20'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={consent.disclaimer}
                     onChange={() => {}}
-                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0"
+                    className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0 cursor-pointer"
                   />
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-on-surface dark:text-white">2. Medical &amp; Emergency Disclaimer</p>
-                    <p className="text-on-surface-variant dark:text-white/60 leading-relaxed text-xs">
-                      I understand Mythri is an AI companion for emotional reflection and wellness support — not a licensed medical professional or replacement for emergency crisis care.
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-on-surface dark:text-white flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[17px] text-primary">healing</span>
+                        2. Non-Clinical AI Support &amp; Helplines
+                      </p>
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                        Non-Diagnostic
+                      </span>
+                    </div>
+                    <p className="text-on-surface-variant dark:text-white/70 leading-relaxed text-xs">
+                      Mythri is an Artificial Intelligence wellness companion for reflection and coping techniques — <strong>not</strong> a licensed psychiatrist, medical provider, or crisis emergency hotline.
                     </p>
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 text-[11px] text-amber-900 dark:text-amber-200 leading-snug">
+                      <strong>24/7 Crisis Support:</strong> In acute emergencies, call <strong>Kiran (14416)</strong>, <strong>Tele-MANAS (14416 / 1800 891 4416)</strong>, or <strong>Vandrevala (+91 9999 666 555)</strong>.
+                    </div>
                   </div>
                 </div>
 
-                {/* 3. Privacy & Data Use */}
+                {/* 3. Privacy, Zero Resale & AES-256 Confidentiality */}
                 <div
                   onClick={() => setConsent((prev) => ({ ...prev, privacy: !prev.privacy }))}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                  className={`p-4 sm:p-4.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
                     consent.privacy
-                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10'
-                      : 'bg-black/[0.02] dark:bg-white/[0.03] border-black/10 dark:border-white/10 hover:border-black/20'
+                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10 shadow-sm'
+                      : 'bg-black/[0.015] dark:bg-white/[0.025] border-black/10 dark:border-white/10 hover:border-black/20'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={consent.privacy}
                     onChange={() => {}}
-                    className="mt-0.5 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0"
+                    className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0 cursor-pointer"
                   />
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-on-surface dark:text-white">3. Privacy &amp; Data Security</p>
-                    <p className="text-on-surface-variant dark:text-white/60 leading-relaxed text-xs">
-                      I consent to my conversation and audio data being processed securely to deliver tailored responses. My data is strictly protected and will never be sold.
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-on-surface dark:text-white flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[17px] text-primary">lock</span>
+                        3. Privacy &amp; AES-256 Confidentiality
+                      </p>
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                        Zero Resale
+                      </span>
+                    </div>
+                    <p className="text-on-surface-variant dark:text-white/70 leading-relaxed text-xs">
+                      Your conversations and reflections are protected using bank-grade AES-256 encryption. We never sell your personal or mental health data to advertisers or third-party brokers.
                     </p>
                   </div>
                 </div>
+
+                {/* 4. Terms of Care & Responsible Sanctuary Conduct */}
+                <div
+                  onClick={() => setConsent((prev) => ({ ...prev, terms: !prev.terms }))}
+                  className={`p-4 sm:p-4.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                    consent.terms
+                      ? 'bg-primary/5 border-primary/40 dark:bg-primary/10 shadow-sm'
+                      : 'bg-black/[0.015] dark:bg-white/[0.025] border-black/10 dark:border-white/10 hover:border-black/20'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={consent.terms}
+                    onChange={() => {}}
+                    className="mt-1 w-4 h-4 rounded text-primary focus:ring-primary accent-primary shrink-0 cursor-pointer"
+                  />
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-on-surface dark:text-white flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[17px] text-primary">gavel</span>
+                        4. Terms of Care &amp; Sanctuary Standards
+                      </p>
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 text-on-surface-variant dark:text-white/70">
+                        Sanctuary Code
+                      </span>
+                    </div>
+                    <p className="text-on-surface-variant dark:text-white/70 leading-relaxed text-xs">
+                      I agree to engage in safe, respectful interactions within the sanctuary and abide by Mythri's Terms of Service and continuous safety protocols.
+                    </p>
+                  </div>
+                </div>
+
               </div>
 
               {errorMessage && (
-                <p className="text-xs text-red-500 dark:text-red-400 text-center font-medium">{errorMessage}</p>
+                <p className="text-xs text-red-500 dark:text-red-400 text-center font-medium bg-red-50 dark:bg-red-950/30 p-2.5 rounded-xl border border-red-200 dark:border-red-900/40">
+                  {errorMessage}
+                </p>
               )}
 
               <button
@@ -284,11 +377,11 @@ export default function OnboardingPage() {
                 disabled={!isConsentValid}
                 className={`w-full py-4 rounded-2xl font-headline-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                   isConsentValid
-                    ? 'bg-primary text-on-primary shadow-lg shadow-primary/25 hover:brightness-105 active:scale-[0.99]'
+                    ? 'bg-primary text-on-primary shadow-lg shadow-primary/25 hover:brightness-105 active:scale-[0.99] cursor-pointer'
                     : 'bg-black/10 dark:bg-white/10 text-on-surface-variant/40 dark:text-white/30 cursor-not-allowed'
                 }`}
               >
-                <span>I Agree &amp; Continue</span>
+                <span>Accept Terms &amp; Enter Sanctuary</span>
                 <span className="material-symbols-outlined text-lg">arrow_forward</span>
               </button>
             </div>

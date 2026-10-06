@@ -17,6 +17,7 @@ import {
   LucideIcon
 } from 'lucide-react'
 import { usePWAContext } from '@/shared/components/PWAProvider'
+import { getFeedbackMode } from '@/core/api'
 
 interface NavItem {
   id: string
@@ -68,11 +69,25 @@ export default function RadialNav() {
   // Don't render on landing or auth pages
   if (pathname === '/login' || pathname === '/') return null
 
-  const handleNavigate = (href: string) => {
+  const handleNavigate = async (href: string) => {
     setIsOpen(false)
-    if (pathname !== href) {
-      router.push(href)
+    if (pathname === href) return
+
+    // If leaving a session (text-chat or voice-chat) and going to any non-feedback page
+    if ((pathname === '/text-chat' || pathname === '/voice-chat') && href !== '/feedback' && href !== '/text-chat' && href !== '/voice-chat') {
+      try {
+        const modeRes = await getFeedbackMode()
+        if (modeRes.mode === 'new') {
+          const sid = sessionStorage.getItem('mb_session_id') || ''
+          router.push(`/feedback?from=exit&session_id=${sid}&target=${encodeURIComponent(href)}`)
+          return
+        }
+      } catch {
+        // fallback to normal navigation
+      }
     }
+
+    router.push(href)
   }
 
   return (

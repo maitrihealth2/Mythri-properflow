@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { startSession, getTranscript, logout, API_URL, getInMemoryToken, getActiveApiUrl, fetchWithFailover } from '@/core/api'
+import { startSession, getTranscript, logout, API_URL, getInMemoryToken, getActiveApiUrl, fetchWithFailover, getFeedbackMode } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
@@ -444,9 +443,30 @@ export default function VoiceModePage() {
     mitraStore.setState('idle')
   }
 
-  const handleStopConversation = () => {
+  const handleExitNavigation = async (targetHref: string) => {
     stopVoice()
-    router.push('/text-chat')
+    setMainMenuOpen(false)
+    setLangMenuOpen(false)
+    if (targetHref === '/feedback') {
+      router.push(targetHref)
+      return
+    }
+
+    try {
+      const modeRes = await getFeedbackMode()
+      if (modeRes.mode === 'new') {
+        const sid = sessionId || sessionIdRef.current || sessionStorage.getItem('mb_session_id') || ''
+        router.push(`/feedback?from=exit&session_id=${sid}&target=${encodeURIComponent(targetHref)}`)
+        return
+      }
+    } catch {
+      // fallback
+    }
+    router.push(targetHref)
+  }
+
+  const handleStopConversation = () => {
+    handleExitNavigation('/text-chat')
   }
 
   useEffect(() => {
@@ -770,21 +790,21 @@ export default function VoiceModePage() {
 
           {/* Desktop Main Menu */}
           <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 glass-menu dark:bg-[#1C1822]/95 dark:border-white/10 rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto shadow-2xl' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <Link href="/home" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            <button onClick={() => handleExitNavigation('/home')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
-            </Link>
-            <Link href="/text-chat" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/text-chat')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
-            </Link>
-            <Link href="/history" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/history')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
-            </Link>
-            <Link href="/profile" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/profile')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">person</span> Profile
-            </Link>
-            <Link href="/feedback" className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md">
+            </button>
+            <button onClick={() => handleExitNavigation('/feedback')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
               <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
-            </Link>
+            </button>
             <div className="h-px bg-outline-variant/30 dark:bg-white/10 my-1 mx-2"></div>
             <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
               <span className="material-symbols-outlined text-[20px]">logout</span> Logout
