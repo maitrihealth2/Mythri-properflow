@@ -152,16 +152,24 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         h["Referrer-Policy"]   = "strict-origin-when-cross-origin"
         h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
 
-        # Cross-origin isolation policies
-        h["Cross-Origin-Opener-Policy"]   = "same-origin"
-        h["Cross-Origin-Resource-Policy"] = "same-site"
+        # Cross-origin isolation policies (allow popups for OAuth and Google Auth)
+        h["Cross-Origin-Opener-Policy"]   = "same-origin-allow-popups"
+        h["Cross-Origin-Resource-Policy"] = "cross-origin"
 
-        # Content-Security-Policy (API server — tighten further on frontend)
-        h["Content-Security-Policy"] = (
-            "default-src 'none'; "
-            "frame-ancestors 'none';"
-        )
-
-        # NOTE: X-XSS-Protection intentionally omitted — deprecated; CSP is the modern control
+        # Content-Security-Policy
+        req_path = request.url.path.lower()
+        if req_path in ("/docs", "/redoc", "/openapi.json") or req_path.startswith("/docs"):
+            h["Content-Security-Policy"] = (
+                "default-src 'self' https://cdn.jsdelivr.net https://fastapi.tiangolo.com; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: https://fastapi.tiangolo.com https://cdn.jsdelivr.net;"
+            )
+            h.pop("X-Frame-Options", None)
+        else:
+            h["Content-Security-Policy"] = (
+                "default-src 'none'; "
+                "frame-ancestors 'none';"
+            )
 
         return response

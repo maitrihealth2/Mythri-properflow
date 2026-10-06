@@ -137,10 +137,9 @@ app = FastAPI(
     description="AI Mental Health Support — Voice + Text — Built by Affyne Labs, Powered by Sarvam AI",
     version="3.0.0",
     lifespan=lifespan,
-    # Disable interactive docs in production — they expose the full API schema publicly
-    docs_url=None if _is_production else "/docs",
-    redoc_url=None if _is_production else "/redoc",
-    openapi_url=None if _is_production else "/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 cors_origins_env = os.getenv("CORS_ORIGINS", "")
