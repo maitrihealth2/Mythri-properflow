@@ -114,7 +114,7 @@ function SanctuaryWisp() {
 
 export default function LoginPage() {
   const router = useRouter()
-  const { token, setToken } = useAuth()
+  const { token, loading: authLoading, setToken } = useAuth()
   const [mode, setMode] = useState<'signin' | 'create'>('signin')
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
@@ -127,12 +127,15 @@ export default function LoginPage() {
 
   const [agreeTerms, setAgreeTerms] = useState(false)
 
-  // CRIT-03: Use in-memory token from AuthContext, not localStorage
+  // CRIT-03: Redirect already-authenticated users away from /login.
+  // Only redirect after authLoading is done so we don't fire during the
+  // initial session-restore attempt (which would loop back to /login if
+  // the refresh resolves while still on this page).
   useEffect(() => {
-    if (token) {
+    if (!authLoading && token) {
       router.replace('/home');
     }
-  }, [token, router]);
+  }, [token, authLoading, router]);
 
   const handleGoogleLogin = async () => {
     try {

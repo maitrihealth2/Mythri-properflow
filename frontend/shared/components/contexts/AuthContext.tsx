@@ -21,7 +21,7 @@ import React, {
   useRef,
   ReactNode,
 } from 'react'
-import api, { setInMemoryToken, getActiveApiUrl } from '@/core/api'
+import api, { setInMemoryToken, getActiveApiUrl, serverPool } from '@/core/api'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,12 +84,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const restore = async () => {
       try {
-        const { data } = await api.post('/api/auth/refresh', {})
+        // Use the active backend URL directly to bypass the Next.js rewrite
+        // (next.config.js rewrites point to 127.0.0.1:8000 which is dead in production)
+        const backendUrl = serverPool.getActiveUrl()
+        const { data } = await api.post(`${backendUrl}/api/auth/refresh`, {})
         if (data.access_token) {
           setToken(data.access_token, data.username)
         }
       } catch {
-        // No valid session
+        // No valid session — user must log in
       } finally {
         setLoading(false)
       }
