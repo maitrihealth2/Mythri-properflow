@@ -24,12 +24,7 @@ const getMoodIcon = (mood: string) => {
 export default function DashboardPage() {
   const router = useRouter()
   const { token, user, loading: authLoading } = useAuth()
-  const [username, setUsername] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('mb_username') || 'Seeker'
-    }
-    return 'Seeker'
-  })
+  const [username, setUsername] = useState('Seeker')
   const [menuOpen, setMenuOpen] = useState(false)
   const [greeting, setGreeting] = useState('Good morning')
   const [stats, setStats] = useState<any>(null)
@@ -151,8 +146,9 @@ export default function DashboardPage() {
         <section className="flex flex-col justify-center flex-none md:w-[30%] lg:w-[28%] gap-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           
           <div className="mb-2 text-center md:text-left pl-2 shrink-0">
-            <h1 className="text-display-sm lg:text-display-md font-headline-md text-primary mb-1 tracking-tight leading-tight">
-              <span className="opacity-70 font-light italic text-headline-sm lg:text-headline-lg">{greeting},</span><br/>{username}.
+            <h1 className="text-display-sm lg:text-display-md font-headline-md text-primary mb-1 tracking-tight leading-tight" suppressHydrationWarning>
+              <span className="opacity-70 font-light italic text-headline-sm lg:text-headline-lg" suppressHydrationWarning>{greeting},</span><br/>
+              <span suppressHydrationWarning>{username}</span>.
             </h1>
             <p className="text-body-sm lg:text-body-md text-on-surface-variant font-body-md opacity-80 max-w-sm mx-auto md:mx-0">
               "Small steps every day create lasting change."
