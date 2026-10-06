@@ -64,15 +64,16 @@ def set_refresh_cookie(response: Response, refresh_token: str):
     if samesite not in ("strict", "lax", "none"):
         samesite = "lax"
     is_prod = os.getenv("ENVIRONMENT", "").lower() in ("production", "prod")
-    # If samesite=none, browsers strictly require secure=True
-    is_secure = True if (samesite == "none" or is_prod) else True
+    # If samesite=none, browsers strictly require secure=True. In local/dev over HTTP, secure must be False.
+    is_secure = True if (samesite == "none" or is_prod) else False
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
         secure=is_secure,
         samesite=samesite,
-        max_age=7 * 24 * 60 * 60
+        max_age=7 * 24 * 60 * 60,
+        path="/"
     )
 
 

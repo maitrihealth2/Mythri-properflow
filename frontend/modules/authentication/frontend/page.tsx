@@ -162,9 +162,9 @@ export default function LoginPage() {
       await new Promise(r => setTimeout(r, 400))
       
       if (data.needs_onboarding) {
-        window.location.href = '/onboarding'
+        router.replace('/onboarding')
       } else {
-        window.location.href = '/home'
+        router.replace('/home')
       }
     } catch (err: any) {
       console.error("Google Auth Error:", err)
@@ -249,9 +249,9 @@ export default function LoginPage() {
       await new Promise(r => setTimeout(r, 400))
 
       if (data.needs_onboarding) {
-        window.location.href = '/onboarding'
+        router.replace('/onboarding')
       } else {
-        window.location.href = '/home'
+        router.replace('/home')
       }
     } catch (err: any) {
       console.error("API Error:", err)
