@@ -78,7 +78,7 @@ export default function ProfilePage() {
         }).finally(() => {
             setLoading(false)
         })
-    }, [router])
+    }, [router, authLoading, token])
 
     const handleLogout = async (e: React.MouseEvent) => {
         e.preventDefault()

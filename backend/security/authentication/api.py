@@ -5,7 +5,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, EmailStr
 
-from core.database.models import get_db, User, UserOnboarding
+from core.database.models import get_db, User, UserOnboarding, UserProfile
 from security.authentication.service import (
     hash_password, verify_password,
     create_access_token, create_refresh_token,
@@ -109,13 +109,30 @@ async def register(req: RegisterRequest, response: Response, db: Session = Depen
         db.commit()
         db.refresh(user)
 
+        # Create initial profile and onboarding with custom name
+        profile = UserProfile(
+            user_id=user.id,
+            preferred_name=req.username,
+            full_name=req.username
+        )
+        db.add(profile)
+
+        onboarding = UserOnboarding(
+            user_id=user.id,
+            preferred_name=req.username,
+            language=req.preferred_language,
+            is_completed=True,
+            conversation_style="auto_adaptive"
+        )
+        db.add(onboarding)
+        db.commit()
+
         token = create_access_token({"user_id": user.id, "username": user.username})
         refresh_str, refresh_jti, refresh_family = create_refresh_token({"user_id": user.id, "username": user.username})
         store_refresh_token(db, user.id, refresh_jti, refresh_family)
         set_refresh_cookie(response, refresh_str)
 
-        needs_onboarding = check_needs_onboarding(db, user.id)
-        return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
+        return TokenResponse(access_token=token, username=user.username, needs_onboarding=False)
     except Exception as e:
         db.rollback()
         if isinstance(e, HTTPException):
@@ -319,10 +336,15 @@ def consume_ws_ticket(ticket: str) -> int | None:
 
 
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == current_user.id).first()
+    preferred_name = (profile.preferred_name if profile and profile.preferred_name else None) or (onboarding.preferred_name if onboarding and onboarding.preferred_name else None) or current_user.username
+
     return {
         "id": current_user.id, 
         "username": current_user.username, 
+        "preferred_name": preferred_name,
         "email": current_user.email, 
         "preferred_language": current_user.preferred_language,
         "is_active": current_user.is_active

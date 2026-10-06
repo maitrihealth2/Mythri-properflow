@@ -55,7 +55,7 @@ export default function HistoryPage() {
     }
 
     fetchHistory()
-  }, [router])
+  }, [router, authLoading, token])
 
   const handleSessionClick = async (session: Session) => {
     setSelectedSession(session)

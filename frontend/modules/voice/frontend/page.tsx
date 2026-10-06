@@ -114,7 +114,7 @@ export default function VoiceModePage() {
       triggerAutoEndSession()
       stopVoice()
     }
-  }, [router])
+  }, [router, authLoading, token])
 
   const initSession = async () => {
     try {

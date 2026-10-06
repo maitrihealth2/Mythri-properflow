@@ -275,7 +275,7 @@ export default function ConsultationPage() {
     }
 
     return () => window.removeEventListener('mb_language_changed', handleLangEvent)
-  }, [router]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [router, authLoading, token])
 
   // ─── Scroll + persist whenever committed messages change ──────────────────
   useEffect(() => {

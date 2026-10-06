@@ -30,6 +30,7 @@ import api, { setInMemoryToken, getActiveApiUrl, serverPool } from '@/core/api'
 export interface AuthUser {
   id: number
   username: string
+  preferred_name?: string
   email: string
   preferred_language: string
   is_active: boolean
@@ -106,7 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) { setUser(null); return }
     let cancelled = false
     api.get('/api/auth/me')
-      .then(({ data }) => { if (!cancelled) setUser(data) })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setUser(data)
+          const customName = data.preferred_name || data.username
+          if (customName) {
+            localStorage.setItem('mb_username', customName)
+          }
+        }
+      })
       .catch(() => {})
     return () => { cancelled = true }
   }, [token])

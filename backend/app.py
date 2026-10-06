@@ -167,12 +167,13 @@ app.add_middleware(AuditLoggerMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"^https://([\w-]+\.)*(onrender\.com|affynelabs\.com|vercel\.app)$",
+    allow_origin_regex=r"^https?://([\w-]+\.)*(onrender\.com|affynelabs\.com|affynelabs\.in|vercel\.app|localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
-    # Explicit method allowlist — no wildcard
-    allow_methods=["HEAD","GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    # Explicit header allowlist — no wildcard
-    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With", "X-Trace-Id"],
+    # Explicit method allowlist
+    allow_methods=["HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    # Allow headers for CORS preflight
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 @app.middleware("http")

@@ -164,11 +164,7 @@ export default function LoginPage() {
       setAuthPhase('transitioning')
       await new Promise(r => setTimeout(r, 400))
       
-      if (data.needs_onboarding) {
-        router.replace('/onboarding')
-      } else {
-        router.replace('/home')
-      }
+      router.replace('/home')
     } catch (err: any) {
       console.error("Google Auth Error:", err)
       const detail = err?.response?.data?.detail || err.userMessage || err.message
@@ -251,11 +247,7 @@ export default function LoginPage() {
       setAuthPhase('transitioning')
       await new Promise(r => setTimeout(r, 400))
 
-      if (data.needs_onboarding) {
-        router.replace('/onboarding')
-      } else {
-        router.replace('/home')
-      }
+      router.replace('/home')
     } catch (err: any) {
       console.error("API Error:", err)
       let errorMessage = err?.response?.data?.detail || err.userMessage || err.message || "Something didn't quite work. Please check your details."

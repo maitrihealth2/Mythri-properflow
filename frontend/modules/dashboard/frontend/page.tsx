@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getDashboardStats, getOnboardingStatus, logout } from '@/core/api'
+import { getDashboardStats, getOnboardingStatus, getProfile, logout } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
@@ -24,7 +24,12 @@ const getMoodIcon = (mood: string) => {
 export default function DashboardPage() {
   const router = useRouter()
   const { token, user, loading: authLoading } = useAuth()
-  const [username, setUsername] = useState('Seeker')
+  const [username, setUsername] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('mb_username') || 'Seeker'
+    }
+    return 'Seeker'
+  })
   const [menuOpen, setMenuOpen] = useState(false)
   const [greeting, setGreeting] = useState('Good morning')
   const [stats, setStats] = useState<any>(null)
@@ -33,34 +38,39 @@ export default function DashboardPage() {
     if (authLoading) return
     if (!token) {
       router.replace('/login')
-    } else {
-      if (user?.username) {
-        setUsername(user.username)
-      } else {
-        const storedName = localStorage.getItem('mb_username')
-        if (storedName) setUsername(storedName)
-      }
-      
-      // Check onboarding status
-      getOnboardingStatus().then(status => {
-        console.log('[ONBOARDING] Dashboard status check:', status)
-        if (!status || !status.completed) {
-          console.log('[ONBOARDING] Onboarding incomplete -> redirecting to /onboarding')
-          router.replace('/onboarding')
-        } else {
-          console.log('[ONBOARDING] Onboarding complete -> loading dashboard stats')
-          getDashboardStats().then(setStats).catch(console.error)
-        }
-      }).catch(err => {
-        console.error('[ONBOARDING_ERROR] Dashboard status check failed:', err)
-      })
+      return
     }
+
+    // Set custom username from auth user, local storage or profile
+    if (user?.preferred_name) {
+      setUsername(user.preferred_name)
+      localStorage.setItem('mb_username', user.preferred_name)
+    } else if (user?.username) {
+      setUsername(user.username)
+      localStorage.setItem('mb_username', user.username)
+    } else {
+      const storedName = localStorage.getItem('mb_username')
+      if (storedName) setUsername(storedName)
+    }
+
+    // Fallback profile check for preferred_name
+    getProfile().then(p => {
+      if (p?.preferred_name) {
+        setUsername(p.preferred_name)
+        localStorage.setItem('mb_username', p.preferred_name)
+      } else if (p?.username && !user?.preferred_name) {
+        setUsername(p.username)
+      }
+    }).catch(() => {})
+    
+    // Load dashboard stats
+    getDashboardStats().then(setStats).catch(console.error)
 
     const hour = new Date().getHours()
     if (hour < 12) setGreeting('Good morning')
     else if (hour < 18) setGreeting('Good afternoon')
     else setGreeting('Good evening')
-  }, [router])
+  }, [router, authLoading, token, user])
 
   return (
     <>
