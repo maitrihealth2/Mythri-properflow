@@ -139,6 +139,129 @@ function ConsentModal({ record, onClose }: { record: ConsentRecord; onClose: () 
   )
 }
 
+// ── Feedback Detail Modal ───────────────────────────────────────────────────
+const SURVEY_QUESTIONS_MAP: Record<string, string> = {
+  q1_comfort: '1. Comfortable talking openly',
+  q2_understanding: '2. Understood what was expressed',
+  q3_relevance: '3. Relevance of responses',
+  q4_empathy: '4. Empathetic & emotionally appropriate',
+  q5_naturalness: '5. Naturalness of conversation',
+  q6_context_memory: '6. Context memory & continuity',
+  q7_reflection_help: '7. Helpfulness in reflecting',
+  q8_individuality: '8. Individualized vs generic',
+  q9_overall_satisfaction: '9. Overall satisfaction',
+  q10_use_again: '10. Likely to use again',
+  q11_wellbeing_value: '11. [Crucial] Value for regular emotional wellbeing',
+  overall_experience: '12. Overall experience rating',
+  overall: 'Overall Emotional Support',
+  empathy: 'Empathy & Understanding',
+  helpfulness: 'Clarity & Guidance',
+  fluency: 'Conversation Naturalness',
+}
+
+function FeedbackDetailModal({ record, onClose }: { record: FeedbackRecord; onClose: () => void }) {
+  const ratings = record.ratings || {}
+  const ratingKeys = Object.keys(ratings)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="relative bg-surface-container-lowest rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-outline-variant/30" onClick={(e) => e.stopPropagation()}>
+        
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b border-outline-variant/30 bg-surface-container-low">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-on-surface">{record.username}</h2>
+              <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                record.feedback_type === 'post_session_exit'
+                  ? 'bg-primary/10 text-primary border border-primary/20'
+                  : 'bg-black/5 dark:bg-white/10 text-on-surface-variant'
+              }`}>
+                {record.feedback_type === 'post_session_exit' ? 'Post-Session Exit' : 'General'}
+              </span>
+            </div>
+            <p className="text-xs text-on-surface-variant mt-0.5">{record.email} • {new Date(record.created_at).toLocaleString()}</p>
+            {record.session_id && (
+              <p className="text-[11px] text-primary font-mono mt-0.5">Session Token/ID: #{record.session_id}</p>
+            )}
+          </div>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors">
+            ✕
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-6 bg-surface-container-lowest">
+          
+          {/* Overall Score Badge */}
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+            <span className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">
+              Overall Experience Score
+            </span>
+            <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
+              {'★'.repeat(Math.min(5, Math.max(1, Math.round(record.rating || 5))))} ({record.rating || 5}/5)
+            </span>
+          </div>
+
+          {/* Survey Questions Breakdown */}
+          {ratingKeys.length > 0 && (
+            <section className="space-y-3">
+              <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                Detailed Survey Question Scores ({ratingKeys.length} Questions)
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ratingKeys.map((key) => {
+                  const score = ratings[key]
+                  const label = SURVEY_QUESTIONS_MAP[key] || key
+                  const isCrucial = key === 'q11_wellbeing_value'
+
+                  return (
+                    <div
+                      key={key}
+                      className={`p-3.5 rounded-xl border flex flex-col justify-between gap-1.5 ${
+                        isCrucial
+                          ? 'bg-primary/10 border-primary/30'
+                          : 'bg-surface border-outline-variant/30'
+                      }`}
+                    >
+                      <p className="text-xs font-semibold text-on-surface leading-snug">{label}</p>
+                      <div className="flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400">
+                        <span>{'★'.repeat(score)}{'☆'.repeat(Math.max(0, 5 - score))}</span>
+                        <span className="text-on-surface">{score}/5</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* Written Comments */}
+          <section className="space-y-2">
+            <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+              Written Thoughts &amp; Suggestions
+            </h3>
+            <div className="p-4 rounded-2xl bg-surface border border-outline-variant/30 text-xs sm:text-sm text-on-surface leading-relaxed whitespace-pre-wrap">
+              {record.content ? record.content : <span className="text-on-surface-variant/60 italic">No additional written text submitted.</span>}
+            </div>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-outline-variant/30 bg-surface-container-low flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-full bg-surface-variant hover:bg-surface-variant/80 text-on-surface text-xs font-semibold transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Maintenance Control Modal ────────────────────────────────────────────────
 function MaintenanceModal({
   status,
@@ -442,6 +565,7 @@ export default function AdminDashboard() {
   const [activeSession, setActiveSession] = useState<{ id: number; messages: MessageRecord[]; started_at: string } | null>(null)
   
   const [selectedConsent, setSelectedConsent] = useState<ConsentRecord | null>(null)
+  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackRecord | null>(null)
 
   // Maintenance State
   const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus | null>(null)
@@ -1371,15 +1495,19 @@ export default function AdminDashboard() {
                       </thead>
                       <tbody>
                         {filteredFeedbacks.map((f, i) => {
-                          const overallRating = f.rating || (f.ratings?.overall) || null
-                          const empathy = f.ratings?.empathy
-                          const helpfulness = f.ratings?.helpfulness
-                          const fluency = f.ratings?.fluency
+                          const overallRating = f.rating || (f.ratings?.overall_experience) || (f.ratings?.overall) || null
+                          const empathy = f.ratings?.q4_empathy || f.ratings?.empathy
+                          const understanding = f.ratings?.q2_understanding
+                          const wellbeingValue = f.ratings?.q11_wellbeing_value
 
                           return (
-                            <tr key={i} className="border-b last:border-0 hover:bg-surface-variant/40 font-body-sm transition-colors">
+                            <tr
+                              key={i}
+                              onClick={() => setSelectedFeedback(f)}
+                              className="border-b last:border-0 hover:bg-surface-variant/50 font-body-sm transition-colors cursor-pointer group"
+                            >
                               <td className="p-4 align-top">
-                                <div className="font-semibold text-on-surface">{f.username}</div>
+                                <div className="font-semibold text-on-surface group-hover:text-primary transition-colors">{f.username}</div>
                                 <div className="text-xs text-on-surface-variant mt-0.5">{f.email}</div>
                                 {f.session_id && (
                                   <div className="text-[10px] text-primary mt-1 font-mono">
@@ -1397,19 +1525,19 @@ export default function AdminDashboard() {
                                     </div>
                                     {f.ratings && (
                                       <div className="flex flex-wrap gap-1 text-[10px]">
-                                        {empathy && (
+                                        {understanding && (
                                           <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                                            Empathy: {empathy}★
+                                            Q2 Understood: {understanding}★
                                           </span>
                                         )}
-                                        {helpfulness && (
-                                          <span className="px-1.5 py-0.5 rounded bg-secondary/10 text-secondary">
-                                            Clarity: {helpfulness}★
+                                        {empathy && (
+                                          <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                                            Q4 Empathy: {empathy}★
                                           </span>
                                         )}
-                                        {fluency && (
-                                          <span className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-on-surface-variant">
-                                            Fluency: {fluency}★
+                                        {wellbeingValue && (
+                                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold">
+                                            Q11 Wellbeing: {wellbeingValue}★
                                           </span>
                                         )}
                                       </div>
@@ -1431,7 +1559,7 @@ export default function AdminDashboard() {
                               </td>
 
                               <td className="p-4 align-top">
-                                <p className="whitespace-pre-wrap text-on-surface text-xs leading-relaxed max-w-lg">
+                                <p className="whitespace-pre-wrap text-on-surface text-xs leading-relaxed max-w-lg line-clamp-2">
                                   {f.content ? f.content : <span className="text-on-surface-variant/60 italic">No additional comments provided.</span>}
                                 </p>
                               </td>
@@ -1439,6 +1567,18 @@ export default function AdminDashboard() {
                               <td className="p-4 align-top text-right text-xs text-on-surface-variant">
                                 {new Date(f.created_at).toLocaleDateString()}<br />
                                 <span className="text-[11px] opacity-70">{new Date(f.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <div className="mt-2">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedFeedback(f)
+                                    }}
+                                    className="px-2.5 py-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-semibold transition-colors"
+                                  >
+                                    View All 12
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           )
@@ -1457,12 +1597,38 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-
-
             </div>
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      {selectedConsent && (
+        <ConsentModal record={selectedConsent} onClose={() => setSelectedConsent(null)} />
+      )}
+
+      {selectedFeedback && (
+        <FeedbackDetailModal record={selectedFeedback} onClose={() => setSelectedFeedback(null)} />
+      )}
+
+      {isMaintenanceModalOpen && (
+        <MaintenanceModal
+          status={maintenanceStatus}
+          onClose={() => setIsMaintenanceModalOpen(false)}
+          onSave={handleSaveMaintenance}
+          onDisable={handleDisableMaintenance}
+          loading={maintenanceLoading}
+        />
+      )}
+
+      <GlobalStatusModal
+        isOpen={globalStatusModal.open}
+        action={globalStatusModal.action}
+        totalCount={totalUsers}
+        loading={globalStatusLoading}
+        onClose={() => setGlobalStatusModal({ open: false, action: 'block_all' })}
+        onConfirm={handleGlobalStatusAction}
+      />
     </div>
   )
 }

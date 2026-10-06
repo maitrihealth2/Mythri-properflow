@@ -9,44 +9,100 @@ import RadialNav from '@/shared/components/RadialNav'
 
 interface QuestionItem {
   id: string
+  number: number
   title: string
-  subtitle: string
+  subtitle?: string
   icon: string
+  tag?: string
 }
 
-const RATING_QUESTIONS: QuestionItem[] = [
+const CORE_QUESTIONS: QuestionItem[] = [
   {
-    id: 'overall',
-    title: 'Overall Emotional Support',
-    subtitle: 'How supported, calmer, or lighter do you feel after this session?',
+    id: 'q1_comfort',
+    number: 1,
+    title: 'How comfortable did you feel talking openly with Mythri?',
     icon: 'sentiment_satisfied',
   },
   {
-    id: 'empathy',
-    title: 'Empathy & Understanding',
-    subtitle: 'How accurately did Mythri listen and connect with what you were feeling?',
+    id: 'q2_understanding',
+    number: 2,
+    title: 'How well did Mythri understand what you were trying to express?',
+    icon: 'psychology',
+  },
+  {
+    id: 'q3_relevance',
+    number: 3,
+    title: 'How relevant were Mythri’s responses to your situation?',
+    icon: 'check_circle',
+  },
+  {
+    id: 'q4_empathy',
+    number: 4,
+    title: 'How empathetic and emotionally appropriate did Mythri’s responses feel?',
     icon: 'favorite',
   },
   {
-    id: 'helpfulness',
-    title: 'Clarity & Guidance',
-    subtitle: 'Were the insights, reflections, and exercises practical and gentle?',
-    icon: 'auto_awesome',
+    id: 'q5_naturalness',
+    number: 5,
+    title: 'How natural did the conversation with Mythri feel?',
+    icon: 'forum',
   },
   {
-    id: 'fluency',
-    title: 'Conversation Naturalness',
-    subtitle: 'How smooth, human-like, and comfortable was the conversational flow?',
-    icon: 'forum',
+    id: 'q6_context_memory',
+    number: 6,
+    title: 'How well did Mythri remember and use context from your conversation?',
+    icon: 'history_edu',
+  },
+  {
+    id: 'q7_reflection_help',
+    number: 7,
+    title: 'How useful was Mythri in helping you reflect on what you were feeling or experiencing?',
+    icon: 'self_improvement',
+  },
+  {
+    id: 'q8_individuality',
+    number: 8,
+    title: 'How much did you feel that Mythri understood you as an individual rather than giving generic responses?',
+    icon: 'person_pin',
+  },
+  {
+    id: 'q9_overall_satisfaction',
+    number: 9,
+    title: 'How satisfied were you with the overall conversation experience?',
+    icon: 'mood',
+  },
+  {
+    id: 'q10_use_again',
+    number: 10,
+    title: 'How likely would you be to use Mythri again?',
+    icon: 'repeat',
   },
 ]
 
+const VALIDATION_QUESTION: QuestionItem = {
+  id: 'q11_wellbeing_value',
+  number: 11,
+  title: 'How valuable would Mythri be as a regular part of your emotional wellbeing?',
+  subtitle: 'Crucial validation question on long-term emotional support and daily wellness value',
+  icon: 'verified',
+  tag: 'Crucial Validation',
+}
+
+const OVERALL_QUESTION: QuestionItem = {
+  id: 'overall_experience',
+  number: 12,
+  title: 'Overall, how would you rate your experience with Mythri?',
+  subtitle: 'Comprehensive rating of your entire interaction and sanctuary experience',
+  icon: 'star',
+  tag: 'Overall Rating',
+}
+
 const RATING_LABELS: Record<number, string> = {
-  1: 'Needs Improvement',
-  2: 'Fair',
-  3: 'Good & Comforting',
-  4: 'Very Helpful',
-  5: 'Exceptional & Grounding',
+  1: '1 ★ Very Poor / Strongly Disagree',
+  2: '2 ★ Poor / Disagree',
+  3: '3 ★ Neutral / Moderate',
+  4: '4 ★ Good / Agree',
+  5: '5 ★ Excellent / Strongly Agree',
 }
 
 function StarRating({
@@ -60,7 +116,7 @@ function StarRating({
   const activeVal = hoverVal !== null ? hoverVal : value
 
   return (
-    <div className="flex flex-col items-center sm:items-start gap-1.5">
+    <div className="flex flex-col items-start gap-1">
       <div className="flex items-center gap-1.5 sm:gap-2">
         {[1, 2, 3, 4, 5].map((star) => {
           const filled = star <= activeVal
@@ -75,7 +131,7 @@ function StarRating({
               title={`${star} Star${star > 1 ? 's' : ''}`}
             >
               <span
-                className={`material-symbols-outlined text-[28px] sm:text-[32px] transition-colors ${
+                className={`material-symbols-outlined text-[26px] sm:text-[30px] transition-colors ${
                   filled
                     ? 'text-amber-500 fill-current drop-shadow-sm'
                     : 'text-outline/30 dark:text-white/20'
@@ -104,10 +160,18 @@ function FeedbackContent() {
   const { token, loading: authLoading } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [ratings, setRatings] = useState<Record<string, number>>({
-    overall: 5,
-    empathy: 5,
-    helpfulness: 5,
-    fluency: 5,
+    q1_comfort: 5,
+    q2_understanding: 5,
+    q3_relevance: 5,
+    q4_empathy: 5,
+    q5_naturalness: 5,
+    q6_context_memory: 5,
+    q7_reflection_help: 5,
+    q8_individuality: 5,
+    q9_overall_satisfaction: 5,
+    q10_use_again: 5,
+    q11_wellbeing_value: 5,
+    overall_experience: 5,
   })
   const [comments, setComments] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -132,7 +196,7 @@ function FeedbackContent() {
     setSubmitStatus('idle')
 
     try {
-      const overallScore = ratings.overall || 5
+      const overallScore = ratings.overall_experience || ratings.q9_overall_satisfaction || 5
       await submitFeedback({
         content: comments.trim(),
         rating: overallScore,
@@ -263,29 +327,101 @@ function FeedbackContent() {
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               
-              {/* Question Ratings Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {RATING_QUESTIONS.map((q, idx) => (
-                  <div
-                    key={q.id}
-                    className="p-4 sm:p-5 rounded-2xl bg-white/50 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 flex flex-col justify-between gap-3 hover:border-primary/30 transition-colors"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-primary dark:text-white">
-                        <span className="material-symbols-outlined text-[20px] opacity-80">{q.icon}</span>
-                        <h4 className="text-sm font-semibold tracking-tight">{q.title}</h4>
-                      </div>
-                      <p className="text-xs text-on-surface-variant dark:text-white/60 leading-relaxed">
-                        {q.subtitle}
-                      </p>
-                    </div>
+              {/* Rating Scale Legend */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 text-primary font-bold">
+                  <span className="material-symbols-outlined text-[18px]">straighten</span>
+                  <span>User Feedback Survey — 1–5 Stars</span>
+                </div>
+                <div className="text-on-surface-variant dark:text-white/80 font-medium text-[11px] sm:text-xs bg-white/60 dark:bg-black/20 px-3 py-1 rounded-xl border border-black/5 dark:border-white/10">
+                  ⭐ <strong>1</strong> = Very Poor / Strongly Disagree &nbsp;→&nbsp; ⭐ <strong>5</strong> = Excellent / Strongly Agree
+                </div>
+              </div>
 
-                    <StarRating
-                      value={ratings[q.id] || 5}
-                      onChange={(val) => handleRatingChange(q.id, val)}
-                    />
-                  </div>
-                ))}
+              {/* 10 Core Questions Grid */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant dark:text-white/60 flex items-center gap-1.5 px-1">
+                  <span className="material-symbols-outlined text-[16px] text-primary">chat</span>
+                  Conversation &amp; Interaction Experience (Questions 1–10)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {CORE_QUESTIONS.map((q) => (
+                    <div
+                      key={q.id}
+                      className="p-4 sm:p-5 rounded-2xl bg-white/60 dark:bg-white/[0.03] border border-black/5 dark:border-white/10 flex flex-col justify-between gap-3 hover:border-primary/30 transition-all shadow-sm"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-start gap-2 text-on-surface dark:text-white">
+                          <span className="text-primary font-bold text-xs px-2 py-0.5 rounded-md bg-primary/10 shrink-0 mt-0.5">
+                            Q{q.number}
+                          </span>
+                          <h4 className="text-xs sm:text-sm font-semibold tracking-tight leading-snug">
+                            {q.title}
+                          </h4>
+                        </div>
+                      </div>
+
+                      <StarRating
+                        value={ratings[q.id] || 5}
+                        onChange={(val) => handleRatingChange(q.id, val)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Crucial Validation Question (Q11) */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-primary/10 via-white/50 to-primary/5 dark:from-primary/20 dark:via-black/40 dark:to-primary/10 border-2 border-primary/30 shadow-md space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-[10px] sm:text-xs font-bold uppercase px-3 py-1 rounded-full bg-primary text-on-primary shadow-sm flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">verified</span>
+                    Crucial Validation Question
+                  </span>
+                  <span className="text-xs font-semibold text-primary">Q11 of 12</span>
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="text-sm sm:text-base font-bold text-on-surface dark:text-white">
+                    {VALIDATION_QUESTION.title}
+                  </h4>
+                  {VALIDATION_QUESTION.subtitle && (
+                    <p className="text-xs text-on-surface-variant dark:text-white/70">
+                      {VALIDATION_QUESTION.subtitle}
+                    </p>
+                  )}
+                </div>
+
+                <StarRating
+                  value={ratings[VALIDATION_QUESTION.id] || 5}
+                  onChange={(val) => handleRatingChange(VALIDATION_QUESTION.id, val)}
+                />
+              </div>
+
+              {/* Overall Experience Rating Question (Q12) */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-amber-500/30 dark:border-amber-500/20 shadow-sm space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="text-[10px] sm:text-xs font-bold uppercase px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">star</span>
+                    Overall Rating
+                  </span>
+                  <span className="text-xs font-semibold text-on-surface-variant">Overall Summary</span>
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="text-sm sm:text-base font-bold text-on-surface dark:text-white">
+                    {OVERALL_QUESTION.title}
+                  </h4>
+                  {OVERALL_QUESTION.subtitle && (
+                    <p className="text-xs text-on-surface-variant dark:text-white/70">
+                      {OVERALL_QUESTION.subtitle}
+                    </p>
+                  )}
+                </div>
+
+                <StarRating
+                  value={ratings[OVERALL_QUESTION.id] || 5}
+                  onChange={(val) => handleRatingChange(OVERALL_QUESTION.id, val)}
+                />
               </div>
 
               {/* Text Feedback */}
