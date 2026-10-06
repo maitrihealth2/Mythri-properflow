@@ -9,8 +9,11 @@ os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
 _BACKEND_DIR = pathlib.Path(__file__).resolve().parent
+_runtime_env = os.getenv("ENVIRONMENT")
 load_dotenv(_BACKEND_DIR / ".env")
 load_dotenv(_BACKEND_DIR / ".env.local", override=True)
+if _runtime_env:
+    os.environ["ENVIRONMENT"] = _runtime_env
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
