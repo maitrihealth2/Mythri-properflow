@@ -60,12 +60,23 @@ def get_current_user(
 
 def set_refresh_cookie(response: Response, refresh_token: str):
     import os
-    samesite = os.getenv("COOKIE_SAMESITE", "lax").lower()
-    if samesite not in ("strict", "lax", "none"):
-        samesite = "lax"
     is_prod = os.getenv("ENVIRONMENT", "").lower() in ("production", "prod")
-    # If samesite=none, browsers strictly require secure=True. In local/dev over HTTP, secure must be False.
-    is_secure = True if (samesite == "none" or is_prod) else False
+
+    # In production the frontend and backend are on different domains.
+    # SameSite=Lax blocks cookies on cross-origin POST (like /api/auth/refresh)
+    # → must use SameSite=None + Secure=True so the browser sends the cookie.
+    # In local dev (no ENVIRONMENT var set) keep SameSite=Lax + Secure=False
+    # so cookies work over plain http://localhost.
+    samesite_env = os.getenv("COOKIE_SAMESITE", "").lower()
+    if samesite_env in ("strict", "lax", "none"):
+        samesite = samesite_env
+    elif is_prod:
+        samesite = "none"   # required for cross-domain cookie delivery
+    else:
+        samesite = "lax"
+
+    is_secure = is_prod or samesite == "none"
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,

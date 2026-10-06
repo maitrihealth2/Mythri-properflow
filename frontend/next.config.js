@@ -20,12 +20,13 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.googletagmanager.com https://static.cloudflareinsights.com;
+      script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://www.googletagmanager.com https://static.cloudflareinsights.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com data:;
       img-src 'self' data: blob: https:;
       media-src 'self' blob: data: https:;
-      connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.affynelabs.com wss://*.affynelabs.com https://*.onrender.com wss://*.onrender.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.googleapis.com;
+      connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.affynelabs.com wss://*.affynelabs.com https://*.onrender.com wss://*.onrender.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.googleapis.com https://www.google-analytics.com https://region1.google-analytics.com https://cloudflareinsights.com;
       frame-src 'self' https://*.firebaseapp.com https://accounts.google.com;
       frame-ancestors 'none';
       object-src 'none';
