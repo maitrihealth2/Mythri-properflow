@@ -624,6 +624,11 @@ def init_db():
     
     # Auto-synchronize missing columns on existing tables (PostgreSQL / SQLite safe)
     migration_statements = [
+        'ALTER TABLE "user_feedback" ADD COLUMN IF NOT EXISTS "rating" INTEGER DEFAULT 5;',
+        'ALTER TABLE "user_feedback" ADD COLUMN IF NOT EXISTS "ratings" JSON;',
+        'ALTER TABLE "user_feedback" ADD COLUMN IF NOT EXISTS "session_id" INTEGER REFERENCES sessions(id) ON DELETE SET NULL;',
+        'ALTER TABLE "user_feedback" ADD COLUMN IF NOT EXISTS "feedback_type" VARCHAR(50) DEFAULT \'general\';',
+        'ALTER TABLE "user_feedback" ALTER COLUMN "content" DROP NOT NULL;',
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "user_id" INTEGER REFERENCES users(id) ON DELETE CASCADE;',
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "distress_score" DOUBLE PRECISION;',
         'ALTER TABLE "message_analysis" ADD COLUMN IF NOT EXISTS "arousal_score" DOUBLE PRECISION;',
