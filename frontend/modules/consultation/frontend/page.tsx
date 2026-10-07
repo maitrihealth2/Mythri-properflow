@@ -224,8 +224,8 @@ export default function ConsultationPage() {
             ws.send("ping")
           }
         }, 30000)
-      } catch (err) {
-        console.warn('[WS] Failed to connect events socket:', err)
+      } catch {
+        // Suppress WS connection noise
       }
     }
 
@@ -270,7 +270,7 @@ export default function ConsultationPage() {
       // Fetch user profile for persona overlay
       getProfile().then(data => {
         if (data) setUserProfile(data)
-      }).catch(err => console.error("Error fetching profile for persona:", err))
+      }).catch(() => {})
     }
 
     return () => window.removeEventListener('mb_language_changed', handleLangEvent)
@@ -676,8 +676,6 @@ export default function ConsultationPage() {
 
     } catch (err: any) {
       if (err.message === 'AUTH_FAILED') return // Interceptor will redirect to login
-      console.error('Chat send error:', err)
-      
       const remaining = fullContent.slice(processedChars).trim()
       if (remaining) {
         setBubbleQueue(prev => [...prev, { content: remaining, is_last_in_group: false }])

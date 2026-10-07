@@ -345,8 +345,8 @@ export default function VoiceModePage() {
                 checkAudioQueue()
               }
             }
-          } catch (e) {
-            console.error('Failed to parse chunk:', cleanChunk, e)
+          } catch {
+            // Silently ignore corrupted partial stream chunk
           }
         }
       }

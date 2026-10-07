@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getOnboardingStatus, submitOnboarding } from '@/core/api'
+import { getOnboardingStatus, submitOnboarding, safeLogError } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 
@@ -78,7 +78,7 @@ export default function OnboardingPage() {
         }
       })
       .catch((err) => {
-        console.error('[ONBOARDING_STATUS_ERR]', err)
+        safeLogError('[ONBOARDING_STATUS_ERR]', err)
       })
   }, [router])
 
@@ -158,7 +158,7 @@ export default function OnboardingPage() {
         router.replace('/home')
       }, 1600)
     } catch (err: any) {
-      console.error('[SUBMIT_ONBOARDING_ERR]', err)
+      safeLogError('[SUBMIT_ONBOARDING_ERR]', err)
       setErrorMessage(err?.response?.data?.detail || 'Failed to save preferences. Please try again.')
       setIsSubmitting(false)
     }

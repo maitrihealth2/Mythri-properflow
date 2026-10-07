@@ -93,8 +93,7 @@ export default function OnboardingFlow() {
       setTimeout(() => {
         router.push('/text-chat')
       }, 2000)
-    } catch (e) {
-      console.error("Failed to submit onboarding data:", e)
+    } catch {
       router.push('/text-chat') // Fallback
     }
   }

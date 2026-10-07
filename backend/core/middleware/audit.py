@@ -27,7 +27,8 @@ audit_logger.propagate = False
 # Sensitive query fields to redact from request URLs
 PII_FIELDS = [
     r"password", r"idToken", r"access_token", r"ticket", r"refresh_token",
-    r"token", r"key", r"secret", r"authorization", r"code", r"admin_key"
+    r"token", r"key", r"apiKey", r"api_key", r"secret", r"authorization",
+    r"code", r"admin_key", r"credential", r"session_token"
 ]
 REDACT_STRING = "***REDACTED***"
 

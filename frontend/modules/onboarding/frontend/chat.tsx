@@ -324,8 +324,8 @@ export default function OnboardingChat() {
       if (collectedData.current.preferred_name) {
         localStorage.setItem('mb_username', collectedData.current.preferred_name);
       }
-    } catch (e) {
-      console.error('Failed to submit onboarding data:', e);
+    } catch {
+      // Handled gracefully, route forward
     }
 
     setTimeout(() => {

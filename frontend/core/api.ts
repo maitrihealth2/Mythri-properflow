@@ -70,12 +70,21 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // ── High-Availability Multi-Server Failover Retry ──
-    const isNetworkOrServerError = !error.response || [502, 503, 504].includes(error.response.status);
-    if (originalRequest && isNetworkOrServerError) {
+    const isCanceled = axios.isCancel(error) || error.code === 'ERR_CANCELED' || error.name === 'CanceledError';
+    const isServerError = error.response && [502, 503, 504].includes(error.response.status);
+    const isTrueNetworkError = !error.response && !isCanceled && (
+      error.code === 'ECONNREFUSED' ||
+      error.code === 'ERR_NETWORK' ||
+      error.message?.includes('Network Error') ||
+      error.message?.includes('Failed to fetch')
+    );
+
+    const isNetworkOrServerError = isServerError || isTrueNetworkError;
+    if (originalRequest && isNetworkOrServerError && !isCanceled) {
       const allServers = serverPool.getAllServers();
       originalRequest._failoverCount = (originalRequest._failoverCount || 0);
 
-      if (originalRequest._failoverCount < allServers.length - 1) {
+      if (allServers.length > 1 && originalRequest._failoverCount < allServers.length - 1) {
         originalRequest._failoverCount += 1;
         const nextServer = serverPool.rotateToNextServer(error.message || 'Server unavailable');
         originalRequest.baseURL = nextServer;
@@ -195,7 +204,7 @@ export async function logout() {
   try {
     await api.post('/api/auth/logout')
   } catch (err) {
-    console.error('Logout API failed', err)
+    safeLogError('Logout API note:', err)
   } finally {
     if (typeof window !== 'undefined') {
       // CRIT-03: clear in-memory token
@@ -463,4 +472,20 @@ export const disableAdminMaintenanceMode = async (): Promise<MaintenanceStatus> 
   const response = await api.post('/api/admin/maintenance/disable')
   return response.data
 }
+
+/**
+ * Sanitizes and safely logs errors to prevent exposing passwords, credentials, or bearer tokens.
+ */
+export function safeLogError(prefix: string, err: any): void {
+  const isDev = process.env.NODE_ENV !== 'production';
+  if (!isDev) return;
+  const message = err?.response?.data?.detail || err?.userMessage || err?.message || 'An error occurred';
+  const status = err?.response?.status;
+  const url = err?.config?.url;
+  // NEVER log err.config.data or err.config.headers as they may contain passwords or tokens
+  const safeMsg = status ? `[${status}] ${message}` : message;
+  const safeUrl = url ? `(endpoint: ${url.split('?')[0]})` : '';
+  console.error(`${prefix} ${safeMsg} ${safeUrl}`.trim());
+}
+
 

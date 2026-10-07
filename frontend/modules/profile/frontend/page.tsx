@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-import { getProfile, updateProfile, logout } from '@/core/api'
+import { getProfile, updateProfile, logout, safeLogError } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ThemeToggle from '@/shared/components/ThemeToggle'
 import RadialNav from '@/shared/components/RadialNav'
@@ -73,7 +73,7 @@ export default function ProfilePage() {
             setProfile(mapped)
             setForm(mapped)
         }).catch(err => {
-            console.error("Failed to load profile", err)
+            safeLogError("Failed to load profile", err)
             setError("Failed to load profile. Please refresh.")
         }).finally(() => {
             setLoading(false)
@@ -128,7 +128,7 @@ export default function ProfilePage() {
             setForm(mapped)
             setEditMode(prev => ({ ...prev, [section]: false }))
         } catch (err) {
-            console.error("Save failed", err)
+            safeLogError("Save profile failed", err)
             setError("Failed to save changes. Please try again.")
         } finally {
             setSaving(null)

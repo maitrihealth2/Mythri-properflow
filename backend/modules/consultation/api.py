@@ -234,7 +234,7 @@ async def send_message(
         raise HTTPException(status_code=404, detail="Session not found")
 
     asyncio.create_task(broadcast_event("TEXT_START", "Client Keyboard -> FastAPI", {"status": "received"}))
-    CommandCenter.log_ai("TEXT_START", f"User Input: {req.message[:50]}...")
+    CommandCenter.log_ai("TEXT_START", f"Processing message ({len(req.message)} chars)")
 
     crisis = check_for_crisis(req.message)
     if crisis.is_crisis:
@@ -247,7 +247,7 @@ async def send_message(
     # Crisis result is already computed above and flows into the classifier.
     # This single value gates all downstream component activation.
     turn_complexity = classify_turn_complexity(req.message, crisis)
-    CommandCenter.log_ai("TURN_GATE", f"complexity={turn_complexity.value} msg='{req.message[:40]}'")
+    CommandCenter.log_ai("TURN_GATE", f"complexity={turn_complexity.value}")
 
     # ── Input safety LLM — only when turn warrants it ────────────────────────
     # Crisis is already caught deterministically above.

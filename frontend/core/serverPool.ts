@@ -172,9 +172,6 @@ class ServerPoolManager {
     }
 
     const newUrl = this.servers[this.activeIndex].url;
-    if (typeof window !== 'undefined') {
-      console.warn(`[SERVER_FAILOVER] Switched from ${currentServer.url} to ${newUrl}. Reason: ${reason || 'Connection failure'}`);
-    }
     return newUrl;
   }
 

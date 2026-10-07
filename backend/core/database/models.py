@@ -6,6 +6,7 @@ from sqlalchemy.sql import func
 from security.encryption import EncryptedText
 import os
 import time
+import re
 import pathlib
 from dotenv import load_dotenv
 
@@ -50,11 +51,6 @@ from sqlalchemy import event
 def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
     try:
         conn.info.setdefault('query_start_time', []).append(time.time())
-        from core.logger.terminal import CommandCenter
-        # Extract a short preview of the SQL query for the terminal
-        short_query = statement.strip().replace('\n', ' ')[:80] + "..."
-        action = "READ" if statement.strip().upper().startswith("SELECT") else "WRITE"
-        CommandCenter.log_db(action, short_query)
     except Exception:
         pass
 
@@ -64,9 +60,10 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
         start_times = conn.info.get('query_start_time', [])
         if start_times:
             duration = time.time() - start_times.pop()
-            if duration > 0.250:  # Observability warning threshold for slow queries (>250ms)
+            if duration > 0.500:  # Observability warning threshold for slow queries (>500ms)
                 from core.logger.terminal import CommandCenter
-                CommandCenter.log_db("SLOW_QUERY", f"{duration*1000:.1f}ms: {statement.strip()[:70]}...")
+                safe_stmt = re.sub(r'(?i)(password|token|secret|key)\s*=\s*[^\s,)]+', r'\1=***', statement.strip()[:70])
+                CommandCenter.log_db("SLOW_QUERY", f"{duration*1000:.1f}ms: {safe_stmt}...")
     except Exception:
         pass
 

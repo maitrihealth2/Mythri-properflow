@@ -1,5 +1,6 @@
 import os
 import time
+import re
 import asyncio
 import threading
 from datetime import datetime
@@ -13,6 +14,15 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeEl
 console = Console(safe_box=True)
 
 class _CommandCenter:
+    def _scrub(self, text: str) -> str:
+        if not text:
+            return ""
+        s = str(text)
+        # Redact credentials, API keys, tokens, passwords
+        s = re.sub(r'(?i)(key|api_key|token|password|secret|authorization|hashed_password)\s*[:=]\s*["\']?[^\s"\'&,;]+["\']?', r'\1=***REDACTED***', s)
+        s = re.sub(r'(AIzaSy[A-Za-z0-9_-]{33}|nvapi-[A-Za-z0-9_-]{30,}|Bearer\s+[A-Za-z0-9._-]+)', r'***REDACTED***', s)
+        return s
+
     def __init__(self):
         self._lock = threading.Lock()
         # System Health State
@@ -175,7 +185,7 @@ class _CommandCenter:
             text = Text()
             text.append(f"[{self._ts()}] ", style="dim")
             text.append(f"{str(method):>6} ", style="bold blue")
-            text.append(f"{endpoint} ", style="default")
+            text.append(f"{self._scrub(endpoint)} ", style="default")
             text.append(f"{status} ", style=f"bold {color}")
             text.append(f"({duration_ms:.1f}ms)", style="dim")
             
@@ -195,7 +205,7 @@ class _CommandCenter:
             text = Text()
             text.append(f"[{self._ts()}] ", style="dim")
             text.append(f"DB {action} ", style="bold yellow")
-            text.append(str(query), style="yellow")
+            text.append(self._scrub(str(query)), style="yellow")
             console.print(text)
         except Exception as e:
             print(f"[LOG_DB_ERROR] {e}")
@@ -209,7 +219,7 @@ class _CommandCenter:
             text = Text()
             text.append(f"[{self._ts()}] ", style="dim")
             text.append(f"AI {str(phase):>15} | ", style="bold magenta")
-            text.append(str(details), style="magenta")
+            text.append(self._scrub(str(details)), style="magenta")
             console.print(text)
         except Exception as e:
             print(f"[LOG_AI_ERROR] {e}")
@@ -221,7 +231,7 @@ class _CommandCenter:
         file_path = "Unknown"
         line = "?"
         func = ""
-        problem = msg
+        problem = self._scrub(msg)
 
         import os
         import traceback

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { login, register, googleLogin, forgotPassword } from '@/core/api'
+import { login, register, googleLogin, forgotPassword, safeLogError } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { auth, googleProvider } from '@/core/firebase'
 import { signInWithPopup, sendPasswordResetEmail } from 'firebase/auth'
@@ -166,7 +166,7 @@ export default function LoginPage() {
       
       router.replace('/home')
     } catch (err: any) {
-      console.error("Google Auth Error:", err)
+      safeLogError("Google Auth Error:", err)
       const detail = err?.response?.data?.detail || err.userMessage || err.message
       if (typeof detail === 'string' && detail.toLowerCase().includes('not allowed to access')) {
         setError("You are not allowed to access right now")
@@ -197,7 +197,7 @@ export default function LoginPage() {
       }
       setSuccessMessage('Password reset email sent! Please check your inbox.');
     } catch (err: any) {
-      console.error("Password reset error:", err);
+      safeLogError("Password reset error:", err);
       let errMsg = err?.message || "Failed to send reset email.";
       if (errMsg.includes('user-not-found') || errMsg.includes('EMAIL_NOT_FOUND')) {
         errMsg = "No account found with this email address.";
@@ -249,7 +249,7 @@ export default function LoginPage() {
 
       router.replace('/home')
     } catch (err: any) {
-      console.error("API Error:", err)
+      safeLogError("API Error:", err)
       let errorMessage = err?.response?.data?.detail || err.userMessage || err.message || "Something didn't quite work. Please check your details."
       
       if (typeof errorMessage === 'string') {

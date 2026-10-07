@@ -57,7 +57,6 @@ export function usePWA() {
       setIsInstallable(false)
       setDeferredPrompt(null)
       setShowIOSGuide(false)
-      console.log('[PWA] Mythri App installed successfully')
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -69,23 +68,19 @@ export function usePWA() {
         navigator.serviceWorker
           .register('/sw.js')
           .then((registration) => {
-            console.log('[PWA] Service Worker registered with scope:', registration.scope)
-
             // Check for service worker updates
             registration.onupdatefound = () => {
               const installingWorker = registration.installing
               if (installingWorker) {
                 installingWorker.onstatechange = () => {
                   if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('[PWA] New version available! Reload on next session.')
+                    // Update ready
                   }
                 }
               }
             }
           })
-          .catch((error) => {
-            console.warn('[PWA] Service Worker registration failed:', error)
-          })
+          .catch(() => {})
       })
     }
 
@@ -102,7 +97,6 @@ export function usePWA() {
     }
 
     if (!deferredPrompt) {
-      console.log('[PWA] Installation prompt not available')
       return false
     }
 
@@ -110,16 +104,13 @@ export function usePWA() {
       await deferredPrompt.prompt()
       const choiceResult = await deferredPrompt.userChoice
       if (choiceResult.outcome === 'accepted') {
-        console.log('[PWA] User accepted the installation')
         setDeferredPrompt(null)
         setIsInstallable(false)
         return true
       } else {
-        console.log('[PWA] User dismissed the installation')
         return false
       }
-    } catch (err) {
-      console.error('[PWA] Install prompt error:', err)
+    } catch {
       return false
     }
   }, [deferredPrompt, isIOS, isStandalone])

@@ -36,8 +36,12 @@ from providers.llm.exceptions import (
 
 
 def _log(msg: str) -> None:
-    """Structured provider telemetry — printed to stdout for log capture."""
-    print(f"[LLM] {msg}", flush=True)
+    """Structured provider telemetry routed through CommandCenter."""
+    try:
+        from core.logger.terminal import CommandCenter
+        CommandCenter.log_ai("ROUTER", msg)
+    except Exception:
+        pass
 
 
 class LLMRouter:
