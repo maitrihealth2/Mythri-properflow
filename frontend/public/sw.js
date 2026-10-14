@@ -20,10 +20,17 @@ const PRECACHE_ASSETS = [
 // URLs/Patterns to NEVER cache (Always Network Only)
 const BYPASS_PATTERNS = [
   /\/api\//i,                     // Backend API endpoints & rewrites
+  /\/health/i,                    // Health checks
+  /trycloudflare\.com/i,          // Cloudflare tunnels
+  /loca\.lt/i,                    // LocalTunnel
+  /pinggy\.link/i,                // Pinggy tunnels
+  /onrender\.com/i,               // Render backend instances
   /identitytoolkit\.googleapis/i, // Firebase Auth
   /securetoken\.googleapis/i,     // Firebase Tokens
   /googletagmanager\.com/i,       // GA
   /google-analytics\.com/i,       // GA
+  /doubleclick\.net/i,            // Ads/Analytics
+  /google\.co/i,                  // Google Ads/Analytics
   /cloudflare/i,                  // Tunnel endpoints
   /sarvam/i,                      // AI voice & speech
   /openai/i,                      // AI streaming
@@ -183,7 +190,16 @@ self.addEventListener('fetch', (event) => {
       .then((networkResponse) => {
         return networkResponse;
       })
-      .catch(() => caches.match(request))
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        // Never return undefined to event.respondWith as it throws TypeError
+        return new Response('Network error occurred.', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      })
   );
 });
 
