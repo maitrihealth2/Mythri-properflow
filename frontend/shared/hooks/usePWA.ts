@@ -74,7 +74,8 @@ export function usePWA() {
               if (installingWorker) {
                 installingWorker.onstatechange = () => {
                   if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // Update ready
+                    // Automatically take control and update client
+                    installingWorker.postMessage({ type: 'SKIP_WAITING' })
                   }
                 }
               }

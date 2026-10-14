@@ -3,7 +3,7 @@
  * Production-ready caching strategy designed for Next.js App Router
  */
 
-const CACHE_VERSION = 'mythri-pwa-v1';
+const CACHE_VERSION = 'mythri-pwa-v3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -118,14 +118,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 6. Next.js Immutable Static Chunks (/_next/static/*): Cache-First
+  // 6. Next.js Static Chunks (/_next/static/*): Stale-While-Revalidate
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(request).then((networkResponse) => {
+        const fetchPromise = fetch(request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
             caches.open(STATIC_CACHE).then((cache) => {
@@ -133,7 +130,9 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return networkResponse;
-        });
+        }).catch(() => null);
+
+        return cachedResponse || fetchPromise;
       })
     );
     return;
