@@ -80,6 +80,8 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), default=func.now(), comment="When the user account was created")
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), comment="Last modification timestamp")
     is_active = Column(Boolean, default=True)
+    waitlist_status = Column(String(20), default="approved", server_default="approved", nullable=False, comment="Waiting list status: waitlisted, approved, rejected")
+    waitlist_number = Column(Integer, nullable=True, comment="Sequential ticket number on the waitlist")
 
     # Relationships
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -621,6 +623,10 @@ def init_db():
     
     # Auto-synchronize missing columns on existing tables (PostgreSQL / SQLite safe)
     migration_statements = [
+        'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "waitlist_status" VARCHAR(20) DEFAULT \'approved\';',
+        'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "waitlist_number" INTEGER;',
+        'UPDATE "users" SET "waitlist_status" = \'approved\' WHERE "waitlist_status" IS NULL;',
+        'CREATE INDEX IF NOT EXISTS "ix_users_waitlist_status" ON "users" ("waitlist_status");',
         'ALTER TABLE "user_feedback" ADD COLUMN IF NOT EXISTS "rating" INTEGER DEFAULT 5;',
         'ALTER TABLE "user_feedback" ADD COLUMN IF NOT EXISTS "ratings" JSON;',
         'ALTER TABLE "user_feedback" ADD COLUMN IF NOT EXISTS "session_id" INTEGER REFERENCES sessions(id) ON DELETE SET NULL;',
@@ -651,5 +657,19 @@ def init_db():
                     conn.execute(text(stmt))
                 except Exception as e:
                     print(f"[DB MIGRATE WARNING] {e}")
-                    
+    else:
+        try:
+            from sqlalchemy import inspect, text
+            with engine.begin() as conn:
+                insp = inspect(conn)
+                if insp.has_table("users"):
+                    cols = [c["name"] for c in insp.get_columns("users")]
+                    if "waitlist_status" not in cols:
+                        conn.execute(text('ALTER TABLE "users" ADD COLUMN "waitlist_status" VARCHAR(20) DEFAULT \'approved\';'))
+                        conn.execute(text('UPDATE "users" SET "waitlist_status" = \'approved\' WHERE "waitlist_status" IS NULL;'))
+                    if "waitlist_number" not in cols:
+                        conn.execute(text('ALTER TABLE "users" ADD COLUMN "waitlist_number" INTEGER;'))
+        except Exception as e:
+            print(f"[DB MIGRATE SQLITE WARNING] {e}")
+
     print("Database tables and schema synchronized.")

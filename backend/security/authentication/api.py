@@ -3,6 +3,7 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, Response, Request as FastAPIRequest
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel, Field, EmailStr
 
 from core.database.models import get_db, User, UserOnboarding, UserProfile
@@ -34,6 +35,8 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     username: str
     needs_onboarding: bool = False
+    waitlist_status: str = "approved"
+    waitlist_number: int | None = None
 
 def check_needs_onboarding(db: Session, user_id: int) -> bool:
     onboarding = db.query(UserOnboarding).filter(UserOnboarding.user_id == user_id).first()
@@ -57,6 +60,17 @@ def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=403, detail="You are not allowed to access right now")
     return user
+
+def get_approved_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    status = (current_user.waitlist_status or "approved").lower()
+    if status == "waitlisted":
+        raise HTTPException(
+            status_code=403,
+            detail="Your account is currently on the waiting list. Please wait for administrator approval."
+        )
+    return current_user
 
 def set_refresh_cookie(response: Response, refresh_token: str):
     import os
@@ -99,11 +113,17 @@ async def register(req: RegisterRequest, response: Response, db: Session = Depen
     await firebase_client.register(req.email, req.password)
 
     try:
+        # Assign next sequential waitlist ticket number
+        highest_number = db.query(func.coalesce(func.max(User.waitlist_number), 0)).scalar() or 0
+        next_waitlist_number = highest_number + 1
+
         user = User(
             username=req.username, email=req.email,
             hashed_password="firebase_managed",
             preferred_language=req.preferred_language,
-            is_active=True
+            is_active=True,
+            waitlist_status="waitlisted",
+            waitlist_number=next_waitlist_number
         )
         db.add(user)
         db.commit()
@@ -132,7 +152,13 @@ async def register(req: RegisterRequest, response: Response, db: Session = Depen
         store_refresh_token(db, user.id, refresh_jti, refresh_family)
         set_refresh_cookie(response, refresh_str)
 
-        return TokenResponse(access_token=token, username=user.username, needs_onboarding=False)
+        return TokenResponse(
+            access_token=token,
+            username=user.username,
+            needs_onboarding=False,
+            waitlist_status=user.waitlist_status or "waitlisted",
+            waitlist_number=user.waitlist_number
+        )
     except Exception as e:
         db.rollback()
         if isinstance(e, HTTPException):
@@ -165,7 +191,13 @@ async def login(request: FastAPIRequest, req: LoginRequest, response: Response, 
     set_refresh_cookie(response, refresh_str)
 
     needs_onboarding = check_needs_onboarding(db, user.id)
-    return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
+    return TokenResponse(
+        access_token=token,
+        username=user.username,
+        needs_onboarding=needs_onboarding,
+        waitlist_status=user.waitlist_status or "approved",
+        waitlist_number=user.waitlist_number
+    )
 
 @router.post("/google", response_model=TokenResponse)
 async def google_login(req: GoogleLoginRequest, response: Response, db: Session = Depends(get_db)):
@@ -205,12 +237,17 @@ async def google_login(req: GoogleLoginRequest, response: Response, db: Session 
                 username = f"{base_username}{counter}"
                 counter += 1
                 
+            highest_number = db.query(func.coalesce(func.max(User.waitlist_number), 0)).scalar() or 0
+            next_waitlist_number = highest_number + 1
+
             user = User(
                 username=username,
                 email=email,
                 hashed_password="firebase_google_managed",
                 preferred_language="en-IN",
-                is_active=True
+                is_active=True,
+                waitlist_status="waitlisted",
+                waitlist_number=next_waitlist_number
             )
             db.add(user)
             db.commit()
@@ -222,7 +259,13 @@ async def google_login(req: GoogleLoginRequest, response: Response, db: Session 
         set_refresh_cookie(response, refresh_str)
 
         needs_onboarding = check_needs_onboarding(db, user.id)
-        return TokenResponse(access_token=token, username=user.username, needs_onboarding=needs_onboarding)
+        return TokenResponse(
+            access_token=token,
+            username=user.username,
+            needs_onboarding=needs_onboarding,
+            waitlist_status=user.waitlist_status or "approved",
+            waitlist_number=user.waitlist_number
+        )
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_access_token(request: FastAPIRequest, response: Response, db: Session = Depends(get_db)):
@@ -260,7 +303,12 @@ def refresh_access_token(request: FastAPIRequest, response: Response, db: Sessio
     store_refresh_token(db, user.id, new_jti, family)
     set_refresh_cookie(response, new_refresh_str)
 
-    return TokenResponse(access_token=new_access, username=user.username)
+    return TokenResponse(
+        access_token=new_access,
+        username=user.username,
+        waitlist_status=user.waitlist_status or "approved",
+        waitlist_number=user.waitlist_number
+    )
 
 @router.post("/logout")
 def logout(request: FastAPIRequest, response: Response, db: Session = Depends(get_db)):
@@ -306,6 +354,12 @@ def issue_ws_ticket(current_user: User = Depends(get_current_user)):
     The client exchanges this ticket for a WebSocket connection instead
     of passing the JWT in a URL query string.
     """
+    if (current_user.waitlist_status or "approved").lower() == "waitlisted":
+        raise HTTPException(
+            status_code=403,
+            detail="Your account is currently on the waiting list. Please wait for administrator approval."
+        )
+
     now = time.time()
     _prune_ws_tickets(now)
 
@@ -347,7 +401,9 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         "preferred_name": preferred_name,
         "email": current_user.email, 
         "preferred_language": current_user.preferred_language,
-        "is_active": current_user.is_active
+        "is_active": current_user.is_active,
+        "waitlist_status": current_user.waitlist_status or "approved",
+        "waitlist_number": current_user.waitlist_number
     }
 
 class ForgotPasswordRequest(BaseModel):

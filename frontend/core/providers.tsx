@@ -6,6 +6,7 @@ import { AuthProvider } from '@/shared/components/contexts/AuthContext'
 import { FeatureFlagProvider } from '@/shared/components/contexts/FeatureFlagContext'
 import { MaintenanceGuard } from '@/shared/components/MaintenanceGuard'
 import { BlockedGuard } from '@/shared/components/BlockedGuard'
+import { WaitlistGuard } from '@/shared/components/WaitlistGuard'
 
 import { PWAProvider } from '@/shared/components/PWAProvider'
 
@@ -26,7 +27,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <FeatureFlagProvider>
             <MaintenanceGuard>
               <BlockedGuard>
-                {children}
+                <WaitlistGuard>
+                  {children}
+                </WaitlistGuard>
               </BlockedGuard>
             </MaintenanceGuard>
           </FeatureFlagProvider>

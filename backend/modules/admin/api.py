@@ -145,14 +145,26 @@ def get_feedback(admin=Depends(require_admin), db: Session = Depends(get_db)):
     return {"feedbacks": feedbacks}
 
 @router.get("/users")
-def get_users(admin=Depends(require_admin), db: Session = Depends(get_db), search: str = "", skip: int = 0, limit: int = 50):
+def get_users(admin=Depends(require_admin), db: Session = Depends(get_db), search: str = "", status: str = "", skip: int = 0, limit: int = 50):
     # MED-07: Cap maximum page size to prevent full-table dump
     limit = min(limit, 100)
     base_query = db.query(User)
     if search:
         search_term = f"%{search}%"
         base_query = base_query.filter((User.username.ilike(search_term)) | (User.email.ilike(search_term)))
+    
+    if status == "waitlisted":
+        base_query = base_query.filter(User.waitlist_status == "waitlisted")
+    elif status == "approved":
+        base_query = base_query.filter((User.waitlist_status == "approved") | (User.waitlist_status == None))
+    elif status == "blocked":
+        base_query = base_query.filter(User.is_active == False)
+
     total = base_query.count()
+
+    waitlist_count = db.query(User).filter(User.waitlist_status == "waitlisted").count()
+    approved_count = db.query(User).filter((User.waitlist_status == "approved") | (User.waitlist_status == None)).count()
+    blocked_count = db.query(User).filter(User.is_active == False).count()
 
     query = db.query(
         User, 
@@ -163,6 +175,13 @@ def get_users(admin=Depends(require_admin), db: Session = Depends(get_db), searc
     if search:
         search_term = f"%{search}%"
         query = query.filter((User.username.ilike(search_term)) | (User.email.ilike(search_term)))
+
+    if status == "waitlisted":
+        query = query.filter(User.waitlist_status == "waitlisted")
+    elif status == "approved":
+        query = query.filter((User.waitlist_status == "approved") | (User.waitlist_status == None))
+    elif status == "blocked":
+        query = query.filter(User.is_active == False)
         
     query = query.group_by(User.id).order_by(User.created_at.desc()).offset(skip).limit(limit)
     
@@ -175,10 +194,18 @@ def get_users(admin=Depends(require_admin), db: Session = Depends(get_db), searc
             "preferred_language": user.preferred_language,
             "created_at": user.created_at,
             "is_active": user.is_active,
+            "waitlist_status": user.waitlist_status or "approved",
+            "waitlist_number": user.waitlist_number,
             "session_count": session_count,
             "last_active": last_active or user.updated_at
         })
-    return {"users": users, "total": total}
+    return {
+        "users": users,
+        "total": total,
+        "waitlist_count": waitlist_count,
+        "approved_count": approved_count,
+        "blocked_count": blocked_count
+    }
 
 @router.get("/users/{user_id}")
 def get_user_detail(user_id: int, admin=Depends(require_admin), db: Session = Depends(get_db)):
@@ -196,6 +223,8 @@ def get_user_detail(user_id: int, admin=Depends(require_admin), db: Session = De
         "preferred_language": user.preferred_language,
         "created_at": user.created_at,
         "is_active": user.is_active,
+        "waitlist_status": user.waitlist_status or "approved",
+        "waitlist_number": user.waitlist_number,
         "profile": {
             "bio": profile.bio if profile else None,
             "age": profile.age if profile else None,
@@ -458,6 +487,76 @@ async def bulk_delete_users(req: BulkDeleteRequest, admin=Depends(require_admin)
         "deleted": deleted,
         "errors": errors,
         "message": f"Deleted {len(deleted)} user(s). {len(errors)} error(s)."
+    }
+
+
+class UserWaitlistRequest(BaseModel):
+    status: str = Field(..., pattern="^(waitlisted|approved|rejected)$")
+
+@router.put("/users/{user_id}/waitlist")
+def update_user_waitlist_status(user_id: int, req: UserWaitlistRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    """Update a user's waitlist access status (e.g. approve or move to waitlist)."""
+    from core.logger.terminal import CommandCenter
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.waitlist_status = req.status
+    if req.status == "approved":
+        user.is_active = True
+    elif req.status == "waitlisted" and not user.waitlist_number:
+        highest_number = db.query(func.coalesce(func.max(User.waitlist_number), 0)).scalar() or 0
+        user.waitlist_number = highest_number + 1
+
+    db.commit()
+    db.refresh(user)
+
+    admin_email = admin.get("email", "admin")
+    CommandCenter.log_db("ADMIN", f"Admin {admin_email} set waitlist status to {req.status} for user {user_id} ({user.email})")
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_active": user.is_active,
+        "waitlist_status": user.waitlist_status,
+        "waitlist_number": user.waitlist_number,
+        "message": f"User waitlist status updated to {req.status}"
+    }
+
+
+class BulkWaitlistRequest(BaseModel):
+    user_ids: list[int] = Field(..., min_length=1, max_length=100)
+    status: str = Field(..., pattern="^(waitlisted|approved|rejected)$")
+
+@router.post("/users/bulk-waitlist")
+def bulk_update_waitlist_status(req: BulkWaitlistRequest, admin=Depends(require_admin), db: Session = Depends(get_db)):
+    """Bulk update waitlist status for multiple users."""
+    from core.logger.terminal import CommandCenter
+    if not req.user_ids:
+        raise HTTPException(status_code=400, detail="No user IDs provided")
+
+    users = db.query(User).filter(User.id.in_(req.user_ids)).all()
+    highest_number = None
+    for user in users:
+        user.waitlist_status = req.status
+        if req.status == "approved":
+            user.is_active = True
+        elif req.status == "waitlisted" and not user.waitlist_number:
+            if highest_number is None:
+                highest_number = db.query(func.coalesce(func.max(User.waitlist_number), 0)).scalar() or 0
+            highest_number += 1
+            user.waitlist_number = highest_number
+
+    db.commit()
+
+    admin_email = admin.get("email", "admin")
+    CommandCenter.log_db("ADMIN", f"Admin {admin_email} bulk updated {len(users)} users to waitlist status {req.status}")
+
+    return {
+        "updated_count": len(users),
+        "status": req.status,
+        "message": f"Successfully updated {len(users)} user(s) to {req.status}"
     }
 
 

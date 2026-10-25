@@ -18,7 +18,7 @@ from providers.sarvam.voice_client import get_language_prompt
 from security.crisis_handler import check_for_crisis
 from modules.profile.service import get_persona_summary, update_persona
 from rag.brain.state_tracker import tracker
-from security.authentication.api import get_current_user
+from security.authentication.api import get_current_user, get_approved_user
 from modules.dashboard.api import broadcast_event
 from core.logger.terminal import CommandCenter
 from modules.consultation.support_router import route as support_route
@@ -72,7 +72,7 @@ class ChatResponse(BaseModel):
 
 @router.post("/start", response_model=StartSessionResponse)
 async def start_session(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_user),
     db: Session = Depends(get_db),
 ):
     def _create_session():

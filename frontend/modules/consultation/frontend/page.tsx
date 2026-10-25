@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import api, { startSession, sendMessage, getTranscript, logout, getProfile, getInMemoryToken, getWsTicket, getActiveApiUrl, getWebSocketUrl, fetchWithFailover, getFeedbackMode } from '@/core/api'
+import api, { startSession, sendMessage, getTranscript, logout, getProfile, getInMemoryToken, getWsTicket, getActiveApiUrl, getWebSocketUrl, fetchWithFailover, getFeedbackMode, refreshToken } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
@@ -541,7 +541,8 @@ export default function ConsultationPage() {
 
         if (res.status === 401 && !isRetry) {
           try {
-            await api.get('/api/auth/me') // Trigger token refresh through axios interceptor
+            const newToken = await refreshToken()
+            if (!newToken) throw new Error('AUTH_FAILED')
           } catch {
             throw new Error('AUTH_FAILED')
           }

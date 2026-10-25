@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { startSession, getTranscript, logout, API_URL, getInMemoryToken, getActiveApiUrl, fetchWithFailover, getFeedbackMode } from '@/core/api'
+import { startSession, getTranscript, logout, API_URL, getInMemoryToken, getActiveApiUrl, fetchWithFailover, getFeedbackMode, refreshToken } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
@@ -263,12 +263,27 @@ export default function VoiceModePage() {
       const headers: Record<string, string> = {}
       if (token) headers['Authorization'] = `Bearer ${token}`
 
-      const res = await fetchWithFailover('/api/voice/conversation', {
+      let res = await fetchWithFailover('/api/voice/conversation', {
         method: 'POST',
         headers,
         credentials: 'include',
         body: formData,
       })
+
+      if (res.status === 401) {
+        try {
+          const newToken = await refreshToken()
+          if (newToken) {
+            headers['Authorization'] = `Bearer ${newToken}`
+            res = await fetchWithFailover('/api/voice/conversation', {
+              method: 'POST',
+              headers,
+              credentials: 'include',
+              body: formData,
+            })
+          }
+        } catch (_) {}
+      }
 
       if (!res.ok) throw new Error(`Fetch failed with status ${res.status}`)
 

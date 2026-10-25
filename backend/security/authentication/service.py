@@ -159,9 +159,23 @@ def verify_and_rotate_refresh_token(db, token: str) -> tuple[dict, str] | tuple[
         # JTI not in DB — orphaned token (old pre-Phase-2 token or forged)
         return None, None
 
+    ROTATION_GRACE_PERIOD_SECONDS = 30
+
     if record.revoked:
-        # ── REUSE DETECTED — revoke the entire family ──
         now = datetime.now(timezone.utc)
+        record_revoked_at = record.revoked_at
+        if record_revoked_at and record_revoked_at.tzinfo is None:
+            record_revoked_at = record_revoked_at.replace(tzinfo=timezone.utc)
+
+        # Allow a 30-second grace window for concurrent requests or lagging tabs from the same client session
+        if (
+            record.revoke_reason == "rotated"
+            and record_revoked_at is not None
+            and (now - record_revoked_at).total_seconds() < ROTATION_GRACE_PERIOD_SECONDS
+        ):
+            return payload, family
+
+        # ── REUSE DETECTED outside grace window — revoke the entire family ──
         db.query(RefreshToken).filter(
             RefreshToken.family == family,
             RefreshToken.revoked == False  # noqa: E712

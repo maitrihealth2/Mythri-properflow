@@ -21,7 +21,7 @@ import React, {
   useRef,
   ReactNode,
 } from 'react'
-import api, { setInMemoryToken, getActiveApiUrl, serverPool } from '@/core/api'
+import api, { setInMemoryToken, getActiveApiUrl, serverPool, refreshToken } from '@/core/api'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,6 +34,8 @@ export interface AuthUser {
   email: string
   preferred_language: string
   is_active: boolean
+  waitlist_status?: string
+  waitlist_number?: number | null
 }
 
 interface AuthContextValue {
@@ -42,6 +44,7 @@ interface AuthContextValue {
   loading: boolean
   setToken: (token: string, username?: string) => void
   clearAuth: () => void
+  refreshUser: () => Promise<AuthUser | null>
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +57,7 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   setToken: () => {},
   clearAuth: () => {},
+  refreshUser: async () => null,
 })
 
 // ---------------------------------------------------------------------------
@@ -85,12 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const restore = async () => {
       try {
-        // Use the active backend URL directly to bypass the Next.js rewrite
-        // (next.config.js rewrites point to 127.0.0.1:8000 which is dead in production)
-        const backendUrl = serverPool.getActiveUrl()
-        const { data } = await api.post(`${backendUrl}/api/auth/refresh`, {})
-        if (data.access_token) {
-          setToken(data.access_token, data.username)
+        const refreshedToken = await refreshToken()
+        if (refreshedToken) {
+          const username = typeof window !== 'undefined' ? localStorage.getItem('mb_username') || undefined : undefined
+          setToken(refreshedToken, username)
         }
       } catch {
         // No valid session — user must log in
@@ -102,26 +104,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restore()
   }, [setToken])
 
+  // Synchronize React state when token is refreshed by interceptor or other modules
+  useEffect(() => {
+    const handleTokenRefreshed = (e: any) => {
+      const newToken = e?.detail?.token
+      const username = e?.detail?.username
+      if (newToken) {
+        setTokenState(newToken)
+        if (username) localStorage.setItem('mb_username', username)
+      }
+    }
+
+    window.addEventListener('mythri:auth_token_refreshed', handleTokenRefreshed)
+    return () => window.removeEventListener('mythri:auth_token_refreshed', handleTokenRefreshed)
+  }, [])
+
+  // Proactive background refresh:
+  // Access tokens expire in 30 minutes. Refresh every 20 minutes so active conversations never disconnect.
+  useEffect(() => {
+    if (!token) return
+
+    const REFRESH_INTERVAL_MS = 20 * 60 * 1000 // 20 minutes
+    const interval = setInterval(async () => {
+      try {
+        await refreshToken()
+      } catch {
+        // Transient network failure; next call or next interval will retry
+      }
+    }, REFRESH_INTERVAL_MS)
+
+    return () => clearInterval(interval)
+  }, [token])
+
+  const refreshUser = useCallback(async (): Promise<AuthUser | null> => {
+    try {
+      const { data } = await api.get('/api/auth/me')
+      setUser(data)
+      const customName = data.preferred_name || data.username
+      if (customName) {
+        localStorage.setItem('mb_username', customName)
+      }
+      return data
+    } catch {
+      return null
+    }
+  }, [])
+
   // Fetch user identity when token changes
   useEffect(() => {
     if (!token) { setUser(null); return }
     let cancelled = false
-    api.get('/api/auth/me')
-      .then(({ data }) => {
-        if (!cancelled) {
-          setUser(data)
-          const customName = data.preferred_name || data.username
-          if (customName) {
-            localStorage.setItem('mb_username', customName)
-          }
-        }
-      })
-      .catch(() => {})
+    refreshUser().catch(() => {})
     return () => { cancelled = true }
-  }, [token])
+  }, [token, refreshUser])
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, setToken, clearAuth }}>
+    <AuthContext.Provider value={{ token, user, loading, setToken, clearAuth, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

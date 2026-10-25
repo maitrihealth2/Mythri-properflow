@@ -19,7 +19,7 @@ from rag.brain.analyst import should_skip_assessor, assess_turn
 from modules.voice.vocal_engine import optimize_pitch
 from security.crisis_handler import check_for_crisis
 from rag.brain.state_tracker import tracker
-from security.authentication.api import get_current_user
+from security.authentication.api import get_current_user, get_approved_user
 from modules.dashboard.api import broadcast_event
 
 MAX_AUDIO_BYTES = 15 * 1024 * 1024  # 15MB hard upload limit
@@ -61,7 +61,7 @@ class SpeakRequest(BaseModel):
 @router.post("/speak")
 async def speak(
     req: SpeakRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_user),
 ):
     try:
         audio_bytes = await synthesize_speech(req.text, req.language)
@@ -77,7 +77,7 @@ async def speak(
 async def transcribe(
     audio: UploadFile = File(...),
     language: str = Form(default="en-IN"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_user),
 ):
     audio_bytes = await _safe_read_audio(audio)
     print(f"[TRANSCRIBE] size={len(audio_bytes)} lang={language}")
@@ -229,7 +229,7 @@ async def voice_conversation(
     audio: UploadFile = File(...),
     session_id: str = Form(...),
     language: str = Form(default="en-IN"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_approved_user),
     db: Session = Depends(get_db),
 ):
     print(f"\n{'='*60}")

@@ -59,6 +59,67 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+const NON_REFRESH_PATHS = [
+  '/api/auth/refresh',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/google',
+  '/api/auth/forgot-password',
+  '/api/admin/login'
+];
+
+/**
+ * Centrally managed token refresh function.
+ * De-duplicates concurrent refresh calls via a shared queue.
+ */
+export async function refreshToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+
+  if (isRefreshing) {
+    return new Promise(function(resolve, reject) {
+      failedQueue.push({ resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    const currentUrl = serverPool.getActiveUrl();
+    const { data } = await axios.post(`${currentUrl}/api/auth/refresh`, {}, { withCredentials: true });
+
+    const new_token = data.access_token;
+    // CRIT-03: store in memory ONLY — never localStorage
+    setInMemoryToken(new_token);
+    if (data.username) localStorage.setItem('mb_username', data.username);
+
+    api.defaults.headers.common['Authorization'] = `Bearer ${new_token}`;
+
+    // Notify AuthContext and other components of the refreshed token
+    window.dispatchEvent(new CustomEvent('mythri:auth_token_refreshed', {
+      detail: { token: new_token, username: data.username }
+    }));
+
+    processQueue(null, new_token);
+    return new_token;
+  } catch (err: any) {
+    processQueue(err, null);
+
+    // Only force logout if the server definitively rejected the session (401 or 403)
+    // For network errors, timeouts, or server 5xx drops, do NOT wipe local data or force redirect
+    const isDefiniteAuthFailure = err.response && (err.response.status === 401 || err.response.status === 403);
+    if (isDefiniteAuthFailure) {
+      setInMemoryToken(null);
+      localStorage.removeItem('mb_username');
+      localStorage.removeItem('mb_language');
+      sessionStorage.removeItem('mb_session_id');
+      window.location.href = '/login';
+    }
+    throw err;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 api.interceptors.response.use(
   (response) => {
     if (response.config?.baseURL) {
@@ -95,46 +156,19 @@ api.interceptors.response.use(
       }
     }
     
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      if (typeof window !== 'undefined' && !originalRequest.url?.includes('/api/auth/')) {
-        if (isRefreshing) {
-          return new Promise(function(resolve, reject) {
-            failedQueue.push({ resolve, reject })
-          }).then(token => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          }).catch(err => {
-            return Promise.reject(err);
-          });
-        }
-        
+    const isNonRefreshPath = NON_REFRESH_PATHS.some(path => originalRequest?.url?.includes(path));
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isNonRefreshPath) {
+      if (typeof window !== 'undefined') {
         originalRequest._retry = true;
-        isRefreshing = true;
-
         try {
-          const currentUrl = serverPool.getActiveUrl();
-          const { data } = await axios.post(`${currentUrl}/api/auth/refresh`, {}, { withCredentials: true });
-
-          const new_token = data.access_token;
-          // CRIT-03: store in memory ONLY — never localStorage
-          setInMemoryToken(new_token);
-          if (data.username) localStorage.setItem('mb_username', data.username);
-
-          api.defaults.headers.common['Authorization'] = `Bearer ${new_token}`;
-          originalRequest.headers.Authorization = `Bearer ${new_token}`;
-
-          processQueue(null, new_token);
-          return api(originalRequest);
-        } catch (err) {
-          processQueue(err, null);
-          setInMemoryToken(null);
-          localStorage.removeItem('mb_username')
-          localStorage.removeItem('mb_language')
-          sessionStorage.removeItem('mb_session_id')
-          window.location.href = '/login'
-          return Promise.reject(err);
-        } finally {
-          isRefreshing = false;
+          const newToken = await refreshToken();
+          if (newToken) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          }
+        } catch (refreshErr) {
+          return Promise.reject(refreshErr);
         }
       }
     }
@@ -369,8 +403,10 @@ export const getAdminFeedback = async () => {
   const response = await api.get('/api/admin/feedback')
   return response.data
 }
-export const getAdminUsers = async (search = '', skip = 0, limit = 50) => {
-  const response = await api.get('/api/admin/users', { params: { search, skip, limit } })
+export const getAdminUsers = async (search = '', skip = 0, limit = 50, status = '') => {
+  const params: any = { search, skip, limit }
+  if (status) params.status = status
+  const response = await api.get('/api/admin/users', { params })
   return response.data
 }
 export const getAdminUserDetail = async (userId: number) => {
@@ -411,6 +447,16 @@ export const updateAdminUserStatus = async (userId: number, isActive: boolean) =
 
 export const bulkUpdateAdminUserStatus = async (userIds: number[], isActive: boolean) => {
   const response = await api.post('/api/admin/users/bulk-status', { user_ids: userIds, is_active: isActive })
+  return response.data
+}
+
+export const updateAdminUserWaitlist = async (userId: number, status: 'approved' | 'waitlisted' | 'rejected') => {
+  const response = await api.put(`/api/admin/users/${userId}/waitlist`, { status })
+  return response.data
+}
+
+export const bulkUpdateAdminUserWaitlist = async (userIds: number[], status: 'approved' | 'waitlisted' | 'rejected') => {
+  const response = await api.post('/api/admin/users/bulk-waitlist', { user_ids: userIds, status })
   return response.data
 }
 

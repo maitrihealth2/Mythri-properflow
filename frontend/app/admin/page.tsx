@@ -14,6 +14,8 @@ import {
   deleteAdminUsers,
   updateAdminUserStatus,
   bulkUpdateAdminUserStatus,
+  updateAdminUserWaitlist,
+  bulkUpdateAdminUserWaitlist,
   updateAllUsersStatus,
   getAdminMaintenanceStatus,
   setAdminMaintenanceMode,
@@ -51,6 +53,8 @@ interface UserListRecord {
   preferred_language: string
   created_at: string
   is_active: boolean
+  waitlist_status?: string
+  waitlist_number?: number | null
   session_count: number
   last_active: string
 }
@@ -62,6 +66,8 @@ interface UserDetailRecord {
   preferred_language: string
   created_at: string
   is_active: boolean
+  waitlist_status?: string
+  waitlist_number?: number | null
   profile: {
     bio?: string
     age?: number
@@ -555,6 +561,14 @@ export default function AdminDashboard() {
   const [statusLoadingUser, setStatusLoadingUser] = useState<number | null>(null)
   const [bulkStatusLoading, setBulkStatusLoading] = useState<boolean>(false)
 
+  // Waitlist State
+  const [userFilter, setUserFilter] = useState<'all' | 'waitlisted' | 'approved' | 'blocked'>('all')
+  const [waitlistCount, setWaitlistCount] = useState<number>(0)
+  const [approvedCount, setApprovedCount] = useState<number>(0)
+  const [blockedCount, setBlockedCount] = useState<number>(0)
+  const [waitlistLoadingUser, setWaitlistLoadingUser] = useState<number | null>(null)
+  const [bulkWaitlistLoading, setBulkWaitlistLoading] = useState<boolean>(false)
+
   // Global All-Users Block/Unblock State
   const [globalStatusModal, setGlobalStatusModal] = useState<{ open: boolean; action: 'block_all' | 'unblock_all' }>({ open: false, action: 'block_all' })
   const [globalStatusLoading, setGlobalStatusLoading] = useState(false)
@@ -665,14 +679,14 @@ export default function AdminDashboard() {
         loadData(activeTab)
       }
     }
-  }, [activeTab, isAuthenticated, page, pageSize, search])
+  }, [activeTab, isAuthenticated, page, pageSize, search, userFilter])
 
   // Optional: debounce search for users to avoid spamming
   useEffect(() => {
     if (activeTab === 'users') {
        setPage(1) // Reset to page 1 on new search
     }
-  }, [search])
+  }, [search, userFilter])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -701,9 +715,13 @@ export default function AdminDashboard() {
     try {
       if (tab === 'users') {
         const skip = (page - 1) * pageSize
-        const res = await getAdminUsers(search, skip, pageSize)
+        const statusParam = userFilter === 'all' ? '' : userFilter
+        const res = await getAdminUsers(search, skip, pageSize, statusParam)
         setUsers(res.users)
         setTotalUsers(res.total || 0)
+        if (typeof res.waitlist_count === 'number') setWaitlistCount(res.waitlist_count)
+        if (typeof res.approved_count === 'number') setApprovedCount(res.approved_count)
+        if (typeof res.blocked_count === 'number') setBlockedCount(res.blocked_count)
       } else if (tab === 'consents') {
         const res = await getAdminConsents()
         setConsents(res.consents)
@@ -807,6 +825,50 @@ export default function AdminDashboard() {
       alert("Failed to update user access status")
     } finally {
       setBulkStatusLoading(false)
+    }
+  }
+
+  const handleUpdateWaitlistStatus = async (userId: number, newStatus: 'approved' | 'waitlisted', e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setWaitlistLoadingUser(userId)
+    try {
+      const res = await updateAdminUserWaitlist(userId, newStatus)
+      setUsers(prev => prev.map(u => u.id === userId ? {
+        ...u,
+        waitlist_status: res.waitlist_status,
+        waitlist_number: res.waitlist_number,
+        is_active: res.is_active
+      } : u))
+      if (activeUser && activeUser.id === userId) {
+        setActiveUser(prev => prev ? {
+          ...prev,
+          waitlist_status: res.waitlist_status,
+          waitlist_number: res.waitlist_number,
+          is_active: res.is_active
+        } : null)
+      }
+      await loadData('users')
+    } catch (err) {
+      console.error("Failed to update waitlist status", err)
+      alert("Failed to update user access status")
+    } finally {
+      setWaitlistLoadingUser(null)
+    }
+  }
+
+  const handleBulkWaitlistStatus = async (targetStatus: 'approved' | 'waitlisted') => {
+    if (selectedUsers.size === 0) return
+    setBulkWaitlistLoading(true)
+    try {
+      const userIds = Array.from(selectedUsers)
+      await bulkUpdateAdminUserWaitlist(userIds, targetStatus)
+      setSelectedUsers(new Set())
+      await loadData('users')
+    } catch (err) {
+      console.error("Bulk waitlist update failed", err)
+      alert("Failed to bulk update users")
+    } finally {
+      setBulkWaitlistLoading(false)
     }
   }
 
@@ -942,6 +1004,31 @@ export default function AdminDashboard() {
               ← Back to Users
             </button>
             <div className="flex items-center gap-3">
+              {activeUser.waitlist_status === 'waitlisted' ? (
+                <button
+                  onClick={(e) => handleUpdateWaitlistStatus(activeUser.id, 'approved', e)}
+                  disabled={waitlistLoadingUser === activeUser.id}
+                  className="px-4 py-2 rounded-full font-label-md text-xs sm:text-sm font-semibold flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm cursor-pointer"
+                  title="Approve access to Mythri sanctuary"
+                >
+                  {waitlistLoadingUser === activeUser.id ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span>✅</span>
+                  )}
+                  <span>Approve Access</span>
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => handleUpdateWaitlistStatus(activeUser.id, 'waitlisted', e)}
+                  disabled={waitlistLoadingUser === activeUser.id}
+                  className="px-3.5 py-2 rounded-full font-label-md text-xs sm:text-sm font-medium flex items-center gap-1.5 border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-200 cursor-pointer"
+                  title="Move user back to waiting list"
+                >
+                  <span>⏳ Move to Waitlist</span>
+                </button>
+              )}
+
               <button
                 onClick={(e) => handleToggleUserStatus(activeUser.id, activeUser.is_active, e)}
                 disabled={statusLoadingUser === activeUser.id}
@@ -964,8 +1051,18 @@ export default function AdminDashboard() {
           
           <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/30 p-6 flex flex-col md:flex-row gap-8">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
+              <div className="flex items-center gap-3 mb-1 flex-wrap">
                 <h2 className="text-2xl font-headline-md text-primary">{activeUser.username}</h2>
+                {activeUser.waitlist_status === 'waitlisted' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span>Waitlisted (#{activeUser.waitlist_number || '—'})</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-200">
+                    <span>✅ Approved Access</span>
+                  </span>
+                )}
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                   activeUser.is_active
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
@@ -1190,6 +1287,30 @@ export default function AdminDashboard() {
               {activeTab === 'users' && (
                 <div className="h-full flex flex-col gap-3">
 
+                  {/* ── Filter Pills Bar ── */}
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {(['all', 'waitlisted', 'approved', 'blocked'] as const).map(filter => (
+                        <button
+                          key={filter}
+                          onClick={() => { setUserFilter(filter); setPage(1) }}
+                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
+                            userFilter === filter
+                              ? 'bg-primary text-white shadow-sm'
+                              : 'bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40'
+                          }`}
+                        >
+                          <span>
+                            {filter === 'all' && `All Users (${totalUsers})`}
+                            {filter === 'waitlisted' && `⏳ Waiting List (${waitlistCount})`}
+                            {filter === 'approved' && `✅ Approved (${approvedCount})`}
+                            {filter === 'blocked' && `🚫 Blocked (${blockedCount})`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* ── Bulk actions bar ── */}
                   {selectedUsers.size > 0 && (
                     <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-container-low border border-outline-variant/40 rounded-xl px-5 py-3 shadow-sm">
@@ -1199,15 +1320,35 @@ export default function AdminDashboard() {
                       <div className="flex items-center flex-wrap gap-2.5">
                         <button
                           onClick={() => setSelectedUsers(new Set())}
-                          className="text-sm text-on-surface-variant hover:text-on-surface transition-colors px-2 py-1"
+                          className="text-sm text-on-surface-variant hover:text-on-surface transition-colors px-2 py-1 cursor-pointer"
                         >
                           Clear
+                        </button>
+
+                        <button
+                          onClick={() => handleBulkWaitlistStatus('approved')}
+                          disabled={bulkWaitlistLoading}
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          title="Approve selected waitlisted users"
+                        >
+                          {bulkWaitlistLoading ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
+                          <span>✅ Approve Selected</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleBulkWaitlistStatus('waitlisted')}
+                          disabled={bulkWaitlistLoading}
+                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          title="Move selected users to waitlist"
+                        >
+                          {bulkWaitlistLoading ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
+                          <span>⏳ Waitlist Selected</span>
                         </button>
                         
                         <button
                           onClick={() => handleBulkStatusChange(false)}
                           disabled={bulkStatusLoading}
-                          className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm"
+                          className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
                         >
                           {bulkStatusLoading ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
                           <span>🚫 Block Selected</span>
@@ -1216,16 +1357,16 @@ export default function AdminDashboard() {
                         <button
                           onClick={() => handleBulkStatusChange(true)}
                           disabled={bulkStatusLoading}
-                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm"
+                          className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-medium rounded-full transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
                         >
                           {bulkStatusLoading ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
-                          <span>✅ Allow Selected</span>
+                          <span>Allow Selected</span>
                         </button>
 
                         {!deleteConfirm ? (
                           <button
                             onClick={() => setDeleteConfirm(true)}
-                            className="px-3.5 py-1.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-red-700 transition-colors shadow-sm"
+                            className="px-3.5 py-1.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
                           >
                             🗑 Delete Selected
                           </button>
@@ -1235,13 +1376,13 @@ export default function AdminDashboard() {
                             <button
                               onClick={handleBulkDelete}
                               disabled={deleting}
-                              className="px-3.5 py-1.5 bg-red-700 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-red-800 transition-colors disabled:opacity-50"
+                              className="px-3.5 py-1.5 bg-red-700 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-red-800 transition-colors disabled:opacity-50 cursor-pointer"
                             >
                               {deleting ? 'Deleting…' : 'Yes, Delete'}
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(false)}
-                              className="px-3 py-1.5 border border-outline-variant rounded-full text-xs sm:text-sm hover:bg-surface transition-colors"
+                              className="px-3 py-1.5 border border-outline-variant rounded-full text-xs sm:text-sm hover:bg-surface transition-colors cursor-pointer"
                             >
                               Cancel
                             </button>
@@ -1266,10 +1407,10 @@ export default function AdminDashboard() {
                           </th>
                           <th className="p-4">User</th>
                           <th className="p-4">Email</th>
-                          <th className="p-4 text-center">Status</th>
+                          <th className="p-4 text-center">Status / Access</th>
                           <th className="p-4 text-center">Sessions</th>
                           <th className="p-4 text-center">Joined Date</th>
-                          <th className="p-4 text-right">Access Control</th>
+                          <th className="p-4 text-right">Approval & Control</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1296,14 +1437,22 @@ export default function AdminDashboard() {
                             </td>
                             <td className="p-4 text-on-surface-variant cursor-pointer" onClick={() => handleUserClick(u.id)}>{u.email}</td>
                             <td className="p-4 text-center cursor-pointer" onClick={() => handleUserClick(u.id)}>
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                u.is_active
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50'
-                                  : 'bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                                <span>{u.is_active ? 'Active' : 'Blocked'}</span>
-                              </span>
+                              {u.waitlist_status === 'waitlisted' ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800 shadow-xs">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                  <span>Waitlist #{u.waitlist_number || '—'}</span>
+                                </span>
+                              ) : !u.is_active ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/50">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <span>Blocked</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <span>Approved</span>
+                                </span>
+                              )}
                             </td>
                             <td className="p-4 text-center cursor-pointer" onClick={() => handleUserClick(u.id)}>
                               <span className="bg-surface-variant px-2.5 py-1 rounded-full text-xs font-medium text-on-surface-variant">
@@ -1314,21 +1463,48 @@ export default function AdminDashboard() {
                               {new Date(u.created_at).toLocaleDateString()}
                             </td>
                             <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={(e) => handleToggleUserStatus(u.id, u.is_active, e)}
-                                disabled={statusLoadingUser === u.id}
-                                title={u.is_active ? "Block user from accessing website" : "Unblock user to allow access"}
-                                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all inline-flex items-center gap-1.5 border shadow-sm cursor-pointer ${
-                                  u.is_active
-                                    ? 'bg-surface border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 dark:border-rose-900/40 dark:text-rose-300 dark:hover:bg-rose-950/30'
-                                    : 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
-                                }`}
-                              >
-                                {statusLoadingUser === u.id && (
-                                  <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              <div className="flex items-center justify-end gap-1.5">
+                                {u.waitlist_status === 'waitlisted' ? (
+                                  <button
+                                    onClick={(e) => handleUpdateWaitlistStatus(u.id, 'approved', e)}
+                                    disabled={waitlistLoadingUser === u.id}
+                                    title="Approve this user and grant application access"
+                                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-semibold transition-all inline-flex items-center gap-1 shadow-sm cursor-pointer"
+                                  >
+                                    {waitlistLoadingUser === u.id ? (
+                                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <span>✓</span>
+                                    )}
+                                    <span>Approve</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={(e) => handleUpdateWaitlistStatus(u.id, 'waitlisted', e)}
+                                    disabled={waitlistLoadingUser === u.id}
+                                    title="Move user to waiting list"
+                                    className="px-2.5 py-1 bg-surface border border-amber-300 hover:bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-200 rounded-full text-xs font-medium transition-all inline-flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <span>⏳ Waitlist</span>
+                                  </button>
                                 )}
-                                <span>{u.is_active ? '🚫 Block' : '✅ Allow'}</span>
-                              </button>
+
+                                <button
+                                  onClick={(e) => handleToggleUserStatus(u.id, u.is_active, e)}
+                                  disabled={statusLoadingUser === u.id}
+                                  title={u.is_active ? "Block user from accessing website" : "Unblock user to allow access"}
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all inline-flex items-center gap-1 border shadow-xs cursor-pointer ${
+                                    u.is_active
+                                      ? 'bg-surface border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 dark:border-rose-900/40 dark:text-rose-300 dark:hover:bg-rose-950/30'
+                                      : 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700'
+                                  }`}
+                                >
+                                  {statusLoadingUser === u.id && (
+                                    <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                  )}
+                                  <span>{u.is_active ? '🚫 Block' : '✅ Allow'}</span>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}

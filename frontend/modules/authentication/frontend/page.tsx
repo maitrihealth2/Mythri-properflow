@@ -247,7 +247,11 @@ export default function LoginPage() {
       setAuthPhase('transitioning')
       await new Promise(r => setTimeout(r, 400))
 
-      router.replace('/home')
+      if (data?.waitlist_status === 'waitlisted') {
+        router.replace('/waitlist')
+      } else {
+        router.replace('/home')
+      }
     } catch (err: any) {
       safeLogError("API Error:", err)
       let errorMessage = err?.response?.data?.detail || err.userMessage || err.message || "Something didn't quite work. Please check your details."
