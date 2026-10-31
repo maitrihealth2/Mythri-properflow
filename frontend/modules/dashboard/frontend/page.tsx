@@ -94,9 +94,9 @@ export default function DashboardPage() {
       `}} />
 
       {/* Ambient Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#fff8f5] dark:bg-black">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#F3EDE3] dark:bg-[#1D1713]">
         <div className="absolute inset-0 bg-cover bg-center opacity-50 bg-[url('/assets/background.png')] dark:bg-[url('/assets/Gemini_Generated_Image_psevl6psevl6psev-clean.png')]"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#fff8f5]/60 via-transparent to-[#fff8f5]/80 dark:from-black/60 dark:to-black/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#F3EDE3]/60 via-transparent to-[#F3EDE3]/80 dark:from-[#1D1713]/70 dark:to-[#1D1713]/85"></div>
         <div className="absolute inset-0 bg-grain opacity-[0.03] mix-blend-overlay"></div>
       </div>
 

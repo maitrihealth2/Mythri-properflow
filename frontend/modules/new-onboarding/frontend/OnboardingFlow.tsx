@@ -161,10 +161,10 @@ export default function OnboardingFlow() {
   }
 
   return (
-    <div className="flex-1 w-full min-h-[100dvh] bg-[#FFFDF9] dark:bg-[#141218] flex flex-col relative overflow-hidden selection:bg-primary/20">
+    <div className="flex-1 w-full min-h-[100dvh] bg-[#F3EDE3] dark:bg-[#1D1713] flex flex-col relative overflow-hidden selection:bg-primary/20">
       {/* Story Canvas Ambient Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FFFDF9] via-[#FFFDF9] to-[#F5E6E1] dark:from-[#141218] dark:via-[#141218] dark:to-[#221A21]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#F3EDE3] via-[#F3EDE3] to-[#EAE0D2] dark:from-[#1D1713] dark:via-[#1D1713] dark:to-[#29211B]" />
         <motion.div
           className="absolute top-1/4 left-0 w-[100vw] h-[50vw] rounded-full blur-[140px] opacity-[0.15] dark:opacity-[0.08]"
           style={{ background: 'radial-gradient(ellipse, #7A4A5F 0%, transparent 60%)' }}
@@ -226,7 +226,7 @@ export default function OnboardingFlow() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-0 left-0 w-full z-20 pb-6 sm:pb-10 pt-10 sm:pt-16 bg-gradient-to-t from-[#FFFDF9] via-[#FFFDF9]/90 to-transparent dark:from-[#141218] dark:via-[#141218]/90 pointer-events-none"
+            className="fixed bottom-0 left-0 w-full z-20 pb-6 sm:pb-10 pt-10 sm:pt-16 bg-gradient-to-t from-[#F3EDE3] via-[#F3EDE3]/90 to-transparent dark:from-[#1D1713] dark:via-[#1D1713]/90 pointer-events-none"
           >
             <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-wrap gap-2 sm:gap-3 justify-center pointer-events-auto">
               {currentChoices.map((choice) => (
@@ -247,7 +247,7 @@ export default function OnboardingFlow() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 bg-[#FFFDF9] dark:bg-[#141218] flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-50 bg-[#F3EDE3] dark:bg-[#1D1713] flex flex-col items-center justify-center p-6"
           >
             <MythriAura state="success" size="lg" className="mb-8" />
             <motion.h2 

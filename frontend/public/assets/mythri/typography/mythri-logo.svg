@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none">
+  <defs>
+    <linearGradient id="mythriGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4A2B38" />
+      <stop offset="60%" stop-color="#603347" />
+      <stop offset="100%" stop-color="#8C7355" />
+    </linearGradient>
+  </defs>
+  <text 
+    x="600" 
+    y="280" 
+    text-anchor="middle" 
+    font-family="'Literata', Georgia, serif" 
+    font-size="240" 
+    font-weight="600" 
+    letter-spacing="0.04em" 
+    fill="url(#mythriGrad)">
+    Mythri
+  </text>
+</svg>

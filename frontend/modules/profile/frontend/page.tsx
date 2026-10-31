@@ -185,8 +185,8 @@ export default function ProfilePage() {
             `}} />
 
             {/* Enhanced Background with Mesh Gradients & Particles */}
-            <div className="fixed inset-0 pointer-events-none z-0 dark:bg-black">
-                <div className="absolute inset-0 bg-[#fff8f5] dark:bg-black"></div>
+            <div className="fixed inset-0 pointer-events-none z-0 dark:bg-[#1D1713]">
+                <div className="absolute inset-0 bg-[#F3EDE3] dark:bg-[#1D1713]"></div>
                 <div className="absolute inset-0 bg-cover bg-center opacity-50 transition-all duration-1000 bg-[url('/assets/background.png')] dark:bg-[url('/assets/Gemini_Generated_Image_psevl6psevl6psev-clean.png')]"></div>
                 <div className="absolute top-[-10%] left-[-5%] w-[50vw] h-[50vw] rounded-full bg-secondary-container/40 mix-blend-multiply filter blur-[120px] animate-float-slow dark:bg-secondary-container/20"></div>
                 <div className="absolute bottom-[-10%] right-[-5%] w-[60vw] h-[60vw] rounded-full bg-primary-container/40 mix-blend-multiply filter blur-[140px] animate-float-slower dark:bg-primary-container/20"></div>

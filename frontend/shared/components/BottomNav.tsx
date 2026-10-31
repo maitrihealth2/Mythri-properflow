@@ -13,8 +13,8 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname()
 
-  // Don't render on login or voice pages
-  if (pathname === '/' || pathname === '/login' || pathname?.startsWith('/voice')) return null
+  // Don't render on login, landing or voice pages
+  if (pathname === '/' || pathname === '/login' || pathname === '/landing' || pathname?.startsWith('/voice')) return null
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex justify-around items-center glass-menu py-2 pb-safe border-t">

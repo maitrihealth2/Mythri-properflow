@@ -165,7 +165,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#fff8f5] dark:bg-black text-on-surface dark:text-white relative overflow-x-hidden select-none">
+    <div className="min-h-[100dvh] w-full flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F3EDE3] dark:bg-[#1D1713] text-on-surface dark:text-white relative overflow-x-hidden select-none">
       {/* Dynamic Background Elements */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/10 dark:bg-primary/20 blur-[120px] animate-pulse" />

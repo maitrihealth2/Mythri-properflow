@@ -112,7 +112,15 @@ export async function refreshToken(): Promise<string | null> {
       localStorage.removeItem('mb_username');
       localStorage.removeItem('mb_language');
       sessionStorage.removeItem('mb_session_id');
-      window.location.href = '/login';
+
+      // CRITICAL FIX: NEVER force redirect or reload if user is already on a public page (/, /landing, /login, /waitlist)
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const isPublicPage = path === '/' || path === '/landing' || path === '/login' || path === '/waitlist';
+        if (!isPublicPage) {
+          window.location.href = '/login';
+        }
+      }
     }
     throw err;
   } finally {
@@ -532,6 +540,26 @@ export function safeLogError(prefix: string, err: any): void {
   const safeMsg = status ? `[${status}] ${message}` : message;
   const safeUrl = url ? `(endpoint: ${url.split('?')[0]})` : '';
   console.error(`${prefix} ${safeMsg} ${safeUrl}`.trim());
+}
+
+export const completeWaitlist = async (data: {
+  intentions?: string
+  vibe?: string
+  cadence?: string
+  agreed_privacy?: boolean
+  affirmation?: string
+}) => {
+  const response = await api.post('/api/auth/waitlist/complete', data)
+  return response.data
+}
+
+export const reportIssue = async (data: {
+  issue_type: string
+  description: string
+  contact_email?: string
+}) => {
+  const response = await api.post('/api/auth/report-issue', data)
+  return response.data
 }
 
 

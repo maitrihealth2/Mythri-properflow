@@ -742,7 +742,7 @@ export default function VoiceModePage() {
         <div className="absolute inset-0 bg-white/40 dark:bg-black/20 z-0 pointer-events-none" />
 
         {/* Base gradient (softened to let the image peek through) */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFFDF9]/60 via-[#FDF5F2]/50 to-[#F5E6E1]/60 dark:from-[#141218]/30 dark:via-transparent dark:to-[#221A21]/30 z-0 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F3EDE3]/60 via-[#EAE0D2]/50 to-[#DFD3C4]/60 dark:from-[#1D1713]/30 dark:via-transparent dark:to-[#29211B]/30 z-0 pointer-events-none" />
         
         {/* Swirling Layer 1 - Muted Plum */}
         <motion.div

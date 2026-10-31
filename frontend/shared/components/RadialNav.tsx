@@ -67,7 +67,7 @@ export default function RadialNav() {
   }, [isOpen])
 
   // Don't render on landing or auth pages
-  if (pathname === '/login' || pathname === '/') return null
+  if (pathname === '/login' || pathname === '/' || pathname === '/landing') return null
 
   const handleNavigate = async (href: string) => {
     setIsOpen(false)

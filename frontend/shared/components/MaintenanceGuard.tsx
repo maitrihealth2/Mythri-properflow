@@ -80,18 +80,18 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   // If maintenance is enabled and active, lock EVERY non-admin route completely
   if (maintenance?.enabled && (!maintenance.ends_at || timeLeft.totalSeconds > 0)) {
     return (
-      <div className="min-h-screen w-full bg-[#fbf9f8] text-[#1e1a20] flex flex-col justify-between items-center px-4 py-8 relative overflow-hidden selection:bg-[#7d5260] selection:text-white font-body-md select-none">
+      <div className="min-h-screen w-full bg-[#F3EDE3] text-[#382820] flex flex-col justify-between items-center px-4 py-8 relative overflow-hidden selection:bg-[#80523B] selection:text-white font-body-md select-none">
         {/* Background ambient lighting */}
-        <div className="fixed top-[-15%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-[#ffd8e4]/30 blur-3xl pointer-events-none -z-10 animate-pulse" style={{ animationDuration: '6s' }} />
-        <div className="fixed bottom-[-15%] right-[-10%] w-[65vw] h-[65vw] rounded-full bg-[#e8def8]/40 blur-3xl pointer-events-none -z-10 animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="fixed top-[-15%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-[#D6BEA4]/30 blur-3xl pointer-events-none -z-10 animate-pulse" style={{ animationDuration: '6s' }} />
+        <div className="fixed bottom-[-15%] right-[-10%] w-[65vw] h-[65vw] rounded-full bg-[#EAE0D2]/50 blur-3xl pointer-events-none -z-10 animate-pulse" style={{ animationDuration: '8s' }} />
 
         {/* Top Header / Brand */}
         <header className="w-full max-w-4xl flex items-center justify-between z-10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7d5260] to-[#986878] flex items-center justify-center text-white font-bold shadow-md shadow-[#7d5260]/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#80523B] to-[#A07050] flex items-center justify-center text-white font-bold shadow-md shadow-[#80523B]/20">
               M
             </div>
-            <span className="font-headline-lg text-xl tracking-tight text-[#31111d] font-serif">
+            <span className="font-headline-lg text-xl tracking-tight text-[#382820] font-serif">
               Mythri
             </span>
           </div>
@@ -106,15 +106,15 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
         <main className="w-full max-w-2xl my-auto py-12 flex flex-col items-center text-center z-10">
           {/* Animated Lock Badge */}
           <div className="relative mb-8">
-            <div className="absolute inset-0 rounded-3xl bg-[#7d5260]/15 blur-xl pointer-events-none" />
-            <div className="relative w-24 h-24 rounded-3xl bg-white/80 backdrop-blur-md border border-[#eaddff] shadow-xl flex items-center justify-center text-[#7d5260]">
+            <div className="absolute inset-0 rounded-3xl bg-[#80523B]/15 blur-xl pointer-events-none" />
+            <div className="relative w-24 h-24 rounded-3xl bg-white/80 backdrop-blur-md border border-[#D6BEA4] shadow-xl flex items-center justify-center text-[#80523B]">
               <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1, 'wght' 300" }}>
                 lock_clock
               </span>
             </div>
           </div>
 
-          <h1 className="font-headline-lg text-3xl sm:text-4xl md:text-5xl font-serif text-[#31111d] tracking-tight mb-4 leading-tight">
+          <h1 className="font-headline-lg text-3xl sm:text-4xl md:text-5xl font-serif text-[#382820] tracking-tight mb-4 leading-tight">
             We are tending to the sanctuary
           </h1>
 
@@ -124,44 +124,44 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
 
           {/* Pure Countdown Display */}
           {maintenance.ends_at && timeLeft.totalSeconds > 0 ? (
-            <div className="w-full max-w-md bg-white/70 backdrop-blur-md rounded-3xl p-6 border border-[#eaddff] shadow-lg shadow-[#7d5260]/5 mb-4">
-              <p className="text-xs uppercase tracking-widest text-[#7d5260] font-bold mb-4">
+            <div className="w-full max-w-md bg-white/70 backdrop-blur-md rounded-3xl p-6 border border-[#D6BEA4] shadow-lg shadow-[#80523B]/5 mb-4">
+              <p className="text-xs uppercase tracking-widest text-[#80523B] font-bold mb-4">
                 Estimated Time Remaining
               </p>
               
               <div className="grid grid-cols-4 gap-2 sm:gap-3">
                 {/* Days */}
                 <div className="flex flex-col items-center p-3 bg-[#f7f2fa] rounded-2xl border border-[#ece6f0]">
-                  <span className="font-serif text-2xl sm:text-3xl font-bold text-[#31111d]">
+                  <span className="font-serif text-2xl sm:text-3xl font-bold text-[#382820]">
                     {String(timeLeft.days).padStart(2, '0')}
                   </span>
-                  <span className="text-[11px] font-medium text-[#7d5260] uppercase mt-1">
+                  <span className="text-[11px] font-medium text-[#80523B] uppercase mt-1">
                     Days
                   </span>
                 </div>
 
                 {/* Hours */}
                 <div className="flex flex-col items-center p-3 bg-[#f7f2fa] rounded-2xl border border-[#ece6f0]">
-                  <span className="font-serif text-2xl sm:text-3xl font-bold text-[#31111d]">
+                  <span className="font-serif text-2xl sm:text-3xl font-bold text-[#382820]">
                     {String(timeLeft.hours).padStart(2, '0')}
                   </span>
-                  <span className="text-[11px] font-medium text-[#7d5260] uppercase mt-1">
+                  <span className="text-[11px] font-medium text-[#80523B] uppercase mt-1">
                     Hours
                   </span>
                 </div>
 
                 {/* Minutes */}
                 <div className="flex flex-col items-center p-3 bg-[#f7f2fa] rounded-2xl border border-[#ece6f0]">
-                  <span className="font-serif text-2xl sm:text-3xl font-bold text-[#31111d]">
+                  <span className="font-serif text-2xl sm:text-3xl font-bold text-[#382820]">
                     {String(timeLeft.minutes).padStart(2, '0')}
                   </span>
-                  <span className="text-[11px] font-medium text-[#7d5260] uppercase mt-1">
+                  <span className="text-[11px] font-medium text-[#80523B] uppercase mt-1">
                     Mins
                   </span>
                 </div>
 
                 {/* Seconds */}
-                <div className="flex flex-col items-center p-3 bg-[#7d5260] text-white rounded-2xl shadow-sm">
+                <div className="flex flex-col items-center p-3 bg-[#80523B] text-white rounded-2xl shadow-sm">
                   <span className="font-serif text-2xl sm:text-3xl font-bold">
                     {String(timeLeft.seconds).padStart(2, '0')}
                   </span>
@@ -177,7 +177,7 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-sm text-[#7d5260] bg-white/60 px-5 py-2.5 rounded-full border border-[#eaddff] shadow-sm mb-4">
+            <div className="flex items-center gap-2 text-sm text-[#80523B] bg-white/60 px-5 py-2.5 rounded-full border border-[#D6BEA4] shadow-sm mb-4">
               <span className="material-symbols-outlined text-base animate-spin">refresh</span>
               <span>Maintenance in progress. We will be back shortly.</span>
             </div>

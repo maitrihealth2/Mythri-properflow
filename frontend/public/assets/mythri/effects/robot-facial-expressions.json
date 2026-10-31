@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "character": "Mythri Companion Robot",
+  "screenDisplay": {
+    "dimensions": [480, 320],
+    "baseColor": "#141416",
+    "screenGlossiness": 0.95,
+    "emissiveGlowColor": "#FFC107",
+    "emissiveIntensity": 1.6
+  },
+  "states": {
+    "sleeping": {
+      "leftEye": { "type": "flatLine", "width": 40, "y": 160 },
+      "rightEye": { "type": "flatLine", "width": 40, "y": 160 },
+      "emissiveIntensity": 0.2
+    },
+    "listening": {
+      "leftEye": { "type": "roundedEllipse", "rx": 22, "ry": 28, "y": 155 },
+      "rightEye": { "type": "roundedEllipse", "rx": 22, "ry": 28, "y": 155 },
+      "emissiveIntensity": 1.4
+    },
+    "smiling": {
+      "leftEye": { "type": "curvedArcUp", "radius": 34, "strokeWidth": 10, "angleSpan": 140, "y": 150 },
+      "rightEye": { "type": "curvedArcUp", "radius": 34, "strokeWidth": 10, "angleSpan": 140, "y": 150 },
+      "emissiveIntensity": 1.8
+    },
+    "joyful": {
+      "leftEye": { "type": "curvedArcUp", "radius": 38, "strokeWidth": 12, "angleSpan": 155, "y": 146 },
+      "rightEye": { "type": "curvedArcUp", "radius": 38, "strokeWidth": 12, "angleSpan": 155, "y": 146 },
+      "emissiveIntensity": 2.2
+    }
+  }
+}

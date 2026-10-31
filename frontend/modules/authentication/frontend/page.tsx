@@ -114,7 +114,7 @@ function SanctuaryWisp() {
 
 export default function LoginPage() {
   const router = useRouter()
-  const { token, loading: authLoading, setToken } = useAuth()
+  const { token, user, loading: authLoading, setToken } = useAuth()
   const [mode, setMode] = useState<'signin' | 'create'>('signin')
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
@@ -128,14 +128,20 @@ export default function LoginPage() {
   const [agreeTerms, setAgreeTerms] = useState(false)
 
   // CRIT-03: Redirect already-authenticated users away from /login.
-  // Only redirect after authLoading is done so we don't fire during the
-  // initial session-restore attempt (which would loop back to /login if
-  // the refresh resolves while still on this page).
+  // Only redirect after authLoading is done AND user data is loaded so we
+  // know the waitlist status before choosing the destination.
+  // Waitlisted users go to /waitlist; everyone else goes to /home.
   useEffect(() => {
-    if (!authLoading && token) {
+    if (authLoading || !token) return;
+    // Wait for user object to load before redirecting (avoids wrong destination
+    // on first render when token is set but /api/auth/me hasn't resolved yet).
+    if (!user) return;
+    if (user.waitlist_status === 'waitlisted') {
+      router.replace('/waitlist');
+    } else {
       router.replace('/home');
     }
-  }, [token, authLoading, router]);
+  }, [token, user, authLoading, router]);
 
   const handleGoogleLogin = async () => {
     try {

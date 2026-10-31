@@ -68,7 +68,7 @@ export function BlockedGuard({ children }: { children: React.ReactNode }) {
 
   if (isBlocked) {
     return (
-      <div className="min-h-screen w-full bg-[#fcf8f6] dark:bg-[#141218] text-[#1e1a20] dark:text-[#e6e1e5] flex flex-col justify-between items-center px-4 py-8 relative overflow-hidden font-body-md select-none">
+      <div className="min-h-screen w-full bg-[#F3EDE3] dark:bg-[#1D1713] text-[#382820] dark:text-[#F3EDE3] flex flex-col justify-between items-center px-4 py-8 relative overflow-hidden font-body-md select-none">
         {/* Background ambient glow */}
         <div
           className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-rose-200/40 dark:bg-rose-950/20 blur-3xl pointer-events-none -z-10 animate-pulse"
@@ -82,10 +82,10 @@ export function BlockedGuard({ children }: { children: React.ReactNode }) {
         {/* Top Header */}
         <header className="w-full max-w-3xl flex items-center justify-between z-10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7d5260] to-[#986878] flex items-center justify-center text-white font-bold shadow-md shadow-[#7d5260]/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#80523B] to-[#A07050] flex items-center justify-center text-white font-bold shadow-md shadow-[#80523B]/20">
               M
             </div>
-            <span className="font-headline-lg text-xl tracking-tight text-[#31111d] dark:text-[#f2dae2] font-serif">
+            <span className="font-headline-lg text-xl tracking-tight text-[#382820] dark:text-[#F3EDE3] font-serif">
               Mythri
             </span>
           </div>
@@ -109,7 +109,7 @@ export function BlockedGuard({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Heading */}
-          <h1 className="font-headline-lg text-2xl sm:text-3xl font-serif text-[#31111d] dark:text-[#ffd8e4] tracking-tight mb-3">
+          <h1 className="font-headline-lg text-2xl sm:text-3xl font-serif text-[#382820] dark:text-[#F3EDE3] tracking-tight mb-3">
             Access Restricted
           </h1>
 
@@ -125,7 +125,7 @@ export function BlockedGuard({ children }: { children: React.ReactNode }) {
           <button
             onClick={handleSignOut}
             disabled={isLoggingOut}
-            className="px-6 py-3 rounded-full bg-[#7d5260] hover:bg-[#653f4c] active:scale-95 text-white font-medium text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer"
+            className="px-6 py-3 rounded-full bg-[#80523B] hover:bg-[#6a3f28] active:scale-95 text-white font-medium text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer"
           >
             {isLoggingOut ? (
               <>

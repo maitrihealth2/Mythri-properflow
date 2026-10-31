@@ -10,35 +10,43 @@ export function WaitlistGuard({ children }: { children: React.ReactNode }) {
   const { user, token, loading } = useAuth()
 
   const isAdminRoute = pathname?.startsWith('/admin')
-  const isLoginRoute = pathname === '/login' || pathname === '/'
+  const isLoginRoute = pathname === '/login' || pathname === '/' || pathname === '/landing'
   const isWaitlistRoute = pathname === '/waitlist'
 
-  const isWaitlisted = token && user && user.waitlist_status === 'waitlisted'
-  const isApproved = token && user && (user.waitlist_status === 'approved' || !user.waitlist_status)
+  // Only derive status once user is loaded — avoids acting on stale null
+  const isWaitlisted = !loading && token && user && user.waitlist_status === 'waitlisted'
+  const isApproved = !loading && token && user && (user.waitlist_status === 'approved' || !user.waitlist_status)
 
   useEffect(() => {
+    // Never act until session restore + /me fetch are both complete
     if (loading || !token || !user) return
 
-    // If waitlisted and on a protected application route, route to /waitlist
+    // Waitlisted user trying to access app routes → hold them at /waitlist
     if (isWaitlisted && !isWaitlistRoute && !isAdminRoute && !isLoginRoute) {
       router.replace('/waitlist')
+      return
     }
 
-    // If already approved but still on /waitlist, forward to /home
+    // Approved user somehow landed on /waitlist → forward to /home
     if (isApproved && isWaitlistRoute) {
       router.replace('/home')
     }
   }, [isWaitlisted, isApproved, isWaitlistRoute, isAdminRoute, isLoginRoute, loading, token, user, router])
 
-  // Admin routes and public login routes always bypass waitlist guard
+  // Admin and public routes always render through
   if (isAdminRoute || isLoginRoute) {
     return <>{children}</>
   }
 
-  // If waitlisted and attempting to access an inner route, prevent flash of private content
-  if (isWaitlisted && !isWaitlistRoute) {
+  // /waitlist is always rendered through — it handles its own UI
+  if (isWaitlistRoute) {
+    return <>{children}</>
+  }
+
+  // Waitlisted user on an inner route — block render until redirect fires
+  if (isWaitlisted) {
     return (
-      <div className="min-h-screen w-full bg-[#fcf8f6] dark:bg-[#141218] flex items-center justify-center p-6 text-center font-body-md select-none">
+      <div className="min-h-screen w-full bg-[#F3EDE3] dark:bg-[#1D1713] flex items-center justify-center p-6 text-center font-body-md select-none">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           <p className="text-xs uppercase tracking-widest text-on-surface-variant font-medium">

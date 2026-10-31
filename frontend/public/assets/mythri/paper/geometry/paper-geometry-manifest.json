@@ -1,0 +1,71 @@
+{
+  "version": "1.0.0",
+  "name": "Mythri 3D Paper Architecture Geometry Manifest",
+  "units": "meters",
+  "geometryDefinitions": {
+    "primaryPaperSheet": {
+      "type": "SubdividedPlane",
+      "width": 3.2,
+      "height": 2.4,
+      "widthSegments": 48,
+      "heightSegments": 36,
+      "creaseHinges": [
+        {
+          "name": "topRightCornerFlap",
+          "origin": [0.65, 0.45, 0.008],
+          "axis": [0.7071, 0.7071, 0.0],
+          "maxFoldAngleRad": 2.76,
+          "vertices": [[0,0,0], [0.95,0,0], [0,0.75,0]],
+          "material": "creaseBack"
+        },
+        {
+          "name": "bottomLeftOppositeFlap",
+          "origin": [-0.75, -0.45, 0.008],
+          "axis": [-0.7071, -0.7071, 0.0],
+          "maxFoldAngleRad": 2.57,
+          "vertices": [[0,0,0], [-0.85,0,0], [0,-0.7,0]],
+          "material": "creaseBack"
+        }
+      ]
+    },
+    "paperArches": {
+      "type": "ParametricRibbonArch",
+      "radiusInner": 1.2,
+      "radiusOuter": 1.25,
+      "depth": 0.35,
+      "segments": 32,
+      "arcSpanRad": 3.14159,
+      "material": "ivoryPaper"
+    },
+    "origamiSidePylons": {
+      "type": "FacetedCone",
+      "radius": 0.55,
+      "height": 2.4,
+      "radialSegments": 4,
+      "rotationYRad": 0.7854,
+      "material": "ivoryPaper"
+    },
+    "translucentVellumVeil": {
+      "type": "ApertureSplitPanel",
+      "dimensions": [1.6, 1.3],
+      "thickness": 0.002,
+      "material": "vellumPhysical",
+      "panels": [
+        { "name": "topFlap", "hinge": [0, 0.52, 0], "axis": [1, 0, 0], "maxAngle": 1.48 },
+        { "name": "leftPanel", "hinge": [-0.6, 0, 0], "axis": [0, 1, 0], "maxAngle": 1.92 },
+        { "name": "rightPanel", "hinge": [0.6, 0, 0], "axis": [0, 1, 0], "maxAngle": 1.92 },
+        { "name": "bottomFlap", "hinge": [0, -0.52, 0], "axis": [1, 0, 0], "maxAngle": 1.57 }
+      ]
+    },
+    "dimensionalTypography": {
+      "type": "ExtrudeGeometry",
+      "fontFamily": "Literata",
+      "extrusionDepth": 0.18,
+      "bevelEnabled": true,
+      "bevelThickness": 0.04,
+      "bevelSize": 0.03,
+      "bevelSegments": 3,
+      "material": "sculptedIvory"
+    }
+  }
+}

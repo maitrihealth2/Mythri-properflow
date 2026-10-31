@@ -4,9 +4,9 @@ import type { NextRequest } from 'next/server'
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // ── Root URL: route to /home (client-side AuthContext manages redirect to /login if unauthenticated) ──
+  // Root URL / serves the cinematic landing page
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/home', request.url))
+    return NextResponse.next()
   }
 
   return NextResponse.next()
