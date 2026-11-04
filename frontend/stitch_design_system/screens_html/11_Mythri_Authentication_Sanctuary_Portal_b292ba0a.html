@@ -1,0 +1,375 @@
+<!DOCTYPE html><html class="h-full" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_blank" name="shell-type"><title>Mythri · Quiet Entry</title><link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;1,7..72,400&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+@keyframes checkDraw {
+  0% { stroke-dashoffset: 48; opacity: 0; }
+  40% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+@keyframes gentlePulseGlow {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(203, 175, 145, 0.45)); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 24px rgba(203, 175, 145, 0.75)); }
+}
+.animate-check {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: checkDraw 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.animate-glow-ring {
+  animation: gentlePulseGlow 3s ease-in-out infinite;
+}
+</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "error-container": "#ffdad6", "primary-fixed": "#fbdccf", "oat": "#F1E6D7", "surface-container-highest": "#e5e2dc", "inverse-on-surface": "#f3f0ea", "secondary-container": "#fdc9b3", "on-primary-fixed": "#271810", "on-primary-container": "#b99f93", "on-primary": "#ffffff", "surface": "#fcf9f3", "surface-container-high": "#ebe8e2", "on-tertiary-container": "#bba083", "on-tertiary-fixed": "#281805", "on-secondary": "#ffffff", "secondary-fixed": "#ffdbcd", "background": "#fcf9f3", "muted": "#756A62", "surface-variant": "#e5e2dc", "secondary-fixed-dim": "#eebba6", "on-secondary-fixed": "#2f1407", "surface-tint": "#705a4f", "ivory": "#FBF8F2", "surface-container-low": "#f6f3ed", "outline-variant": "#d3c3bd", "secondary": "#7c5544", "inverse-surface": "#31312d", "on-error": "#ffffff", "on-surface-variant": "#4f4540", "espresso": "#49362D", "on-error-container": "#93000a", "on-surface": "#1c1c18", "surface-bright": "#fcf9f3", "primary-container": "#49362d", "tertiary": "#32220d", "on-secondary-container": "#795241", "border": "#E3D8CC", "on-tertiary": "#ffffff", "surface-container-lowest": "#ffffff", "tertiary-container": "#4a3720", "on-background": "#1c1c18", "surface-dim": "#dcdad4", "ink": "#2C2724", "on-primary-fixed-variant": "#574239", "primary-fixed-dim": "#ddc1b4", "outline": "#81756f", "on-secondary-fixed-variant": "#623e2e", "tertiary-fixed-dim": "#dfc2a3", "inverse-primary": "#ddc1b4", "surface-container": "#f0eee8", "error": "#ba1a1a", "primary": "#322119", "caramel": "#CBAF91", "on-tertiary-fixed-variant": "#574239", "tertiary-fixed": "#fcddbd", "mocha": "#8B6250" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-md": "1rem", "space-2xl": "3rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "margin-mobile": "1.25rem", "margin": "4rem", "space-xl": "2rem", "space-3xl": "4rem", "space-lg": "1.5rem", "gutter": "1.5rem" }, "fontFamily": { "label-sm": [ "Literata" ], "body-lg": [ "Literata" ], "headline-md": [ "Literata" ], "label-md": [ "Literata" ], "headline-lg-mobile": [ "Literata" ], "headline-lg": [ "Literata" ], "display-lg": [ "Literata" ], "headline-sm": [ "Literata" ], "display-lg-mobile": [ "Literata" ], "body-sm": [ "Literata" ], "body-md": [ "Literata" ] }, "fontSize": { "label-sm": [ "12px", { "lineHeight": "1.2", "fontWeight": "500" } ], "body-lg": [ "18px", { "lineHeight": "1.7", "fontWeight": "400" } ], "headline-md": [ "24px", { "lineHeight": "1.4", "fontWeight": "500" } ], "label-md": [ "14px", { "lineHeight": "1.2", "fontWeight": "500" } ], "headline-lg-mobile": [ "26px", { "lineHeight": "1.3", "fontWeight": "500" } ], "headline-lg": [ "32px", { "lineHeight": "1.3", "fontWeight": "500" } ], "display-lg": [ "48px", { "lineHeight": "1.2", "fontWeight": "500" } ], "headline-sm": [ "20px", { "lineHeight": "1.4", "fontWeight": "500" } ], "display-lg-mobile": [ "32px", { "lineHeight": "1.25", "fontWeight": "500" } ], "body-sm": [ "14px", { "lineHeight": "1.6", "fontWeight": "400" } ], "body-md": [ "16px", { "lineHeight": "1.7", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col justify-center items-center"><main class="w-full flex-1 flex flex-col justify-center items-center bg-surface relative"><div class="flex flex-col w-full relative min-h-screen text-ink overflow-x-hidden select-none">
+<!-- Full-Bleed Atmospheric Background Layer -->
+<div class="fixed inset-0 pointer-events-none z-0">
+<img alt="Golden terrace overlooking tranquil mountain waters bathed in warm sunset" class="w-full h-full object-cover object-center filter brightness-[0.98] contrast-[0.95]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYzNb0m9N4q6-kZum-228cQhgkHn0u9xXA9vXYmqzxCNoKolycRCfP5-ic5KrgnACluWdxha5CyvfzVQnBN0D33vPKJntLowO8O1FNIw2eBDP7G9I851gdc-s_K4Cg1hOhgI9QzKmcN3JRo__5xCrCDd94PFkXQ1aeu1LoPam6XKuMaNutVafceLwgZi0OmAbWGhkgl_hpjhA806iWgmRv2naqaSfyHK6RYTkAzcZXInWUzY4DVXIg4pJJrUjiw0Zqdqk">
+<!-- Delicate organic scrim layers: warm ivory wash at top-left, gentle caramel light balance -->
+<div class="absolute inset-0 bg-gradient-to-l from-ivory/95 via-ivory/80 to-transparent backdrop-blur-[1px] ml-auto md:w-[60%] lg:w-[48%] transition-all duration-1000 ease-out" id="backdrop-overlay"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-ivory/90 via-transparent to-ivory/40"></div>
+</div>
+<!-- Main Sanctuary Portal Container -->
+<div class="relative z-10 flex flex-col justify-between min-h-screen max-w-7xl mx-auto w-full px-6 sm:px-12 lg:px-20 py-10 md:py-14">
+<!-- Top Atmospheric Header -->
+<header class="flex items-center justify-between w-full">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-2.5 rounded-full bg-mocha/80 animate-pulse"></span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm tracking-tight text-espresso font-medium">Mythri</span>
+<span class="font-label-sm text-label-sm text-muted tracking-wider uppercase">Quiet Emotional Harbor</span>
+</div>
+</div>
+<div class="hidden sm:flex items-center gap-4 text-muted">
+<span class="font-label-sm text-label-sm italic text-mocha/90">Sanctuary standard 2.4 · Encrypted space</span>
+</div>
+</header>
+<!-- Center Interactive Workspace (Containerless Editorial Design) -->
+<main class="flex-1 flex flex-col justify-center my-6 md:my-10 max-w-md w-full ml-auto">
+<section class="transition-all duration-700 w-full" id="auth-section">
+<div class="mb-8 space-y-2" id="header-text-block">
+<p class="font-label-sm text-label-sm uppercase tracking-widest text-muted/80">A quiet harbor</p>
+<h1 class="font-display-lg text-display-lg text-espresso tracking-tight leading-tight" id="view-title">Step into the quiet.</h1>
+<p class="font-body-md text-body-md text-muted" id="view-desc">Enter your unhurried sanctuary.</p>
+</div>
+<!-- Interactive Clickable Toggle Buttons / Tabs -->
+<div class="relative flex items-center space-x-8 mb-8 border-b border-border/60 pb-3" role="tablist">
+<button aria-selected="true" class="font-headline-sm text-headline-sm text-espresso font-medium transition-colors duration-200 focus:outline-none flex items-center gap-2 group cursor-pointer" id="tab-signin" onclick="switchAuthMode('signin')" role="tab" type="button">
+<span>Sign in</span>
+</button>
+<button aria-selected="false" class="font-headline-sm text-headline-sm text-muted font-normal hover:text-espresso transition-colors duration-200 focus:outline-none flex items-center gap-2 group cursor-pointer" id="tab-signup" onclick="switchAuthMode('signup')" role="tab" type="button">
+<span>Create account</span>
+</button>
+<div class="absolute -bottom-[1px] left-0 h-[2px] bg-espresso transition-all duration-300 ease-out" id="tab-indicator" style="width: 78px; left: 0px;"></div>
+</div>
+<!-- Form Container with Inward Blend / Dissolve Target -->
+<div class="transition-all duration-700 ease-out origin-center" id="form-morph-wrapper">
+<form class="space-y-5" id="auth-form" onsubmit="handleAuthSubmit(event)">
+<!-- Username (Only on Create Account) -->
+<div class="hidden transition-all duration-300" id="field-username">
+<label class="block font-label-md text-label-md text-espresso mb-1" for="input-username">Username</label>
+<div class="relative">
+<input class="w-full bg-transparent border-b border-border focus:border-espresso text-ink placeholder:text-muted/50 font-body-md text-body-md px-1 py-2.5 transition-all focus:outline-none" id="input-username" placeholder="Your chosen username" type="text" value="Elio">
+</div>
+</div>
+<!-- Email / Mail ID -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<label class="font-label-md text-label-md text-espresso" for="input-email" id="label-email">Email or Username</label>
+</div>
+<div class="relative">
+<input class="w-full bg-transparent border-b border-border focus:border-espresso text-ink placeholder:text-muted/50 font-body-md text-body-md px-1 py-2.5 transition-all focus:outline-none" id="input-email" placeholder="elio.perrin@retreat.internal" required="" type="text" value="elio.perrin@retreat.internal">
+</div>
+</div>
+<!-- Password -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<label class="font-label-md text-label-md text-espresso" for="input-password" id="label-password">Password</label>
+<button class="font-label-sm text-label-sm text-mocha hover:text-espresso transition-colors hover:underline focus:outline-none" id="link-forgot" onclick="promptForgot()" type="button">Forgot password?</button>
+</div>
+<div class="relative">
+<input class="w-full bg-transparent border-b border-border focus:border-espresso text-ink placeholder:text-muted/50 font-body-md text-body-md px-1 py-2.5 pr-8 transition-all focus:outline-none tracking-wider" id="input-password" placeholder="••••••••••••" required="" type="password" value="harbor-whisper-88">
+<button class="absolute right-0 top-2.5 text-muted/60 hover:text-espresso focus:outline-none transition-colors" onclick="togglePasswordVisibility('input-password', this)" title="Toggle password visibility" type="button">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+</div>
+</div>
+<!-- Confirm Password (Only on Create Account) -->
+<div class="hidden transition-all duration-300" id="field-confirm-password">
+<label class="block font-label-md text-label-md text-espresso mb-1" for="input-confirm">Confirm password</label>
+<div class="relative">
+<input class="w-full bg-transparent border-b border-border focus:border-espresso text-ink placeholder:text-muted/50 font-body-md text-body-md px-1 py-2.5 pr-8 transition-all focus:outline-none tracking-wider" id="input-confirm" placeholder="Repeat your password" type="password" value="harbor-whisper-88">
+<button class="absolute right-0 top-2.5 text-muted/60 hover:text-espresso focus:outline-none transition-colors" onclick="togglePasswordVisibility('input-confirm', this)" title="Toggle password visibility" type="button">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+</div>
+</div>
+<!-- CTA Button -->
+<div class="pt-3">
+<button class="w-full group relative overflow-hidden bg-espresso text-ivory font-headline-sm text-headline-sm py-3.5 px-6 rounded-full shadow-sm hover:bg-mocha active:scale-[0.99] transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer" id="submit-btn" type="submit">
+<span id="submit-btn-text">Enter sanctuary</span>
+<span class="material-symbols-outlined text-xl transition-transform duration-300 group-hover:translate-x-1 text-caramel">arrow_forward</span>
+</button>
+</div>
+<!-- Divider -->
+<div class="relative flex items-center justify-center my-4">
+<div class="border-t border-border/60 w-full"></div>
+<span class="bg-ivory/90 backdrop-blur-sm px-3 font-label-sm text-label-sm text-muted/70 italic whitespace-nowrap">or continue quietly</span>
+<div class="border-t border-border/60 w-full"></div>
+</div>
+<!-- Google Button -->
+<button class="w-full bg-transparent hover:bg-oat/50 border border-border/80 hover:border-mocha/60 text-espresso font-body-md text-body-md py-3 px-6 rounded-full transition-all duration-200 flex items-center justify-center gap-3 group focus:outline-none cursor-pointer" onclick="triggerGoogleAuth()" type="button">
+<svg class="w-4 h-4 text-espresso/80 group-hover:text-espresso fill-current" viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887C18.2 16.15 15.65 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.55 0 2.96.59 4.04 1.56l2.36-2.36C17.06 3.65 14.8 2.8 12.24 2.8 7.14 2.8 3 6.94 3 12.04s4.14 9.24 9.24 9.24c5.33 0 8.86-3.75 8.86-9.02 0-.6-.06-1.18-.18-1.74l-8.68-.235z"></path></svg>
+<span>Continue with Google</span>
+</button>
+</form>
+</div>
+</section>
+<!-- Interactive Verification & Harmonious Entry State -->
+<section class="hidden flex-col items-center justify-center transition-all duration-1000 w-full opacity-0 py-8" id="welcome-state">
+<!-- Step 1: Animated Checkmark with Subtle Warm Glow -->
+<div class="flex flex-col items-center justify-center transition-all duration-700" id="verification-badge">
+<div class="relative w-24 h-24 rounded-full flex items-center justify-center bg-oat/70 border border-caramel/50 animate-glow-ring">
+<div class="absolute inset-0 rounded-full bg-caramel/20 blur-md pointer-events-none"></div>
+<svg class="w-12 h-12 text-espresso relative z-10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+<path class="animate-check text-espresso" d="M5 13l4 4L19 7"></path>
+</svg>
+</div>
+<span class="mt-4 font-label-md text-label-md text-mocha tracking-wide uppercase transition-all duration-500" id="verification-text">Verified harbor pass</span>
+</div>
+<!-- Step 2: Peaceful Welcome Reveal (Dissolves into calm space) -->
+<div class="hidden flex-col items-start w-full space-y-6 pt-6 opacity-0 transition-opacity duration-1000 ease-out" id="greeting-reveal">
+<div class="space-y-3">
+<p class="font-label-sm text-label-sm uppercase tracking-widest text-caramel">Harmonized entry</p>
+<h2 class="font-display-lg text-display-lg text-espresso tracking-tight leading-tight" id="greeting-heading">Welcome to the sanctuary, Elio.</h2>
+<p class="font-body-md text-body-md text-muted leading-relaxed" id="greeting-subtext">The terrace is quiet and unhurried. The golden light has settled over the water, and your space is ready.</p>
+</div>
+<div class="pt-4 flex flex-col gap-3 w-full">
+<button class="w-full bg-espresso hover:bg-mocha text-ivory font-headline-sm text-headline-sm py-3.5 px-8 rounded-full shadow-sm transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer" onclick="enterSanctuaryRoom()" type="button">
+<span>Take a seat on the terrace</span>
+<span class="material-symbols-outlined text-caramel">night_shelter</span>
+</button>
+<button class="w-full text-mocha hover:text-espresso font-label-md text-label-md py-2 transition-colors underline underline-offset-4 focus:outline-none cursor-pointer flex items-center justify-center gap-1.5" onclick="resetToForm()" type="button">
+<span class="material-symbols-outlined text-base">restart_alt</span>
+<span>Reset / Re-test flow</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Editorial Safeguard & Crisis Compassion Footer -->
+<footer class="pt-8 border-t border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="flex items-center gap-2 text-muted">
+<p class="font-label-sm text-label-sm text-muted">
+Mythri is an encrypted, private sanctuary. Your thoughts and voice stay strictly on your terms.
+</p>
+</div>
+<div class="flex items-center gap-6">
+<button class="font-label-sm text-label-sm text-mocha hover:text-espresso transition-colors hover:underline flex items-center gap-1.5 focus:outline-none" onclick="alert('If you are experiencing acute distress, you are not alone. Please reach out to your local helpline or text HOME to 741741 for 24/7 compassionate support.')">
+<span class="w-1.5 h-1.5 rounded-full bg-caramel"></span>
+<span>Crisis Compassion Support</span>
+</button>
+<span class="text-border">·</span>
+<span class="font-label-sm text-label-sm text-muted/70">
+Palette 03 · Espresso &amp; Oat
+</span>
+</div>
+</footer>
+</div>
+<!-- Client-side Interactive State Machine -->
+<script>
+let currentMode = 'signin';
+
+function switchAuthMode(mode) {
+  currentMode = mode;
+  const tabSignIn = document.getElementById('tab-signin');
+  const tabSignUp = document.getElementById('tab-signup');
+  const indicator = document.getElementById('tab-indicator');
+  const fieldUsername = document.getElementById('field-username');
+  const fieldConfirm = document.getElementById('field-confirm-password');
+  const labelEmail = document.getElementById('label-email');
+  const inputEmail = document.getElementById('input-email');
+  const title = document.getElementById('view-title');
+  const desc = document.getElementById('view-desc');
+  const submitText = document.getElementById('submit-btn-text');
+  const forgotLink = document.getElementById('link-forgot');
+
+  if (mode === 'signup') {
+    tabSignUp.classList.add('text-espresso', 'font-medium');
+    tabSignUp.classList.remove('text-muted', 'font-normal');
+    tabSignUp.setAttribute('aria-selected', 'true');
+
+    tabSignIn.classList.remove('text-espresso', 'font-medium');
+    tabSignIn.classList.add('text-muted', 'font-normal');
+    tabSignIn.setAttribute('aria-selected', 'false');
+
+    indicator.style.left = '106px';
+    indicator.style.width = '145px';
+
+    fieldUsername.classList.remove('hidden');
+    fieldConfirm.classList.remove('hidden');
+    forgotLink.classList.add('hidden');
+    labelEmail.innerText = 'Mail ID';
+    inputEmail.placeholder = 'name@sanctuary.internal';
+
+    title.innerText = 'Begin your journey.';
+    desc.innerText = 'Craft a gentle profile where you can exhale, reflect freely, and listen without judgment.';
+    submitText.innerText = 'Begin your journey';
+  } else {
+    tabSignIn.classList.add('text-espresso', 'font-medium');
+    tabSignIn.classList.remove('text-muted', 'font-normal');
+    tabSignIn.setAttribute('aria-selected', 'true');
+
+    tabSignUp.classList.remove('text-espresso', 'font-medium');
+    tabSignUp.classList.add('text-muted', 'font-normal');
+    tabSignUp.setAttribute('aria-selected', 'false');
+
+    indicator.style.left = '0px';
+    indicator.style.width = '78px';
+
+    fieldUsername.classList.add('hidden');
+    fieldConfirm.classList.add('hidden');
+    forgotLink.classList.remove('hidden');
+    labelEmail.innerText = 'Email or Username';
+    inputEmail.placeholder = 'elio.perrin@retreat.internal';
+
+    title.innerText = 'Step into the quiet.';
+    desc.innerText = 'Enter your unhurried sanctuary.';
+    submitText.innerText = 'Enter sanctuary';
+  }
+}
+
+function togglePasswordVisibility(inputId, triggerBtn) {
+  const input = document.getElementById(inputId);
+  const icon = triggerBtn.querySelector('.material-symbols-outlined');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerText = 'visibility_off';
+  } else {
+    input.type = 'password';
+    icon.innerText = 'visibility';
+  }
+}
+
+function promptForgot() {
+  const email = document.getElementById('input-email').value || 'your address';
+  alert('A quiet reset link has been dispatched to ' + email + '. Take your time.');
+}
+
+function triggerGoogleAuth() {
+  executeHarmoniousEntry('Welcome to the sanctuary, Traveler.');
+}
+
+function handleAuthSubmit(e) {
+  e.preventDefault();
+  let userName = 'Elio';
+  if (currentMode === 'signup') {
+    const rawName = document.getElementById('input-username').value.trim();
+    if (rawName) userName = rawName;
+  } else {
+    const emailVal = document.getElementById('input-email').value.trim();
+    if (emailVal && !emailVal.includes('@')) {
+      userName = emailVal;
+    }
+  }
+  executeHarmoniousEntry('Welcome to the sanctuary, ' + userName + '.');
+}
+
+function executeHarmoniousEntry(greetingText) {
+  const authSection = document.getElementById('auth-section');
+  const formWrapper = document.getElementById('form-morph-wrapper');
+  const headerBlock = document.getElementById('header-text-block');
+  const welcomeSection = document.getElementById('welcome-state');
+  const verificationBadge = document.getElementById('verification-badge');
+  const greetingReveal = document.getElementById('greeting-reveal');
+  const greetingHeading = document.getElementById('greeting-heading');
+  const backdropOverlay = document.getElementById('backdrop-overlay');
+
+  if (greetingText) {
+    greetingHeading.innerText = greetingText;
+  }
+
+  // 1. Harmonious convergence: Form elements gently blend/dissolve inward
+  formWrapper.style.transition = 'all 0.65s cubic-bezier(0.4, 0, 0.2, 1)';
+  formWrapper.style.transform = 'scale(0.94) translateY(-10px)';
+  formWrapper.style.opacity = '0';
+  formWrapper.style.filter = 'blur(6px)';
+
+  headerBlock.style.transition = 'all 0.5s ease-out';
+  headerBlock.style.opacity = '0';
+  headerBlock.style.transform = 'translateY(-12px)';
+
+  // 2. Transition to verification checkmark
+  setTimeout(() => {
+    authSection.classList.add('hidden');
+    welcomeSection.classList.remove('hidden');
+    welcomeSection.classList.remove('opacity-0');
+    welcomeSection.classList.add('flex', 'opacity-100');
+
+    // Softly expand backdrop overlay to let more terrace ambience breathe
+    backdropOverlay.classList.remove('via-ivory/80');
+    backdropOverlay.classList.add('via-ivory/65', 'backdrop-blur-[0.5px]');
+
+    // 3. Smooth transition to Peaceful "Welcome to the sanctuary" fade-in
+    setTimeout(() => {
+      verificationBadge.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+      verificationBadge.style.opacity = '0';
+      verificationBadge.style.transform = 'scale(0.85) translateY(-8px)';
+
+      setTimeout(() => {
+        verificationBadge.classList.add('hidden');
+        greetingReveal.classList.remove('hidden');
+        greetingReveal.classList.add('flex');
+
+        // Smooth gradual fade in
+        requestAnimationFrame(() => {
+          greetingReveal.classList.remove('opacity-0');
+          greetingReveal.classList.add('opacity-100');
+        });
+      }, 350);
+
+    }, 1400);
+
+  }, 600);
+}
+
+function resetToForm() {
+  const authSection = document.getElementById('auth-section');
+  const formWrapper = document.getElementById('form-morph-wrapper');
+  const headerBlock = document.getElementById('header-text-block');
+  const welcomeSection = document.getElementById('welcome-state');
+  const verificationBadge = document.getElementById('verification-badge');
+  const greetingReveal = document.getElementById('greeting-reveal');
+  const backdropOverlay = document.getElementById('backdrop-overlay');
+
+  // Reset visual styles
+  welcomeSection.classList.remove('opacity-100');
+  welcomeSection.classList.add('opacity-0');
+
+  setTimeout(() => {
+    welcomeSection.classList.add('hidden');
+    welcomeSection.classList.remove('flex');
+
+    verificationBadge.classList.remove('hidden');
+    verificationBadge.style.opacity = '1';
+    verificationBadge.style.transform = 'none';
+
+    greetingReveal.classList.add('hidden', 'opacity-0');
+    greetingReveal.classList.remove('flex');
+
+    // Restore form wrapper
+    authSection.classList.remove('hidden');
+    formWrapper.style.transform = 'none';
+    formWrapper.style.filter = 'none';
+    formWrapper.style.opacity = '1';
+
+    headerBlock.style.opacity = '1';
+    headerBlock.style.transform = 'none';
+
+    // Restore backdrop overlay
+    backdropOverlay.classList.remove('via-ivory/65', 'backdrop-blur-[0.5px]');
+    backdropOverlay.classList.add('via-ivory/80');
+  }, 400);
+}
+
+function enterSanctuaryRoom() {
+  alert('Your unhurried terrace session is open. Breathe gently.');
+}
+</script>
+</div></main></body></html>

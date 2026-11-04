@@ -1,116 +1,12 @@
 'use client'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { login, register, googleLogin, forgotPassword, safeLogError } from '@/core/api'
 import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { auth, googleProvider } from '@/core/firebase'
 import { signInWithPopup, sendPasswordResetEmail } from 'firebase/auth'
-import { motion } from 'framer-motion'
-import { useRef } from 'react'
-
-const features = [
-  { icon: 'shield_locked', title: 'A Safe Space', desc: 'Your conversations are private, encrypted, and completely judgement-free.' },
-  { icon: 'psychology', title: 'Cognitive Reflection', desc: 'Identify patterns in your thoughts and navigate them gently with guided insights.' },
-  { icon: 'self_improvement', title: 'Real-time Grounding', desc: 'Dynamic breathing and grounding exercises right when you need them most.' }
-]
-
-function FeatureCarousel() {
-  const [idx, setIdx] = useState(0)
-  
-  useEffect(() => {
-    const timer = setInterval(() => setIdx((i) => (i + 1) % features.length), 5000)
-    return () => clearInterval(timer)
-  }, [])
-
-  return (
-    <div className="flex flex-col md:text-left text-center items-center md:items-start gap-3 md:gap-4 md:border-l-2 border-white/20 md:pl-6 py-2 transition-all duration-500 min-h-[140px]">
-      <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
-        <span className="material-symbols-outlined text-white/90 text-4xl md:text-[28px]">{features[idx].icon}</span>
-        <h3 className="text-white font-headline-md text-2xl md:text-xl tracking-tight drop-shadow-md">{features[idx].title}</h3>
-      </div>
-      <p className="text-white/80 font-body-md text-base md:text-sm max-w-sm leading-relaxed drop-shadow px-6 md:px-0">
-        {features[idx].desc}
-      </p>
-      
-      {/* Dots */}
-      <div className="flex justify-center md:justify-start gap-2 mt-2 w-full md:w-auto">
-        {features.map((_, i) => (
-          <div 
-            key={i} 
-            className={`h-1.5 rounded-full transition-all duration-500 ${i === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/30 cursor-pointer hover:bg-white/50'}`}
-            onClick={() => setIdx(i)}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function SanctuaryWisp() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState({ x: 0, y: 0 })
-  const [active, setActive] = useState(false)
-
-  // Recenter when inactive
-  useEffect(() => {
-    if (!active && containerRef.current) {
-      setPos({ 
-        x: containerRef.current.clientWidth / 2, 
-        y: containerRef.current.clientHeight / 2 
-      })
-    }
-  }, [active])
-
-  // Initial center
-  useEffect(() => {
-    if (containerRef.current) {
-      setPos({ 
-        x: containerRef.current.clientWidth / 2, 
-        y: containerRef.current.clientHeight / 2 
-      })
-    }
-  }, [])
-
-  const handlePointer = (e: React.PointerEvent) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
-    setPos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    })
-  }
-
-  return (
-    <div 
-      ref={containerRef}
-      className="md:hidden absolute inset-0 z-20 overflow-hidden touch-none"
-      onPointerMove={handlePointer}
-      onPointerDown={(e) => { setActive(true); handlePointer(e); }}
-      onPointerUp={() => setActive(false)}
-      onPointerLeave={() => setActive(false)}
-      onPointerCancel={() => setActive(false)}
-    >
-      {/* Wisp */}
-      <motion.div
-        animate={{ 
-          x: pos.x - 32, 
-          y: pos.y - 32, 
-          scale: active ? 1.5 : 1,
-          opacity: active ? 0.9 : 0.4
-        }}
-        transition={{ type: "spring", stiffness: 120, damping: 20, mass: 0.8 }}
-        className="absolute w-16 h-16 pointer-events-none flex items-center justify-center"
-      >
-        <div className="w-2 h-2 bg-white rounded-full shadow-[0_0_20px_5px_rgba(255,255,255,0.8)]"></div>
-        <motion.div 
-           animate={{ scale: [1, 1.4, 1] }} 
-           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-           className="absolute inset-0 bg-white/30 blur-xl rounded-full"
-        />
-      </motion.div>
-    </div>
-  )
-}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -122,55 +18,43 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [authPhase, setAuthPhase] = useState<'idle' | 'merging' | 'verifying' | 'success' | 'error' | 'transitioning'>('idle')
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
-
   const [agreeTerms, setAgreeTerms] = useState(false)
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false)
 
-  // CRIT-03: Redirect already-authenticated users away from /login.
-  // Only redirect after authLoading is done AND user data is loaded so we
-  // know the waitlist status before choosing the destination.
-  // Waitlisted users go to /waitlist; everyone else goes to /home.
+  // Redirect already-authenticated users
   useEffect(() => {
-    if (authLoading || !token) return;
-    // Wait for user object to load before redirecting (avoids wrong destination
-    // on first render when token is set but /api/auth/me hasn't resolved yet).
-    if (!user) return;
+    if (authLoading || !token) return
+    if (!user) return
     if (user.waitlist_status === 'waitlisted') {
-      router.replace('/waitlist');
+      router.replace('/waitlist')
     } else {
-      router.replace('/home');
+      router.replace('/home')
     }
-  }, [token, user, authLoading, router]);
+  }, [token, user, authLoading, router])
 
   const handleGoogleLogin = async () => {
     try {
       setLoading(true)
       setError('')
       setSuccessMessage('')
+
       const result = await signInWithPopup(auth, googleProvider)
       const idToken = await result.user.getIdToken()
       
-      setAuthPhase('merging')
-      await new Promise(r => setTimeout(r, 600))
-      setAuthPhase('verifying')
-      
       const data = await googleLogin(idToken)
-      // CRIT-03: Store token in memory via AuthContext, not localStorage
       setToken(data.access_token, data.username)
       localStorage.setItem('mb_language', 'en-IN')
       sessionStorage.removeItem('mb_session_id')
+      
       if (typeof window !== 'undefined' && (window as any).gtag) {
         (window as any).gtag('event', 'login', { method: 'Google' })
       }
       
-      setAuthPhase('success')
-      await new Promise(r => setTimeout(r, 800))
-      
-      setAuthPhase('transitioning')
-      await new Promise(r => setTimeout(r, 400))
-      
-      router.replace('/home')
+      if (data?.waitlist_status === 'waitlisted') {
+        router.replace('/waitlist')
+      } else {
+        router.replace('/home')
+      }
     } catch (err: any) {
       safeLogError("Google Auth Error:", err)
       const detail = err?.response?.data?.detail || err.userMessage || err.message
@@ -179,80 +63,67 @@ export default function LoginPage() {
       } else {
         setError(detail || "Google Sign-In failed.")
       }
-      setAuthPhase('idle')
       setLoading(false)
     }
   }
 
-  const handleForgotPassword = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!form.email.trim()) {
-      setError('Please enter your email address to reset your password.');
-      setSuccessMessage('');
-      return;
+      setError('Please enter your email address to reset your password.')
+      return
     }
     
     try {
-      setLoading(true);
-      setError('');
-      setSuccessMessage('');
+      setLoading(true)
+      setError('')
+      setSuccessMessage('')
       try {
-        await forgotPassword(form.email.trim());
+        await forgotPassword(form.email.trim())
       } catch {
-        await sendPasswordResetEmail(auth, form.email.trim());
+        await sendPasswordResetEmail(auth, form.email.trim())
       }
-      setSuccessMessage('Password reset email sent! Please check your inbox.');
+      setSuccessMessage('Password reset email sent. Please check your inbox.')
     } catch (err: any) {
-      safeLogError("Password reset error:", err);
-      let errMsg = err?.message || "Failed to send reset email.";
+      safeLogError("Password reset error:", err)
+      let errMsg = err?.message || "Failed to send reset email."
       if (errMsg.includes('user-not-found') || errMsg.includes('EMAIL_NOT_FOUND')) {
-        errMsg = "No account found with this email address.";
+        errMsg = "No account found with this email address."
       }
-      setError(errMsg);
+      setError(errMsg)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!form.email.trim() || !form.password.trim() || (mode === 'create' && !form.name.trim())) {
-      setError('Please fill in all required fields')
+      setError('Please fill in all required fields.')
       return
     }
     if (mode === 'create' && form.password !== form.confirmPassword) {
-      setError('Passwords do not match')
+      setError('Passwords do not match.')
       return
     }
     if (mode === 'create' && !agreeTerms) {
-      setError('You must accept the Terms, Privacy Policy & Non-Disclosure Agreement by Affyne Labs to continue.')
+      setError('Please accept the Terms & Privacy Policy to continue.')
       return
     }
     
     setError('')
     setSuccessMessage('')
     setLoading(true)
-    
-    setAuthPhase('merging')
-    await new Promise(r => setTimeout(r, 600))
-    setAuthPhase('verifying')
 
     try {
       const data = mode === 'signin'
-        ? await login(form.email, form.password)
-        : await register(form.name, form.email, form.password, 'en-IN')
+        ? await login(form.email.trim(), form.password)
+        : await register(form.name.trim(), form.email.trim(), form.password, 'en-IN')
         
-      // CRIT-03: Store token in memory via AuthContext, not localStorage
       setToken(data.access_token, data.username)
       localStorage.setItem('mb_language', 'en-IN')
       sessionStorage.removeItem('mb_session_id')
       
-      setAuthPhase('success')
-      await new Promise(r => setTimeout(r, 800))
-      
-      setAuthPhase('transitioning')
-      await new Promise(r => setTimeout(r, 400))
-
       if (data?.waitlist_status === 'waitlisted') {
         router.replace('/waitlist')
       } else {
@@ -260,325 +131,440 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       safeLogError("API Error:", err)
-      let errorMessage = err?.response?.data?.detail || err.userMessage || err.message || "Something didn't quite work. Please check your details."
+      let errorMessage = err?.response?.data?.detail || err.userMessage || err.message || "Authentication failed. Please verify your details."
       
       if (typeof errorMessage === 'string') {
-        const lowerError = errorMessage.toLowerCase();
-        if (lowerError.includes('not allowed to access')) {
-          errorMessage = "You are not allowed to access right now";
-        } else if (lowerError.includes('invalid_login_credentials') || lowerError.includes('invalid-credential') || lowerError.includes('wrong-password') || lowerError.includes('user-not-found')) {
-          errorMessage = "Invalid credentials. Please check your email and password.";
-        } else if (lowerError.includes('email-already-in-use') || lowerError.includes('email_exists')) {
-          errorMessage = "An account with this email already exists.";
-        } else if (lowerError.includes('weak-password')) {
-          errorMessage = "Password should be at least 6 characters.";
+        const lower = errorMessage.toLowerCase()
+        if (lower.includes('not allowed to access')) {
+          errorMessage = "You are not allowed to access right now."
+        } else if (lower.includes('invalid_login_credentials') || lower.includes('invalid-credential') || lower.includes('wrong-password') || lower.includes('user-not-found')) {
+          errorMessage = "Invalid credentials. Please check your email and password."
+        } else if (lower.includes('email-already-in-use') || lower.includes('email_exists')) {
+          errorMessage = "An account with this email already exists."
+        } else if (lower.includes('weak-password')) {
+          errorMessage = "Password should be at least 6 characters."
         }
       }
       
       setError(errorMessage)
-      setAuthPhase('error')
-      await new Promise(r => setTimeout(r, 1500))
-      
-      setAuthPhase('idle')
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex w-full min-h-screen relative overflow-hidden bg-surface dark:bg-background flex-col md:flex-row">
-      <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes drawCheck {
-              to { stroke-dashoffset: 0; }
-          }
-      `}} suppressHydrationWarning />
-      
-      {/* Left Side: Visual Sanctuary (Full screen on mobile, 60% on desktop) */}
-      <div className="absolute md:relative inset-0 md:inset-auto w-full md:w-[60%] h-screen overflow-hidden flex flex-col justify-between p-8 pt-16 md:p-12 lg:p-16 z-0">
-        <img 
-            src="/assets/login%20page.jpeg" 
-            alt="Background" 
-            className="absolute inset-0 w-full h-full object-cover z-0" 
+    <>
+      <style suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `
+        /* Standalone floating glass pill tabs */
+        .floating-glass-pill {
+          background: rgba(255, 250, 243, 0.58);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.65);
+          box-shadow: 0 4px 16px -2px rgba(45, 28, 18, 0.12);
+        }
+
+        /* Standalone floating input pills */
+        .floating-glass-input {
+          background: rgba(255, 250, 243, 0.65);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          box-shadow: 0 6px 20px -3px rgba(45, 28, 18, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6);
+          transition: all 0.25s ease-in-out;
+        }
+
+        .floating-glass-input:focus-within {
+          background: rgba(255, 255, 255, 0.94);
+          border-color: rgba(62, 42, 32, 0.55);
+          box-shadow: 0 8px 25px -4px rgba(45, 28, 18, 0.2), inset 0 1px 1px 0 rgba(255, 255, 255, 0.85);
+        }
+
+        /* Standalone floating secondary button */
+        .floating-glass-button {
+          background: rgba(255, 250, 243, 0.68);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          box-shadow: 0 6px 20px -3px rgba(45, 28, 18, 0.12);
+          transition: all 0.25s ease-in-out;
+        }
+
+        .floating-glass-button:hover {
+          background: rgba(255, 255, 255, 0.92);
+          border-color: rgba(255, 255, 255, 0.95);
+          box-shadow: 0 8px 25px -3px rgba(45, 28, 18, 0.18);
+        }
+
+        .floating-text-shadow {
+          text-shadow: 0 1px 4px rgba(255, 255, 255, 0.4), 0 2px 10px rgba(45, 28, 18, 0.2);
+        }
+
+        .brand-text-shadow {
+          text-shadow: 0 2px 12px rgba(44, 30, 22, 0.4), 0 4px 24px rgba(0, 0, 0, 0.25);
+        }
+      `}} />
+
+      {/* Main Container */}
+      <div className="relative min-h-[100dvh] w-full flex flex-col justify-between overflow-x-hidden font-sans antialiased text-[#2F1E16] bg-[#2A1D18]">
+        
+        {/* Responsive Background Images */}
+        {/* Desktop/Tablet (md+): sanctuary-login-desktop.png */}
+        {/* Mobile (<md): sanctuary-login-mobile.png */}
+        <div 
+          className="fixed inset-0 bg-cover bg-no-repeat pointer-events-none z-0 bg-center bg-[url('/assets/sanctuary/sanctuary-login-mobile.png')] md:bg-[url('/assets/sanctuary/sanctuary-login-desktop.png')]"
+          aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/80 md:bg-gradient-to-b md:from-black/70 md:via-black/30 md:to-black/80 z-10"></div>
-        
-        {/* Mobile-only Top Brand */}
-        <div className="md:hidden relative z-20 text-center animate-fade-in-up mt-12" style={{ animationDelay: '0.1s' }}>
-            <h1 className="text-white font-display-lg text-5xl mb-2 tracking-tight drop-shadow-md">Mythri</h1>
-            <p className="text-white/90 font-body-md text-base italic tracking-wide drop-shadow">A digital sanctuary for the mind.</p>
-        </div>
 
-        {/* Desktop Top Brand */}
-        <div className="hidden md:block relative z-20 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            <h1 className="text-white font-display-lg text-5xl lg:text-6xl mb-2 tracking-tight">Mythri</h1>
-            <p className="text-white/80 font-body-md text-lg italic tracking-wide">A digital sanctuary for the mind.</p>
-        </div>
-        
-        {/* Desktop Feature Carousel */}
-        <div className="hidden md:block relative z-20 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <FeatureCarousel />
-        </div>
+        {/* Ambient Warmth and Contrast Overlay */}
+        <div 
+          className="fixed inset-0 pointer-events-none z-[1] bg-gradient-to-b from-black/35 via-transparent to-black/45 md:bg-gradient-to-r md:from-black/25 md:via-transparent md:to-black/30"
+          aria-hidden="true" 
+        />
 
-        {/* Mobile Interactive Wisp */}
-        <SanctuaryWisp />
+        {/* Main Content Grid */}
+        <main className="relative z-10 w-full min-h-[100dvh] flex items-center px-5 sm:px-8 md:px-12 lg:px-20 py-8 md:py-12">
+          <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-4 items-center">
+            
+            {/* ================================================================= */}
+            {/* LEFT SECTION: Brand Presentation                                  */}
+            {/* ================================================================= */}
+            <section className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left select-none pt-4 lg:pt-0">
+              <div className="max-w-md flex flex-col items-center lg:items-start w-full">
+                
+                {/* 4-pointed curved star sparkle glyph */}
+                <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-[#FAF6EE] mb-2 drop-shadow-md">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C12 7.5 16.5 12 22 12C16.5 12 12 16.5 12 22C12 16.5 7.5 12 2 12C7.5 12 12 7.5 12 2Z" />
+                  </svg>
+                </div>
 
-        {/* Mobile Get Started Button */}
-        <div className="md:hidden relative z-20 w-full animate-fade-in-up mt-auto pb-12 mb-8" style={{ animationDelay: '0.3s' }}>
-            <button 
-                onClick={() => setMobileDrawerOpen(true)}
-                className="w-full bg-white text-on-surface font-label-md text-base h-14 rounded-full shadow-xl shadow-black/20 flex items-center justify-center gap-2 hover:bg-white/90 transition-colors"
-            >
-                Get Started
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-            </button>
-        </div>
+                {/* Brand Title */}
+                <h1 className="font-serif text-4xl sm:text-5xl lg:text-[3.5rem] tracking-tight font-normal text-[#FAF6EE] leading-none mb-3 brand-text-shadow">
+                  Mythri
+                </h1>
+
+                {/* Tagline */}
+                <p className="font-serif text-base sm:text-lg lg:text-[1.2rem] text-[#F3ECE2] opacity-95 tracking-wide font-light brand-text-shadow">
+                  Your thoughts. A kinder place.
+                </p>
+
+                {/* Assurance badge */}
+                <div className="hidden lg:flex items-center gap-2 mt-8 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white/95 text-xs shadow-sm">
+                  <span className="material-symbols-outlined text-[16px]">lock</span>
+                  <span>Private, encrypted sanctuary</span>
+                </div>
+              </div>
+            </section>
+
+            {/* Center architectural spacer for natural arch view */}
+            <div className="hidden lg:block lg:col-span-2"></div>
+
+            {/* ================================================================= */}
+            {/* RIGHT SECTION: INDIVIDUALLY FLOATING ELEMENTS (NO CONTAINER BOX)  */}
+            {/* ================================================================= */}
+            <section className="lg:col-span-5 w-full max-w-[420px] mx-auto lg:mr-0 lg:ml-auto flex flex-col">
+              
+              {/* Individually Floating Tab Switcher */}
+              <div className="flex items-center justify-start mb-6 p-1 rounded-full floating-glass-pill w-fit">
+                <button 
+                  type="button" 
+                  onClick={() => { setMode('signin'); setError(''); setSuccessMessage(''); setForgotPasswordOpen(false); }}
+                  className={`px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
+                    mode === 'signin' && !forgotPasswordOpen
+                      ? 'bg-[#2B231E] text-[#FAF6EE] shadow-md'
+                      : 'text-[#5C4538] hover:text-[#2B231E]'
+                  }`}
+                >
+                  Log In
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => { setMode('create'); setError(''); setSuccessMessage(''); setForgotPasswordOpen(false); }}
+                  className={`px-5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
+                    mode === 'create'
+                      ? 'bg-[#2B231E] text-[#FAF6EE] shadow-md'
+                      : 'text-[#5C4538] hover:text-[#2B231E]'
+                  }`}
+                >
+                  Create account
+                </button>
+              </div>
+
+              {/* Individually Floating Header Title */}
+              <header className="mb-6 text-left">
+                <h2 className="font-serif text-3xl sm:text-4xl text-[#241710] font-normal leading-tight tracking-tight mb-1.5 floating-text-shadow">
+                  {forgotPasswordOpen 
+                    ? 'Reset your password'
+                    : mode === 'signin' 
+                      ? 'Welcome back' 
+                      : 'Create account'}
+                </h2>
+                <p className="text-[#4E3B30] text-sm sm:text-base font-normal floating-text-shadow">
+                  {forgotPasswordOpen
+                    ? "Enter your email to receive a recovery link."
+                    : mode === 'signin' 
+                      ? 'Step into a calmer you.' 
+                      : 'Begin your journey to peace of mind.'}
+                </p>
+              </header>
+
+              {/* Status Alerts (Floating pills) */}
+              {error && (
+                <div className="mb-5 p-3.5 rounded-2xl bg-red-950/20 backdrop-blur-md border border-red-800/30 text-red-950 text-xs sm:text-sm flex items-start gap-2.5 shadow-sm animate-fade-in-up">
+                  <span className="material-symbols-outlined text-[18px] text-red-900 shrink-0 mt-0.5">error</span>
+                  <span className="font-medium">{error}</span>
+                </div>
+              )}
+              {successMessage && (
+                <div className="mb-5 p-3.5 rounded-2xl bg-emerald-950/20 backdrop-blur-md border border-emerald-800/30 text-emerald-950 text-xs sm:text-sm flex items-start gap-2.5 shadow-sm animate-fade-in-up">
+                  <span className="material-symbols-outlined text-[18px] text-emerald-900 shrink-0 mt-0.5">check_circle</span>
+                  <span className="font-medium">{successMessage}</span>
+                </div>
+              )}
+
+              {/* FORGOT PASSWORD FORM */}
+              {forgotPasswordOpen ? (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  {/* Floating Email Input Pill */}
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none text-[#5C4538]">
+                      <span className="material-symbols-outlined text-[20px]">mail</span>
+                    </div>
+                    <input 
+                      type="email" 
+                      required 
+                      value={form.email} 
+                      onChange={(e) => setForm({ ...form, email: e.target.value })} 
+                      placeholder="Your email address" 
+                      className="w-full pl-12 pr-4 py-3.5 rounded-full floating-glass-input text-sm text-[#2F1E16] placeholder:text-[#7A6658] outline-none"
+                    />
+                  </div>
+
+                  {/* Floating Submit Button Pill */}
+                  <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full py-3.5 px-6 rounded-full bg-[#2B231E]/95 hover:bg-[#1E1713] text-[#FAF6EE] text-sm font-medium tracking-wide shadow-lg active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 border border-white/20 disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Send recovery email</span>
+                        <span className="text-sm">→</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="pt-2 text-center">
+                    <button 
+                      type="button" 
+                      onClick={() => { setForgotPasswordOpen(false); setError(''); }}
+                      className="text-xs text-[#4E3B30] hover:text-[#241710] font-medium transition-colors floating-text-shadow"
+                    >
+                      ← Back to Log In
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* LOGIN / SIGNUP FORM (ALL INDIVIDUALLY FLOATING) */
+                <form onSubmit={handleSubmit} className="space-y-3.5">
+                  
+                  {/* Floating Name Input Pill (Sign Up Only) */}
+                  {mode === 'create' && (
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none text-[#5C4538]">
+                        <span className="material-symbols-outlined text-[20px]">person</span>
+                      </div>
+                      <input 
+                        type="text" 
+                        required 
+                        value={form.name} 
+                        onChange={(e) => setForm({ ...form, name: e.target.value })} 
+                        placeholder="Your preferred name" 
+                        className="w-full pl-12 pr-4 py-3.5 rounded-full floating-glass-input text-sm text-[#2F1E16] placeholder:text-[#7A6658] outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {/* Floating Email / Username Input Pill */}
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none text-[#5C4538]">
+                      <span className="material-symbols-outlined text-[20px]">mail</span>
+                    </div>
+                    <input 
+                      type="text" 
+                      required 
+                      autoComplete="username"
+                      value={form.email} 
+                      onChange={(e) => setForm({ ...form, email: e.target.value })} 
+                      placeholder={mode === 'signin' ? "Email or username" : "Your email address"} 
+                      className="w-full pl-12 pr-4 py-3.5 rounded-full floating-glass-input text-sm text-[#2F1E16] placeholder:text-[#7A6658] outline-none"
+                    />
+                  </div>
+
+                  {/* Floating Password Input Pill */}
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none text-[#5C4538]">
+                      <span className="material-symbols-outlined text-[20px]">lock</span>
+                    </div>
+                    <input 
+                      type={showPassword ? 'text' : 'password'} 
+                      required 
+                      autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                      value={form.password} 
+                      onChange={(e) => setForm({ ...form, password: e.target.value })} 
+                      placeholder="Password" 
+                      className="w-full pl-12 pr-12 py-3.5 rounded-full floating-glass-input text-sm text-[#2F1E16] placeholder:text-[#7A6658] outline-none"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label="Toggle password visibility"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#5C4538] hover:text-[#2F1E16] focus:outline-none"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {showPassword ? 'visibility_off' : 'visibility'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Floating Confirm Password Input Pill (Sign Up Only) */}
+                  {mode === 'create' && (
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none text-[#5C4538]">
+                        <span className="material-symbols-outlined text-[20px]">lock</span>
+                      </div>
+                      <input 
+                        type={showConfirmPassword ? 'text' : 'password'} 
+                        required 
+                        autoComplete="new-password"
+                        value={form.confirmPassword} 
+                        onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} 
+                        placeholder="Confirm password" 
+                        className="w-full pl-12 pr-12 py-3.5 rounded-full floating-glass-input text-sm text-[#2F1E16] placeholder:text-[#7A6658] outline-none"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label="Toggle confirm password visibility"
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#5C4538] hover:text-[#2F1E16] focus:outline-none"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Floating Terms Checkbox (Sign Up Only) */}
+                  {mode === 'create' && (
+                    <div className="flex items-start gap-2.5 pt-1 text-left px-1">
+                      <input 
+                        type="checkbox" 
+                        id="terms-check" 
+                        checked={agreeTerms} 
+                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                        className="mt-1 w-4 h-4 rounded text-[#2B231E] focus:ring-[#2B231E] border-[#5C4538]/40"
+                      />
+                      <label htmlFor="terms-check" className="text-xs text-[#4E3B30] leading-snug floating-text-shadow">
+                        I agree to the Terms of Service & Privacy Policy by Affyne Labs.
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Floating Forgot Password Link (Sign In Only) */}
+                  {mode === 'signin' && (
+                    <div className="flex justify-end pt-0.5 px-2">
+                      <button 
+                        type="button" 
+                        onClick={() => { setForgotPasswordOpen(true); setError(''); }}
+                        className="text-xs text-[#4E3B30] hover:text-[#241710] font-medium transition-colors focus:outline-none floating-text-shadow"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Floating Primary Action Button Pill */}
+                  <div className="pt-1">
+                    <button 
+                      type="submit" 
+                      disabled={loading}
+                      className="w-full py-3.5 px-6 rounded-full bg-[#2B231E]/95 hover:bg-[#1E1713] text-[#FAF6EE] text-sm font-medium tracking-wide shadow-lg active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 border border-white/20 disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span>{mode === 'signin' ? 'Log In' : 'Create Account'}</span>
+                          <span className="text-sm">→</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Floating Divider */}
+                  <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-white/30"></div>
+                    <span className="flex-shrink mx-3 text-[#5C4538] text-[11px] uppercase tracking-wider font-medium floating-text-shadow">or</span>
+                    <div className="flex-grow border-t border-white/30"></div>
+                  </div>
+
+                  {/* Floating Google Sign-In Button Pill */}
+                  <button 
+                    type="button" 
+                    onClick={handleGoogleLogin}
+                    disabled={loading}
+                    className="w-full py-3 px-5 rounded-full floating-glass-button text-[#2F1E16] text-sm font-medium tracking-wide active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2.5"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span>Continue with Google</span>
+                  </button>
+
+                </form>
+              )}
+
+              {/* Floating Bottom Prompt */}
+              <div className="mt-6 pt-3 text-center">
+                <p className="text-xs sm:text-sm text-[#4E3B30] floating-text-shadow">
+                  {mode === 'signin' ? (
+                    <>
+                      New to Mythri?{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => { setMode('create'); setError(''); setSuccessMessage(''); setForgotPasswordOpen(false); }}
+                        className="font-semibold text-[#241710] underline underline-offset-4 decoration-[#241710]/50 hover:decoration-[#241710] transition-colors"
+                      >
+                        Create account
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => { setMode('signin'); setError(''); setSuccessMessage(''); setForgotPasswordOpen(false); }}
+                        className="font-semibold text-[#241710] underline underline-offset-4 decoration-[#241710]/50 hover:decoration-[#241710] transition-colors"
+                      >
+                        Log in
+                      </button>
+                    </>
+                  )}
+                </p>
+              </div>
+
+            </section>
+
+          </div>
+        </main>
+
       </div>
-
-      {/* Mobile Backdrop Overlay */}
-      <div 
-        className={`md:hidden absolute inset-0 bg-black/40 backdrop-blur-sm z-20 transition-opacity duration-500 ${mobileDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setMobileDrawerOpen(false)}
-      />
-
-      {/* Right Side: Auth Panel (Bottom Sheet on Mobile, 40% on Desktop) */}
-      <div className={`absolute md:relative bottom-0 w-full md:w-[40%] max-h-[85vh] md:max-h-none h-auto md:h-screen overflow-y-auto flex flex-col items-center justify-start md:justify-center p-6 md:p-12 bg-surface dark:bg-surface-container shadow-[0_-20px_40px_rgba(0,0,0,0.15)] md:shadow-[-20px_0_40px_rgba(0,0,0,0.1)] z-30 rounded-t-[2.5rem] md:rounded-none transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${mobileDrawerOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
-         
-         {/* Mobile Drag Handle */}
-         <div className="w-12 h-1.5 bg-outline/20 rounded-full mb-6 md:hidden flex-shrink-0 mx-auto cursor-pointer" onClick={() => setMobileDrawerOpen(false)}></div>
-
-         <main className={`relative z-20 w-full max-w-[400px] mx-auto animate-fade-in-up transition-opacity duration-500 ${authPhase === 'transitioning' ? 'opacity-0' : 'opacity-100'}`} style={{ animationDelay: '0.2s' }}>
-             
-             {/* The Form */}
-             <div id="authStep" className="w-full space-y-6 relative pb-8 md:pb-0">
-                 
-                 {/* Tab Switcher */}
-                 <div className={`relative w-full flex border-b border-outline/20 transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden border-transparent mb-0' : 'opacity-100 h-10 mb-2'}`}>
-                     <button
-                         className={`flex-1 text-center font-label-md text-sm transition-colors pb-3 ${mode === 'signin' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                         onClick={() => { setMode('signin'); setError(''); }}
-                         type="button" disabled={authPhase !== 'idle'}>
-                         Sign in
-                     </button>
-                     <button
-                         className={`flex-1 text-center font-label-md text-sm transition-colors pb-3 ${mode === 'create' ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                         onClick={() => { setMode('create'); setError(''); }}
-                         type="button" disabled={authPhase !== 'idle'}>
-                         Create account
-                     </button>
-                     {/* Active Underline */}
-                     <div className="absolute bottom-0 left-0 w-1/2 h-[2px] bg-primary tab-underline transition-transform duration-300"
-                         style={{ transform: mode === 'signin' ? 'translateX(0%)' : 'translateX(100%)' }}></div>
-                 </div>
-
-                 {/* Auth Form */}
-                 <form className="w-full space-y-4 relative" onSubmit={handleSubmit}>
-                     
-                     {/* Welcome Message (Dynamic) */}
-                     <div className={`transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 scale-95 h-0 overflow-hidden mb-0' : 'opacity-100 scale-100 h-[60px] mb-2 space-y-1'}`}>
-                         <h2 className="text-on-surface font-headline-md text-2xl md:text-3xl tracking-tight">
-                             {mode === 'signin' ? 'Return to your space' : 'Join our sanctuary'}
-                         </h2>
-                         <p className="text-on-surface-variant font-body-sm text-sm">
-                             {mode === 'signin' ? 'Take a deep breath and step inside.' : 'Begin your journey toward quiet reflection.'}
-                         </p>
-                     </div>
-
-                     {/* Name Field (Hidden for Sign In) */}
-                     {mode === 'create' && (
-                         <div className={`transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden m-0' : 'opacity-100 h-[72px] space-y-1.5'} animate-fade-up`}>
-                             <label className="block font-label-md text-sm text-on-surface ml-1" htmlFor="name">Full name</label>
-                             <input
-                                 className="w-full h-12 px-5 rounded-2xl border border-outline/20 bg-surface-variant/30 text-on-surface font-body-md placeholder:text-on-surface-variant/50 focus:bg-surface-variant/50 focus:border-primary transition-all outline-none"
-                                 id="name" placeholder="John Doe" type="text"
-                                 value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                                 required
-                                 disabled={authPhase !== 'idle'}
-                             />
-                         </div>
-                     )}
-
-                     {/* Credentials Merge Container */}
-                     <div className={`relative flex flex-col mx-auto transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden z-20 ${
-                         authPhase !== 'idle' 
-                         ? 'gap-0 p-6 md:p-8 rounded-[2rem] bg-surface border border-primary/20 shadow-xl shadow-primary/5 scale-[1.02] w-[240px] h-[240px]'
-                         : 'gap-4 p-0 bg-transparent border border-transparent rounded-2xl scale-100 w-full h-[160px]'
-                     }`}>
-                         
-                         {/* Inside Verification UI */}
-                         <div className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out z-30 ${
-                             authPhase === 'verifying' || authPhase === 'success' || authPhase === 'error' || authPhase === 'transitioning'
-                             ? 'opacity-100 pointer-events-auto delay-100 bg-surface/90 backdrop-blur-md'
-                             : 'opacity-0 pointer-events-none'
-                         }`}>
-                             <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-700 ${
-                                 authPhase === 'success' 
-                                 ? 'scale-100 bg-primary border border-primary/40 shadow-lg shadow-primary/20 text-on-primary' 
-                                 : authPhase === 'error'
-                                 ? 'scale-100 bg-error border border-error/40 shadow-lg shadow-error/20 text-on-error'
-                                 : 'scale-90 bg-surface border border-outline/20'
-                             }`}>
-                                 {(authPhase === 'merging' || authPhase === 'verifying') && (
-                                     <div className="w-8 h-8 relative flex items-center justify-center">
-                                         <div className="absolute inset-0 border-2 border-primary/20 rounded-full"></div>
-                                         <div className="absolute inset-0 border-2 border-primary border-t-transparent rounded-full animate-spin" style={{ animationDuration: '2s' }}></div>
-                                         <div className="absolute inset-0 border-2 border-primary/40 border-b-transparent rounded-full animate-spin" style={{ animationDuration: '3s', animationDirection: 'reverse' }}></div>
-                                     </div>
-                                 )}
-                                 {authPhase === 'success' && (
-                                     <svg className="w-8 h-8 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" strokeDasharray="50" strokeDashoffset="50" style={{ animation: 'drawCheck 0.6s ease-out forwards' }} />
-                                     </svg>
-                                 )}
-                                 {authPhase === 'error' && (
-                                     <svg className="w-8 h-8 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" strokeDasharray="50" strokeDashoffset="50" style={{ animation: 'drawCheck 0.4s ease-out forwards' }} />
-                                     </svg>
-                                 )}
-                             </div>
-                             <p className={`mt-4 font-label-md tracking-[0.2em] uppercase text-[10px] text-center px-4 transition-all duration-500 ${authPhase === 'success' ? 'opacity-100 text-primary' : authPhase === 'error' ? 'opacity-100 text-error' : 'opacity-70 animate-pulse text-primary'}`}>
-                                 {authPhase === 'success' ? 'Identity Confirmed' : authPhase === 'error' ? 'Verification Failed' : 'Verifying...'}
-                             </p>
-                         </div>
-
-                         {/* Email Input wrapper */}
-                         <div className={`flex flex-col justify-center w-full transition-all duration-700 ease-in-out ${
-                             authPhase !== 'idle' ? 'h-10 opacity-0 pointer-events-none' : 'h-[72px] opacity-100'
-                         }`}>
-                             <label className={`block font-label-md text-sm text-on-surface ml-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`} htmlFor="email">Email address</label>
-                             <input
-                                 className={`w-full h-12 px-5 rounded-2xl font-body-md transition-all duration-700 outline-none ${
-                                     authPhase !== 'idle' 
-                                     ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
-                                     : 'bg-surface-variant/30 border border-outline/20 focus:bg-surface-variant/50 focus:border-primary text-on-surface placeholder:text-on-surface-variant/50'
-                                 }`}
-                                 id="email" placeholder="name@example.com" required type="email"
-                                 value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                                 disabled={authPhase !== 'idle'}
-                             />
-                         </div>
-
-                         {/* Password Input wrapper */}
-                         <div className={`flex gap-4 w-full transition-all duration-700 ease-in-out ${
-                             authPhase !== 'idle' ? 'h-10 opacity-0 pointer-events-none' : 'h-[72px] opacity-100'
-                         }`}>
-                             <div className="flex flex-col justify-center relative flex-1 h-full">
-                                 <div className={`flex justify-between items-center px-1 mb-1.5 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`}>
-                                     <label className="font-label-md text-sm text-on-surface" htmlFor="password">Password</label>
-                                     {mode === 'signin' && (
-                                         <button className="font-label-md text-primary/80 hover:text-primary transition-colors text-xs" onClick={handleForgotPassword} type="button" disabled={authPhase !== 'idle'}>Forgot?</button>
-                                     )}
-                                 </div>
-                                 <div className="relative h-12">
-                                     <input
-                                         className={`w-full h-12 px-5 rounded-2xl font-body-md transition-all duration-700 outline-none ${
-                                             authPhase !== 'idle' 
-                                             ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
-                                             : 'bg-surface-variant/30 border border-outline/20 focus:bg-surface-variant/50 focus:border-primary text-on-surface placeholder:text-on-surface-variant/50'
-                                         }`}
-                                         id="password" placeholder="••••••••" required type={showPassword ? 'text' : 'password'}
-                                         value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                                         disabled={authPhase !== 'idle'}
-                                     />
-                                     <button
-                                         className={`absolute right-4 top-1/2 -translate-y-1/2 transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'text-on-surface-variant hover:text-on-surface flex items-center'}`}
-                                         onClick={() => setShowPassword(!showPassword)} type="button" disabled={authPhase !== 'idle'}>
-                                         <span className="material-symbols-outlined text-[18px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                                     </button>
-                                 </div>
-                             </div>
-
-                             {/* Confirm Password Field (Hidden for Sign In) */}
-                             {mode === 'create' && (
-                                 <div className={`flex flex-col justify-center relative flex-1 h-full transition-opacity duration-300 ${authPhase !== 'idle' ? 'opacity-0' : 'opacity-100'}`}>
-                                     <div className="flex justify-between items-center px-1 mb-1.5">
-                                         <label className="font-label-md text-sm text-on-surface" htmlFor="confirmPassword">Confirm</label>
-                                     </div>
-                                     <div className="relative h-12">
-                                         <input
-                                             className={`w-full h-12 px-5 rounded-2xl font-body-md transition-all duration-700 outline-none ${
-                                                 authPhase !== 'idle' 
-                                                 ? 'bg-transparent border-transparent text-transparent placeholder:text-transparent' 
-                                                 : 'bg-surface-variant/30 border border-outline/20 focus:bg-surface-variant/50 focus:border-primary text-on-surface placeholder:text-on-surface-variant/50'
-                                             }`}
-                                             id="confirmPassword" placeholder="••••••••" required type={showConfirmPassword ? 'text' : 'password'}
-                                             value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-                                             disabled={authPhase !== 'idle'}
-                                         />
-                                         <button
-                                             className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors flex items-center"
-                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)} type="button" disabled={authPhase !== 'idle'}>
-                                             <span className="material-symbols-outlined text-[18px]">{showConfirmPassword ? 'visibility_off' : 'visibility'}</span>
-                                         </button>
-                                     </div>
-                                 </div>
-                             )}
-                         </div>
-                     </div>
-
-                     {/* Error Message */}
-                     <div className={`transition-all duration-300 overflow-hidden ${error ? 'max-h-20 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'}`}>
-                         <div className="py-3 px-4 bg-error-container/80 backdrop-blur-sm text-on-error-container border border-error/20 rounded-xl font-body-sm text-sm flex items-center gap-3">
-                             <span className="material-symbols-outlined text-[18px]">info</span>
-                             <span>{error}</span>
-                         </div>
-                     </div>
-
-                     {/* Success Message */}
-                     <div className={`transition-all duration-300 overflow-hidden ${successMessage ? 'max-h-20 opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'}`}>
-                         <div className="py-3 px-4 bg-primary-container/80 backdrop-blur-sm text-on-primary-container border border-primary/20 rounded-xl font-body-sm text-sm flex items-center gap-3">
-                             <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                             <span>{successMessage}</span>
-                         </div>
-                     </div>
-
-                     {/* Mandatory Consent & Non-Disclosure Agreement for Account Creation */}
-                     {mode === 'create' && (
-                         <div className={`p-3.5 rounded-xl bg-surface-variant/30 border border-outline-variant/30 text-xs text-on-surface-variant transition-all duration-300 ${authPhase !== 'idle' ? 'opacity-0 h-0 p-0 overflow-hidden m-0' : 'opacity-100 mt-2 space-y-2'}`}>
-                             <label className="flex items-start space-x-2.5 cursor-pointer">
-                                 <input
-                                     type="checkbox"
-                                     className="mt-0.5 w-4 h-4 rounded border-outline accent-primary text-primary"
-                                     checked={agreeTerms}
-                                     onChange={(e) => setAgreeTerms(e.target.checked)}
-                                     disabled={authPhase !== 'idle'}
-                                 />
-                                 <span className="leading-snug">
-                                     I am 18+ and agree to <strong>Affyne Labs</strong> Terms of Use &amp; Privacy Policy, and agree to the <strong>Non-Disclosure Agreement</strong> (I will not disclose, reverse-engineer, or share internal system architecture or prompt engineering).
-                                 </span>
-                             </label>
-                         </div>
-                     )}
-
-                     {/* Submit Button */}
-                     <button
-                         className={`w-full bg-primary text-on-primary font-label-md text-sm rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all duration-500 flex justify-center items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 mt-2 ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden p-0 border-0 mt-0' : 'h-12 opacity-100'}`}
-                         type="submit" disabled={authPhase !== 'idle' || (mode === 'create' && !agreeTerms)}>
-                         <span>{mode === 'signin' ? 'Continue to Sanctuary' : 'Create Account'}</span>
-                         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                     </button>
-                 </form>
-
-                 {/* Social/Other Methods */}
-                 <div className={`w-full transition-all duration-500 ease-in-out ${authPhase !== 'idle' ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-24'} animate-fade-up`}>
-                     <div className="flex items-center gap-4 mb-3 md:mb-4">
-                         <div className="h-[1px] flex-1 bg-outline/20"></div>
-                         <span className="font-label-md text-[10px] text-on-surface-variant/70 uppercase tracking-widest">or</span>
-                         <div className="h-[1px] flex-1 bg-outline/20"></div>
-                     </div>
-                     <button
-                         className="w-full h-12 border border-outline/30 bg-surface text-on-surface font-label-md text-sm rounded-2xl hover:bg-surface-variant transition-colors flex justify-center items-center gap-3 disabled:opacity-50"
-                         type="button" onClick={handleGoogleLogin} disabled={authPhase !== 'idle'}>
-                         <svg className="w-5 h-5" viewBox="0 0 24 24">
-                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
-                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
-                         </svg>
-                         Continue with Google
-                     </button>
-                 </div>
-             </div>
-         </main>
-      </div>
-    </div>
+    </>
   )
 }

@@ -1,0 +1,581 @@
+<!DOCTYPE html><html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Mythri - Sanctuary Chat</title>
+<!-- Tailwind CSS v3 with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Literata (Editorial Serif) & Plus Jakarta Sans / Inter for UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;1,7..72,400&amp;family=Plus+Jakarta+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sanctuary: {
+              canvas: '#F7F4EE',
+              surface: '#FFFDF9',
+              primary: '#43342B',
+              primaryHover: '#332720',
+              textPrimary: '#2B2521',
+              textMuted: '#887E77',
+              border: '#E8E2D7',
+              accentTick: '#5C98A6',
+              oat: '#F1E6D7',
+              ivory: '#FBF8F2'
+            }
+          },
+          fontFamily: {
+            serif: ['Literata', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(67, 52, 43, 0.05)',
+            'float': '0 6px 24px -4px rgba(67, 52, 43, 0.08)',
+            'popover': '0 10px 28px -4px rgba(50, 40, 32, 0.12)',
+            'sheet': '0 -8px 30px rgba(50, 40, 32, 0.14)'
+          }
+        }
+      }
+    };
+  </script>
+<!-- BEGIN: CustomStyles -->
+<style data-purpose="custom-layout">
+    /* iOS Momentum Scrolling & safe area */
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, textarea {
+      user-select: text;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(67, 52, 43, 0.15);
+      border-radius: 9999px;
+    }
+  </style>
+<style data-purpose="animations">
+    @keyframes fadeInSlide {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-bubble {
+      animation: fadeInSlide 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes pulseTyping {
+      0%, 100% { opacity: 0.3; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    .dot-1 { animation: pulseTyping 1.3s infinite 0s ease-in-out; }
+    .dot-2 { animation: pulseTyping 1.3s infinite 0.2s ease-in-out; }
+    .dot-3 { animation: pulseTyping 1.3s infinite 0.4s ease-in-out; }
+
+    @keyframes slideUpSheet {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    @keyframes slideDownSheet {
+      from { transform: translateY(0); }
+      to { transform: translateY(100%); }
+    }
+    .sheet-enter {
+      animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .sheet-exit {
+      animation: slideDownSheet 0.22s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+  </style>
+<!-- END: CustomStyles -->
+</head>
+<body class="h-full bg-sanctuary-canvas text-sanctuary-textPrimary font-sans antialiased flex flex-col justify-between items-center selection:bg-amber-100">
+<!-- Mobile Screen Container -->
+<div class="relative w-full max-w-md h-full flex flex-col bg-sanctuary-canvas shadow-xl overflow-hidden"><div aria-hidden="true" class="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"><svg class="absolute w-full h-full stroke-[#8B6250] fill-none" style="opacity: 0.16;" viewBox="0 0 420 880" xmlns="http://www.w3.org/2000/svg"><g stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 95 Q38 80 50 90 T72 82" stroke-dasharray="1 2"></path><path d="M36 82 C34 94 48 102 54 114"></path><circle cx="52" cy="82" r="2.5" stroke-width="1"></circle><path d="M372 70 Q382 60 392 68 T404 60" stroke-width="1.2"></path><path d="M385 58 L385 78 M375 68 L395 68" stroke-width="1.2"></path><path d="M18 220 C24 200 42 195 48 215 C54 235 34 245 22 235 C14 228 15 224 18 220 Z" stroke-width="1.3"></path><path d="M26 210 Q34 220 40 216" stroke-width="1"></path><path d="M388 280 C370 290 366 310 380 324 C394 338 412 322 406 304 C402 292 396 285 388 280 Z" stroke-width="1.3"></path><path d="M382 296 C390 304 398 308 402 316" stroke-width="1"></path><path d="M16 410 Q32 380 20 350 Q36 345 44 365 Q52 385 34 400" stroke-width="1.3"></path><circle cx="42" cy="346" r="2"></circle><circle cx="24" cy="340" r="1.5"></circle><path d="M390 440 Q370 450 364 470 T382 494 T404 476" stroke-width="1.3" stroke-dasharray="2 3"></path><path d="M380 460 Q388 468 376 476" stroke-width="1"></path><path d="M28 540 Q38 520 54 532 Q68 544 56 560 Q44 574 28 556 Z" stroke-width="1.3"></path><path d="M34 535 C42 542 46 550 50 554" stroke-width="1"></path><path d="M378 610 C364 618 360 635 372 648 C386 660 402 650 402 636 C402 622 390 615 378 610 Z" stroke-width="1.3"></path><path d="M384 624 Q378 636 390 642" stroke-width="1"></path><path d="M20 700 C30 688 48 684 56 698 C64 712 50 726 36 724 C24 722 18 710 20 700 Z" stroke-width="1.3"></path><path d="M385 735 Q395 725 402 735" stroke-width="1.2"></path><path d="M392 725 L392 745 M382 735 L402 735" stroke-width="1.2"></path><path d="M205 320 A30 30 0 0 1 235 350" stroke-width="1" stroke-dasharray="3 3"></path><path d="M215 350 A20 20 0 0 1 235 370" stroke-width="1" stroke-dasharray="2 2"></path><path d="M190 560 C205 550 215 565 225 555" stroke-width="1" stroke-dasharray="2 3"></path><circle cx="228" cy="553" r="1.5"></circle><circle cx="188" cy="562" r="1.5"></circle></g></svg></div>
+<!-- BEGIN: TopNavigationBar -->
+<header class="flex-none pt-4 pb-2 px-4 bg-transparent z-30 transition-all" data-purpose="app-header">
+<div class="flex items-center justify-between">
+<!-- Back Navigation & Companion Profile Info -->
+<div class="flex items-center gap-3">
+<!-- Back Button -->
+<button aria-label="Back" class="p-1.5 -ml-1 text-sanctuary-textPrimary hover:text-sanctuary-primary transition-colors focus:outline-none" type="button">
+<svg class="w-6 h-6 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Mythri Avatar Thumbnail & Presence -->
+<div class="flex items-center gap-2.5"><div class="flex flex-col"><h1 class="font-serif text-[17px] font-medium tracking-tight text-sanctuary-textPrimary leading-tight">Mythri</h1><div class="flex items-center gap-1.5 mt-0.5"><span class="w-2 h-2 bg-emerald-600 rounded-full inline-block"></span><span class="text-[11px] font-normal tracking-wide text-sanctuary-textMuted leading-none">Online</span></div></div></div>
+</div>
+<!-- Right Action Menu Trigger -->
+<div class="relative" data-purpose="options-menu-wrapper">
+<button aria-expanded="false" aria-haspopup="true" aria-label="Options Menu" class="p-2 text-sanctuary-textPrimary hover:bg-black/5 rounded-full transition-colors focus:outline-none" id="menuButton" type="button">
+<!-- Vertical Three Dots (⋮) -->
+<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+<circle cx="12" cy="5" r="1.75"></circle>
+<circle cx="12" cy="12" r="1.75"></circle>
+<circle cx="12" cy="19" r="1.75"></circle>
+</svg>
+</button>
+<!-- Popover Menu Dropdown -->
+<div class="absolute right-0 mt-1.5 w-44 bg-sanctuary-surface rounded-2xl shadow-popover border border-sanctuary-border/70 py-1.5 z-50 transform origin-top-right transition-all duration-150 hidden" id="menuDropdown" role="menu">
+<!-- Language Option -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-sanctuary-textPrimary hover:bg-stone-100/70 transition-colors text-left" id="btnLanguage" role="menuitem" type="button">
+<svg class="w-4 h-4 text-sanctuary-textMuted stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5 0 4.5-4 4.5-9S14.5 3 12 3m0 18c-2.5 0-4.5-4-4.5-9S9.5 3 12 3m-9 9h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="">Language</span>
+</button>
+<!-- Divider -->
+<div class="h-px bg-sanctuary-border/40 my-1 mx-2"></div>
+<!-- New Chat Option -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-sanctuary-textPrimary hover:bg-stone-100/70 transition-colors text-left" id="btnNewChat" role="menuitem" type="button">
+<svg class="w-4 h-4 text-sanctuary-textMuted stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="">New chat</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- END: TopNavigationBar -->
+<!-- BEGIN: ConversationFeed -->
+<main class="flex-1 overflow-y-auto custom-scrollbar px-4 pt-3 pb-4 space-y-4 font-sans relative z-10" data-purpose="message-thread" id="chatFeed"><!-- Message 1 (User): Anxiety disclosure -->
+<div class="flex flex-col items-end w-full animate-bubble" data-purpose="user-message-group">
+<div class="max-w-[82%] bg-sanctuary-primary text-[#FBF8F3] px-3.5 pt-2.5 pb-2 rounded-2xl rounded-br-sm shadow-soft">
+<p class="font-sans text-[14.5px] leading-relaxed tracking-normal font-normal pr-1">
+      I've been feeling really anxious lately...
+    </p>
+<div class="flex items-center justify-end gap-1 mt-1 text-[11px] text-[#FBF8F3]/60 font-sans leading-none select-none">
+<span class="">10:24 AM</span>
+<span class="text-sanctuary-accentTick font-medium text-[12px] tracking-tighter" title="Read">✓✓</span>
+</div>
+</div>
+</div>
+<!-- Message 2 (Mythri): Empathetic reflection -->
+<div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+<div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 pt-3 pb-2 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+<p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+      That sounds really heavy, Ananya. It's okay to feel this way. You're not alone in this.
+    </p>
+<p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724] mt-2.5">
+      Would you like to talk about what's been triggering these feelings, or would you like to explore some ways to feel more grounded right now?
+    </p>
+<div class="flex items-center justify-end mt-1 text-[11px] text-sanctuary-textMuted font-sans leading-none select-none">
+<span class="">10:25 AM</span>
+</div>
+</div>
+</div>
+<!-- Message 3 (User): Root cause -->
+<div class="flex flex-col items-end w-full animate-bubble" data-purpose="user-message-group">
+<div class="max-w-[82%] bg-sanctuary-primary text-[#FBF8F3] px-3.5 pt-2.5 pb-2 rounded-2xl rounded-br-sm shadow-soft">
+<p class="font-sans text-[14.5px] leading-relaxed tracking-normal font-normal pr-1">
+      I think it's mostly because of work and expectations.
+    </p>
+<div class="flex items-center justify-end gap-1 mt-1 text-[11px] text-[#FBF8F3]/60 font-sans leading-none select-none">
+<span class="">10:26 AM</span>
+<span class="text-sanctuary-accentTick font-medium text-[12px] tracking-tighter" title="Read">✓✓</span>
+</div>
+</div>
+</div>
+<!-- Message 4 (Mythri): Grounding proposal -->
+<div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+<div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 pt-3 pb-2 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+<p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+      That makes sense. Many people feel this way. Let's take a moment to breathe. Would you like me to guide you through a short grounding exercise?
+    </p>
+<div class="flex items-center justify-end mt-1 text-[11px] text-sanctuary-textMuted font-sans leading-none select-none">
+<span class="">10:27 AM</span>
+</div>
+</div>
+</div>
+<!-- Dynamic Typing Indicator Container (Hidden by default) -->
+<div class="hidden flex-col items-start w-full" data-purpose="typing-indicator" id="typingIndicator">
+<div class="bg-sanctuary-surface px-4 py-3 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft flex items-center space-x-1.5">
+<span class="w-2 h-2 bg-stone-500 rounded-full dot-1"></span>
+<span class="w-2 h-2 bg-stone-500 rounded-full dot-2"></span>
+<span class="w-2 h-2 bg-stone-500 rounded-full dot-3"></span>
+</div>
+<span class="text-[10px] text-sanctuary-textMuted mt-1 ml-1 font-sans">Mythri is typing...</span>
+</div></main>
+<!-- END: ConversationFeed -->
+<!-- BEGIN: BottomInputComposer -->
+<footer class="flex-none p-3 pb-5 bg-gradient-to-t from-sanctuary-canvas via-sanctuary-canvas to-transparent relative z-10" data-purpose="chat-input-bar">
+<form class="relative flex items-center bg-sanctuary-surface rounded-full border border-sanctuary-border px-2 py-1.5 shadow-float focus-within:border-stone-400 focus-within:ring-1 focus-within:ring-stone-300 transition-all" id="messageForm">
+<!-- Attachment / Expression Icon -->
+<button aria-label="Add gentle expression or reflection" class="p-2 text-stone-500 hover:text-sanctuary-primary transition-colors focus:outline-none" type="button">
+<!-- Serene smile icon -->
+<svg class="w-6 h-6 stroke-[1.6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M9 10h.01M15 10h.01" stroke-linecap="round"></path>
+<path d="M8.5 14.5c1.2 1.5 5.8 1.5 7 0" stroke-linecap="round"></path>
+</svg>
+</button>
+<!-- Message Input Field -->
+<input autocomplete="off" class="flex-1 bg-transparent border-none text-[15px] text-sanctuary-textPrimary placeholder:text-stone-400 focus:ring-0 focus:outline-none px-2 py-1.5 font-sans" id="userInput" placeholder="Type a message..." type="text">
+<!-- Send Button -->
+<button aria-label="Voice input" class="w-10 h-10 flex items-center justify-center text-stone-500 hover:text-sanctuary-primary hover:bg-black/5 active:scale-95 rounded-full transition-all focus:outline-none flex-shrink-0 mr-1" id="micButton" type="button"><svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><button aria-label="Send message" class="w-10 h-10 flex items-center justify-center bg-sanctuary-primary hover:bg-sanctuary-primaryHover active:scale-95 text-[#FBF8F3] rounded-full transition-all focus:outline-none shadow-sm flex-shrink-0" id="sendButton" type="submit">
+<!-- Elegant Rightward Pointer / Arrow -->
+<svg class="w-4 h-4 translate-x-0.5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M8.25 4.5l7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</form>
+</footer>
+<!-- END: BottomInputComposer -->
+<!-- BEGIN: LanguageBottomSheetModal -->
+<div aria-labelledby="languageModalTitle" aria-modal="true" class="fixed inset-0 z-50 flex flex-col justify-end hidden" id="languageModalOverlay" role="dialog">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-[#2C2724]/40 backdrop-blur-[2px] transition-opacity duration-200 opacity-0" id="languageModalBackdrop"></div>
+<!-- Sheet Surface -->
+<div class="relative w-full max-w-md mx-auto bg-sanctuary-surface rounded-t-[28px] border-t border-[#ECE5D9] shadow-sheet p-5 pb-6 z-10 transform translate-y-full flex flex-col" id="languageSheet">
+<!-- Drag Handle Indicator -->
+<div class="w-10 h-1 bg-[#D8CEBF] rounded-full mx-auto mb-4 -mt-1 opacity-80"></div>
+<!-- Modal Header -->
+<div class="flex items-center justify-between pb-3 border-b border-[#ECE5D9]/70">
+<div>
+<h2 class="font-serif text-lg font-medium text-sanctuary-textPrimary tracking-tight" id="languageModalTitle">Choose Language</h2>
+<p class="text-xs text-sanctuary-textMuted font-sans mt-0.5">Select your preferred sanctuary companion voice</p>
+</div>
+<button aria-label="Close" class="p-1.5 text-sanctuary-textMuted hover:text-sanctuary-textPrimary rounded-full hover:bg-stone-100 transition-colors focus:outline-none" id="btnCloseLanguageModal" type="button">
+<svg class="w-5 h-5 stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+<!-- Language Selection List -->
+<div aria-label="Language options" class="mt-3.5 space-y-2.5" id="languageOptionsList" role="radiogroup">
+<!-- Option 1: English (Default) -->
+<button aria-checked="true" class="lang-option w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 border-sanctuary-primary bg-sanctuary-oat/30 transition-all text-left group" data-lang-name="English" data-lang-native="English" role="radio" type="button">
+<div class="flex flex-col">
+<span class="font-sans font-medium text-[15px] text-sanctuary-textPrimary">English</span>
+<span class="text-xs text-sanctuary-textMuted font-sans">English</span>
+</div>
+<div class="checkmark-icon w-6 h-6 rounded-full bg-sanctuary-primary text-white flex items-center justify-center transition-transform scale-100">
+<svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</button>
+<!-- Option 2: Hindi -->
+<button aria-checked="false" class="lang-option w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-sanctuary-border hover:border-stone-400/60 bg-transparent transition-all text-left group" data-lang-name="Hindi" data-lang-native="हिंदी" role="radio" type="button">
+<div class="flex flex-col">
+<span class="font-sans font-medium text-[15px] text-sanctuary-textPrimary">Hindi</span>
+<span class="text-xs text-sanctuary-textMuted font-sans">हिंदी</span>
+</div>
+<div class="checkmark-icon w-6 h-6 rounded-full bg-sanctuary-primary text-white flex items-center justify-center transition-transform scale-0 hidden">
+<svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</button>
+<!-- Option 3: Telugu -->
+<button aria-checked="false" class="lang-option w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-sanctuary-border hover:border-stone-400/60 bg-transparent transition-all text-left group" data-lang-name="Telugu" data-lang-native="తెలుగు" role="radio" type="button">
+<div class="flex flex-col">
+<span class="font-sans font-medium text-[15px] text-sanctuary-textPrimary">Telugu</span>
+<span class="text-xs text-sanctuary-textMuted font-sans">తెలుగు</span>
+</div>
+<div class="checkmark-icon w-6 h-6 rounded-full bg-sanctuary-primary text-white flex items-center justify-center transition-transform scale-0 hidden">
+<svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</button>
+<!-- Option 4: Tamil -->
+<button aria-checked="false" class="lang-option w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-sanctuary-border hover:border-stone-400/60 bg-transparent transition-all text-left group" data-lang-name="Tamil" data-lang-native="தமிழ்" role="radio" type="button">
+<div class="flex flex-col">
+<span class="font-sans font-medium text-[15px] text-sanctuary-textPrimary">Tamil</span>
+<span class="text-xs text-sanctuary-textMuted font-sans">தமிழ்</span>
+</div>
+<div class="checkmark-icon w-6 h-6 rounded-full bg-sanctuary-primary text-white flex items-center justify-center transition-transform scale-0 hidden">
+<svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</button>
+</div>
+<!-- Actions -->
+<div class="mt-5 grid grid-cols-2 gap-3 pt-2">
+<button class="w-full py-2.5 px-4 rounded-full border border-sanctuary-border text-sanctuary-textPrimary text-sm font-medium hover:bg-stone-100 transition-colors focus:outline-none" id="btnCancelLanguageModal" type="button">
+        Cancel
+      </button>
+<button class="w-full py-2.5 px-4 rounded-full bg-sanctuary-primary text-sanctuary-ivory text-sm font-medium hover:bg-sanctuary-primaryHover transition-colors shadow-sm focus:outline-none" id="btnConfirmLanguage" type="button">
+        Confirm
+      </button>
+</div>
+</div>
+</div>
+<!-- END: LanguageBottomSheetModal -->
+<!-- BEGIN: GentleToastNotification -->
+<div aria-live="polite" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-3" id="toastNotification" role="status">
+<div class="flex items-center gap-2 bg-sanctuary-primary text-sanctuary-ivory px-4 py-2 rounded-full shadow-lg text-[13px] font-sans border border-sanctuary-primaryHover/80">
+<svg class="w-4 h-4 text-emerald-400 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span id="toastMessage" class="">Language set to English</span>
+</div>
+</div>
+<!-- END: GentleToastNotification -->
+</div>
+<!-- BEGIN: InteractiveHandlers -->
+<script data-purpose="menu-toggle">
+    // Interactive Three-Dots Popover Menu
+    const menuButton = document.getElementById('menuButton');
+    const menuDropdown = document.getElementById('menuDropdown');
+    const btnLanguage = document.getElementById('btnLanguage');
+    const btnNewChat = document.getElementById('btnNewChat');
+
+    // Language modal elements
+    const languageModalOverlay = document.getElementById('languageModalOverlay');
+    const languageModalBackdrop = document.getElementById('languageModalBackdrop');
+    const languageSheet = document.getElementById('languageSheet');
+    const btnCloseLanguageModal = document.getElementById('btnCloseLanguageModal');
+    const btnCancelLanguageModal = document.getElementById('btnCancelLanguageModal');
+    const btnConfirmLanguage = document.getElementById('btnConfirmLanguage');
+    const langOptions = document.querySelectorAll('.lang-option');
+    const toastNotification = document.getElementById('toastNotification');
+    const toastMessage = document.getElementById('toastMessage');
+
+    let currentSelectedLanguage = 'English';
+    let tempSelectedLanguage = 'English';
+
+    function toggleMenu(show) {
+      const isVisible = show !== undefined ? show : menuDropdown.classList.contains('hidden');
+      if (isVisible) {
+        menuDropdown.classList.remove('hidden');
+        menuButton.setAttribute('aria-expanded', 'true');
+      } else {
+        menuDropdown.classList.add('hidden');
+        menuButton.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    menuButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = menuDropdown.classList.contains('hidden');
+      toggleMenu(willOpen);
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!menuDropdown.contains(e.target) && !menuButton.contains(e.target)) {
+        toggleMenu(false);
+      }
+    });
+
+    function showToast(message) {
+      toastMessage.textContent = message;
+      toastNotification.classList.remove('opacity-0', '-translate-y-3');
+      toastNotification.classList.add('opacity-100', 'translate-y-0');
+      
+      setTimeout(() => {
+        toastNotification.classList.remove('opacity-100', 'translate-y-0');
+        toastNotification.classList.add('opacity-0', '-translate-y-3');
+      }, 2400);
+    }
+
+    function openLanguageModal() {
+      tempSelectedLanguage = currentSelectedLanguage;
+      updateLanguageUI(tempSelectedLanguage);
+
+      languageModalOverlay.classList.remove('hidden');
+      // trigger transition
+      requestAnimationFrame(() => {
+        languageModalBackdrop.classList.remove('opacity-0');
+        languageModalBackdrop.classList.add('opacity-100');
+        languageSheet.classList.remove('sheet-exit', 'translate-y-full');
+        languageSheet.classList.add('sheet-enter');
+      });
+    }
+
+    function closeLanguageModal() {
+      languageModalBackdrop.classList.remove('opacity-100');
+      languageModalBackdrop.classList.add('opacity-0');
+      languageSheet.classList.remove('sheet-enter');
+      languageSheet.classList.add('sheet-exit');
+
+      setTimeout(() => {
+        languageModalOverlay.classList.add('hidden');
+      }, 220);
+    }
+
+    function updateLanguageUI(selected) {
+      langOptions.forEach(opt => {
+        const langName = opt.getAttribute('data-lang-name');
+        const checkIcon = opt.querySelector('.checkmark-icon');
+        const isSelected = (langName === selected);
+
+        opt.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+        if (isSelected) {
+          opt.classList.remove('border-sanctuary-border', 'bg-transparent');
+          opt.classList.add('border-sanctuary-primary', 'bg-sanctuary-oat/30');
+          checkIcon.classList.remove('hidden');
+          checkIcon.classList.remove('scale-0');
+          checkIcon.classList.add('scale-100');
+        } else {
+          opt.classList.add('border-sanctuary-border', 'bg-transparent');
+          opt.classList.remove('border-sanctuary-primary', 'bg-sanctuary-oat/30');
+          checkIcon.classList.add('hidden');
+          checkIcon.classList.remove('scale-100');
+          checkIcon.classList.add('scale-0');
+        }
+      });
+    }
+
+    // Modal Selection Triggers
+    langOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        tempSelectedLanguage = opt.getAttribute('data-lang-name');
+        updateLanguageUI(tempSelectedLanguage);
+      });
+    });
+
+    btnConfirmLanguage.addEventListener('click', () => {
+      currentSelectedLanguage = tempSelectedLanguage;
+      closeLanguageModal();
+      showToast(`Language set to ${currentSelectedLanguage}`);
+    });
+
+    btnCloseLanguageModal.addEventListener('click', closeLanguageModal);
+    btnCancelLanguageModal.addEventListener('click', closeLanguageModal);
+    languageModalBackdrop.addEventListener('click', closeLanguageModal);
+
+    // Menu Item Actions
+    btnLanguage.addEventListener('click', () => {
+      toggleMenu(false);
+      openLanguageModal();
+    });
+
+    btnNewChat.addEventListener('click', () => {
+      toggleMenu(false);
+      if (confirm("Begin a fresh conversation with Mythri?")) {
+        const feed = document.getElementById('chatFeed');
+        // Reset chat feed while maintaining the sanctuary layout
+        feed.innerHTML = `
+          <div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+            <div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 py-3.5 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+              <p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+                Hello Ananya. I'm right here with you. Take your time, what would you like to reflect on today?
+              </p>
+            </div>
+            <div class="flex items-center mt-1 ml-1 text-[11px] text-sanctuary-textMuted font-sans">
+              <span>Just now</span>
+            </div>
+          </div>
+          <div id="typingIndicator" class="hidden flex-col items-start w-full" data-purpose="typing-indicator">
+            <div class="bg-sanctuary-surface px-4 py-3 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft flex items-center space-x-1.5">
+              <span class="w-2 h-2 bg-stone-500 rounded-full dot-1"></span>
+              <span class="w-2 h-2 bg-stone-500 rounded-full dot-2"></span>
+              <span class="w-2 h-2 bg-stone-500 rounded-full dot-3"></span>
+            </div>
+            <span class="text-[10px] text-sanctuary-textMuted mt-1 ml-1 font-sans">Mythri is typing...</span>
+          </div>
+        `;
+      }
+    });
+  </script>
+<script data-purpose="message-dispatch">
+    // Message Posting & Companion Auto-Reply Simulation
+    const messageForm = document.getElementById('messageForm');
+    const userInput = document.getElementById('userInput');
+    const chatFeed = document.getElementById('chatFeed');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    function getCurrentTime() {
+      const now = new Date();
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; 
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      return `${hours}:${minutes} ${ampm}`;
+    }
+
+    function scrollToBottom() {
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+    }
+
+    messageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      const timeString = getCurrentTime();
+
+      // Create & Append User Bubble (Double tick indicator included)
+      const userMessageHtml = `
+        <div class="flex flex-col items-end w-full animate-bubble" data-purpose="user-message-group">
+          <div class="max-w-[82%] bg-sanctuary-primary text-[#FBF8F3] px-3.5 pt-2.5 pb-2 rounded-2xl rounded-br-sm shadow-soft">
+            <p class="font-sans text-[14.5px] leading-relaxed tracking-normal font-normal pr-1">
+              ${escapeHtml(text)}
+            </p>
+            <div class="flex items-center justify-end gap-1 mt-1 text-[11px] text-[#FBF8F3]/60 font-sans leading-none select-none">
+              <span>${timeString}</span>
+              <span class="text-sanctuary-accentTick font-medium text-[12px] tracking-tighter" title="Read">✓✓</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Insert before typing indicator
+      typingIndicator.insertAdjacentHTML('beforebegin', userMessageHtml);
+      userInput.value = '';
+      scrollToBottom();
+
+      // Trigger typing indicator and gentle response
+      typingIndicator.classList.remove('hidden');
+      scrollToBottom();
+
+      setTimeout(() => {
+        typingIndicator.classList.add('hidden');
+        
+        // Empathetic response library
+        const responses = [
+          "I hear you. Let's take a deep breath together. Inhale gently for four seconds, and release slowly...",
+          "Thank you for sharing that with me. It is completely natural to feel overwhelmed when demands build up. What feels most urgent to your heart right now?",
+          "You don't have to carry all of that at once. Let's gently break it down and give yourself permission to pause.",
+          "I'm here listening. Take all the time you need to be still."
+        ];
+        const randomReply = responses[Math.floor(Math.random() * responses.length)];
+        const replyTime = getCurrentTime();
+
+        const mythriMessageHtml = `
+          <div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+            <div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 pt-3 pb-2 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+              <p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+                ${randomReply}
+              </p>
+              <div class="flex items-center justify-end mt-1 text-[11px] text-sanctuary-textMuted font-sans leading-none select-none">
+                <span>${replyTime}</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        typingIndicator.insertAdjacentHTML('beforebegin', mythriMessageHtml);
+        scrollToBottom();
+      }, 1600);
+    });
+
+    // Helper to sanitize injected user content
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+    }
+  </script>
+<!-- END: InteractiveHandlers -->
+
+
+</body></html>

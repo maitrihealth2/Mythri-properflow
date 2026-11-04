@@ -7,7 +7,7 @@ import { useAuth } from '@/shared/components/contexts/AuthContext'
 import { useMitraStore } from '@/shared/stores/mitraStore'
 import ExerciseOverlay from '@/shared/components/ExerciseOverlay'
 import ThemeToggle from '@/shared/components/ThemeToggle'
-import RadialNav from '@/shared/components/RadialNav'
+import SanctuaryNavRail from '@/shared/components/SanctuaryNavRail'
 import { motion } from 'framer-motion'
 import MythriAura, { AuraState } from '@/shared/components/MythriAura'
 
@@ -790,41 +790,19 @@ export default function VoiceModePage() {
         {/* Center content mask to keep readability high */}
         <div className="absolute inset-x-[10%] inset-y-[5%] bg-white/[0.2] dark:bg-black/[0.1] blur-[80px] rounded-full pointer-events-none z-0" />
 
+        {/* Left Sidebar Navigation Rail */}
+        <SanctuaryNavRail variant="adaptive" />
+
         {/* Top Floating Navigation */}
         <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-margin-desktop py-4 pointer-events-none transition-all">
-          <div className="flex items-center gap-3 pointer-events-auto">
-            <RadialNav />
+          <div className="flex items-center gap-3 pointer-events-auto pl-12 sm:pl-14 md:pl-16">
             <div className="text-headline-md font-headline-md font-medium text-primary dark:text-[#F3ECF2]">Mythri</div>
           </div>
           <div className="flex gap-2 sm:gap-3 items-center relative pointer-events-auto mr-2">
             <ThemeToggle />
-            <button onClick={() => { setLangMenuOpen(!langMenuOpen); setMainMenuOpen(false) }} className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105">language</button>
-            <button onClick={() => { setMainMenuOpen(!mainMenuOpen); setLangMenuOpen(false) }} className="hidden md:flex material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105">grid_view</button>
-            <button onClick={() => router.replace('/text-chat')} className="md:hidden material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105">close</button>
+            <button onClick={() => setLangMenuOpen(!langMenuOpen)} className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105" title="Language">language</button>
+            <button onClick={() => router.replace('/text-chat')} className="material-symbols-outlined text-primary dark:text-white/90 glass-panel p-2 rounded-full transition-all active:scale-95 hover:scale-105" title="Exit to Chat">close</button>
           </div>
-
-          {/* Desktop Main Menu */}
-          <nav className={`absolute right-4 md:right-8 top-[100%] mt-2 w-56 glass-menu dark:bg-[#1C1822]/95 dark:border-white/10 rounded-2xl flex-col p-2 gap-1 origin-top transition-all duration-300 hidden md:flex ${mainMenuOpen ? 'scale-y-100 opacity-100 pointer-events-auto shadow-2xl' : 'scale-y-0 opacity-0 pointer-events-none'}`}>
-            <button onClick={() => handleExitNavigation('/home')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
-              <span className="material-symbols-outlined text-[20px]">home</span> Sanctuary
-            </button>
-            <button onClick={() => handleExitNavigation('/text-chat')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
-              <span className="material-symbols-outlined text-[20px]">health_and_safety</span> Consultation
-            </button>
-            <button onClick={() => handleExitNavigation('/history')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
-              <span className="material-symbols-outlined text-[20px]">history</span> Your Sessions
-            </button>
-            <button onClick={() => handleExitNavigation('/profile')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
-              <span className="material-symbols-outlined text-[20px]">person</span> Profile
-            </button>
-            <button onClick={() => handleExitNavigation('/feedback')} className="text-on-surface-variant dark:text-white/80 hover:bg-white/60 dark:hover:bg-white/10 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md w-full text-left">
-              <span className="material-symbols-outlined text-[20px]">feedback</span> Feedback
-            </button>
-            <div className="h-px bg-outline-variant/30 dark:bg-white/10 my-1 mx-2"></div>
-            <button onClick={async () => { await logout(); localStorage.clear(); sessionStorage.removeItem('mb_session_id'); window.location.href = '/login'; }} className="text-error hover:bg-error/10 dark:hover:bg-error/20 transition-colors px-4 py-2.5 rounded-xl flex items-center gap-3 font-label-md text-left w-full">
-              <span className="material-symbols-outlined text-[20px]">logout</span> Logout
-            </button>
-          </nav>
 
           {/* Language Menu */}
           <div className={`absolute right-16 md:right-20 top-[100%] mt-2 w-40 glass-menu dark:bg-[#1C1822]/95 dark:border-white/10 rounded-2xl flex flex-col p-2 gap-1 origin-top-right transition-all duration-300 ${langMenuOpen ? 'scale-100 opacity-100 pointer-events-auto shadow-2xl' : 'scale-95 opacity-0 pointer-events-none'}`}>

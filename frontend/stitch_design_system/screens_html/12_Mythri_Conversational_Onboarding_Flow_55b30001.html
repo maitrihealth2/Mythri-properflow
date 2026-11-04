@@ -1,0 +1,558 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_blank" name="shell-type">
+<title>Mythri · Conversational Sanctuary</title>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-dim": "#dcdad4",
+            "on-secondary-fixed-variant": "#623e2e",
+            "on-background": "#1c1c18",
+            "secondary-container": "#fdc9b3",
+            "surface-tint": "#705a4f",
+            "secondary-fixed-dim": "#eebba6",
+            "on-secondary-fixed": "#2f1407",
+            "on-surface": "#1c1c18",
+            "on-primary-container": "#b99f93",
+            "on-primary-fixed-variant": "#574239",
+            "on-tertiary-fixed": "#281805",
+            "on-error-container": "#93000a",
+            "on-primary-fixed": "#271810",
+            "surface-container-high": "#ebe8e2",
+            "oat": "#F1E6D7",
+            "secondary": "#7c5544",
+            "on-surface-variant": "#4f4540",
+            "on-secondary-container": "#795241",
+            "primary-fixed": "#fbdccf",
+            "tertiary-container": "#4a3720",
+            "on-tertiary-fixed-variant": "#57432c",
+            "inverse-surface": "#31312d",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#f0eee8",
+            "surface": "#fcf9f3",
+            "tertiary-fixed": "#fcddbd",
+            "ivory": "#FBF8F2",
+            "on-tertiary": "#ffffff",
+            "outline": "#81756f",
+            "border": "#E3D8CC",
+            "error": "#ba1a1a",
+            "ink": "#2C2724",
+            "outline-variant": "#d3c3bd",
+            "error-container": "#ffdad6",
+            "mocha": "#8B6250",
+            "primary": "#322119",
+            "tertiary-fixed-dim": "#dfc2a3",
+            "inverse-on-surface": "#f3f0ea",
+            "espresso": "#49362D",
+            "on-error": "#ffffff",
+            "inverse-primary": "#ddc1b4",
+            "surface-container-low": "#f6f3ed",
+            "tertiary": "#32220d",
+            "primary-container": "#49362d",
+            "on-secondary": "#ffffff",
+            "surface-variant": "#e5e2dc",
+            "surface-container-highest": "#e5e2dc",
+            "secondary-fixed": "#ffdbcd",
+            "background": "#fcf9f3",
+            "on-tertiary-container": "#bba083",
+            "muted": "#756A62",
+            "primary-fixed-dim": "#ddc1b4",
+            "surface-bright": "#fcf9f3",
+            "on-primary": "#ffffff",
+            "caramel": "#CBAF91"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "gutter": "1.5rem",
+            "space-3xl": "4rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin": "4rem",
+            "space-2xl": "3rem",
+            "space-xl": "2rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1.25rem"
+          },
+          fontFamily: {
+            "label-md": ["Literata", "serif"],
+            "label-sm": ["Literata", "serif"],
+            "body-md": ["Literata", "serif"],
+            "headline-md": ["Literata", "serif"],
+            "display-lg": ["Literata", "serif"],
+            "headline-sm": ["Literata", "serif"],
+            "body-lg": ["Literata", "serif"],
+            "body-sm": ["Literata", "serif"],
+            "headline-lg-mobile": ["Literata", "serif"],
+            "headline-lg": ["Literata", "serif"],
+            "display-lg-mobile": ["Literata", "serif"]
+          },
+          fontSize: {
+            "label-md": ["14px", { lineHeight: "1.2", fontWeight: "500" }],
+            "label-sm": ["12px", { lineHeight: "1.2", fontWeight: "500" }],
+            "body-md": ["16px", { lineHeight: "1.7", fontWeight: "400" }],
+            "headline-md": ["24px", { lineHeight: "1.4", fontWeight: "500" }],
+            "display-lg": ["48px", { lineHeight: "1.2", fontWeight: "500" }],
+            "headline-sm": ["20px", { lineHeight: "1.4", fontWeight: "500" }],
+            "body-lg": ["18px", { lineHeight: "1.7", fontWeight: "400" }],
+            "body-sm": ["14px", { lineHeight: "1.6", fontWeight: "400" }],
+            "headline-lg": ["32px", { lineHeight: "1.3", fontWeight: "500" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Ambient Fade-in animations */
+    @keyframes gentleFadeIn {
+      0% { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes sereneFadeFloat {
+      0% {
+        opacity: 0;
+        transform: translateY(22px);
+      }
+      60% {
+        opacity: 0.7;
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-gentle-fade {
+      animation: gentleFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-serene-btn {
+      animation: sereneFadeFloat 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+      opacity: 0;
+    }
+
+    /* Text contrast protection without milky backdrop overlay */
+    .sanctuary-text-shadow {
+      text-shadow: 0 1px 2px rgba(255, 250, 245, 0.65), 0 0 16px rgba(255, 245, 235, 0.4);
+    }
+
+    /* Stream of thought conversational turn animation */
+    .stream-turn {
+      animation: gentleFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Soft pulse for typing indicator */
+    @keyframes typingDot {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.1); }
+    }
+    .dot-1 { animation: typingDot 1.4s infinite ease-in-out; }
+    .dot-2 { animation: typingDot 1.4s infinite ease-in-out 0.2s; }
+    .dot-3 { animation: typingDot 1.4s infinite ease-in-out 0.4s; }
+  </style>
+<style id="neutralize-text-shadows">.sanctuary-text-shadow, .stream-turn, h1, p, span, a, button { text-shadow: none !important; }</style></head>
+<body class="font-body-md text-ink antialiased min-h-screen flex flex-col justify-between selection:bg-espresso/20 selection:text-espresso relative overflow-hidden bg-[#E2D2BF]">
+<!-- ========================================================
+       BACKGROUND: PRISTINE SCULPTURAL ARCHITECTURAL SANCTUARY
+       Full-bleed, natural fidelity, zero veil/overlay
+       ======================================================== -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<img alt="Sculptural Sanctuary at Golden Hour" class="w-full h-full object-cover object-center" id="bg-sanctuary" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCINIylh0wS58GPfMX7Lnhhfk15rBioz0jvvafcwwiaRruYUhLPBOfTvtDARmgz0iJIy-_edVueSeiBSEmx7qt0pkfdIGlFZx6xHqZ9kqDv0Mdv859mLlzO1u52RgqeR2o6nkZByi2mgGsEVsNiw8yZ24zBeQhwFFIQ1JJYuATTLz3YXL0YQNAEzwzautdUVPrIVtKuQuY8dbDnvPcI-ZbEyaCMji0AMlnm1SzaDUZN7Z0oAhYcJV10P-qqYR0S92PFOZ0">
+</div>
+<!-- ========================================================
+       HEADER: PURE MINIMAL TEXT NAVIGATION
+       ======================================================== -->
+<header class="w-full py-6 md:py-8 px-margin-mobile md:px-margin flex items-center justify-between z-20 transition-all duration-500">
+<div class="flex items-center gap-2.5">
+<span class="font-headline-sm text-espresso font-medium tracking-tight">MYTHRI</span>
+<span class="text-espresso/40 select-none">·</span>
+<span class="font-body-sm text-espresso/80 hidden sm:inline">Conversational Sanctuary</span>
+</div>
+<div class="flex items-center gap-5 sm:gap-7">
+<!-- Restart plain text link -->
+<button class="font-label-sm text-xs md:text-sm text-espresso/70 hover:text-espresso transition-colors tracking-wide bg-transparent border-0 p-0 cursor-pointer" onclick="resetToWelcome()" title="Start over">
+      Restart
+    </button>
+<!-- Pause & exit plain text link -->
+<a class="font-label-sm text-xs md:text-sm text-espresso/70 hover:text-espresso transition-colors tracking-wide" data-path="pause-and-exit" href="#">
+      Pause &amp; exit
+    </a>
+</div>
+</header>
+<!-- ========================================================
+       MAIN INTERACTIVE VIEWPORT
+       ======================================================== -->
+<main class="w-full flex-grow flex flex-col items-center justify-center px-margin-mobile md:px-margin relative z-10 max-w-4xl mx-auto">
+<!-- ======================================================
+       VIEW 1: WELCOME HERO (Pure centered typography)
+       ====================================================== -->
+<div class="w-full max-w-xl mx-auto flex flex-col items-center text-center transition-all duration-700 ease-out opacity-0 -translate-y-4 hidden" id="welcome-hero">
+<h1 class="font-display-lg text-4xl sm:text-5xl md:text-display-lg text-espresso tracking-tight leading-tight mb-4 font-normal">
+      Welcome to MYTHRI
+    </h1>
+<p class="font-body-lg text-lg sm:text-xl text-espresso/90 leading-relaxed max-w-md mb-2 font-normal">
+      A quiet harbor for your thoughts.
+    </p>
+<p class="font-body-md text-espresso/75 max-w-sm mb-10 leading-relaxed text-sm sm:text-base">
+      An unhurried space to breathe, reflect, and share only what feels comfortable.
+    </p>
+<div class="animate-serene-btn w-full flex justify-center">
+<button class="px-8 py-3 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2 group cursor-pointer" id="btn-begin" onclick="beginConversationalFlow()">
+<span class="">Begin</span>
+<span class="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- ======================================================
+       VIEW 2: STREAM-OF-THOUGHT CONVERSATIONAL SPACE
+       Pure typing input - Zero suggestions, pills, or chips
+       ====================================================== -->
+<div class="w-full max-w-2xl flex-grow flex flex-col justify-between transition-all duration-700 ease-out h-[calc(100vh-190px)] min-h-[500px] opacity-100" id="chat-interface">
+<!-- Conversation Stream Canvas -->
+<div class="flex-grow overflow-y-auto space-y-7 pr-2 py-4 scroll-smooth" id="chat-messages">
+<!-- Dynamically injected stream-of-thought turns -->
+<div class="flex flex-col items-start space-y-1.5 max-w-xl stream-turn ">
+        <div class="text-espresso/70 font-label-sm text-xs tracking-wider uppercase sanctuary-text-shadow select-none">Mythri</div>
+        <div class="text-espresso font-body-lg text-base sm:text-[18px] leading-relaxed sanctuary-text-shadow">
+          Hi, I'm Mythri.
+        </div>
+      </div></div>
+<!-- Functional Pure Composer Row -->
+<div class="w-full pt-3 pb-3">
+<form class="relative flex items-center gap-2 bg-[#F9F4EC]/90 backdrop-blur-md border border-espresso/25 rounded-full px-5 py-2.5 shadow-sm transition-all focus-within:border-espresso/70 focus-within:bg-[#FAF6F0] focus-within:shadow-md" id="chat-form" onsubmit="handleUserSubmit(event)">
+<input autocomplete="off" class="flex-grow bg-transparent border-0 outline-none focus:ring-0 text-ink font-body-md text-base placeholder:text-espresso/45 py-1 px-1" id="chat-input" placeholder="Type your response..." type="text">
+<!-- Send button -->
+<button aria-label="Send response" class="w-9 h-9 rounded-full bg-espresso text-ivory flex items-center justify-center hover:bg-mocha transition-all duration-200 shadow-sm flex-shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" id="btn-send-message" type="submit">
+<span class="material-symbols-outlined text-base">arrow_upward</span>
+</button>
+</form>
+</div>
+</div>
+</main>
+<!-- ========================================================
+       FOOTER: SUBTLE CLEAN EDITORIAL TEXT
+       ======================================================== -->
+<footer class="w-full py-5 md:py-6 px-margin-mobile md:px-margin text-center z-20">
+<div class="flex flex-col sm:flex-row items-center justify-center gap-x-4 gap-y-1 text-espresso/75 text-xs sm:text-body-sm">
+<span class="font-label-sm text-xs text-espresso/70">
+      Private &amp; encrypted · Non-diagnostic companion
+    </span>
+<span class="hidden sm:inline text-espresso/40">·</span>
+<a class="hover:text-espresso transition-colors underline underline-offset-4 font-label-sm text-xs text-espresso/80" data-path="crisis-support" href="#">
+      Access 24/7 Crisis Support Resources
+    </a>
+</div>
+</footer>
+<!-- ========================================================
+       CONVERSATIONAL STATE ENGINE JAVASCRIPT
+       Free-form typing flow without pills or chips
+       ======================================================== -->
+<script>
+    const flowState = {
+      step: 0,
+      userName: '',
+      reason: '',
+      feeling: '',
+      supportNeed: '',
+      isWaiting: false
+    };
+
+    const welcomeHeroEl = document.getElementById('welcome-hero');
+    const chatInterfaceEl = document.getElementById('chat-interface');
+    const chatMessagesEl = document.getElementById('chat-messages');
+    const chatInputEl = document.getElementById('chat-input');
+    const btnSendEl = document.getElementById('btn-send-message');
+
+    // Transitions from Centered Welcome Hero to Conversational Chat
+    function beginConversationalFlow() {
+      welcomeHeroEl.classList.add('opacity-0', '-translate-y-4');
+      setTimeout(() => {
+        welcomeHeroEl.classList.add('hidden');
+        chatInterfaceEl.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          chatInterfaceEl.classList.remove('opacity-0');
+          chatInterfaceEl.classList.add('opacity-100');
+        });
+        startGreetingStep();
+      }, 450);
+    }
+
+    // Reset back to initial Welcome screen
+    function resetToWelcome() {
+      flowState.step = 0;
+      flowState.userName = '';
+      flowState.reason = '';
+      flowState.feeling = '';
+      flowState.supportNeed = '';
+      flowState.isWaiting = false;
+
+      chatMessagesEl.innerHTML = '';
+      chatInputEl.value = '';
+      chatInputEl.disabled = false;
+      btnSendEl.disabled = false;
+
+      chatInterfaceEl.classList.add('opacity-0');
+      setTimeout(() => {
+        chatInterfaceEl.classList.add('hidden');
+        welcomeHeroEl.classList.remove('hidden', 'opacity-0', '-translate-y-4');
+      }, 350);
+    }
+
+    // Append Mythri Stream-of-Thought message
+    function appendMythriMessage(contentHtml, customClass = '') {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `flex flex-col items-start space-y-1.5 max-w-xl stream-turn ${customClass}`;
+      msgDiv.innerHTML = `
+        <div class="text-espresso/70 font-label-sm text-xs tracking-wider uppercase sanctuary-text-shadow select-none">Mythri</div>
+        <div class="text-espresso font-body-lg text-base sm:text-[18px] leading-relaxed sanctuary-text-shadow">
+          ${contentHtml}
+        </div>
+      `;
+      chatMessagesEl.appendChild(msgDiv);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    // Append User message (Stream-of-Thought style, right aligned)
+    function appendUserMessage(text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'flex flex-col items-end space-y-1.5 max-w-xl ml-auto stream-turn';
+      msgDiv.innerHTML = `
+        <div class="text-espresso/70 font-label-sm text-xs tracking-wider uppercase sanctuary-text-shadow select-none">You</div>
+        <div class="bg-[#F6EFE5]/90 backdrop-blur-md text-espresso border border-espresso/15 rounded-2xl rounded-br-xs px-4 py-2.5 max-w-md font-body-md text-base leading-relaxed shadow-xs">
+          ${escapeHtml(text)}
+        </div>
+      `;
+      chatMessagesEl.appendChild(msgDiv);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    // Show temporary typing indicator
+    function showTypingIndicator() {
+      const typingDiv = document.createElement('div');
+      typingDiv.id = 'typing-indicator';
+      typingDiv.className = 'flex items-center gap-1.5 text-espresso/60 py-2 stream-turn';
+      typingDiv.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-espresso/60 dot-1"></span>
+        <span class="w-2 h-2 rounded-full bg-espresso/60 dot-2"></span>
+        <span class="w-2 h-2 rounded-full bg-espresso/60 dot-3"></span>
+      `;
+      chatMessagesEl.appendChild(typingDiv);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typing-indicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    // ----------------------------------------------------
+    // STEP 1: Mythri first message: "Hi, I'm Mythri."
+    // ----------------------------------------------------
+    function startGreetingStep() {
+      flowState.step = 1;
+      chatInputEl.placeholder = "Type your response...";
+      chatInputEl.disabled = false;
+      btnSendEl.disabled = false;
+      setTimeout(() => {
+        chatInputEl.focus();
+      }, 100);
+
+      appendMythriMessage("Hi, I'm Mythri.");
+    }
+
+    // ----------------------------------------------------
+    // STEP 2: Mythri asks "What is your name?"
+    // ----------------------------------------------------
+    function startNameStep() {
+      flowState.step = 2;
+      showTypingIndicator();
+      setTimeout(() => {
+        removeTypingIndicator();
+        appendMythriMessage("What is your name?");
+        chatInputEl.placeholder = "Share your name...";
+        chatInputEl.disabled = false;
+        btnSendEl.disabled = false;
+        chatInputEl.focus();
+      }, 700);
+    }
+
+    // ----------------------------------------------------
+    // STEP 3: Warm welcome using their name + continue prompt
+    // ----------------------------------------------------
+    function startWarmWelcomeStep() {
+      flowState.step = 3;
+      showTypingIndicator();
+
+      const name = flowState.userName || 'friend';
+      setTimeout(() => {
+        removeTypingIndicator();
+        const welcomeHtml = `
+          <p class="mb-2">It's wonderful to meet you, ${escapeHtml(name)}. Welcome to your quiet space.</p>
+          <p class="mb-4">Whenever you're ready, we can take a moment to understand what would feel most supportive for you today.</p>
+          <div class="pt-1">
+            <button type="button" onclick="handleContinueClick()" class="px-7 py-2.5 rounded-full bg-espresso text-ivory font-label-md text-sm hover:bg-mocha transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center gap-2 group cursor-pointer">
+              <span>Continue</span>
+              <span class="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">arrow_forward</span>
+            </button>
+          </div>
+        `;
+        appendMythriMessage(welcomeHtml);
+        chatInputEl.placeholder = "Click Continue, or type what's on your mind...";
+        chatInputEl.disabled = false;
+        btnSendEl.disabled = false;
+        chatInputEl.focus();
+      }, 850);
+    }
+
+    function handleContinueClick() {
+      if (flowState.step === 3) {
+        startReasonStep();
+      }
+    }
+
+    // ----------------------------------------------------
+    // STEP 4: "What brings you here today?"
+    // ----------------------------------------------------
+    function startReasonStep() {
+      flowState.step = 4;
+      showTypingIndicator();
+      setTimeout(() => {
+        removeTypingIndicator();
+        appendMythriMessage("What brings you here today?");
+        chatInputEl.placeholder = "Tell me what brings you here...";
+        chatInputEl.disabled = false;
+        btnSendEl.disabled = false;
+        chatInputEl.focus();
+      }, 650);
+    }
+
+    // ----------------------------------------------------
+    // STEP 5: "How have you been feeling lately?"
+    // ----------------------------------------------------
+    function startFeelingStep() {
+      flowState.step = 5;
+      showTypingIndicator();
+      setTimeout(() => {
+        removeTypingIndicator();
+        appendMythriMessage("I hear you. Thank you for giving voice to that.<br class='hidden sm:block'/> How have you been feeling lately?");
+        chatInputEl.placeholder = "Describe how you've been feeling...";
+        chatInputEl.disabled = false;
+        btnSendEl.disabled = false;
+        chatInputEl.focus();
+      }, 850);
+    }
+
+    // ----------------------------------------------------
+    // STEP 6: "What would feel most helpful for our time together?"
+    // ----------------------------------------------------
+    function startSupportStep() {
+      flowState.step = 6;
+      showTypingIndicator();
+      setTimeout(() => {
+        removeTypingIndicator();
+        appendMythriMessage("What would feel most helpful for our time together?");
+        chatInputEl.placeholder = "Tell me what would feel most supportive...";
+        chatInputEl.disabled = false;
+        btnSendEl.disabled = false;
+        chatInputEl.focus();
+      }, 850);
+    }
+
+    // ----------------------------------------------------
+    // STEP 7: Final conclusion + "Enter sanctuary space →"
+    // ----------------------------------------------------
+    function startSanctuaryReadyStep() {
+      flowState.step = 7;
+      showTypingIndicator();
+
+      const name = flowState.userName || 'friend';
+      setTimeout(() => {
+        removeTypingIndicator();
+        const conclusionHtml = `
+          <p class="mb-3">Thank you for sharing with me, ${escapeHtml(name)}. Your sanctuary is ready whenever you are.</p>
+          <div class="pt-1">
+            <a href="#" data-path="enter-sanctuary" class="px-7 py-2.5 rounded-full bg-espresso text-ivory font-label-md text-sm hover:bg-mocha transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center gap-2 group cursor-pointer">
+              <span>Enter sanctuary space</span>
+              <span class="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">arrow_forward</span>
+            </a>
+          </div>
+        `;
+        appendMythriMessage(conclusionHtml);
+        chatInputEl.placeholder = "Your sanctuary space is ready...";
+        chatInputEl.disabled = true;
+        btnSendEl.disabled = true;
+      }, 950);
+    }
+
+    // ----------------------------------------------------
+    // User Submit Handler
+    // ----------------------------------------------------
+    function handleUserSubmit(e) {
+      e.preventDefault();
+      const text = chatInputEl.value.trim();
+      if (!text) return;
+
+      appendUserMessage(text);
+      chatInputEl.value = '';
+
+      if (flowState.step === 1) {
+        // User responds to greeting
+        startNameStep();
+      } else if (flowState.step === 2) {
+        // User inputs their name
+        flowState.userName = text;
+        startWarmWelcomeStep();
+      } else if (flowState.step === 3) {
+        // User typed instead of clicking Continue
+        flowState.reason = text;
+        startFeelingStep();
+      } else if (flowState.step === 4) {
+        // User explains what brings them here
+        flowState.reason = text;
+        startFeelingStep();
+      } else if (flowState.step === 5) {
+        // User describes feelings
+        flowState.feeling = text;
+        startSupportStep();
+      } else if (flowState.step === 6) {
+        // User shares support preferences
+        flowState.supportNeed = text;
+        startSanctuaryReadyStep();
+      }
+    }
+  </script>
+
+
+</body></html>

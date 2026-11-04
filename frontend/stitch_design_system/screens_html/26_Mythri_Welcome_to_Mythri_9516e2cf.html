@@ -1,0 +1,302 @@
+<!DOCTYPE html><html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Welcome to Mythri — A Quiet Space to Pause</title>
+<!-- Google Fonts: Literata Serif & Inter for subtle UI accents -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..700;1,7..72,200..400&amp;family=Plus+Jakarta+Sans:wght@300;400;500&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            espresso: {
+              DEFAULT: '#49362D',
+              deep: '#362720',
+              soft: '#5E483C'
+            },
+            ink: '#2C2724',
+            oat: '#F1E6D7',
+            ivory: '#FBF8F2',
+            sandstone: '#E8DFD3',
+            borderWarm: '#E3D8CC'
+          },
+          fontFamily: {
+            serif: ['"Literata"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Typography & Micro-animations -->
+<style data-purpose="typography-and-effects">
+    body {
+      font-family: 'Literata', Georgia, serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Ambient glassmorphic subtle sheen */
+    .sanctuary-glass {
+      background: rgba(251, 248, 242, 0.45);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+
+    .sanctuary-pill {
+      background: rgba(251, 248, 242, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(227, 216, 204, 0.6);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .sanctuary-pill:hover {
+      background: rgba(251, 248, 242, 0.85);
+      border-color: rgba(73, 54, 45, 0.25);
+    }
+
+    /* Breathing slow glow animation */
+    @keyframes slowBreath {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.65;
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: 1;
+      }
+    }
+
+    .pulse-breath {
+      animation: slowBreath 7s ease-in-out infinite;
+    }
+
+    /* Fade-in on entry */
+    @keyframes gentleReveal {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-reveal {
+      animation: gentleReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .animate-reveal-delay-1 {
+      animation: gentleReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+      opacity: 0;
+    }
+
+    .animate-reveal-delay-2 {
+      animation: gentleReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body class="h-full w-full overflow-hidden select-none bg-stone-900 text-ink relative">
+<!-- BEGIN: Background Layer -->
+<div aria-hidden="true" class="fixed inset-0 z-0 pointer-events-none" data-purpose="ambient-background">
+<!-- Visual sanctuary background photo -->
+<img alt="Serene curved architectural villa facing a tranquil coastal sunset" class="w-full h-full object-cover object-center filter saturate-[1.02] contrast-[1.01]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVAwNmMHTZrsVd4McO_TM4dUTJiK6c67Ot3kCcala1hfzpV_EyqFyHETZs5aSnPRuwStKNJLG-5iFR94RCJG9_IgmIbHm-gDeyYFMnrFdl1rCi1le74_rBrvWsfRcmMWjxObuQDaC2LfyxIPjF90AdkAOBznNyI2aJuKsC3joTWrqB6OZiVDYxfXTKrp018DMAAdwKK58A5clPrDTJ7Yq2p_3K-tGb3Q3wDNcqbdiDpadkblHqdwDekX2ikH0S2vAHTO0">
+<!-- Subtle warm atmospheric gradient overlays to ensure editorial contrast -->
+<div class="absolute inset-0 bg-gradient-to-t from-[#2C2724]/40 via-transparent to-[#FBF8F2]/30"></div>
+<div class="absolute inset-0 bg-[#49362D]/10 mix-blend-soft-light"></div>
+</div>
+<!-- END: Background Layer -->
+<!-- BEGIN: Main Viewport Container -->
+<div class="relative z-10 flex flex-col justify-between h-full w-full p-6 sm:p-10 lg:p-14 max-w-[1720px] mx-auto">
+<!-- BEGIN: TopHeader -->
+<header class="flex items-center justify-between animate-reveal" data-purpose="site-header">
+<!-- Subtle Brand Emblem & Name -->
+<a aria-label="Mythri Home" class="group flex items-center space-x-3.5 focus:outline-none" href="#"><div class="w-9 h-9 rounded-full flex items-center justify-center bg-espresso text-ivory shadow-md transition-transform duration-500 group-hover:rotate-45 border border-white/20" style="background-color: rgba(44, 39, 36, 0.85); box-shadow: rgba(0, 0, 0, 0.3) 0px 4px 16px;"><svg class="w-4 h-4 fill-current text-white" viewBox="0 0 24 24" style="color: rgb(255, 248, 238);"><path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8L12 0Z"></path></svg></div><span class="font-serif text-3xl font-semibold tracking-tight select-none text-white" style="color: rgb(255, 248, 238); text-shadow: rgba(44, 39, 36, 0.7) 0px 2px 12px, rgba(238, 187, 166, 0.2) 0px 0px 24px, rgba(0, 0, 0, 0.8) 0px 1px 3px;">mythri</span></a>
+<!-- Quiet Secondary Controls -->
+<nav class="flex items-center gap-3 sm:gap-4 font-sans text-xs tracking-wide uppercase text-espresso-deep font-medium" data-purpose="header-navigation"></nav>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: HeroArrivalArea -->
+<main class="flex flex-col items-center justify-center text-center px-4 max-w-3xl mx-auto my-auto py-8" data-purpose="hero-content"><h1 class="animate-reveal font-serif text-6xl sm:text-7xl md:text-8xl font-semibold tracking-tight leading-[1.08] drop-shadow-sm" style="color: rgb(255, 248, 238); text-shadow: rgba(50, 33, 25, 0.7) 0px 2px 20px, rgba(238, 187, 166, 0.25) 0px 0px 40px, rgba(0, 0, 0, 0.8) 0px 1px 4px;">Welcome to Mythri</h1></main>
+<!-- END: HeroArrivalArea -->
+<!-- BEGIN: BottomAnchors -->
+<footer class="flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t border-white/20 text-xs text-ink/80 animate-reveal" data-purpose="grounding-footer">
+<!-- Privacy Reassurance (Left Anchor) -->
+<div class="flex items-center space-x-2.5 font-sans" data-purpose="privacy-notice">
+<!-- Micro Shield / Lock Icon -->
+<span aria-hidden="true" class="text-espresso/70">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</span>
+<span class="tracking-normal font-light">
+          Private &amp; encrypted · Your conversations stay purely yours.
+        </span>
+</div>
+<!-- AI Companion Notice & Crisis Guardrail (Right Anchor) -->
+<div class="flex items-center space-x-3 font-sans text-center md:text-right" data-purpose="safety-notice">
+<span class="text-ink/75 font-light">
+          Mythri is an AI emotional companion, not a crisis service.
+        </span>
+<a class="underline underline-offset-4 decoration-espresso/40 hover:decoration-espresso text-espresso font-medium hover:text-espresso-deep transition-colors" href="#crisis-resources" id="crisisLink">
+          Emergency resources
+        </a>
+</div>
+</footer>
+<!-- END: BottomAnchors -->
+</div>
+<!-- END: Main Viewport Container -->
+<!-- BEGIN: Interactive Modal Drawer (What to Expect & Safety) -->
+<dialog class="backdrop:bg-stone-900/40 backdrop:backdrop-blur-sm bg-transparent p-4 max-w-lg w-full m-auto open:flex open:flex-col items-center justify-center focus:outline-none" id="infoModal">
+<div class="w-full bg-[#FAF6F0] rounded-3xl p-7 sm:p-9 shadow-2xl border border-borderWarm/70 text-ink relative">
+<button aria-label="Close dialog" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-sandstone/40 hover:bg-sandstone/70 flex items-center justify-center text-espresso transition-colors" id="closeModalBtn" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</svg>
+</button>
+<span class="font-sans text-[11px] uppercase tracking-widest text-[#8E7051] font-semibold mb-2 block">
+        Our Sanctuary Principles
+      </span>
+<h2 class="font-serif text-2xl text-espresso-deep mb-4 font-normal" id="modalTitle">
+        What to expect inside Mythri
+      </h2>
+<div class="space-y-4 font-serif text-sm leading-relaxed text-ink/80" id="modalBody">
+<p class="">
+          Mythri offers an attentive, reflective ear whenever your mind feels heavy or words need a safe harbor to settle.
+        </p>
+<ul class="space-y-2.5 font-sans text-xs text-ink/80 pt-1">
+<li class="flex items-start gap-2.5">
+<span class="text-amber-800 mt-0.5">•</span>
+<span class=""><strong>Never rushed:</strong> Take five seconds or twenty minutes to reply. Silence is welcome here.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="text-amber-800 mt-0.5">•</span>
+<span class=""><strong>Strict confidentiality:</strong> Your reflections are isolated and not sold or traded.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="text-amber-800 mt-0.5">•</span>
+<span class=""><strong>Supportive boundaries:</strong> If you are experiencing extreme distress or danger, we gently guide you to qualified human emergency professionals.</span>
+</li>
+</ul>
+</div>
+<div class="mt-8 pt-5 border-t border-borderWarm/50 flex justify-end">
+<button class="px-6 py-2.5 bg-espresso text-ivory rounded-full font-sans text-xs font-medium hover:bg-espresso-deep transition-colors" id="confirmModalBtn" type="button">
+          Understood
+        </button>
+</div>
+</div>
+</dialog>
+<!-- END: Interactive Modal Drawer -->
+<!-- BEGIN: Client Interactivity Script -->
+<script data-purpose="sanctuary-ui-logic">
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('infoModal');
+      const openExpectBtn = document.getElementById('expectationsBtn');
+      const openAboutBtn = document.getElementById('openAboutModalBtn');
+      const openSafetyBtn = document.getElementById('openSafetyModalBtn');
+      const crisisLink = document.getElementById('crisisLink');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const confirmModalBtn = document.getElementById('confirmModalBtn');
+      const audioToggle = document.getElementById('audioToggleBtn');
+      const modalTitle = document.getElementById('modalTitle');
+      const beginCta = document.getElementById('beginJourneyCta');
+
+      // Modal open utility
+      const showModal = (title, mode) => {
+        if (!modal) return;
+        modalTitle.textContent = title;
+        modal.showModal();
+      };
+
+      if (openExpectBtn) {
+        openExpectBtn.addEventListener('click', () => {
+          showModal('What to expect inside Mythri');
+        });
+      }
+
+      if (openAboutBtn) {
+        openAboutBtn.addEventListener('click', () => {
+          showModal('About Mythri Companion');
+        });
+      }
+
+      if (openSafetyBtn || crisisLink) {
+        const handleSafety = (e) => {
+          e.preventDefault();
+          showModal('Privacy, Guardrails & Support');
+        };
+        if (openSafetyBtn) openSafetyBtn.addEventListener('click', handleSafety);
+        if (crisisLink) crisisLink.addEventListener('click', handleSafety);
+      }
+
+      const dismissModal = () => {
+        if (modal) modal.close();
+      };
+
+      if (closeModalBtn) closeModalBtn.addEventListener('click', dismissModal);
+      if (confirmModalBtn) confirmModalBtn.addEventListener('click', dismissModal);
+
+      // Dismiss on backdrop click
+      if (modal) {
+        modal.addEventListener('click', (event) => {
+          const rect = modal.getBoundingClientRect();
+          const isInDialog = (
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          );
+          if (!isInDialog) {
+            modal.close();
+          }
+        });
+      }
+
+      // Audio toggle state feedback
+      let isPlaying = false;
+      if (audioToggle) {
+        audioToggle.addEventListener('click', () => {
+          isPlaying = !isPlaying;
+          const textSpan = audioToggle.querySelector('span:not(.pulse-breath)');
+          if (textSpan) {
+            textSpan.textContent = isPlaying ? 'Ambience Playing' : 'Evening Breeze';
+          }
+          audioToggle.style.borderColor = isPlaying ? 'rgba(73, 54, 45, 0.4)' : '';
+        });
+      }
+
+      // Primary CTA gentle click feedback
+      if (beginCta) {
+        beginCta.addEventListener('click', (e) => {
+          e.preventDefault();
+          beginCta.textContent = 'Opening your sanctuary...';
+          beginCta.classList.add('opacity-90');
+          setTimeout(() => {
+            showModal('Welcome inside. Take your first breath.');
+            beginCta.innerHTML = '<span>Begin your journey</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+          }, 600);
+        });
+      }
+    });
+  </script>
+<!-- END: Client Interactivity Script -->
+
+
+
+
+
+
+
+
+
+
+</body></html>

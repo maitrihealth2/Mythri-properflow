@@ -1,0 +1,473 @@
+<!DOCTYPE html><html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Mythri - Sanctuary Chat</title>
+<!-- Tailwind CSS v3 with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Literata (Editorial Serif) & Plus Jakarta Sans / Inter for UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;1,7..72,400&amp;family=Plus+Jakarta+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sanctuary: {
+              canvas: '#F7F4EE',
+              surface: '#FFFDF9',
+              primary: '#43342B',
+              primaryHover: '#332720',
+              textPrimary: '#2B2521',
+              textMuted: '#887E77',
+              border: '#E8E2D7',
+              accentTick: '#5C98A6'
+            }
+          },
+          fontFamily: {
+            serif: ['Literata', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(67, 52, 43, 0.05)',
+            'float': '0 6px 24px -4px rgba(67, 52, 43, 0.08)',
+            'popover': '0 10px 28px -4px rgba(50, 40, 32, 0.12)'
+          }
+        }
+      }
+    };
+  </script>
+<!-- BEGIN: CustomStyles -->
+<style data-purpose="custom-layout">
+    /* iOS Momentum Scrolling & safe area */
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, textarea {
+      user-select: text;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(67, 52, 43, 0.15);
+      border-radius: 9999px;
+    }
+  </style>
+<style data-purpose="animations">
+    @keyframes fadeInSlide {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-bubble {
+      animation: fadeInSlide 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes pulseTyping {
+      0%, 100% { opacity: 0.3; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    .dot-1 { animation: pulseTyping 1.3s infinite 0s ease-in-out; }
+    .dot-2 { animation: pulseTyping 1.3s infinite 0.2s ease-in-out; }
+    .dot-3 { animation: pulseTyping 1.3s infinite 0.4s ease-in-out; }
+  </style>
+<!-- END: CustomStyles -->
+</head>
+<body class="h-full bg-sanctuary-canvas text-sanctuary-textPrimary font-sans antialiased flex flex-col justify-between items-center selection:bg-amber-100">
+<!-- Mobile Screen Container -->
+<div class="relative w-full max-w-md h-full flex flex-col bg-sanctuary-canvas shadow-xl overflow-hidden">
+<!-- BEGIN: TopNavigationBar -->
+<header class="flex-none pt-4 pb-2 px-4 bg-transparent z-30 transition-all" data-purpose="app-header">
+<div class="flex items-center justify-between">
+<!-- Back Navigation & Companion Profile Info -->
+<div class="flex items-center gap-3">
+<!-- Back Button -->
+<button aria-label="Back" class="p-1.5 -ml-1 text-sanctuary-textPrimary hover:text-sanctuary-primary transition-colors focus:outline-none" type="button">
+<svg class="w-6 h-6 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Mythri Avatar Thumbnail & Presence -->
+<div class="flex items-center gap-2.5"><div class="flex flex-col"><h1 class="font-serif text-[17px] font-medium tracking-tight text-sanctuary-textPrimary leading-tight">Mythri</h1><div class="flex items-center gap-1.5 mt-0.5"><span class="w-2 h-2 bg-emerald-600 rounded-full inline-block"></span><span class="text-[11px] font-normal tracking-wide text-sanctuary-textMuted leading-none">Online</span></div></div></div>
+</div>
+<!-- Right Action Menu Trigger -->
+<div class="relative" data-purpose="options-menu-wrapper">
+<button aria-expanded="false" aria-haspopup="true" aria-label="Options Menu" class="p-2 text-sanctuary-textPrimary hover:bg-black/5 rounded-full transition-colors focus:outline-none" id="menuButton" type="button">
+<!-- Vertical Three Dots (⋮) -->
+<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+<circle cx="12" cy="5" r="1.75"></circle>
+<circle cx="12" cy="12" r="1.75"></circle>
+<circle cx="12" cy="19" r="1.75"></circle>
+</svg>
+</button>
+<!-- Popover Menu Dropdown -->
+<div class="absolute right-0 mt-1.5 w-44 bg-sanctuary-surface rounded-2xl shadow-popover border border-sanctuary-border/70 py-1.5 z-50 transform origin-top-right transition-all duration-150 hidden" id="menuDropdown" role="menu">
+<!-- Language Option -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-sanctuary-textPrimary hover:bg-stone-100/70 transition-colors text-left" id="btnLanguage" role="menuitem" type="button">
+<svg class="w-4 h-4 text-sanctuary-textMuted stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.5 0 4.5-4 4.5-9S14.5 3 12 3m0 18c-2.5 0-4.5-4-4.5-9S9.5 3 12 3m-9 9h18" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="">Language</span>
+</button>
+<!-- Divider -->
+<div class="h-px bg-sanctuary-border/40 my-1 mx-2"></div>
+<!-- New Chat Option -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-sanctuary-textPrimary hover:bg-stone-100/70 transition-colors text-left" id="btnNewChat" role="menuitem" type="button">
+<svg class="w-4 h-4 text-sanctuary-textMuted stroke-[1.8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="">New chat</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- END: TopNavigationBar -->
+<!-- BEGIN: ConversationFeed -->
+<main class="flex-1 overflow-y-auto custom-scrollbar px-4 pt-3 pb-4 space-y-4 font-sans" data-purpose="message-thread" id="chatFeed"><!-- Message 1 (User): Anxiety disclosure -->
+<div class="flex flex-col items-end w-full animate-bubble" data-purpose="user-message-group">
+  <div class="max-w-[82%] bg-sanctuary-primary text-[#FBF8F3] px-3.5 pt-2.5 pb-2 rounded-2xl rounded-br-sm shadow-soft">
+    <p class="font-sans text-[14.5px] leading-relaxed tracking-normal font-normal pr-1">
+      I've been feeling really anxious lately...
+    </p>
+    <div class="flex items-center justify-end gap-1 mt-1 text-[11px] text-[#FBF8F3]/60 font-sans leading-none select-none">
+      <span class="">10:24 AM</span>
+      <span class="text-sanctuary-accentTick font-medium text-[12px] tracking-tighter" title="Read">✓✓</span>
+    </div>
+  </div>
+</div>
+
+<!-- Message 2 (Mythri): Empathetic reflection -->
+<div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+  <div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 pt-3 pb-2 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+    <p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+      That sounds really heavy, Ananya. It's okay to feel this way. You're not alone in this.
+    </p>
+    <p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724] mt-2.5">
+      Would you like to talk about what's been triggering these feelings, or would you like to explore some ways to feel more grounded right now?
+    </p>
+    <div class="flex items-center justify-end mt-1 text-[11px] text-sanctuary-textMuted font-sans leading-none select-none">
+      <span class="">10:25 AM</span>
+    </div>
+  </div>
+</div>
+
+<!-- Message 3 (User): Root cause -->
+<div class="flex flex-col items-end w-full animate-bubble" data-purpose="user-message-group">
+  <div class="max-w-[82%] bg-sanctuary-primary text-[#FBF8F3] px-3.5 pt-2.5 pb-2 rounded-2xl rounded-br-sm shadow-soft">
+    <p class="font-sans text-[14.5px] leading-relaxed tracking-normal font-normal pr-1">
+      I think it's mostly because of work and expectations.
+    </p>
+    <div class="flex items-center justify-end gap-1 mt-1 text-[11px] text-[#FBF8F3]/60 font-sans leading-none select-none">
+      <span class="">10:26 AM</span>
+      <span class="text-sanctuary-accentTick font-medium text-[12px] tracking-tighter" title="Read">✓✓</span>
+    </div>
+  </div>
+</div>
+
+<!-- Message 4 (Mythri): Grounding proposal -->
+<div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+  <div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 pt-3 pb-2 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+    <p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+      That makes sense. Many people feel this way. Let's take a moment to breathe. Would you like me to guide you through a short grounding exercise?
+    </p>
+    <div class="flex items-center justify-end mt-1 text-[11px] text-sanctuary-textMuted font-sans leading-none select-none">
+      <span class="">10:27 AM</span>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Typing Indicator Container (Hidden by default) -->
+<div class="hidden flex-col items-start w-full" data-purpose="typing-indicator" id="typingIndicator">
+  <div class="bg-sanctuary-surface px-4 py-3 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft flex items-center space-x-1.5">
+    <span class="w-2 h-2 bg-stone-500 rounded-full dot-1"></span>
+    <span class="w-2 h-2 bg-stone-500 rounded-full dot-2"></span>
+    <span class="w-2 h-2 bg-stone-500 rounded-full dot-3"></span>
+  </div>
+  <span class="text-[10px] text-sanctuary-textMuted mt-1 ml-1 font-sans">Mythri is typing...</span>
+</div></main>
+<!-- END: ConversationFeed -->
+<!-- BEGIN: BottomInputComposer -->
+<footer class="flex-none p-3 pb-5 bg-gradient-to-t from-sanctuary-canvas via-sanctuary-canvas to-transparent" data-purpose="chat-input-bar">
+<form class="relative flex items-center bg-sanctuary-surface rounded-full border border-sanctuary-border px-2 py-1.5 shadow-float focus-within:border-stone-400 focus-within:ring-1 focus-within:ring-stone-300 transition-all" id="messageForm">
+<!-- Attachment / Expression Icon -->
+<button aria-label="Add gentle expression or reflection" class="p-2 text-stone-500 hover:text-sanctuary-primary transition-colors focus:outline-none" type="button">
+<!-- Serene smile icon -->
+<svg class="w-6 h-6 stroke-[1.6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M9 10h.01M15 10h.01" stroke-linecap="round"></path>
+<path d="M8.5 14.5c1.2 1.5 5.8 1.5 7 0" stroke-linecap="round"></path>
+</svg>
+</button>
+<!-- Message Input Field -->
+<input autocomplete="off" class="flex-1 bg-transparent border-none text-[15px] text-sanctuary-textPrimary placeholder:text-stone-400 focus:ring-0 focus:outline-none px-2 py-1.5 font-sans" id="userInput" placeholder="Type a message..." type="text">
+<!-- Send Button -->
+<button aria-label="Send message" class="w-10 h-10 flex items-center justify-center bg-sanctuary-primary hover:bg-sanctuary-primaryHover active:scale-95 text-[#FBF8F3] rounded-full transition-all focus:outline-none shadow-sm flex-shrink-0" id="sendButton" type="submit">
+<!-- Elegant Rightward Pointer / Arrow -->
+<svg class="w-4 h-4 translate-x-0.5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M8.25 4.5l7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</form>
+</footer>
+<!-- END: BottomInputComposer -->
+<!-- Language Selection Modal Backdrop and Dialog -->
+<div id="languageModal" class="hidden absolute inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-[2px] transition-opacity duration-200">
+  <!-- Modal Sheet / Dialog -->
+  <div id="languageModalSheet" class="w-full bg-[#FFFDF9] rounded-t-3xl border-t border-x border-[#E3D8CC] p-5 shadow-2xl flex flex-col animate-bubble">
+    <!-- Header -->
+    <div class="flex items-center justify-between pb-3 border-b border-[#ECE5D9]/80">
+      <div>
+        <h2 class="font-serif text-lg font-medium text-[#2B2521]">Choose Language</h2>
+        <p class="text-xs text-sanctuary-textMuted font-sans mt-0.5">Select Mythri's conversational language</p>
+      </div>
+      <button type="button" id="btnCloseLanguageModal" aria-label="Close language options" class="p-1.5 rounded-full text-sanctuary-textMuted hover:text-[#2B2521] hover:bg-black/5 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Language Options List -->
+    <div class="py-3 space-y-2" id="languageOptionsList">
+      <!-- English -->
+      <button type="button" data-lang-code="en" data-lang-name="English" class="lang-option-btn w-full flex items-center justify-between p-3 rounded-2xl border border-sanctuary-primary bg-[#FBF8F3] text-left transition-all">
+        <div class="flex flex-col">
+          <span class="font-serif text-[15px] font-medium text-[#2B2521]">English</span>
+          <span class="text-[12px] text-sanctuary-textMuted font-sans">Primary / Default</span>
+        </div>
+        <div class="lang-check flex items-center justify-center w-5 h-5 rounded-full bg-sanctuary-primary text-[#FBF8F3]">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+      </button>
+
+      <!-- Hindi -->
+      <button type="button" data-lang-code="hi" data-lang-name="Hindi (हिंदी)" class="lang-option-btn w-full flex items-center justify-between p-3 rounded-2xl border border-[#ECE5D9] bg-white hover:bg-[#FBF8F3] text-left transition-all">
+        <div class="flex flex-col">
+          <span class="font-serif text-[15px] font-medium text-[#2B2521]">Hindi (हिंदी)</span>
+          <span class="text-[12px] text-sanctuary-textMuted font-sans">Devanagari</span>
+        </div>
+        <div class="lang-check hidden items-center justify-center w-5 h-5 rounded-full bg-sanctuary-primary text-[#FBF8F3]">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+      </button>
+
+      <!-- Telugu -->
+      <button type="button" data-lang-code="te" data-lang-name="Telugu (తెలుగు)" class="lang-option-btn w-full flex items-center justify-between p-3 rounded-2xl border border-[#ECE5D9] bg-white hover:bg-[#FBF8F3] text-left transition-all">
+        <div class="flex flex-col">
+          <span class="font-serif text-[15px] font-medium text-[#2B2521]">Telugu (తెలుగు)</span>
+          <span class="text-[12px] text-sanctuary-textMuted font-sans">Telugu</span>
+        </div>
+        <div class="lang-check hidden items-center justify-center w-5 h-5 rounded-full bg-sanctuary-primary text-[#FBF8F3]">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+      </button>
+
+      <!-- Tamil -->
+      <button type="button" data-lang-code="ta" data-lang-name="Tamil (தமிழ்)" class="lang-option-btn w-full flex items-center justify-between p-3 rounded-2xl border border-[#ECE5D9] bg-white hover:bg-[#FBF8F3] text-left transition-all">
+        <div class="flex flex-col">
+          <span class="font-serif text-[15px] font-medium text-[#2B2521]">Tamil (தமிழ்)</span>
+          <span class="text-[12px] text-sanctuary-textMuted font-sans">Tamil</span>
+        </div>
+        <div class="lang-check hidden items-center justify-center w-5 h-5 rounded-full bg-sanctuary-primary text-[#FBF8F3]">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="pt-2 flex items-center gap-3">
+      <button type="button" id="btnCancelLanguageModal" class="flex-1 py-2.5 rounded-full text-sm font-medium text-sanctuary-textMuted hover:text-[#2B2521] border border-transparent hover:border-[#ECE5D9] transition-colors">Cancel</button>
+      <button type="button" id="btnConfirmLanguageModal" class="flex-1 py-2.5 rounded-full text-sm font-medium bg-sanctuary-primary hover:bg-sanctuary-primaryHover active:scale-95 text-[#FBF8F3] shadow-sm transition-all">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Subtle Toast Notification -->
+<div id="languageToast" class="hidden absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-[#2B2521] text-[#FBF8F3] text-xs font-sans px-4 py-2 rounded-full shadow-lg items-center gap-2 animate-bubble">
+  <svg class="w-4 h-4 text-[#5C98A6] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+  </svg>
+  <span id="languageToastText" class="">Language updated to English</span>
+</div></div>
+<!-- BEGIN: InteractiveHandlers -->
+<script data-purpose="menu-toggle">
+    // Interactive Three-Dots Popover Menu
+    const menuButton = document.getElementById('menuButton');
+    const menuDropdown = document.getElementById('menuDropdown');
+    const btnLanguage = document.getElementById('btnLanguage');
+    const btnNewChat = document.getElementById('btnNewChat');
+
+    function toggleMenu(show) {
+      const isVisible = show !== undefined ? show : menuDropdown.classList.contains('hidden');
+      if (isVisible) {
+        menuDropdown.classList.remove('hidden');
+        menuButton.setAttribute('aria-expanded', 'true');
+      } else {
+        menuDropdown.classList.add('hidden');
+        menuButton.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    menuButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = menuDropdown.classList.contains('hidden');
+      toggleMenu(willOpen);
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!menuDropdown.contains(e.target) && !menuButton.contains(e.target)) {
+        toggleMenu(false);
+      }
+    });
+
+    // Menu Item Actions
+    btnLanguage.addEventListener('click', () => {
+      toggleMenu(false);
+      // Gentle notification/prompt
+      const currentLang = prompt("Select preferred conversation language:", "English");
+      if (currentLang) {
+        console.log("Language updated to:", currentLang);
+      }
+    });
+
+    btnNewChat.addEventListener('click', () => {
+      toggleMenu(false);
+      if (confirm("Begin a fresh conversation with Mythri?")) {
+        const feed = document.getElementById('chatFeed');
+        // Reset chat feed while maintaining the sanctuary layout
+        feed.innerHTML = `
+          <div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+            <div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 py-3.5 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+              <p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+                Hello Ananya. I'm right here with you. Take your time, what would you like to reflect on today?
+              </p>
+            </div>
+            <div class="flex items-center mt-1 ml-1 text-[11px] text-sanctuary-textMuted font-sans">
+              <span>Just now</span>
+            </div>
+          </div>
+          <div id="typingIndicator" class="hidden flex-col items-start w-full" data-purpose="typing-indicator">
+            <div class="bg-sanctuary-surface px-4 py-3 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft flex items-center space-x-1.5">
+              <span class="w-2 h-2 bg-stone-500 rounded-full dot-1"></span>
+              <span class="w-2 h-2 bg-stone-500 rounded-full dot-2"></span>
+              <span class="w-2 h-2 bg-stone-500 rounded-full dot-3"></span>
+            </div>
+            <span class="text-[10px] text-sanctuary-textMuted mt-1 ml-1 font-sans">Mythri is typing...</span>
+          </div>
+        `;
+      }
+    });
+  </script>
+<script data-purpose="message-dispatch">
+    // Message Posting & Companion Auto-Reply Simulation
+    const messageForm = document.getElementById('messageForm');
+    const userInput = document.getElementById('userInput');
+    const chatFeed = document.getElementById('chatFeed');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    function getCurrentTime() {
+      const now = new Date();
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; 
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      return `${hours}:${minutes} ${ampm}`;
+    }
+
+    function scrollToBottom() {
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+    }
+
+    messageForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      const timeString = getCurrentTime();
+
+      // Create & Append User Bubble (Double tick indicator included)
+      const userMessageHtml = `
+        <div class="flex flex-col items-end w-full animate-bubble" data-purpose="user-message-group">
+          <div class="max-w-[82%] bg-sanctuary-primary text-[#FBF8F3] px-4 py-3 rounded-2xl rounded-br-sm shadow-soft">
+            <p class="font-sans text-[14.5px] leading-relaxed tracking-normal font-normal">
+              ${escapeHtml(text)}
+            </p>
+          </div>
+          <div class="flex items-center gap-1 mt-1 mr-1 text-[11px] text-sanctuary-textMuted font-sans">
+            <span>${timeString}</span>
+            <span class="text-sanctuary-accentTick font-medium text-[12px] tracking-tighter" title="Read">✓✓</span>
+          </div>
+        </div>
+      `;
+
+      // Insert before typing indicator
+      typingIndicator.insertAdjacentHTML('beforebegin', userMessageHtml);
+      userInput.value = '';
+      scrollToBottom();
+
+      // Trigger typing indicator and gentle response
+      typingIndicator.classList.remove('hidden');
+      scrollToBottom();
+
+      setTimeout(() => {
+        typingIndicator.classList.add('hidden');
+        
+        // Empathetic response library
+        const responses = [
+          "I hear you. Let's take a deep breath together. Inhale gently for four seconds, and release slowly...",
+          "Thank you for sharing that with me. It is completely natural to feel overwhelmed when demands build up. What feels most urgent to your heart right now?",
+          "You don't have to carry all of that at once. Let's gently break it down and give yourself permission to pause.",
+          "I'm here listening. Take all the time you need to be still."
+        ];
+        const randomReply = responses[Math.floor(Math.random() * responses.length)];
+        const replyTime = getCurrentTime();
+
+        const mythriMessageHtml = `
+          <div class="flex flex-col items-start w-full animate-bubble" data-purpose="mythri-message-group">
+            <div class="max-w-[85%] bg-sanctuary-surface text-sanctuary-textPrimary px-4 py-3.5 rounded-2xl rounded-tl-sm border border-[#ECE5D9]/80 shadow-soft">
+              <p class="font-serif text-[14.5px] leading-[1.65] text-[#2C2724]">
+                ${randomReply}
+              </p>
+            </div>
+            <div class="flex items-center mt-1 ml-1 text-[11px] text-sanctuary-textMuted font-sans">
+              <span>${replyTime}</span>
+            </div>
+          </div>
+        `;
+
+        typingIndicator.insertAdjacentHTML('beforebegin', mythriMessageHtml);
+        scrollToBottom();
+      }, 1600);
+    });
+
+    // Helper to sanitize injected user content
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+    }
+  </script>
+<!-- END: InteractiveHandlers -->
+
+
+</body></html>

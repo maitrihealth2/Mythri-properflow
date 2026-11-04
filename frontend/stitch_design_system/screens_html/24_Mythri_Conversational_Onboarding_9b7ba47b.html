@@ -1,0 +1,435 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_blank" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }
+  .chat-enter-up {
+    animation: gentleFloatUp 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .mythri-fade-settle {
+    animation: softFadeSettle 950ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes gentleFloatUp {
+    0% {
+      opacity: 0;
+      transform: translateY(18px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes softFadeSettle {
+    0% {
+      opacity: 0;
+      transform: translateY(12px);
+      filter: blur(4px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+  }
+</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "tertiary": "#32220d",
+          "ivory": "#FBF8F2",
+          "tertiary-container": "#4a3720",
+          "on-secondary-fixed-variant": "#623e2e",
+          "surface-tint": "#705a4f",
+          "on-tertiary": "#ffffff",
+          "on-background": "#1c1c18",
+          "on-tertiary-fixed": "#281805",
+          "surface-container-low": "#f6f3ed",
+          "on-secondary-fixed": "#2f1407",
+          "on-primary-fixed-variant": "#574239",
+          "inverse-on-surface": "#f3f0ea",
+          "surface-container": "#f0eee8",
+          "outline": "#81756f",
+          "on-secondary-container": "#795241",
+          "tertiary-fixed": "#fcddbd",
+          "on-primary": "#ffffff",
+          "on-primary-container": "#b99f93",
+          "secondary": "#7c5544",
+          "error-container": "#ffdad6",
+          "on-error": "#ffffff",
+          "on-secondary": "#ffffff",
+          "secondary-fixed": "#ffdbcd",
+          "mocha": "#8B6250",
+          "error": "#ba1a1a",
+          "caramel": "#CBAF91",
+          "primary-fixed-dim": "#ddc1b4",
+          "surface-container-lowest": "#ffffff",
+          "primary-container": "#49362d",
+          "surface-bright": "#fcf9f3",
+          "border": "#E3D8CC",
+          "on-surface": "#1c1c18",
+          "espresso": "#49362D",
+          "surface-container-highest": "#e5e2dc",
+          "secondary-container": "#fdc9b3",
+          "inverse-surface": "#31312d",
+          "on-primary-fixed": "#271810",
+          "ink": "#2C2724",
+          "inverse-primary": "#ddc1b4",
+          "on-surface-variant": "#4f4540",
+          "primary-fixed": "#fbdccf",
+          "primary": "#322119",
+          "surface-container-high": "#ebe8e2",
+          "surface-dim": "#dcdad4",
+          "on-tertiary-fixed-variant": "#57432c",
+          "background": "#fcf9f3",
+          "secondary-fixed-dim": "#eebba6",
+          "muted": "#756A62",
+          "on-error-container": "#93000a",
+          "surface": "#fcf9f3",
+          "surface-variant": "#e5e2dc",
+          "outline-variant": "#d3c3bd",
+          "tertiary-fixed-dim": "#dfc2a3",
+          "on-tertiary-container": "#bba083",
+          "oat": "#F1E6D7"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-sm": "0.5rem",
+          "margin-mobile": "1.25rem",
+          "space-lg": "1.5rem",
+          "margin": "4rem",
+          "space-2xl": "3rem",
+          "space-xl": "2rem",
+          "space-xs": "0.25rem",
+          "space-md": "1rem",
+          "gutter": "1.5rem",
+          "space-3xl": "4rem"
+        },
+        "fontFamily": {
+          "body-lg": [
+            "Literata"
+          ],
+          "headline-lg": [
+            "Literata"
+          ],
+          "headline-md": [
+            "Literata"
+          ],
+          "headline-lg-mobile": [
+            "Literata"
+          ],
+          "body-md": [
+            "Literata"
+          ],
+          "label-sm": [
+            "Literata"
+          ],
+          "label-md": [
+            "Literata"
+          ],
+          "headline-sm": [
+            "Literata"
+          ],
+          "body-sm": [
+            "Literata"
+          ],
+          "display-lg": [
+            "Literata"
+          ],
+          "display-lg-mobile": [
+            "Literata"
+          ]
+        },
+        "fontSize": {
+          "body-lg": [
+            "18px",
+            {
+              "lineHeight": "1.7",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "1.3",
+              "fontWeight": "500"
+            }
+          ],
+          "headline-md": [
+            "24px",
+            {
+              "lineHeight": "1.4",
+              "fontWeight": "500"
+            }
+          ],
+          "headline-lg-mobile": [
+            "26px",
+            {
+              "lineHeight": "1.3",
+              "fontWeight": "500"
+            }
+          ],
+          "body-md": [
+            "16px",
+            {
+              "lineHeight": "1.7",
+              "fontWeight": "400"
+            }
+          ],
+          "label-sm": [
+            "12px",
+            {
+              "lineHeight": "1.2",
+              "fontWeight": "500"
+            }
+          ],
+          "label-md": [
+            "14px",
+            {
+              "lineHeight": "1.2",
+              "fontWeight": "500"
+            }
+          ],
+          "headline-sm": [
+            "20px",
+            {
+              "lineHeight": "1.4",
+              "fontWeight": "500"
+            }
+          ],
+          "body-sm": [
+            "14px",
+            {
+              "lineHeight": "1.6",
+              "fontWeight": "400"
+            }
+          ],
+          "display-lg": [
+            "48px",
+            {
+              "lineHeight": "1.2",
+              "fontWeight": "500"
+            }
+          ],
+          "display-lg-mobile": [
+            "32px",
+            {
+              "lineHeight": "1.25",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-espresso text-ink font-body-md text-body-md min-h-screen w-full h-full overflow-hidden relative selection:bg-secondary-container selection:text-on-secondary-container"><main class="w-full min-h-screen flex flex-col justify-center items-center relative overflow-hidden"><div class="flex flex-col w-full h-full min-h-screen relative overflow-hidden">
+<div class="fixed inset-0 pointer-events-none z-0">
+<img alt="Sculptural Sanctuary" class="w-full h-full object-cover object-center filter brightness-[0.98] contrast-[0.98] transform scale-[1.01]" src="https://lh3.googleusercontent.com/aida/AEtjO1Vc2jKd1VWdZ6qGZFdfBQDwl0kr6O3aRKkV65llyK0bNf09CMaw4SaCvfvOoueYjSVOH6zYBECOF3h2o31tnM1h0gGDrE9pQErmgCMirEEnX4ROk2BFDbSzz4Z4k-B9P6bVPT9nXzBVPdTr1iC2Ou_Sy4-RMa756Crvz84QloRweOqfPY06CiZyFKXnwEzq_17OGZufMfiOlN07BLVxFnbjMglkJg9ARU-8cfdgFpLWiC0oNn8ovxbiea47MwzR8ZS6bqQEL4bxfKM">
+<div class="absolute inset-0 bg-gradient-to-b from-surface/70 via-surface/40 to-surface/85"></div>
+<div class="absolute inset-0 backdrop-blur-[2px]"></div>
+</div>
+<div class="relative z-10 w-full max-w-[680px] mx-auto px-margin-mobile md:px-0 flex-1 flex flex-col justify-center items-center my-auto py-12">
+<div class="w-full flex flex-col justify-center my-auto space-y-6">
+<div class="space-y-6 max-h-[60vh] overflow-y-auto px-1 py-2 scroll-smooth" id="chat-thread">
+<div class="mythri-msg opacity-100 transition-all duration-700 ease-out" id="active-mythri-card">
+<div class="flex items-start">
+<div class="space-y-2 w-full">
+<p class="font-headline-md text-headline-md text-espresso leading-relaxed font-normal selection:bg-secondary-container transition-all duration-700" id="current-question-text">
+                Hi, I'm Mythri. This is your quiet space to pause and reflect. What should I call you?
+              </p>
+</div>
+</div>
+</div>
+<div class="hidden flex items-center gap-2 py-2 text-muted transition-opacity duration-500" id="typing-indicator">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-mocha/60 animate-pulse"></span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-mocha/60 animate-pulse [animation-delay:200ms]"></span>
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-mocha/60 animate-pulse [animation-delay:400ms]"></span>
+<span class="font-label-sm text-label-sm text-muted italic ml-1">reflecting softly...</span>
+</div>
+</div>
+<div class="w-full">
+<div class="relative bg-oat/80 backdrop-blur-md rounded-2xl p-2.5 shadow-[0_4px_24px_-2px_rgba(73,54,45,0.08)] focus-within:shadow-[0_6px_28px_rgba(73,54,45,0.14)] transition-all duration-500" id="input-container">
+<form class="flex items-center gap-2" id="conversational-form">
+<input autocomplete="off" class="flex-1 bg-transparent border-0 outline-none font-body-md text-body-md text-ink placeholder:text-muted/70 px-3 py-1 selection:bg-secondary-container transition-opacity duration-500" id="response-input" placeholder="Type your response gently..." type="text">
+<button aria-label="Send message" class="w-10 h-10 rounded-full bg-espresso text-ivory hover:bg-mocha flex items-center justify-center transition-all duration-300 cursor-pointer shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm active:scale-95" id="send-btn" type="submit">
+<span class="material-symbols-outlined text-[18px]">arrow_upward</span>
+</button>
+</form>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+(() => {
+  const flow = [
+    {
+      id: "name",
+      question: (answers) => "Hi, I'm Mythri. This is your quiet space to pause and reflect. What should I call you?",
+      placeholder: "Type your response gently..."
+    },
+    {
+      id: "age",
+      question: (answers) => `It's good to meet you, ${answers.name || 'friend'}. How old are you? (Only if you feel comfortable sharing)`,
+      placeholder: "Share your age or what feels right..."
+    },
+    {
+      id: "identity",
+      question: (answers) => "Tell me a little about yourself—what brings you here or fills your days?",
+      placeholder: "What's on your mind or in your daily life..."
+    },
+    {
+      id: "presence",
+      question: (answers) => "How would you like Mythri to support you here?",
+      placeholder: "A quiet listener, gentle guidance, breathing room..."
+    },
+    {
+      id: "feeling",
+      question: (answers) => "Lastly, take a deep breath. How are you feeling in this very moment?",
+      placeholder: "Notice gently, without judgment..."
+    }
+  ];
+
+  let currentStep = 0;
+  const userAnswers = {};
+  let isTransitioning = false;
+
+  const currentQuestionText = document.getElementById("current-question-text");
+  const responseInput = document.getElementById("response-input");
+  const form = document.getElementById("conversational-form");
+  const sendBtn = document.getElementById("send-btn");
+  const chatThread = document.getElementById("chat-thread");
+  const typingIndicator = document.getElementById("typing-indicator");
+  const inputContainer = document.getElementById("input-container");
+
+  function appendUserBubble(text) {
+    const bubbleWrapper = document.createElement("div");
+    bubbleWrapper.className = "flex justify-end w-full chat-enter-up my-2";
+    bubbleWrapper.innerHTML = `
+      <div class="max-w-[85%] bg-espresso/95 text-ivory px-5 py-3 rounded-2xl rounded-tr-sm shadow-sm font-body-md text-body-md backdrop-blur-sm tracking-wide">
+        ${text}
+      </div>
+    `;
+    chatThread.insertBefore(bubbleWrapper, typingIndicator);
+    chatThread.scrollTo({
+      top: chatThread.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  function appendMythriQuestion(text) {
+    const mythriBlock = document.createElement("div");
+    mythriBlock.className = "mythri-msg mythri-fade-settle my-3";
+    mythriBlock.innerHTML = `
+      <div class="flex items-start">
+        <div class="space-y-2 w-full">
+          <p class="font-headline-md text-headline-md text-espresso leading-relaxed font-normal selection:bg-secondary-container">
+            ${text}
+          </p>
+        </div>
+      </div>
+    `;
+    chatThread.insertBefore(mythriBlock, typingIndicator);
+    chatThread.scrollTo({
+      top: chatThread.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  function showCompletion() {
+    typingIndicator.classList.remove("hidden");
+    chatThread.scrollTo({
+      top: chatThread.scrollHeight,
+      behavior: 'smooth'
+    });
+
+    setTimeout(() => {
+      typingIndicator.classList.add("hidden");
+      const finalMsg = document.createElement("div");
+      finalMsg.className = "mythri-msg mythri-fade-settle space-y-4 my-4";
+      finalMsg.innerHTML = `
+        <div class="space-y-3">
+          <p class="font-headline-md text-headline-md text-espresso leading-relaxed font-normal">
+            Thank you for sharing, ${userAnswers.name || 'friend'}. Your sanctuary is ready whenever you are.
+          </p>
+          <p class="font-body-md text-body-md text-espresso/75 leading-relaxed">
+            We will hold this space gently together—at your own pace, with kindness and calm.
+          </p>
+          <div class="pt-3">
+            <button type="button" class="inline-flex items-center gap-3 px-7 py-3 rounded-full bg-espresso text-ivory hover:bg-mocha font-label-md text-label-md tracking-wide shadow-sm transition-all duration-500 cursor-pointer">
+              <span>Enter Sanctuary</span>
+              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      `;
+      chatThread.insertBefore(finalMsg, typingIndicator);
+      
+      // Gracefully fade out input container
+      inputContainer.style.opacity = "0";
+      inputContainer.style.pointerEvents = "none";
+      setTimeout(() => {
+        inputContainer.style.display = "none";
+      }, 600);
+
+      chatThread.scrollTo({
+        top: chatThread.scrollHeight,
+        behavior: 'smooth'
+      });
+      isTransitioning = false;
+    }, 950);
+  }
+
+  function advanceStep(val) {
+    if (isTransitioning) return;
+    isTransitioning = true;
+
+    const currentQ = flow[currentStep];
+    userAnswers[currentQ.id] = val;
+
+    // Smoothly clear input with fade
+    responseInput.style.opacity = "0.3";
+    sendBtn.disabled = true;
+
+    appendUserBubble(val);
+
+    setTimeout(() => {
+      responseInput.value = "";
+      responseInput.style.opacity = "1";
+    }, 400);
+
+    currentStep++;
+
+    if (currentStep < flow.length) {
+      setTimeout(() => {
+        typingIndicator.classList.remove("hidden");
+        chatThread.scrollTo({
+          top: chatThread.scrollHeight,
+          behavior: 'smooth'
+        });
+
+        setTimeout(() => {
+          typingIndicator.classList.add("hidden");
+          const nextQ = flow[currentStep];
+          appendMythriQuestion(nextQ.question(userAnswers));
+          responseInput.placeholder = nextQ.placeholder;
+          sendBtn.disabled = false;
+          isTransitioning = false;
+          responseInput.focus();
+        }, 850);
+      }, 450);
+    } else {
+      setTimeout(() => {
+        showCompletion();
+      }, 450);
+    }
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const val = responseInput.value.trim();
+    if (!val || isTransitioning) return;
+    advanceStep(val);
+  });
+})();
+</script></main></body></html>

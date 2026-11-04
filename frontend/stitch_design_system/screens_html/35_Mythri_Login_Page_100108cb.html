@@ -1,0 +1,364 @@
+<!DOCTYPE html><html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Mythri - Welcome back</title>
+<!-- Google Fonts: Literata & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;1,7..72,300&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 with forms and container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Custom Config -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Literata"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              ivory: '#FAF6EE',
+              sand: '#E6DCB8',
+              espresso: '#3E2A20',
+              deepBrown: '#2F1E16',
+              muted: '#6E6258',
+              lightMuted: '#96887B',
+              inputBg: 'rgba(255, 248, 240, 0.45)',
+              inputBorder: 'rgba(110, 80, 60, 0.22)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Styles for Precise Aesthetics -->
+<style data-purpose="global-layout">
+    body {
+      background-color: #d1b498;
+      background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB49GWPJz4oF7C2mBbGmXAbQbJJhcp2GO_Tee7dVxk5VQmuk_xuW2yRbgDEng_zCS2OUS2uRAuyi_0kA_OdemIC-931HH2PpOj6hpiKDSrzTjq4_8PWM-cX31LqpeZctQqB6PdGjE6z-5MN77ju-URunER54pxySALA6RgROYDf7UW_p21564vFg39ZG5x_5eTxOsdy_e98b8YlGfuy_RGq4YEUyoPGk83iacD-i1vA6d7o1Z9_HbWcuWNmGdHDIJ5XlIU');
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    
+    /* Subtle blur and soft glow for transparent controls matching reference */
+    .glass-input {
+      background: rgba(248, 240, 230, 0.48);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(130, 100, 78, 0.22);
+      transition: all 0.25s ease-in-out;
+    }
+
+    .glass-input:hover {
+      background: rgba(248, 240, 230, 0.6);
+      border-color: rgba(130, 100, 78, 0.35);
+    }
+
+    .glass-input:focus-within {
+      background: rgba(252, 247, 240, 0.75);
+      border-color: rgba(90, 60, 40, 0.45);
+      box-shadow: 0 4px 20px -2px rgba(62, 42, 32, 0.08);
+    }
+
+    .glass-button {
+      background: rgba(248, 240, 230, 0.52);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(130, 100, 78, 0.24);
+      transition: all 0.2s ease;
+    }
+
+    .glass-button:hover {
+      background: rgba(248, 240, 230, 0.72);
+      border-color: rgba(110, 80, 60, 0.38);
+    }
+  </style>
+</head>
+<body class="min-h-full font-sans antialiased text-[#3E2A20] selection:bg-[#3E2A20] selection:text-[#FAF6EE] flex flex-col justify-between">
+<!-- BEGIN: MainContent -->
+<main class="w-full min-h-screen relative flex items-center px-6 sm:px-12 md:px-16 lg:px-24 py-12">
+<div class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-4 items-center">
+<!-- BEGIN: LeftBranding -->
+<section class="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left pt-6 pb-2 lg:py-0 select-none" data-purpose="brand-presentation">
+<div class="max-w-sm flex flex-col items-center lg:items-center w-full">
+<!-- Star Glyph matching reference icon -->
+<svg aria-hidden="true" class="w-7 h-7 text-[#FAF6EE] opacity-95 mb-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" viewBox="0 0 24 24">
+<!-- 4-pointed curved star -->
+<path d="M12 2C12 7.5 16.5 12 22 12C16.5 12 12 16.5 12 22C12 16.5 7.5 12 2 12C7.5 12 12 7.5 12 2Z" fill="currentColor" fill-opacity="0.12"></path>
+</svg>
+<!-- Brand Title -->
+<h1 class="font-serif text-[42px] sm:text-[46px] tracking-tight font-normal text-[#FAF6EE] leading-none mb-3 drop-shadow-sm" style="text-shadow: rgba(255, 255, 255, 0.4) 0px 1px 2px, rgba(50, 33, 25, 0.4) 0px 2px 5px, rgba(44, 30, 22, 0.25) 0px 5px 16px;">
+            Mythri
+          </h1>
+<!-- Tagline -->
+<p class="font-serif text-[15px] sm:text-[16px] text-[#F3ECE2] opacity-90 tracking-wide font-light">
+            Your thoughts. A kinder place.
+          </p>
+</div>
+</section>
+<!-- END: LeftBranding -->
+<!-- Spacer for center architectural arch view -->
+<div class="hidden lg:block lg:col-span-2"></div>
+<!-- BEGIN: RightLoginForm -->
+<section class="lg:col-span-5 w-full max-w-[420px] mx-auto lg:mr-4 lg:ml-auto" data-purpose="login-panel"><div class="w-full flex flex-col">
+  <!-- View Toggle Tabs -->
+  <div class="flex items-center justify-start mb-6 p-1 rounded-full glass-input w-fit">
+    <button id="tab-login" type="button" onclick="switchAuthMode('login')" class="px-5 py-2 rounded-full text-[14px] font-medium transition-all duration-200 bg-[#3B281E] text-[#FAF6EE] shadow-sm">
+      Log In
+    </button>
+    <button id="tab-signup" type="button" onclick="switchAuthMode('signup')" class="px-5 py-2 rounded-full text-[14px] font-medium transition-all duration-200 text-[#685A50] hover:text-[#34241B]">
+      Create account
+    </button>
+  </div>
+
+  <!-- LOGIN VIEW -->
+  <div id="view-login" class="">
+    <header class="mb-7 text-left">
+      <h2 class="font-serif text-[34px] sm:text-[38px] text-[#34241B] font-normal leading-tight tracking-tight mb-2">
+        Welcome back
+      </h2>
+      <p class="text-[#685A50] text-[15px] font-normal tracking-normal">
+        Step into a calmer you.
+      </p>
+    </header>
+
+    <form class="space-y-4" id="login-form" onsubmit="event.preventDefault();">
+      <div class="relative" data-purpose="field-email">
+        <div class="glass-input rounded-full h-[54px] flex items-center px-5">
+          <span aria-hidden="true" class="text-[#736357] mr-3.5 flex-shrink-0">
+            <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path>
+            </svg>
+          </span>
+          <input autocomplete="username" class="w-full bg-transparent border-0 p-0 text-[15px] text-[#3E2A20] placeholder-[#807266] focus:ring-0 focus:outline-none" id="user-identity" name="identity" placeholder="Email or phone number" required="" type="text">
+        </div>
+      </div>
+
+      <div class="relative" data-purpose="field-password">
+        <div class="glass-input rounded-full h-[54px] flex items-center px-5">
+          <span aria-hidden="true" class="text-[#736357] mr-3.5 flex-shrink-0">
+            <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect height="11" rx="2.5" ry="2.5" width="14" x="5" y="10"></rect>
+              <path d="M8 10V6.5a4 4 0 0 1 8 0V10"></path>
+            </svg>
+          </span>
+          <input autocomplete="current-password" class="w-full bg-transparent border-0 p-0 text-[15px] text-[#3E2A20] placeholder-[#807266] focus:ring-0 focus:outline-none pr-2" id="user-password" name="password" placeholder="Password" required="" type="password">
+          <button aria-label="Toggle password visibility" class="text-[#736357] hover:text-[#3E2A20] transition-colors p-1 flex-shrink-0 focus:outline-none" id="password-toggle-btn" type="button">
+            <svg class="w-5 h-5 stroke-[1.75]" fill="none" id="eye-icon" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="pt-0.5 pb-2 text-left">
+        <a class="text-[13.5px] text-[#615247] hover:text-[#261710] font-medium transition-colors duration-150 inline-block" href="#forgot-password">
+          Forgot password?
+        </a>
+      </div>
+
+      <button class="w-full h-[54px] rounded-full bg-[#3B281E] hover:bg-[#2C1D15] active:scale-[0.99] text-[#FAF6EE] text-[15px] font-medium tracking-wide flex items-center justify-center space-x-2 transition-all duration-200 shadow-sm" type="submit">
+        <span class="">Log In</span>
+        <span class="text-base font-light leading-none">→</span>
+      </button>
+
+      <div class="flex items-center justify-center py-2.5">
+        <div class="flex-grow border-t border-[#A8988A] opacity-40"></div>
+        <span class="px-4 text-[13px] text-[#786B61] font-normal lowercase select-none">or</span>
+        <div class="flex-grow border-t border-[#A8988A] opacity-40"></div>
+      </div>
+
+      <button type="button" class="w-full h-[54px] rounded-full glass-button active:scale-[0.99] text-[#34241B] hover:text-[#281A12] text-[15px] font-medium tracking-normal flex items-center justify-center space-x-2.5 transition-all duration-200"><svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"></path></svg><span class="">Continue with Google</span></button><div class="pt-4 text-center"><p class="text-[13.5px] text-[#685A50]">New to Mythri? <button type="button" onclick="switchAuthMode('signup')" class="text-[#34241B] hover:underline font-semibold ml-1 inline-block">Create account</button></p></div>
+    </form>
+  </div>
+
+  <!-- SIGN UP / CREATE ACCOUNT VIEW -->
+  <div id="view-signup" class="hidden">
+    <header class="mb-6 text-left">
+      <h2 class="font-serif text-[34px] sm:text-[38px] text-[#34241B] font-normal leading-tight tracking-tight mb-2">
+        Create account
+      </h2>
+      <p class="text-[#685A50] text-[15px] font-normal tracking-normal">
+        Begin your journey to peace of mind.
+      </p>
+    </header>
+
+    <form class="space-y-3.5" id="signup-form" onsubmit="event.preventDefault();">
+      <!-- 1. Username Field -->
+      <div class="relative" data-purpose="field-username">
+        <div class="glass-input rounded-full h-[52px] flex items-center px-5">
+          <span aria-hidden="true" class="text-[#736357] mr-3.5 flex-shrink-0">
+            <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </span>
+          <input autocomplete="nickname" class="w-full bg-transparent border-0 p-0 text-[15px] text-[#3E2A20] placeholder-[#807266] focus:ring-0 focus:outline-none" id="reg-username" name="username" placeholder="Username" required="" type="text">
+        </div>
+      </div>
+
+      <!-- 2. Email / Mail ID Field -->
+      <div class="relative" data-purpose="field-reg-email">
+        <div class="glass-input rounded-full h-[52px] flex items-center px-5">
+          <span aria-hidden="true" class="text-[#736357] mr-3.5 flex-shrink-0">
+            <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect height="16" rx="2" width="20" x="2" y="4"></rect>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </svg>
+          </span>
+          <input autocomplete="email" class="w-full bg-transparent border-0 p-0 text-[15px] text-[#3E2A20] placeholder-[#807266] focus:ring-0 focus:outline-none" id="reg-email" name="email" placeholder="Mail ID" required="" type="email">
+        </div>
+      </div>
+
+      <!-- 3. Password and Confirm Password (2-column side-by-side grid) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <!-- Password -->
+        <div class="relative" data-purpose="field-reg-password">
+          <div class="glass-input rounded-full h-[52px] flex items-center px-4">
+            <span aria-hidden="true" class="text-[#736357] mr-2 flex-shrink-0">
+              <svg class="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect height="11" rx="2" ry="2" width="14" x="5" y="10"></rect>
+                <path d="M8 10V6.5a4 4 0 0 1 8 0V10"></path>
+              </svg>
+            </span>
+            <input autocomplete="new-password" class="w-full bg-transparent border-0 p-0 text-[14px] text-[#3E2A20] placeholder-[#807266] focus:ring-0 focus:outline-none min-w-0" id="reg-password" name="new_password" placeholder="Password" required="" type="password">
+            <button aria-label="Toggle new password" class="text-[#736357] hover:text-[#3E2A20] p-1 flex-shrink-0 focus:outline-none" id="reg-password-toggle-btn" type="button">
+              <svg class="w-4 h-4 stroke-[1.75]" fill="none" id="reg-eye-icon" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="relative" data-purpose="field-confirm-password">
+          <div class="glass-input rounded-full h-[52px] flex items-center px-4">
+            <span aria-hidden="true" class="text-[#736357] mr-2 flex-shrink-0">
+              <svg class="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect height="11" rx="2" ry="2" width="14" x="5" y="10"></rect>
+                <path d="M8 10V6.5a4 4 0 0 1 8 0V10"></path>
+              </svg>
+            </span>
+            <input autocomplete="new-password" class="w-full bg-transparent border-0 p-0 text-[14px] text-[#3E2A20] placeholder-[#807266] focus:ring-0 focus:outline-none min-w-0" id="reg-confirm-password" name="confirm_password" placeholder="Confirm" required="" type="password">
+            <button aria-label="Toggle confirm password" class="text-[#736357] hover:text-[#3E2A20] p-1 flex-shrink-0 focus:outline-none" id="reg-confirm-toggle-btn" type="button">
+              <svg class="w-4 h-4 stroke-[1.75]" fill="none" id="reg-confirm-eye-icon" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Primary Action Button -->
+      <div class="pt-2">
+        <button class="w-full h-[54px] rounded-full bg-[#3B281E] hover:bg-[#2C1D15] active:scale-[0.99] text-[#FAF6EE] text-[15px] font-medium tracking-wide flex items-center justify-center space-x-2 transition-all duration-200 shadow-sm" type="submit">
+          <span class="">Create Account</span>
+          <span class="text-base font-light leading-none">→</span>
+        </button>
+      </div>
+
+      <!-- 5. Switch back link -->
+      <div class="pt-2 text-center">
+        <p class="text-[13.5px] text-[#685A50]">
+          Already have an account?
+          <button type="button" onclick="switchAuthMode('login')" class="text-[#34241B] hover:underline font-semibold ml-1 inline-block">
+            Log in
+          </button>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function switchAuthMode(mode) {
+    const loginView = document.getElementById('view-login');
+    const signupView = document.getElementById('view-signup');
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+
+    if (mode === 'signup') {
+      loginView.classList.add('hidden');
+      signupView.classList.remove('hidden');
+      tabSignup.className = 'px-5 py-2 rounded-full text-[14px] font-medium transition-all duration-200 bg-[#3B281E] text-[#FAF6EE] shadow-sm';
+      tabLogin.className = 'px-5 py-2 rounded-full text-[14px] font-medium transition-all duration-200 text-[#685A50] hover:text-[#34241B]';
+    } else {
+      signupView.classList.add('hidden');
+      loginView.classList.remove('hidden');
+      tabLogin.className = 'px-5 py-2 rounded-full text-[14px] font-medium transition-all duration-200 bg-[#3B281E] text-[#FAF6EE] shadow-sm';
+      tabSignup.className = 'px-5 py-2 rounded-full text-[14px] font-medium transition-all duration-200 text-[#685A50] hover:text-[#34241B]';
+    }
+  }
+
+  function setupToggle(btnId, inputId, iconId) {
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!btn || !input || !icon) return;
+    let visible = false;
+    btn.addEventListener('click', () => {
+      visible = !visible;
+      input.type = visible ? 'text' : 'password';
+      if (visible) {
+        icon.innerHTML = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line>';
+      } else {
+        icon.innerHTML = '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle>';
+      }
+    });
+  }
+
+  setupToggle('password-toggle-btn', 'user-password', 'eye-icon');
+  setupToggle('reg-password-toggle-btn', 'reg-password', 'reg-eye-icon');
+  setupToggle('reg-confirm-toggle-btn', 'reg-confirm-password', 'reg-confirm-eye-icon');
+</script></section>
+<!-- END: RightLoginForm -->
+</div>
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: InteractiveScripts -->
+<script data-purpose="password-toggle">
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('password-toggle-btn');
+      const passwordInput = document.getElementById('user-password');
+      const eyeIcon = document.getElementById('eye-icon');
+
+      if (toggleBtn && passwordInput && eyeIcon) {
+        let isVisible = false;
+
+        toggleBtn.addEventListener('click', () => {
+          isVisible = !isVisible;
+          passwordInput.type = isVisible ? 'text' : 'password';
+
+          if (isVisible) {
+            // Eye off icon
+            eyeIcon.innerHTML = `
+              <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+              <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path>
+              <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path>
+              <line x1="2" y1="2" x2="22" y2="22"></line>
+            `;
+          } else {
+            // Regular eye icon
+            eyeIcon.innerHTML = `
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            `;
+          }
+        });
+      }
+    });
+  </script>
+<!-- END: InteractiveScripts -->
+
+
+
+
+</body></html>

@@ -1,0 +1,156 @@
+{
+  "colorMode": "LIGHT",
+  "font": "LITERATA",
+  "roundness": "ROUND_EIGHT",
+  "customColor": "#49362d",
+  "headlineFont": "LITERATA",
+  "bodyFont": "LITERATA",
+  "labelFont": "LITERATA",
+  "namedColors": {
+    "tertiary": "#32220d",
+    "primary": "#322119",
+    "surface_dim": "#dcdad4",
+    "secondary_container": "#fdc9b3",
+    "outline_variant": "#d3c3bd",
+    "on_secondary_fixed_variant": "#623e2e",
+    "on_secondary": "#ffffff",
+    "on_tertiary": "#ffffff",
+    "primary_fixed_dim": "#ddc1b4",
+    "on_primary_fixed": "#271810",
+    "inverse_surface": "#31312d",
+    "surface_container_high": "#ebe8e2",
+    "outline": "#81756f",
+    "on_surface": "#1c1c18",
+    "surface_container_lowest": "#ffffff",
+    "ink": "#2C2724",
+    "error": "#ba1a1a",
+    "on_primary_container": "#b99f93",
+    "tertiary_fixed_dim": "#dfc2a3",
+    "surface_container_highest": "#e5e2dc",
+    "on_tertiary_fixed_variant": "#57432c",
+    "surface_container_low": "#f6f3ed",
+    "on_error": "#ffffff",
+    "caramel": "#CBAF91",
+    "on_surface_variant": "#4f4540",
+    "secondary_fixed": "#ffdbcd",
+    "mocha": "#8B6250",
+    "primary_container": "#49362d",
+    "espresso": "#49362D",
+    "error_container": "#ffdad6",
+    "inverse_primary": "#ddc1b4",
+    "surface": "#fcf9f3",
+    "inverse_on_surface": "#f3f0ea",
+    "surface_tint": "#705a4f",
+    "on_secondary_fixed": "#2f1407",
+    "surface_container": "#f0eee8",
+    "ivory": "#FBF8F2",
+    "primary_fixed": "#fbdccf",
+    "on_primary_fixed_variant": "#574239",
+    "border": "#E3D8CC",
+    "on_tertiary_container": "#bba083",
+    "on_error_container": "#93000a",
+    "on_secondary_container": "#795241",
+    "tertiary_container": "#4a3720",
+    "oat": "#F1E6D7",
+    "on_background": "#1c1c18",
+    "on_tertiary_fixed": "#281805",
+    "muted": "#756A62",
+    "tertiary_fixed": "#fcddbd",
+    "secondary": "#7c5544",
+    "surface_bright": "#fcf9f3",
+    "background": "#fcf9f3",
+    "secondary_fixed_dim": "#eebba6",
+    "surface_variant": "#e5e2dc",
+    "on_primary": "#ffffff"
+  },
+  "designMd": "---\nname: Digital Sanctuary\ncolors:\n  surface: '#fcf9f3'\n  surface-dim: '#dcdad4'\n  surface-bright: '#fcf9f3'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f6f3ed'\n  surface-container: '#f0eee8'\n  surface-container-high: '#ebe8e2'\n  surface-container-highest: '#e5e2dc'\n  on-surface: '#1c1c18'\n  on-surface-variant: '#4f4540'\n  inverse-surface: '#31312d'\n  inverse-on-surface: '#f3f0ea'\n  outline: '#81756f'\n  outline-variant: '#d3c3bd'\n  surface-tint: '#705a4f'\n  primary: '#322119'\n  on-primary: '#ffffff'\n  primary-container: '#49362d'\n  on-primary-container: '#b99f93'\n  inverse-primary: '#ddc1b4'\n  secondary: '#7c5544'\n  on-secondary: '#ffffff'\n  secondary-container: '#fdc9b3'\n  on-secondary-container: '#795241'\n  tertiary: '#32220d'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#4a3720'\n  on-tertiary-container: '#bba083'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#fbdccf'\n  primary-fixed-dim: '#ddc1b4'\n  on-primary-fixed: '#271810'\n  on-primary-fixed-variant: '#574239'\n  secondary-fixed: '#ffdbcd'\n  secondary-fixed-dim: '#eebba6'\n  on-secondary-fixed: '#2f1407'\n  on-secondary-fixed-variant: '#623e2e'\n  tertiary-fixed: '#fcddbd'\n  tertiary-fixed-dim: '#dfc2a3'\n  on-tertiary-fixed: '#281805'\n  on-tertiary-fixed-variant: '#57432c'\n  background: '#fcf9f3'\n  on-background: '#1c1c18'\n  surface-variant: '#e5e2dc'\n  espresso: '#49362D'\n  mocha: '#8B6250'\n  caramel: '#CBAF91'\n  oat: '#F1E6D7'\n  ivory: '#FBF8F2'\n  ink: '#2C2724'\n  muted: '#756A62'\n  border: '#E3D8CC'\ntypography:\n  display-lg:\n    fontFamily: Literata\n    fontSize: 48px\n    fontWeight: '500'\n    lineHeight: '1.2'\n  display-lg-mobile:\n    fontFamily: Literata\n    fontSize: 32px\n    fontWeight: '500'\n    lineHeight: '1.25'\n  headline-lg:\n    fontFamily: Literata\n    fontSize: 32px\n    fontWeight: '500'\n    lineHeight: '1.3'\n  headline-lg-mobile:\n    fontFamily: Literata\n    fontSize: 26px\n    fontWeight: '500'\n    lineHeight: '1.3'\n  headline-md:\n    fontFamily: Literata\n    fontSize: 24px\n    fontWeight: '500'\n    lineHeight: '1.4'\n  headline-sm:\n    fontFamily: Literata\n    fontSize: 20px\n    fontWeight: '500'\n    lineHeight: '1.4'\n  body-lg:\n    fontFamily: Literata\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.7'\n  body-md:\n    fontFamily: Literata\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: '1.7'\n  body-sm:\n    fontFamily: Literata\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: '1.6'\n  label-md:\n    fontFamily: Literata\n    fontSize: 14px\n    fontWeight: '500'\n    lineHeight: '1.2'\n  label-sm:\n    fontFamily: Literata\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: '1.2'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 1.5rem\n  margin: 4rem\n  margin-mobile: 1.25rem\n  space-xs: 0.25rem\n  space-sm: 0.5rem\n  space-md: 1rem\n  space-lg: 1.5rem\n  space-xl: 2rem\n  space-2xl: 3rem\n  space-3xl: 4rem\n---\n\n# Mythri --- Design System & Experience Specification\n\n## 1. Product direction\n\nMythri is a calm, private, conversation-first emotional-support\nexperience. It should feel like entering a quiet space where someone can\npause, talk, and reflect at their own pace.\n\n> Do not design a mental-health dashboard. Design a place someone would\n> want to stay when they are having a difficult day.\n\nThe product combines a restrained interface, an immersive environment, a\nnatural companion character, and text- or voice-based conversation. The\nexperience should feel premium, warm, mature, and human without\npretending that the AI is a licensed therapist or a real person.\n\n### Core principles\n\n- **Conversation first:** Text and voice conversation are the primary interactions.\n- **Low visual density:** Introduce features progressively; avoid dashboards, competing cards, and persistent side panels.\n- **Immersive but optional:** The 3D room adds presence but must not be required to use core features.\n- **User agency:** Users can skip non-essential onboarding questions, correct assumptions, control memory, and leave immersive mode.\n- **Accessible by default:** Maintain readable UI, keyboard access, visible focus, reduced-motion support, and a complete 2D/text path.\n- **Honest support:** Describe Mythri as an AI emotional-support companion, not a human therapist or emergency service.\n\n## 2. Brand and visual style\n\n### Brand character\n\n**Digital Sanctuary \u00b7 Minimalism \u00b7 Tactile Editorial**\n\nUse exquisite but legible typography, generous whitespace, warm neutral surfaces, deliberate visual hierarchy, restrained accents, and fine borders. The interface should feel intimate and thoughtfully crafted\u2014like a well-made book or stationery\u2014without becoming decorative or difficult to use.\n\n### Avoid\n\n- Analytics-heavy healthcare dashboards.\n- Game, metaverse, or avatar-first styling.\n- Excessive cards, floating panels, glassmorphism, blur, or heavy shadows.\n- Constant gradients, shimmer, parallax, or decorative motion without purpose.\n- A mascot-like or glossy synthetic character.\n- Clinical, judgmental, or overly certain language.\n- Using colour alone to convey meaning.\n\n## 3. Primary colour palette --- 03 Espresso & Oat\n\n- Espresso: `#49362D` (Primary text, strong controls, selected states)\n- Mocha: `#8B6250` (Secondary actions and warm emphasis)\n- Caramel: `#CBAF91` (Soft accents and decorative material references)\n- Oat: `#F1E6D7` (Warm surfaces and quiet section backgrounds)\n- Ivory: `#FBF8F2` (Main canvas and page background)\n- Ink: `#2C2724` (Body text where extra contrast is needed)\n- Muted: `#756A62` (Secondary text; verify contrast before use)\n- Border: `#E3D8CC` (Dividers, input outlines, subtle boundaries)\n\n## 4. Typography\n\nPrimary typeface: Literata (Serif, literary, reflective, warm).\n\n- Display large: Literata 48px, weight 500, line-height 1.2\n- Headline large: Literata 32px, weight 500, line-height 1.3\n- Headline medium: Literata 24px, weight 500, line-height 1.4\n- Body large: Literata 18px, weight 400, line-height 1.7\n- Body medium: Literata 16px, weight 400, line-height 1.7\n- Body small: Literata 14px, weight 400, line-height 1.6\n- Label medium: Literata 14px, weight 500, line-height 1.2\n\n## 5. Layout, spacing, surfaces, and shape\n\n- Base unit: 4px\n- Desktop margin: 64px, Mobile margin: 20px, Standard gutter: 24px\n- Corner radius: Small (0.25rem / 4px), Default (0.5rem / 8px), Medium (0.75rem / 12px), Large (1rem / 16px), Pill (9999px)\n- Fine 1px subtle borders (`#E3D8CC`), soft tonal layering, minimal shadows.\n",
+  "colorVariant": "FIDELITY",
+  "overridePrimaryColor": "#49362d",
+  "overrideSecondaryColor": "#8b6250",
+  "overrideTertiaryColor": "#cbaf91",
+  "overrideNeutralColor": "#fbf8f2",
+  "spacingScale": 2,
+  "typography": {
+    "label-sm": {
+      "fontFamily": "Literata",
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "lineHeight": "1.2"
+    },
+    "label-md": {
+      "fontFamily": "Literata",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "1.2"
+    },
+    "headline-md": {
+      "fontFamily": "Literata",
+      "fontSize": "24px",
+      "fontWeight": "500",
+      "lineHeight": "1.4"
+    },
+    "headline-lg-mobile": {
+      "fontFamily": "Literata",
+      "fontSize": "26px",
+      "fontWeight": "500",
+      "lineHeight": "1.3"
+    },
+    "body-sm": {
+      "fontFamily": "Literata",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "1.6"
+    },
+    "body-md": {
+      "fontFamily": "Literata",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "1.7"
+    },
+    "headline-lg": {
+      "fontFamily": "Literata",
+      "fontSize": "32px",
+      "fontWeight": "500",
+      "lineHeight": "1.3"
+    },
+    "headline-sm": {
+      "fontFamily": "Literata",
+      "fontSize": "20px",
+      "fontWeight": "500",
+      "lineHeight": "1.4"
+    },
+    "display-lg-mobile": {
+      "fontFamily": "Literata",
+      "fontSize": "32px",
+      "fontWeight": "500",
+      "lineHeight": "1.25"
+    },
+    "display-lg": {
+      "fontFamily": "Literata",
+      "fontSize": "48px",
+      "fontWeight": "500",
+      "lineHeight": "1.2"
+    },
+    "body-lg": {
+      "fontFamily": "Literata",
+      "fontSize": "18px",
+      "fontWeight": "400",
+      "lineHeight": "1.7"
+    }
+  },
+  "spacing": {
+    "space-xs": "0.25rem",
+    "space-xl": "2rem",
+    "space-sm": "0.5rem",
+    "margin-mobile": "1.25rem",
+    "space-lg": "1.5rem",
+    "space-md": "1rem",
+    "space-2xl": "3rem",
+    "gutter": "1.5rem",
+    "space-3xl": "4rem",
+    "margin": "4rem"
+  },
+  "headlineFontFamily": "Literata",
+  "bodyFontFamily": "Literata",
+  "labelFontFamily": "Literata"
+}

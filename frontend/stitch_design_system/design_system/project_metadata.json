@@ -1,0 +1,628 @@
+{
+  "name": "projects/11520899214585731703",
+  "title": "Mythri Stitch Design System",
+  "visibility": "PRIVATE",
+  "createTime": "2026-10-13T04:00:04.815517Z",
+  "updateTime": "2026-10-28T13:14:34.847039Z",
+  "projectType": "TEXT_TO_UI_PRO",
+  "thumbnailScreenshot": {
+    "name": "projects/11520899214585731703/screens/6eb879ef236f477d9f957849f9b36331/fileEntries/screenshot",
+    "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1UYdIZOzYhLbdscnDKNN_mR-J6bP7A8QwLTIhGeQuinfyNNr67kQPHHhYA8E0ND6Dg3TDkjj1cLcCQvtqXqVFhVI2xeEGrObhBRd8lonO1mwrh45UaMS1WR8g_dUrYuRnQ-k9EWFQGuYMLipgK-FrMw_Gntbn2hFtTshAxYz7VnM4zPjPjvigb4dN9DETnmyNvBJhVculXQTWJ14DoMzQBmx40a0HseZ25A7px0yqtxC2rI7ceXcEcam22A"
+  },
+  "origin": "STITCH",
+  "deviceType": "DESKTOP",
+  "designTheme": {
+    "colorMode": "LIGHT",
+    "font": "LITERATA",
+    "roundness": "ROUND_EIGHT",
+    "customColor": "#49362d",
+    "headlineFont": "LITERATA",
+    "bodyFont": "LITERATA",
+    "labelFont": "LITERATA",
+    "namedColors": {
+      "tertiary": "#32220d",
+      "primary": "#322119",
+      "surface_dim": "#dcdad4",
+      "secondary_container": "#fdc9b3",
+      "outline_variant": "#d3c3bd",
+      "on_secondary_fixed_variant": "#623e2e",
+      "on_secondary": "#ffffff",
+      "on_tertiary": "#ffffff",
+      "primary_fixed_dim": "#ddc1b4",
+      "on_primary_fixed": "#271810",
+      "inverse_surface": "#31312d",
+      "surface_container_high": "#ebe8e2",
+      "outline": "#81756f",
+      "on_surface": "#1c1c18",
+      "surface_container_lowest": "#ffffff",
+      "ink": "#2C2724",
+      "error": "#ba1a1a",
+      "on_primary_container": "#b99f93",
+      "tertiary_fixed_dim": "#dfc2a3",
+      "surface_container_highest": "#e5e2dc",
+      "on_tertiary_fixed_variant": "#57432c",
+      "surface_container_low": "#f6f3ed",
+      "on_error": "#ffffff",
+      "caramel": "#CBAF91",
+      "on_surface_variant": "#4f4540",
+      "secondary_fixed": "#ffdbcd",
+      "mocha": "#8B6250",
+      "primary_container": "#49362d",
+      "espresso": "#49362D",
+      "error_container": "#ffdad6",
+      "inverse_primary": "#ddc1b4",
+      "surface": "#fcf9f3",
+      "inverse_on_surface": "#f3f0ea",
+      "surface_tint": "#705a4f",
+      "on_secondary_fixed": "#2f1407",
+      "surface_container": "#f0eee8",
+      "ivory": "#FBF8F2",
+      "primary_fixed": "#fbdccf",
+      "on_primary_fixed_variant": "#574239",
+      "border": "#E3D8CC",
+      "on_tertiary_container": "#bba083",
+      "on_error_container": "#93000a",
+      "on_secondary_container": "#795241",
+      "tertiary_container": "#4a3720",
+      "oat": "#F1E6D7",
+      "on_background": "#1c1c18",
+      "on_tertiary_fixed": "#281805",
+      "muted": "#756A62",
+      "tertiary_fixed": "#fcddbd",
+      "secondary": "#7c5544",
+      "surface_bright": "#fcf9f3",
+      "background": "#fcf9f3",
+      "secondary_fixed_dim": "#eebba6",
+      "surface_variant": "#e5e2dc",
+      "on_primary": "#ffffff"
+    },
+    "designMd": "---\nname: Digital Sanctuary\ncolors:\n  surface: '#fcf9f3'\n  surface-dim: '#dcdad4'\n  surface-bright: '#fcf9f3'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f6f3ed'\n  surface-container: '#f0eee8'\n  surface-container-high: '#ebe8e2'\n  surface-container-highest: '#e5e2dc'\n  on-surface: '#1c1c18'\n  on-surface-variant: '#4f4540'\n  inverse-surface: '#31312d'\n  inverse-on-surface: '#f3f0ea'\n  outline: '#81756f'\n  outline-variant: '#d3c3bd'\n  surface-tint: '#705a4f'\n  primary: '#322119'\n  on-primary: '#ffffff'\n  primary-container: '#49362d'\n  on-primary-container: '#b99f93'\n  inverse-primary: '#ddc1b4'\n  secondary: '#7c5544'\n  on-secondary: '#ffffff'\n  secondary-container: '#fdc9b3'\n  on-secondary-container: '#795241'\n  tertiary: '#32220d'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#4a3720'\n  on-tertiary-container: '#bba083'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#fbdccf'\n  primary-fixed-dim: '#ddc1b4'\n  on-primary-fixed: '#271810'\n  on-primary-fixed-variant: '#574239'\n  secondary-fixed: '#ffdbcd'\n  secondary-fixed-dim: '#eebba6'\n  on-secondary-fixed: '#2f1407'\n  on-secondary-fixed-variant: '#623e2e'\n  tertiary-fixed: '#fcddbd'\n  tertiary-fixed-dim: '#dfc2a3'\n  on-tertiary-fixed: '#281805'\n  on-tertiary-fixed-variant: '#57432c'\n  background: '#fcf9f3'\n  on-background: '#1c1c18'\n  surface-variant: '#e5e2dc'\n  espresso: '#49362D'\n  mocha: '#8B6250'\n  caramel: '#CBAF91'\n  oat: '#F1E6D7'\n  ivory: '#FBF8F2'\n  ink: '#2C2724'\n  muted: '#756A62'\n  border: '#E3D8CC'\ntypography:\n  display-lg:\n    fontFamily: Literata\n    fontSize: 48px\n    fontWeight: '500'\n    lineHeight: '1.2'\n  display-lg-mobile:\n    fontFamily: Literata\n    fontSize: 32px\n    fontWeight: '500'\n    lineHeight: '1.25'\n  headline-lg:\n    fontFamily: Literata\n    fontSize: 32px\n    fontWeight: '500'\n    lineHeight: '1.3'\n  headline-lg-mobile:\n    fontFamily: Literata\n    fontSize: 26px\n    fontWeight: '500'\n    lineHeight: '1.3'\n  headline-md:\n    fontFamily: Literata\n    fontSize: 24px\n    fontWeight: '500'\n    lineHeight: '1.4'\n  headline-sm:\n    fontFamily: Literata\n    fontSize: 20px\n    fontWeight: '500'\n    lineHeight: '1.4'\n  body-lg:\n    fontFamily: Literata\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.7'\n  body-md:\n    fontFamily: Literata\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: '1.7'\n  body-sm:\n    fontFamily: Literata\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: '1.6'\n  label-md:\n    fontFamily: Literata\n    fontSize: 14px\n    fontWeight: '500'\n    lineHeight: '1.2'\n  label-sm:\n    fontFamily: Literata\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: '1.2'\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 1.5rem\n  margin: 4rem\n  margin-mobile: 1.25rem\n  space-xs: 0.25rem\n  space-sm: 0.5rem\n  space-md: 1rem\n  space-lg: 1.5rem\n  space-xl: 2rem\n  space-2xl: 3rem\n  space-3xl: 4rem\n---\n\n# Mythri --- Design System & Experience Specification\n\n## 1. Product direction\n\nMythri is a calm, private, conversation-first emotional-support\nexperience. It should feel like entering a quiet space where someone can\npause, talk, and reflect at their own pace.\n\n> Do not design a mental-health dashboard. Design a place someone would\n> want to stay when they are having a difficult day.\n\nThe product combines a restrained interface, an immersive environment, a\nnatural companion character, and text- or voice-based conversation. The\nexperience should feel premium, warm, mature, and human without\npretending that the AI is a licensed therapist or a real person.\n\n### Core principles\n\n- **Conversation first:** Text and voice conversation are the primary interactions.\n- **Low visual density:** Introduce features progressively; avoid dashboards, competing cards, and persistent side panels.\n- **Immersive but optional:** The 3D room adds presence but must not be required to use core features.\n- **User agency:** Users can skip non-essential onboarding questions, correct assumptions, control memory, and leave immersive mode.\n- **Accessible by default:** Maintain readable UI, keyboard access, visible focus, reduced-motion support, and a complete 2D/text path.\n- **Honest support:** Describe Mythri as an AI emotional-support companion, not a human therapist or emergency service.\n\n## 2. Brand and visual style\n\n### Brand character\n\n**Digital Sanctuary \u00b7 Minimalism \u00b7 Tactile Editorial**\n\nUse exquisite but legible typography, generous whitespace, warm neutral surfaces, deliberate visual hierarchy, restrained accents, and fine borders. The interface should feel intimate and thoughtfully crafted\u2014like a well-made book or stationery\u2014without becoming decorative or difficult to use.\n\n### Avoid\n\n- Analytics-heavy healthcare dashboards.\n- Game, metaverse, or avatar-first styling.\n- Excessive cards, floating panels, glassmorphism, blur, or heavy shadows.\n- Constant gradients, shimmer, parallax, or decorative motion without purpose.\n- A mascot-like or glossy synthetic character.\n- Clinical, judgmental, or overly certain language.\n- Using colour alone to convey meaning.\n\n## 3. Primary colour palette --- 03 Espresso & Oat\n\n- Espresso: `#49362D` (Primary text, strong controls, selected states)\n- Mocha: `#8B6250` (Secondary actions and warm emphasis)\n- Caramel: `#CBAF91` (Soft accents and decorative material references)\n- Oat: `#F1E6D7` (Warm surfaces and quiet section backgrounds)\n- Ivory: `#FBF8F2` (Main canvas and page background)\n- Ink: `#2C2724` (Body text where extra contrast is needed)\n- Muted: `#756A62` (Secondary text; verify contrast before use)\n- Border: `#E3D8CC` (Dividers, input outlines, subtle boundaries)\n\n## 4. Typography\n\nPrimary typeface: Literata (Serif, literary, reflective, warm).\n\n- Display large: Literata 48px, weight 500, line-height 1.2\n- Headline large: Literata 32px, weight 500, line-height 1.3\n- Headline medium: Literata 24px, weight 500, line-height 1.4\n- Body large: Literata 18px, weight 400, line-height 1.7\n- Body medium: Literata 16px, weight 400, line-height 1.7\n- Body small: Literata 14px, weight 400, line-height 1.6\n- Label medium: Literata 14px, weight 500, line-height 1.2\n\n## 5. Layout, spacing, surfaces, and shape\n\n- Base unit: 4px\n- Desktop margin: 64px, Mobile margin: 20px, Standard gutter: 24px\n- Corner radius: Small (0.25rem / 4px), Default (0.5rem / 8px), Medium (0.75rem / 12px), Large (1rem / 16px), Pill (9999px)\n- Fine 1px subtle borders (`#E3D8CC`), soft tonal layering, minimal shadows.\n",
+    "colorVariant": "FIDELITY",
+    "overridePrimaryColor": "#49362d",
+    "overrideSecondaryColor": "#8b6250",
+    "overrideTertiaryColor": "#cbaf91",
+    "overrideNeutralColor": "#fbf8f2",
+    "spacingScale": 2,
+    "typography": {
+      "label-sm": {
+        "fontFamily": "Literata",
+        "fontSize": "12px",
+        "fontWeight": "500",
+        "lineHeight": "1.2"
+      },
+      "label-md": {
+        "fontFamily": "Literata",
+        "fontSize": "14px",
+        "fontWeight": "500",
+        "lineHeight": "1.2"
+      },
+      "headline-md": {
+        "fontFamily": "Literata",
+        "fontSize": "24px",
+        "fontWeight": "500",
+        "lineHeight": "1.4"
+      },
+      "headline-lg-mobile": {
+        "fontFamily": "Literata",
+        "fontSize": "26px",
+        "fontWeight": "500",
+        "lineHeight": "1.3"
+      },
+      "body-sm": {
+        "fontFamily": "Literata",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "1.6"
+      },
+      "body-md": {
+        "fontFamily": "Literata",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "1.7"
+      },
+      "headline-lg": {
+        "fontFamily": "Literata",
+        "fontSize": "32px",
+        "fontWeight": "500",
+        "lineHeight": "1.3"
+      },
+      "headline-sm": {
+        "fontFamily": "Literata",
+        "fontSize": "20px",
+        "fontWeight": "500",
+        "lineHeight": "1.4"
+      },
+      "display-lg-mobile": {
+        "fontFamily": "Literata",
+        "fontSize": "32px",
+        "fontWeight": "500",
+        "lineHeight": "1.25"
+      },
+      "display-lg": {
+        "fontFamily": "Literata",
+        "fontSize": "48px",
+        "fontWeight": "500",
+        "lineHeight": "1.2"
+      },
+      "body-lg": {
+        "fontFamily": "Literata",
+        "fontSize": "18px",
+        "fontWeight": "400",
+        "lineHeight": "1.7"
+      }
+    },
+    "spacing": {
+      "space-xs": "0.25rem",
+      "space-xl": "2rem",
+      "space-sm": "0.5rem",
+      "margin-mobile": "1.25rem",
+      "space-lg": "1.5rem",
+      "space-md": "1rem",
+      "space-2xl": "3rem",
+      "gutter": "1.5rem",
+      "space-3xl": "4rem",
+      "margin": "4rem"
+    },
+    "headlineFontFamily": "Literata",
+    "bodyFontFamily": "Literata",
+    "labelFontFamily": "Literata"
+  },
+  "screenInstances": [
+    {
+      "id": "04133ec94d4b488182af159087f01908",
+      "sourceScreen": "projects/11520899214585731703/screens/04133ec94d4b488182af159087f01908",
+      "x": 4007,
+      "y": 4714,
+      "width": 390,
+      "height": 780,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "0ab21ce1c9b54961bbe01e0ec9b57913",
+      "sourceScreen": "projects/11520899214585731703/screens/0ab21ce1c9b54961bbe01e0ec9b57913",
+      "x": 2970,
+      "y": 9619,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "0d0513ccbea549ffbdf2940fefc21a02",
+      "sourceScreen": "projects/11520899214585731703/screens/0d0513ccbea549ffbdf2940fefc21a02",
+      "x": 498,
+      "y": 4714,
+      "width": 1525,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "0d6772f8a8fb4addb80af0f7d6187c31",
+      "sourceScreen": "projects/11520899214585731703/screens/0d6772f8a8fb4addb80af0f7d6187c31",
+      "x": 871,
+      "y": 1554,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "100108cb7b63468e907abcc8fac24e25",
+      "sourceScreen": "projects/11520899214585731703/screens/100108cb7b63468e907abcc8fac24e25",
+      "x": 1972,
+      "y": 3158,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "11f4f7df-1132-4786-8ea8-8c0569dbfdd1",
+      "sourceScreen": "projects/11520899214585731703/screens/9281566100682149640",
+      "x": 6499,
+      "y": 158,
+      "width": 512,
+      "height": 288,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "154c3925e7ce458bb14715d596032d51",
+      "sourceScreen": "projects/11520899214585731703/screens/154c3925e7ce458bb14715d596032d51",
+      "x": 6498,
+      "y": -2205,
+      "width": 512,
+      "height": 343,
+      "label": "Generating Image..."
+    },
+    {
+      "id": "22f765f9f88540e3a346a58253d1f115",
+      "sourceScreen": "projects/11520899214585731703/screens/22f765f9f88540e3a346a58253d1f115",
+      "x": 6220,
+      "width": 1280,
+      "height": 2731,
+      "label": "Mythri \u00b7 Color Palette Comparison & Decision Board",
+      "hidden": true
+    },
+    {
+      "id": "2866ed0c8e9f43dba16beca7765f096d",
+      "sourceScreen": "projects/11520899214585731703/screens/2866ed0c8e9f43dba16beca7765f096d",
+      "x": 186,
+      "y": 9606,
+      "width": 390,
+      "height": 883,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "2e33b958-ae0c-45c4-ad69-21d0350af598",
+      "sourceScreen": "projects/11520899214585731703/screens/3574769580244480626",
+      "y": 11034,
+      "width": 512,
+      "height": 288,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "42a78a20d1d644e99e934e1511d18cdb",
+      "sourceScreen": "projects/11520899214585731703/screens/42a78a20d1d644e99e934e1511d18cdb",
+      "x": 11491,
+      "y": -2347,
+      "width": 1280,
+      "height": 1023,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "4c74a75f529541219d9db3687e3ae8e0",
+      "sourceScreen": "projects/11520899214585731703/screens/4c74a75f529541219d9db3687e3ae8e0",
+      "x": 7074,
+      "y": -2205,
+      "width": 512,
+      "height": 343,
+      "label": "Generating Image..."
+    },
+    {
+      "id": "55b300011d5e4183a728ad214b1d24e9",
+      "sourceScreen": "projects/11520899214585731703/screens/55b300011d5e4183a728ad214b1d24e9",
+      "x": 7079,
+      "y": -1127,
+      "width": 1280,
+      "height": 1133,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "57320ca6f46f4f53bebe97bc0a2df3be",
+      "sourceScreen": "projects/11520899214585731703/screens/57320ca6f46f4f53bebe97bc0a2df3be",
+      "x": 4294,
+      "y": 2834,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen...",
+      "hidden": true
+    },
+    {
+      "id": "582cbdf0490343ed974a467052e32614",
+      "sourceScreen": "projects/11520899214585731703/screens/582cbdf0490343ed974a467052e32614",
+      "x": 782,
+      "y": 7160,
+      "width": 390,
+      "height": 844,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "5a350919-f40d-44d8-941c-5d03cf128cc9",
+      "sourceScreen": "projects/11520899214585731703/screens/14391539786367395832",
+      "x": 88,
+      "y": 3997,
+      "width": 129,
+      "height": 283,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "6585239404c3420b83e6a2fd147b0b74",
+      "sourceScreen": "projects/11520899214585731703/screens/6585239404c3420b83e6a2fd147b0b74",
+      "x": 563,
+      "y": 3311,
+      "width": 512,
+      "height": 917,
+      "label": "Generating Image..."
+    },
+    {
+      "id": "69b98dabb7774bddb975d7d825cbf465",
+      "sourceScreen": "projects/11520899214585731703/screens/69b98dabb7774bddb975d7d825cbf465",
+      "x": 8803,
+      "y": -2347,
+      "width": 1280,
+      "height": 1026,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "6eb879ef236f477d9f957849f9b36331",
+      "sourceScreen": "projects/11520899214585731703/screens/6eb879ef236f477d9f957849f9b36331",
+      "x": 11596,
+      "width": 1280,
+      "height": 2223,
+      "label": "Generating Screen...",
+      "hidden": true
+    },
+    {
+      "id": "71aca15f-b794-4720-b00b-2e8050027351",
+      "sourceScreen": "projects/11520899214585731703/screens/12717704490851166036",
+      "y": 8326,
+      "width": 512,
+      "height": 288,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "869d4bac-7f86-463c-a64b-d6e9b1794fe0",
+      "sourceScreen": "projects/11520899214585731703/screens/13355732506470163338",
+      "x": 1021,
+      "y": 847,
+      "width": 512,
+      "height": 288,
+      "label": "Golden Terrace Overlooking the Sea.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "9516e2cfe8cb41f2af9b9a595ab647b8",
+      "sourceScreen": "projects/11520899214585731703/screens/9516e2cfe8cb41f2af9b9a595ab647b8",
+      "x": 3449,
+      "y": 3158,
+      "width": 1280,
+      "height": 1023,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "95b7b47f815d46a480b56a1bc1493f6d",
+      "sourceScreen": "projects/11520899214585731703/screens/95b7b47f815d46a480b56a1bc1493f6d",
+      "x": 1626,
+      "y": 9619,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "98881f35-98de-4a6a-9b68-ea7a33cb9fef",
+      "sourceScreen": "projects/11520899214585731703/screens/12717704490851166262",
+      "x": 576,
+      "y": 8326,
+      "width": 512,
+      "height": 288,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "9af4b08a-1f5f-4342-b798-a9f9c6b4cdbf",
+      "sourceScreen": "projects/11520899214585731703/screens/8856367177088073848",
+      "y": 7160,
+      "width": 512,
+      "height": 910,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "9b2b9a601e5e4151a02a2f1f5ef9f4b7",
+      "sourceScreen": "projects/11520899214585731703/screens/9b2b9a601e5e4151a02a2f1f5ef9f4b7",
+      "x": 1459,
+      "y": 7228,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "9b7ba47bc3a1421694f2faac4c7f6403",
+      "sourceScreen": "projects/11520899214585731703/screens/9b7ba47bc3a1421694f2faac4c7f6403",
+      "x": 2663,
+      "y": 4714,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "9e337e50-49f6-4656-9041-85748cdf3eab",
+      "sourceScreen": "projects/11520899214585731703/screens/13285987595664468794",
+      "y": 9606,
+      "width": 122,
+      "height": 276,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "aca925b1-c814-4c7a-be7d-8ea55318d18b",
+      "sourceScreen": "projects/11520899214585731703/screens/2798968593569513030",
+      "x": 1354,
+      "y": 9820,
+      "width": 201,
+      "height": 450,
+      "label": "image.png",
+      "hidden": true,
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "assets_a22cc66f81e0497da484d8b00e1586b4",
+      "x": 950,
+      "y": 94,
+      "width": 960,
+      "height": 540,
+      "sourceAsset": "assets/a22cc66f81e0497da484d8b00e1586b4",
+      "type": "DESIGN_SYSTEM_INSTANCE"
+    },
+    {
+      "id": "b0857967-f680-4277-94a6-cc2f5ebefcec",
+      "sourceScreen": "projects/11520899214585731703/screens/10898878437403693952",
+      "x": 5922,
+      "y": -2205,
+      "width": 512,
+      "height": 341,
+      "label": "Sculptural Sanctuary at Golden Hour.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "b0857967-f680-4277-94a6-cc2f5ebefcec-1792040537022",
+      "sourceScreen": "projects/11520899214585731703/screens/1829784836968376547",
+      "x": -77,
+      "y": 4714,
+      "width": 512,
+      "height": 341,
+      "label": "Sculptural Sanctuary at Golden Hour.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "b292ba0a0423482eb5f17c9d2ce219ea",
+      "sourceScreen": "projects/11520899214585731703/screens/b292ba0a0423482eb5f17c9d2ce219ea",
+      "x": 3349,
+      "y": 47,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "b8338f71744649b38512292e622614ba",
+      "sourceScreen": "projects/11520899214585731703/screens/b8338f71744649b38512292e622614ba",
+      "x": 2005,
+      "y": 47,
+      "width": 1280,
+      "height": 1024,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "c161b8f9-05af-400a-a7ff-c4bb09fc6e19",
+      "sourceScreen": "projects/11520899214585731703/screens/12709946836195055147",
+      "width": 780,
+      "height": 1768,
+      "label": "Mythri_Stitch_Design_System_v2.md",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "d15ada2cbf124aec9eb10e922a41cc8a",
+      "sourceScreen": "projects/11520899214585731703/screens/d15ada2cbf124aec9eb10e922a41cc8a",
+      "x": 10147,
+      "y": -2347,
+      "width": 1280,
+      "height": 948,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "d70619bc-231a-4c05-b918-802ce10ad362",
+      "sourceScreen": "projects/11520899214585731703/screens/16540065825769376613",
+      "x": 1339,
+      "y": 10158,
+      "width": 201,
+      "height": 450,
+      "label": "image.png",
+      "hidden": true,
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "d9776684dab24133ad0e6adfa844f12f",
+      "sourceScreen": "projects/11520899214585731703/screens/d9776684dab24133ad0e6adfa844f12f",
+      "x": 12835,
+      "y": -2347,
+      "width": 1280,
+      "height": 1030,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "dc77b4c3478e4dce9ce684b951852278",
+      "sourceScreen": "projects/11520899214585731703/screens/dc77b4c3478e4dce9ce684b951852278",
+      "x": 5638,
+      "y": 3158,
+      "width": 1280,
+      "height": 1024,
+      "label": "Mythri AI Companion Sanctuary"
+    },
+    {
+      "id": "de4fc3ce-12f5-446d-8448-bdb70d8042ea",
+      "sourceScreen": "projects/11520899214585731703/screens/8856367177088076890",
+      "x": 576,
+      "y": 7160,
+      "width": 142,
+      "height": 285,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "df394100eb6e4048bf1539b3b831899e",
+      "sourceScreen": "projects/11520899214585731703/screens/df394100eb6e4048bf1539b3b831899e",
+      "x": 7075,
+      "y": 158,
+      "width": 1280,
+      "height": 1258,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "df53260e169b42e0b8225a30c2ea4019",
+      "sourceScreen": "projects/11520899214585731703/screens/df53260e169b42e0b8225a30c2ea4019",
+      "x": 640,
+      "y": 9606,
+      "width": 390,
+      "height": 883,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "df53260e169b42e0b8225a30c2ea4019-1792043229108",
+      "sourceScreen": "projects/11520899214585731703/screens/11521038683709631658",
+      "x": 1153,
+      "y": 9572,
+      "width": 390,
+      "height": 883,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "e0aeae06aee346f1bc1d99be7c21cb80",
+      "sourceScreen": "projects/11520899214585731703/screens/e0aeae06aee346f1bc1d99be7c21cb80",
+      "x": 1139,
+      "y": 3311,
+      "width": 390,
+      "height": 760,
+      "label": "Generating Screen..."
+    },
+    {
+      "id": "e68f22baa08d4638af76ef26b17ff821",
+      "sourceScreen": "projects/11520899214585731703/screens/e68f22baa08d4638af76ef26b17ff821",
+      "x": 2087,
+      "y": 4714,
+      "width": 512,
+      "height": 917,
+      "label": "Generating Image..."
+    },
+    {
+      "id": "e6a8fbff-3b45-40c7-8bce-a2a16696eb4b",
+      "sourceScreen": "projects/11520899214585731703/screens/11411163775276275535",
+      "x": -12,
+      "y": 3311,
+      "width": 512,
+      "height": 341,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "ec93e740-efad-47bd-8f77-3bde0b2757ad",
+      "sourceScreen": "projects/11520899214585731703/screens/15761159905789064004",
+      "y": 2834,
+      "width": 512,
+      "height": 341,
+      "label": "image.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "edaca0fd-3ca2-4969-85e4-c6ed24cbfd38",
+      "sourceScreen": "projects/11520899214585731703/screens/16250889986500101061",
+      "y": 5994,
+      "width": 512,
+      "height": 910,
+      "label": "Golden Archway Reflection Sanctuary.png",
+      "type": "SCREEN_INSTANCE"
+    },
+    {
+      "id": "f0249f27d3224e52b2bd499a86742f76",
+      "sourceScreen": "projects/11520899214585731703/screens/f0249f27d3224e52b2bd499a86742f76",
+      "x": 7650,
+      "y": -2205,
+      "width": 512,
+      "height": 343,
+      "label": "Generating Image..."
+    }
+  ],
+  "metadata": {
+    "userRole": "OWNER"
+  }
+}

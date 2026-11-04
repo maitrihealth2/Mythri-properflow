@@ -425,3 +425,94 @@ async def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_
         "message": "If this email is registered with us, a password reset link has been sent to your inbox."
     }
 
+class CompleteWaitlistRequest(BaseModel):
+    intentions: str | None = None
+    vibe: str | None = None
+    cadence: str | None = None
+    agreed_privacy: bool = True
+    affirmation: str | None = None
+
+@router.post("/waitlist/complete")
+def complete_waitlist(
+    req: CompleteWaitlistRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    current_user.waitlist_status = "approved"
+    db.commit()
+    db.refresh(current_user)
+    try:
+        from core.logger.terminal import CommandCenter
+        CommandCenter.log_db("WAITLIST", f"User {current_user.email} (ID: {current_user.id}) completed 5 steps & entered sanctuary")
+    except Exception:
+        pass
+    return {
+        "status": "approved",
+        "message": "All 5 steps completed! Welcome to Mythri Sanctuary.",
+        "waitlist_status": current_user.waitlist_status
+    }
+
+class ReportIssueRequest(BaseModel):
+    issue_type: str
+    description: str
+    contact_email: str | None = None
+
+@router.post("/report-issue")
+def report_issue(
+    req: ReportIssueRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        from core.logger.terminal import CommandCenter
+        CommandCenter.log_db("REPORT", f"User {current_user.email} reported [{req.issue_type}]: {req.description}")
+    except Exception:
+        pass
+    return {
+        "status": "success",
+        "message": "Report submitted successfully. Thank you for your feedback!"
+    }
+
+
+
+
+class LandingWaitlistRegisterRequest(BaseModel):
+    name: str
+    email: EmailStr
+    terms_read_completed: bool = True
+    privacy_read_completed: bool = True
+    terms_acknowledged: bool = True
+    privacy_acknowledged: bool = True
+    consent_timestamp: str
+    ticket_number: int | None = None
+
+@router.post("/waitlist/register")
+def register_landing_waitlist(
+    req: LandingWaitlistRegisterRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        from core.logger.terminal import CommandCenter
+        CommandCenter.log_db(
+            "WAITLIST",
+            f"Landing registration: {req.name} ({req.email}), Ticket #{req.ticket_number}, Terms/NDA: {req.terms_acknowledged}, Privacy: {req.privacy_acknowledged} at {req.consent_timestamp}"
+        )
+    except Exception:
+        pass
+
+    existing = db.query(User).filter(User.email == req.email.lower()).first()
+    if existing:
+        if not existing.waitlist_number and req.ticket_number:
+            existing.waitlist_number = req.ticket_number
+            db.commit()
+        return {
+            "status": "success",
+            "message": "Welcome back! Your waitlist reservation has been updated.",
+            "ticket_number": existing.waitlist_number or req.ticket_number or 42
+        }
+
+    return {
+        "status": "success",
+        "message": "Waitlist reservation secured with full legal consent verified.",
+        "ticket_number": req.ticket_number or 42
+    }

@@ -1,0 +1,551 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_blank" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-dim": "#dcdad4", "on-secondary-fixed-variant": "#623e2e", "on-background": "#1c1c18", "secondary-container": "#fdc9b3", "surface-tint": "#705a4f", "secondary-fixed-dim": "#eebba6", "on-secondary-fixed": "#2f1407", "on-surface": "#1c1c18", "on-primary-container": "#b99f93", "on-primary-fixed-variant": "#574239", "on-tertiary-fixed": "#281805", "on-error-container": "#93000a", "on-primary-fixed": "#271810", "surface-container-high": "#ebe8e2", "oat": "#F1E6D7", "secondary": "#7c5544", "on-surface-variant": "#4f4540", "on-secondary-container": "#795241", "primary-fixed": "#fbdccf", "tertiary-container": "#4a3720", "on-tertiary-fixed-variant": "#57432c", "inverse-surface": "#31312d", "surface-container-lowest": "#ffffff", "surface-container": "#f0eee8", "surface": "#fcf9f3", "tertiary-fixed": "#fcddbd", "ivory": "#FBF8F2", "on-tertiary": "#ffffff", "outline": "#81756f", "border": "#E3D8CC", "error": "#ba1a1a", "ink": "#2C2724", "outline-variant": "#d3c3bd", "error-container": "#ffdad6", "mocha": "#8B6250", "primary": "#322119", "tertiary-fixed-dim": "#dfc2a3", "inverse-on-surface": "#f3f0ea", "espresso": "#49362D", "on-error": "#ffffff", "inverse-primary": "#ddc1b4", "surface-container-low": "#f6f3ed", "tertiary": "#32220d", "primary-container": "#49362d", "on-secondary": "#ffffff", "surface-variant": "#e5e2dc", "surface-container-highest": "#e5e2dc", "secondary-fixed": "#ffdbcd", "background": "#fcf9f3", "on-tertiary-container": "#bba083", "muted": "#756A62", "primary-fixed-dim": "#ddc1b4", "surface-bright": "#fcf9f3", "on-primary": "#ffffff", "caramel": "#CBAF91" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-3xl": "4rem", "space-md": "1rem", "space-sm": "0.5rem", "margin": "4rem", "space-2xl": "3rem", "space-xl": "2rem", "space-lg": "1.5rem", "space-xs": "0.25rem", "margin-mobile": "1.25rem" }, "fontFamily": { "label-md": ["Literata"], "label-sm": ["Literata"], "body-md": ["Literata"], "headline-md": ["Literata"], "display-lg": ["Literata"], "headline-sm": ["Literata"], "body-lg": ["Literata"], "body-sm": ["Literata"], "headline-lg-mobile": ["Literata"], "headline-lg": ["Literata"], "display-lg-mobile": ["Literata"] }, "fontSize": { "label-md": ["14px", { "lineHeight": "1.2", "fontWeight": "500" }], "label-sm": ["12px", { "lineHeight": "1.2", "fontWeight": "500" }], "body-md": ["16px", { "lineHeight": "1.7", "fontWeight": "400" }], "headline-md": ["24px", { "lineHeight": "1.4", "fontWeight": "500" }], "display-lg": ["48px", { "lineHeight": "1.2", "fontWeight": "500" }], "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "500" }], "body-lg": ["18px", { "lineHeight": "1.7", "fontWeight": "400" }], "body-sm": ["14px", { "lineHeight": "1.6", "fontWeight": "400" }], "headline-lg-mobile": ["26px", { "lineHeight": "1.3", "fontWeight": "500" }], "headline-lg": ["32px", { "lineHeight": "1.3", "fontWeight": "500" }], "display-lg-mobile": ["32px", { "lineHeight": "1.25", "fontWeight": "500" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col justify-between selection:bg-secondary-container selection:text-on-secondary-fixed"><header class="w-full py-space-lg px-margin-mobile md:px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><span class="font-label-md text-label-md text-primary tracking-wide">Mythri</span><span class="font-body-sm text-body-sm text-muted">· Conversational Sanctuary</span></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-low"><span class="w-1.5 h-1.5 rounded-full bg-espresso"></span><span class="w-1.5 h-1.5 rounded-full bg-caramel/70"></span><span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span></div><a class="font-label-sm text-label-sm text-muted hover:text-espresso transition-colors" data-path="pause-and-exit" href="#">Pause &amp; exit</a></div></header><main class="w-full flex-grow flex flex-col items-center justify-center px-margin-mobile md:px-margin"><div class="flex flex-col w-full relative min-h-[calc(100vh-140px)] justify-between items-center text-ink selection:bg-secondary-container selection:text-on-secondary-fixed">
+<!-- Ambient Architectural Scrim Background -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAZ6cCel_wAnVWGnOt5JjCfmPt68uEq0Qmun96yVIQ9kSlKIRc9dO65RP9TvXGZPjoTk0dJw1ssAdhd2spDmtWZmW3xuo3yWVqmiPMZX3xdmJrB60VA3bYPKusmetVIRY4WIBnRO0tQI7eaK7BeST20PM5tDsXLICwt6yoQc6LKQAR7kkNHyCAkvmJYbYZIauWw0cjaD09wDohPWV5tGZiDPwZn4-VvZp8Kx05rBRnWbjibi1x6_4CoBgzq7xsnzAlelds');"></div>
+<!-- Soft warm tonal overlay adhering to Ivory, Oat & Espresso warmth -->
+<div class="absolute inset-0 bg-gradient-to-b from-surface/85 via-surface/65 to-surface/90 backdrop-blur-[2px]"></div>
+</div>
+<!-- Stage Progress & Sanctuary Atmosphere Bar -->
+<div class="w-full max-w-2xl mx-auto pt-space-md pb-space-lg flex items-center justify-between transition-opacity duration-500" id="progress-container">
+<div class="flex items-center gap-space-sm bg-oat/80 backdrop-blur-md px-space-md py-space-xs rounded-full shadow-sm">
+<span class="w-2 h-2 rounded-full bg-caramel animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-espresso font-medium" id="step-counter">Stage 1 of 7 · Welcome</span>
+</div>
+<!-- Quiet Progress Dots Indicator -->
+<div class="flex items-center gap-1.5" id="dots-indicator">
+<span class="dot-indicator h-1.5 w-6 rounded-full bg-espresso transition-all duration-300"></span>
+<span class="dot-indicator h-1.5 w-2 rounded-full bg-border transition-all duration-300"></span>
+<span class="dot-indicator h-1.5 w-2 rounded-full bg-border transition-all duration-300"></span>
+<span class="dot-indicator h-1.5 w-2 rounded-full bg-border transition-all duration-300"></span>
+<span class="dot-indicator h-1.5 w-2 rounded-full bg-border transition-all duration-300"></span>
+<span class="dot-indicator h-1.5 w-2 rounded-full bg-border transition-all duration-300"></span>
+<span class="dot-indicator h-1.5 w-2 rounded-full bg-border transition-all duration-300"></span>
+</div>
+</div>
+<!-- Primary Conversational Canvas (Journal Column, Max-w 680px) -->
+<div class="w-full max-w-[680px] mx-auto my-auto flex flex-col justify-center relative py-space-xl">
+<!-- STAGE 1: Welcome -->
+<div class="stage-panel opacity-100 translate-y-0 transition-all duration-700 ease-out flex flex-col items-center text-center" id="stage-1">
+<div class="w-12 h-12 rounded-full bg-oat/90 flex items-center justify-center text-espresso mb-space-lg shadow-sm">
+<span class="material-symbols-outlined text-headline-md" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-espresso tracking-tight leading-tight mb-space-md max-w-xl">
+        A quiet harbor for your thoughts.
+      </h1>
+<p class="font-body-lg text-body-lg text-ink leading-relaxed max-w-lg mb-space-sm">
+        Hi, I'm Mythri. This is a gentle, unhurried space to pause, talk, and reflect at your own pace.
+      </p>
+<p class="font-body-md text-body-md text-muted max-w-md mb-space-2xl">
+        There are no expectations here and no right answers. Share only what feels comfortable.
+      </p>
+<div class="flex flex-col sm:flex-row items-center gap-space-md">
+<button class="px-8 py-3.5 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-sm flex items-center gap-space-sm group cursor-pointer" onclick="goToStage(2)">
+<span>Begin gently</span>
+<span class="material-symbols-outlined text-body-md transition-transform duration-300 group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- STAGE 2: Getting Acquainted -->
+<div class="stage-panel hidden opacity-0 translate-y-4 transition-all duration-700 ease-out flex flex-col" id="stage-2">
+<div class="flex items-center gap-space-xs text-muted mb-space-md font-label-sm text-label-sm tracking-wider uppercase">
+<span class="material-symbols-outlined text-body-sm">waving_hand</span>
+<span>Greeting</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-espresso mb-space-md">
+        What would you like me to call you?
+      </h2>
+<p class="font-body-md text-body-md text-muted mb-space-xl">
+        A first name, a nickname, or a simple initials. Whatever allows you to feel most at home.
+      </p>
+<div class="relative w-full max-w-md mb-space-2xl">
+<input class="w-full bg-transparent border-b-2 border-border focus:border-espresso outline-none py-space-sm font-headline-md text-headline-md text-espresso placeholder:text-muted/50 transition-colors" id="input-name" onkeypress="if(event.key === 'Enter') goToStage(3)" placeholder="Your preferred name..." type="text">
+</div>
+<div class="flex items-center justify-between pt-space-lg">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors flex items-center gap-1 cursor-pointer" onclick="goToStage(1)">
+<span class="material-symbols-outlined text-body-md">arrow_back</span>
+<span>Back</span>
+</button>
+<div class="flex items-center gap-space-lg">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors underline underline-offset-4 cursor-pointer" onclick="skipName()">
+            Skip for now
+          </button>
+<button class="px-8 py-3.5 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-sm cursor-pointer" onclick="goToStage(3)">
+            Continue
+          </button>
+</div>
+</div>
+</div>
+<!-- STAGE 3: Reason for Coming -->
+<div class="stage-panel hidden opacity-0 translate-y-4 transition-all duration-700 ease-out flex flex-col" id="stage-3">
+<div class="flex items-center gap-space-xs text-muted mb-space-md font-label-sm text-label-sm tracking-wider uppercase">
+<span class="material-symbols-outlined text-body-sm">psychology_alt</span>
+<span>Intentions</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-espresso mb-space-md" id="reason-title">
+        Nice to meet you. What brought you here today?
+      </h2>
+<p class="font-body-md text-body-md text-muted mb-space-lg">
+        Take your time. You can write in your own words, or choose one of the gentle sparks below.
+      </p>
+<div class="flex flex-wrap gap-space-sm mb-space-lg" id="reason-chips">
+<button class="reason-chip px-space-md py-space-xs rounded-full bg-oat/90 text-muted font-body-sm text-body-sm hover:text-espresso hover:bg-oat border border-border/70 transition-all cursor-pointer" onclick="selectReasonChip('A heavy week', this)" type="button">
+          A heavy week
+        </button>
+<button class="reason-chip px-space-md py-space-xs rounded-full bg-oat/90 text-muted font-body-sm text-body-sm hover:text-espresso hover:bg-oat border border-border/70 transition-all cursor-pointer" onclick="selectReasonChip('Quiet reflection', this)" type="button">
+          Quiet reflection
+        </button>
+<button class="reason-chip px-space-md py-space-xs rounded-full bg-oat/90 text-muted font-body-sm text-body-sm hover:text-espresso hover:bg-oat border border-border/70 transition-all cursor-pointer" onclick="selectReasonChip('Work pressure &amp; fatigue', this)" type="button">
+          Work pressure &amp; fatigue
+        </button>
+<button class="reason-chip px-space-md py-space-xs rounded-full bg-oat/90 text-muted font-body-sm text-body-sm hover:text-espresso hover:bg-oat border border-border/70 transition-all cursor-pointer" onclick="selectReasonChip('Need someone to listen', this)" type="button">
+          Need someone to listen
+        </button>
+<button class="reason-chip px-space-md py-space-xs rounded-full bg-oat/90 text-muted font-body-sm text-body-sm hover:text-espresso hover:bg-oat border border-border/70 transition-all cursor-pointer" onclick="selectReasonChip('Life transitions', this)" type="button">
+          Life transitions
+        </button>
+</div>
+<div class="w-full mb-space-xl">
+<textarea class="w-full bg-oat/60 backdrop-blur-sm rounded-xl p-space-md border border-border focus:border-espresso outline-none font-body-lg text-body-lg text-ink placeholder:text-muted/60 transition-colors resize-none leading-relaxed" id="input-reason" placeholder="Write whatever comes to mind, or leave it blank..." rows="3"></textarea>
+</div>
+<div class="flex items-center justify-between pt-space-md">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors flex items-center gap-1 cursor-pointer" onclick="goToStage(2)">
+<span class="material-symbols-outlined text-body-md">arrow_back</span>
+<span>Back</span>
+</button>
+<div class="flex items-center gap-space-lg">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors underline underline-offset-4 cursor-pointer" onclick="goToStage(4)">
+            Skip
+          </button>
+<button class="px-8 py-3.5 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-sm cursor-pointer" onclick="goToStage(4)">
+            Continue
+          </button>
+</div>
+</div>
+</div>
+<!-- STAGE 4: How They Feel -->
+<div class="stage-panel hidden opacity-0 translate-y-4 transition-all duration-700 ease-out flex flex-col" id="stage-4">
+<div class="flex items-center gap-space-xs text-muted mb-space-md font-label-sm text-label-sm tracking-wider uppercase">
+<span class="material-symbols-outlined text-body-sm">favorite</span>
+<span>State of Being</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-espresso mb-space-md">
+        How has your heart or mind been feeling lately?
+      </h2>
+<p class="font-body-md text-body-md text-muted mb-space-lg">
+        Emotions shift constantly. Whatever you're experiencing today is welcome.
+      </p>
+<!-- Emotion Selector Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm mb-space-lg" id="feeling-grid">
+<button class="feeling-pill p-space-md text-left rounded-xl bg-oat/70 hover:bg-oat border border-border text-ink transition-all flex flex-col justify-between min-h-[90px] cursor-pointer" onclick="toggleFeeling(this, 'Restless')" type="button">
+<span class="material-symbols-outlined text-headline-sm text-muted">air</span>
+<span class="font-label-md text-label-md">Restless</span>
+</button>
+<button class="feeling-pill p-space-md text-left rounded-xl bg-oat/70 hover:bg-oat border border-border text-ink transition-all flex flex-col justify-between min-h-[90px] cursor-pointer" onclick="toggleFeeling(this, 'Carrying a lot')" type="button">
+<span class="material-symbols-outlined text-headline-sm text-muted">grain</span>
+<span class="font-label-md text-label-md">Carrying a lot</span>
+</button>
+<button class="feeling-pill p-space-md text-left rounded-xl bg-oat/70 hover:bg-oat border border-border text-ink transition-all flex flex-col justify-between min-h-[90px] cursor-pointer" onclick="toggleFeeling(this, 'Gentle &amp; calm')" type="button">
+<span class="material-symbols-outlined text-headline-sm text-muted">sunny</span>
+<span class="font-label-md text-label-md">Gentle &amp; calm</span>
+</button>
+<button class="feeling-pill p-space-md text-left rounded-xl bg-oat/70 hover:bg-oat border border-border text-ink transition-all flex flex-col justify-between min-h-[90px] cursor-pointer" onclick="toggleFeeling(this, 'A little exhausted')" type="button">
+<span class="material-symbols-outlined text-headline-sm text-muted">battery_charging_20</span>
+<span class="font-label-md text-label-md">A little exhausted</span>
+</button>
+<button class="feeling-pill p-space-md text-left rounded-xl bg-oat/70 hover:bg-oat border border-border text-ink transition-all flex flex-col justify-between min-h-[90px] cursor-pointer" onclick="toggleFeeling(this, 'Searching for clarity')" type="button">
+<span class="material-symbols-outlined text-headline-sm text-muted">visibility</span>
+<span class="font-label-md text-label-md">Searching for clarity</span>
+</button>
+<button class="feeling-pill p-space-md text-left rounded-xl bg-oat/70 hover:bg-oat border border-border text-ink transition-all flex flex-col justify-between min-h-[90px] cursor-pointer" onclick="toggleFeelingOther(this)" type="button">
+<span class="material-symbols-outlined text-headline-sm text-muted">edit_note</span>
+<span class="font-label-md text-label-md">Something else</span>
+</button>
+</div>
+<div class="hidden mb-space-lg" id="feeling-custom-container">
+<input class="w-full bg-oat/60 rounded-xl px-space-md py-space-sm border border-border focus:border-espresso outline-none font-body-md text-body-md text-espresso" id="feeling-custom-input" placeholder="Name what you're holding in a word or phrase..." type="text">
+</div>
+<div class="flex items-center justify-between pt-space-md">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors flex items-center gap-1 cursor-pointer" onclick="goToStage(3)">
+<span class="material-symbols-outlined text-body-md">arrow_back</span>
+<span>Back</span>
+</button>
+<div class="flex items-center gap-space-lg">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors underline underline-offset-4 cursor-pointer" onclick="goToStage(5)">
+            Skip
+          </button>
+<button class="px-8 py-3.5 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-sm cursor-pointer" onclick="goToStage(5)">
+            Continue
+          </button>
+</div>
+</div>
+</div>
+<!-- STAGE 5: Understanding Needs & Goals -->
+<div class="stage-panel hidden opacity-0 translate-y-4 transition-all duration-700 ease-out flex flex-col" id="stage-5">
+<div class="flex items-center gap-space-xs text-muted mb-space-md font-label-sm text-label-sm tracking-wider uppercase">
+<span class="material-symbols-outlined text-body-sm">explore</span>
+<span>Support Pathways</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-espresso mb-space-md">
+        What would feel most supportive right now?
+      </h2>
+<p class="font-body-md text-body-md text-muted mb-space-xl">
+        Select as many or as few as feel relevant. We adapt softly to your journey.
+      </p>
+<div class="flex flex-col gap-space-sm mb-space-2xl" id="support-chips-list">
+<label class="support-card flex items-center justify-between p-space-md rounded-xl bg-oat/60 hover:bg-oat border border-border cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-espresso">auto_stories</span>
+<span class="font-body-md text-body-md text-ink">Unpacking my thoughts &amp; untangling feelings</span>
+</div>
+<input class="w-4 h-4 accent-espresso rounded cursor-pointer" onchange="toggleSupportSelection(this)" type="checkbox" value="Unpacking my thoughts">
+</label>
+<label class="support-card flex items-center justify-between p-space-md rounded-xl bg-oat/60 hover:bg-oat border border-border cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-espresso">bedtime</span>
+<span class="font-body-md text-body-md text-ink">Finding calmer sleep &amp; soothing evening routines</span>
+</div>
+<input class="w-4 h-4 accent-espresso rounded cursor-pointer" onchange="toggleSupportSelection(this)" type="checkbox" value="Calmer sleep">
+</label>
+<label class="support-card flex items-center justify-between p-space-md rounded-xl bg-oat/60 hover:bg-oat border border-border cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-espresso">self_improvement</span>
+<span class="font-body-md text-body-md text-ink">Practicing mindful pauses during busy days</span>
+</div>
+<input class="w-4 h-4 accent-espresso rounded cursor-pointer" onchange="toggleSupportSelection(this)" type="checkbox" value="Mindful pauses">
+</label>
+<label class="support-card flex items-center justify-between p-space-md rounded-xl bg-oat/60 hover:bg-oat border border-border cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-espresso">groups</span>
+<span class="font-body-md text-body-md text-ink">Navigating relationships or boundaries</span>
+</div>
+<input class="w-4 h-4 accent-espresso rounded cursor-pointer" onchange="toggleSupportSelection(this)" type="checkbox" value="Navigating relationships">
+</label>
+<label class="support-card flex items-center justify-between p-space-md rounded-xl bg-oat/60 hover:bg-oat border border-border cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-espresso">hearing</span>
+<span class="font-body-md text-body-md text-ink">Just having a quiet, attentive listener</span>
+</div>
+<input class="w-4 h-4 accent-espresso rounded cursor-pointer" onchange="toggleSupportSelection(this)" type="checkbox" value="Quiet listener">
+</label>
+</div>
+<div class="flex items-center justify-between pt-space-md">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors flex items-center gap-1 cursor-pointer" onclick="goToStage(4)">
+<span class="material-symbols-outlined text-body-md">arrow_back</span>
+<span>Back</span>
+</button>
+<div class="flex items-center gap-space-lg">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors underline underline-offset-4 cursor-pointer" onclick="goToStage(6)">
+            Skip
+          </button>
+<button class="px-8 py-3.5 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-sm cursor-pointer" onclick="goToStage(6)">
+            Continue
+          </button>
+</div>
+</div>
+</div>
+<!-- STAGE 6: Personalizing Interaction Style -->
+<div class="stage-panel hidden opacity-0 translate-y-4 transition-all duration-700 ease-out flex flex-col" id="stage-6">
+<div class="flex items-center gap-space-xs text-muted mb-space-md font-label-sm text-label-sm tracking-wider uppercase">
+<span class="material-symbols-outlined text-body-sm">tune</span>
+<span>Pacing &amp; Rhythm</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-espresso mb-space-md">
+        How would you prefer to explore together?
+      </h2>
+<p class="font-body-md text-body-md text-muted mb-space-xl">
+        You can always adjust this setting later in your sanctuary preferences.
+      </p>
+<div class="flex flex-col gap-space-md mb-space-2xl" id="interaction-styles">
+<div class="style-option p-space-lg rounded-2xl bg-oat/70 hover:bg-oat border border-espresso text-ink cursor-pointer transition-all flex items-start gap-space-md ring-1 ring-espresso" onclick="selectStyle(this, 'Unstructured conversation')">
+<div class="w-5 h-5 rounded-full border-2 border-espresso flex items-center justify-center mt-1 flex-shrink-0">
+<span class="style-dot w-2.5 h-2.5 rounded-full bg-espresso"></span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-espresso mb-1">Organic, open conversations</div>
+<p class="font-body-sm text-body-sm text-muted">No agendas or checklists. Speak freely and follow wherever your mind leads.</p>
+</div>
+</div>
+<div class="style-option p-space-lg rounded-2xl bg-oat/40 hover:bg-oat/70 border border-border text-ink cursor-pointer transition-all flex items-start gap-space-md" onclick="selectStyle(this, 'Guided gentle prompts')">
+<div class="w-5 h-5 rounded-full border-2 border-muted flex items-center justify-center mt-1 flex-shrink-0">
+<span class="style-dot w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-espresso mb-1">Guided reflective prompts</div>
+<p class="font-body-sm text-body-sm text-muted">Gentle questions to unpack specific life chapters, thoughts, and reflections.</p>
+</div>
+</div>
+<div class="style-option p-space-lg rounded-2xl bg-oat/40 hover:bg-oat/70 border border-border text-ink cursor-pointer transition-all flex items-start gap-space-md" onclick="selectStyle(this, 'Grounding &amp; breathing')">
+<div class="w-5 h-5 rounded-full border-2 border-muted flex items-center justify-center mt-1 flex-shrink-0">
+<span class="style-dot w-2.5 h-2.5 rounded-full bg-transparent"></span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-espresso mb-1">Grounding &amp; pause exercises</div>
+<p class="font-body-sm text-body-sm text-muted">Tactile somatic checks, short breathing spaces, and silent anchors.</p>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-md">
+<button class="font-label-md text-label-md text-muted hover:text-espresso transition-colors flex items-center gap-1 cursor-pointer" onclick="goToStage(5)">
+<span class="material-symbols-outlined text-body-md">arrow_back</span>
+<span>Back</span>
+</button>
+<button class="px-8 py-3.5 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-sm cursor-pointer" onclick="goToStage(7)">
+          Continue
+        </button>
+</div>
+</div>
+<!-- STAGE 7: Transition into Sanctuary -->
+<div class="stage-panel hidden opacity-0 translate-y-4 transition-all duration-700 ease-out flex flex-col items-center text-center" id="stage-7">
+<!-- Quiet Waveform Emblem -->
+<div class="w-16 h-16 rounded-full bg-oat/90 backdrop-blur-md flex items-center justify-center text-espresso mb-space-lg shadow-sm border border-border/40">
+<svg class="w-8 h-8 text-espresso" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" viewBox="0 0 24 24">
+<path d="M4 12h1M7 10v4M10 7v10M13 5v14M16 8v8M19 11v2M22 12h-1"></path>
+</svg>
+</div>
+<h2 class="font-display-lg text-display-lg text-espresso mb-space-md max-w-xl" id="final-greeting">
+        Your sanctuary is ready.
+      </h2>
+<p class="font-body-lg text-body-lg text-ink leading-relaxed max-w-lg mb-space-sm" id="final-summary">
+        Thank you for sharing your thoughts.
+      </p>
+<p class="font-body-md text-body-md text-muted max-w-md mb-space-2xl">
+        This private room remains yours alone. No evaluations, no scoring—only calm presence whenever you choose to return.
+      </p>
+<div class="flex flex-col items-center gap-space-md">
+<a class="px-10 py-4 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-md flex items-center gap-space-sm group" data-path="enter-sanctuary" href="#">
+<span>Enter your personal space</span>
+<span class="material-symbols-outlined text-body-lg transition-transform duration-300 group-hover:translate-x-1">east</span>
+</a>
+<button class="font-label-sm text-label-sm text-muted hover:text-espresso transition-colors pt-space-xs cursor-pointer" onclick="goToStage(6)">
+          Review preferences
+        </button>
+</div>
+</div>
+</div>
+<!-- Ambient Sanctuary Philosophy Notice -->
+<div class="w-full max-w-2xl mx-auto py-space-md text-center">
+<div class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-low/70 backdrop-blur-sm text-muted font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-body-sm text-caramel">lock</span>
+<span>Mythri is a private, encrypted conversational companion · Non-diagnostic &amp; judgment-free</span>
+</div>
+</div>
+</div>
+<script>
+  // Sanctuary State Store
+  const userProfile = {
+    name: '',
+    reason: '',
+    feelings: [],
+    customFeeling: '',
+    supports: [],
+    style: 'Unstructured conversation'
+  };
+
+  const stageTitles = {
+    1: 'Welcome',
+    2: 'Getting acquainted',
+    3: 'Your current season',
+    4: 'Heart & mind check',
+    5: 'Support pathways',
+    6: 'Interaction rhythm',
+    7: 'Entering sanctuary'
+  };
+
+  let currentStage = 1;
+
+  function updateProgress() {
+    const counter = document.getElementById('step-counter');
+    if (counter) {
+      counter.textContent = `Stage ${currentStage} of 7 · ${stageTitles[currentStage]}`;
+    }
+
+    const dots = document.querySelectorAll('.dot-indicator');
+    dots.forEach((dot, idx) => {
+      const stepIdx = idx + 1;
+      if (stepIdx === currentStage) {
+        dot.className = 'dot-indicator h-1.5 w-6 rounded-full bg-espresso transition-all duration-300';
+      } else if (stepIdx < currentStage) {
+        dot.className = 'dot-indicator h-1.5 w-2 rounded-full bg-caramel transition-all duration-300';
+      } else {
+        dot.className = 'dot-indicator h-1.5 w-2 rounded-full bg-border transition-all duration-300';
+      }
+    });
+
+    // Update personalized strings on Stage 3 and Stage 7
+    const displayName = userProfile.name.trim() || 'friend';
+    const reasonTitle = document.getElementById('reason-title');
+    if (reasonTitle) {
+      reasonTitle.textContent = `Nice to meet you, ${displayName}. What brought you here today?`;
+    }
+
+    const finalGreeting = document.getElementById('final-greeting');
+    if (finalGreeting) {
+      finalGreeting.textContent = userProfile.name.trim() 
+        ? `Your sanctuary is ready, ${userProfile.name.trim()}.` 
+        : `Your sanctuary is ready.`;
+    }
+
+    const finalSummary = document.getElementById('final-summary');
+    if (finalSummary) {
+      if (userProfile.feelings.length > 0) {
+        finalSummary.textContent = `Holding space for your thoughts, especially through feeling ${userProfile.feelings.slice(0, 2).join(' & ').toLowerCase()}.`;
+      } else {
+        finalSummary.textContent = `Thank you for sharing. Step in whenever you are ready.`;
+      }
+    }
+  }
+
+  function goToStage(stageNum) {
+    if (stageNum < 1 || stageNum > 7) return;
+
+    // Save inputs from current stage if any
+    if (currentStage === 2) {
+      const nameInput = document.getElementById('input-name');
+      if (nameInput) userProfile.name = nameInput.value.trim();
+    } else if (currentStage === 3) {
+      const reasonInput = document.getElementById('input-reason');
+      if (reasonInput) userProfile.reason = reasonInput.value.trim();
+    } else if (currentStage === 4) {
+      const customFeel = document.getElementById('feeling-custom-input');
+      if (customFeel && customFeel.value.trim()) {
+        userProfile.customFeeling = customFeel.value.trim();
+        if (!userProfile.feelings.includes(userProfile.customFeeling)) {
+          userProfile.feelings.push(userProfile.customFeeling);
+        }
+      }
+    }
+
+    const currentEl = document.getElementById(`stage-${currentStage}`);
+    const nextEl = document.getElementById(`stage-${stageNum}`);
+
+    if (currentEl && nextEl) {
+      currentEl.classList.add('opacity-0', 'translate-y-4');
+      currentEl.classList.remove('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        currentEl.classList.add('hidden');
+        nextEl.classList.remove('hidden');
+        
+        requestAnimationFrame(() => {
+          nextEl.classList.remove('opacity-0', 'translate-y-4');
+          nextEl.classList.add('opacity-100', 'translate-y-0');
+        });
+
+        currentStage = stageNum;
+        updateProgress();
+
+        // Focus first input if any
+        if (stageNum === 2) {
+          const inp = document.getElementById('input-name');
+          if (inp) inp.focus();
+        }
+      }, 250);
+    }
+  }
+
+  function skipName() {
+    userProfile.name = '';
+    const inp = document.getElementById('input-name');
+    if (inp) inp.value = '';
+    goToStage(3);
+  }
+
+  function selectReasonChip(text, btn) {
+    const area = document.getElementById('input-reason');
+    if (!area) return;
+    
+    // Toggle chip selection aesthetic
+    const allChips = document.querySelectorAll('.reason-chip');
+    allChips.forEach(c => {
+      c.classList.remove('bg-espresso', 'text-ivory');
+      c.classList.add('bg-oat/90', 'text-muted');
+    });
+
+    btn.classList.remove('bg-oat/90', 'text-muted');
+    btn.classList.add('bg-espresso', 'text-ivory');
+
+    area.value = text;
+    userProfile.reason = text;
+  }
+
+  function toggleFeeling(button, feeling) {
+    const idx = userProfile.feelings.indexOf(feeling);
+    if (idx > -1) {
+      userProfile.feelings.splice(idx, 1);
+      button.classList.remove('bg-espresso', 'text-ivory', 'border-espresso');
+      button.classList.add('bg-oat/70', 'text-ink', 'border-border');
+      button.querySelector('.material-symbols-outlined').classList.remove('text-ivory');
+      button.querySelector('.material-symbols-outlined').classList.add('text-muted');
+    } else {
+      userProfile.feelings.push(feeling);
+      button.classList.remove('bg-oat/70', 'text-ink', 'border-border');
+      button.classList.add('bg-espresso', 'text-ivory', 'border-espresso');
+      button.querySelector('.material-symbols-outlined').classList.remove('text-muted');
+      button.querySelector('.material-symbols-outlined').classList.add('text-ivory');
+    }
+  }
+
+  function toggleFeelingOther(button) {
+    const customContainer = document.getElementById('feeling-custom-container');
+    if (!customContainer) return;
+
+    if (customContainer.classList.contains('hidden')) {
+      customContainer.classList.remove('hidden');
+      button.classList.remove('bg-oat/70', 'text-ink', 'border-border');
+      button.classList.add('bg-espresso', 'text-ivory', 'border-espresso');
+      button.querySelector('.material-symbols-outlined').classList.remove('text-muted');
+      button.querySelector('.material-symbols-outlined').classList.add('text-ivory');
+      const input = document.getElementById('feeling-custom-input');
+      if (input) input.focus();
+    } else {
+      customContainer.classList.add('hidden');
+      button.classList.remove('bg-espresso', 'text-ivory', 'border-espresso');
+      button.classList.add('bg-oat/70', 'text-ink', 'border-border');
+      button.querySelector('.material-symbols-outlined').classList.remove('text-ivory');
+      button.querySelector('.material-symbols-outlined').classList.add('text-muted');
+    }
+  }
+
+  function toggleSupportSelection(checkbox) {
+    const val = checkbox.value;
+    const parentLabel = checkbox.closest('label');
+    if (checkbox.checked) {
+      if (!userProfile.supports.includes(val)) userProfile.supports.push(val);
+      if (parentLabel) {
+        parentLabel.classList.add('border-espresso', 'bg-oat');
+        parentLabel.classList.remove('bg-oat/60');
+      }
+    } else {
+      const i = userProfile.supports.indexOf(val);
+      if (i > -1) userProfile.supports.splice(i, 1);
+      if (parentLabel) {
+        parentLabel.classList.remove('border-espresso', 'bg-oat');
+        parentLabel.classList.add('bg-oat/60');
+      }
+    }
+  }
+
+  function selectStyle(element, styleName) {
+    userProfile.style = styleName;
+    const allOptions = document.querySelectorAll('.style-option');
+    allOptions.forEach(opt => {
+      opt.classList.remove('border-espresso', 'ring-1', 'ring-espresso', 'bg-oat/70');
+      opt.classList.add('border-border', 'bg-oat/40');
+      const dot = opt.querySelector('.style-dot');
+      if (dot) dot.classList.replace('bg-espresso', 'bg-transparent');
+      const circle = opt.querySelector('.rounded-full');
+      if (circle) circle.classList.replace('border-espresso', 'border-muted');
+    });
+
+    element.classList.remove('border-border', 'bg-oat/40');
+    element.classList.add('border-espresso', 'ring-1', 'ring-espresso', 'bg-oat/70');
+    const dot = element.querySelector('.style-dot');
+    if (dot) dot.classList.replace('bg-transparent', 'bg-espresso');
+    const circle = element.querySelector('.rounded-full');
+    if (circle) circle.classList.replace('border-muted', 'border-espresso');
+  }
+
+  // Initialize view
+  updateProgress();
+</script></main><footer class="w-full py-space-lg px-margin-mobile md:px-margin text-center"><a class="font-body-sm text-body-sm text-muted hover:text-secondary transition-colors inline-flex items-center gap-space-xs" data-path="crisis-support" href="#"><span>In need of immediate care?</span><span class="underline font-label-sm text-label-sm">Access 24/7 Crisis Support Resources</span></a></footer></body></html>

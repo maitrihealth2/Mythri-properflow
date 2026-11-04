@@ -1,0 +1,653 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_blank" name="shell-type">
+<title>Mythri · Conversational Sanctuary</title>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-dim": "#dcdad4",
+            "on-secondary-fixed-variant": "#623e2e",
+            "on-background": "#1c1c18",
+            "secondary-container": "#fdc9b3",
+            "surface-tint": "#705a4f",
+            "secondary-fixed-dim": "#eebba6",
+            "on-secondary-fixed": "#2f1407",
+            "on-surface": "#1c1c18",
+            "on-primary-container": "#b99f93",
+            "on-primary-fixed-variant": "#574239",
+            "on-tertiary-fixed": "#281805",
+            "on-error-container": "#93000a",
+            "on-primary-fixed": "#271810",
+            "surface-container-high": "#ebe8e2",
+            "oat": "#F1E6D7",
+            "secondary": "#7c5544",
+            "on-surface-variant": "#4f4540",
+            "on-secondary-container": "#795241",
+            "primary-fixed": "#fbdccf",
+            "tertiary-container": "#4a3720",
+            "on-tertiary-fixed-variant": "#57432c",
+            "inverse-surface": "#31312d",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#f0eee8",
+            "surface": "#fcf9f3",
+            "tertiary-fixed": "#fcddbd",
+            "ivory": "#FBF8F2",
+            "on-tertiary": "#ffffff",
+            "outline": "#81756f",
+            "border": "#E3D8CC",
+            "error": "#ba1a1a",
+            "ink": "#2C2724",
+            "outline-variant": "#d3c3bd",
+            "error-container": "#ffdad6",
+            "mocha": "#8B6250",
+            "primary": "#322119",
+            "tertiary-fixed-dim": "#dfc2a3",
+            "inverse-on-surface": "#f3f0ea",
+            "espresso": "#49362D",
+            "on-error": "#ffffff",
+            "inverse-primary": "#ddc1b4",
+            "surface-container-low": "#f6f3ed",
+            "tertiary": "#32220d",
+            "primary-container": "#49362d",
+            "on-secondary": "#ffffff",
+            "surface-variant": "#e5e2dc",
+            "surface-container-highest": "#e5e2dc",
+            "secondary-fixed": "#ffdbcd",
+            "background": "#fcf9f3",
+            "on-tertiary-container": "#bba083",
+            "muted": "#756A62",
+            "primary-fixed-dim": "#ddc1b4",
+            "surface-bright": "#fcf9f3",
+            "on-primary": "#ffffff",
+            "caramel": "#CBAF91"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "gutter": "1.5rem",
+            "space-3xl": "4rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "margin": "4rem",
+            "space-2xl": "3rem",
+            "space-xl": "2rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1.25rem"
+          },
+          fontFamily: {
+            "label-md": ["Literata", "serif"],
+            "label-sm": ["Literata", "serif"],
+            "body-md": ["Literata", "serif"],
+            "headline-md": ["Literata", "serif"],
+            "display-lg": ["Literata", "serif"],
+            "headline-sm": ["Literata", "serif"],
+            "body-lg": ["Literata", "serif"],
+            "body-sm": ["Literata", "serif"],
+            "headline-lg-mobile": ["Literata", "serif"],
+            "headline-lg": ["Literata", "serif"],
+            "display-lg-mobile": ["Literata", "serif"]
+          },
+          fontSize: {
+            "label-md": ["14px", { lineHeight: "1.2", fontWeight: "500" }],
+            "label-sm": ["12px", { lineHeight: "1.2", fontWeight: "500" }],
+            "body-md": ["16px", { lineHeight: "1.7", fontWeight: "400" }],
+            "headline-md": ["24px", { lineHeight: "1.4", fontWeight: "500" }],
+            "display-lg": ["48px", { lineHeight: "1.2", fontWeight: "500" }],
+            "headline-sm": ["20px", { lineHeight: "1.4", fontWeight: "500" }],
+            "body-lg": ["18px", { lineHeight: "1.7", fontWeight: "400" }],
+            "body-sm": ["14px", { lineHeight: "1.6", fontWeight: "400" }],
+            "headline-lg": ["32px", { lineHeight: "1.3", fontWeight: "500" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Ambient Fade-in animations */
+    @keyframes gentleFadeIn {
+      0% { opacity: 0; transform: translateY(14px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes softPulse {
+      0%, 100% { opacity: 0.6; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+    @keyframes buttonReveal {
+      0% { opacity: 0; transform: translateY(18px); }
+      60% { opacity: 0.3; }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-gentle-fade {
+      animation: gentleFadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-btn-reveal {
+      animation: buttonReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+      opacity: 0;
+    }
+    .ambient-glow {
+      animation: softPulse 6s ease-in-out infinite;
+    }
+
+    /* Message bubble styling */
+    .chat-bubble-mythri {
+      animation: gentleFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .chat-bubble-user {
+      animation: gentleFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-background font-body-md text-ink antialiased min-h-screen flex flex-col justify-between selection:bg-secondary-container selection:text-on-secondary-fixed relative overflow-hidden">
+<!-- ========================================================
+       BACKGROUND & ARCHITECTURAL ATMOSPHERE
+       Fully visible natural sanctuary image with subtle soft scrim
+       ======================================================== -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<!-- Architectural Golden Hour Sanctuary Background -->
+<img alt="Sculptural Sanctuary at Golden Hour" class="w-full h-full object-cover object-center filter saturate-[1.05] brightness-[1.02] transform scale-100 transition-all duration-1000 ease-out" id="bg-sanctuary" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBulUIRCRjPNvnHrTUHRX2R66DgmluPxf9DPWgR5M5-_QmQ3HarlrvVuIHo-ZvuJwjG9vQ-8Gjxrxs5Dj_k-hDoKYyWHhbNIjGMyhMebnYD2dq85_qUIoCIsGMUz1KpLkOBebAyc4i3XCUddyijRb6u_IS_ubjvBg0QDfgt6TKCKkCvCgU_H64j3YMDcDWqsRvU_-rTgyKd6PcqZoffn_HXqApDqWL5qe-dbxqdEyP6T6kTbPNTWVvbSclNbEXZG3I-p7o">
+<!-- Delicate, subtle atmospheric scrim (preserves warmth and architectural lines while ensuring readability) -->
+<div class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-background/50 backdrop-blur-[0.5px]"></div>
+<div class="absolute inset-0 bg-radial-gradient from-transparent via-background/20 to-background/60"></div>
+</div>
+<!-- ========================================================
+       HEADER NAVIGATION
+       ======================================================== -->
+<header class="w-full py-space-md md:py-space-lg px-margin-mobile md:px-margin flex items-center justify-between z-20 transition-all duration-500">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-espresso font-medium tracking-tight">MYTHRI</span>
+<span class="text-espresso/40">·</span>
+<span class="font-body-sm text-espresso/70 hidden sm:inline">Conversational Sanctuary</span>
+</div>
+<div class="flex items-center gap-space-md">
+<!-- Replay / Reset Option -->
+<button class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-background/50 hover:bg-background/80 backdrop-blur-md text-espresso/70 hover:text-espresso text-label-sm font-label-sm transition-all border border-espresso/10" onclick="resetToWelcome()" title="Start over">
+<span class="material-symbols-outlined text-sm">refresh</span>
+<span class="hidden sm:inline">Restart</span>
+</button>
+<!-- Sanctuary Status Pill -->
+<div class="flex items-center gap-space-xs px-space-md py-1 rounded-full bg-background/50 backdrop-blur-md border border-espresso/10" id="sanctuary-status-pill">
+<span class="w-2 h-2 rounded-full bg-caramel ambient-glow"></span>
+<span class="font-label-sm text-label-sm text-espresso/80" id="header-stage-label">Welcome</span>
+</div>
+<a class="font-label-sm text-label-sm text-espresso/70 hover:text-espresso transition-colors" data-path="pause-and-exit" href="#">
+        Pause &amp; exit
+      </a>
+</div>
+</header>
+<!-- ========================================================
+       MAIN INTERACTIVE VIEWPORT
+       ======================================================== -->
+<main class="w-full flex-grow flex flex-col items-center justify-center px-margin-mobile md:px-margin relative z-10 max-w-4xl mx-auto w-full">
+<!-- ======================================================
+         VIEW 1: WELCOME HERO (Initial state)
+         ====================================================== -->
+<div class="w-full max-w-xl mx-auto flex flex-col items-center text-center py-space-xl transition-all duration-700 ease-out" id="welcome-hero">
+<!-- Quiet Lotus / Sanctuary Glyph -->
+<div class="w-14 h-14 rounded-full bg-background/70 backdrop-blur-md border border-espresso/15 flex items-center justify-center text-espresso mb-space-lg shadow-sm">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+<!-- Welcome Typography -->
+<h1 class="font-display-lg text-4xl sm:text-5xl md:text-display-lg text-espresso tracking-tight leading-tight mb-space-sm font-normal">
+        Welcome to MYTHRI
+      </h1>
+<p class="font-body-lg text-lg sm:text-xl text-espresso/85 leading-relaxed max-w-md mb-space-xs font-normal">
+        A quiet harbor for your thoughts.
+      </p>
+<p class="font-body-md text-espresso/70 max-w-sm mb-space-2xl leading-relaxed text-sm sm:text-base">
+        An unhurried space to breathe, reflect, and share only what feels comfortable.
+      </p>
+<!-- Gracefully animated Begin button -->
+<div class="animate-btn-reveal w-full flex justify-center">
+<button class="px-9 py-3.5 rounded-full bg-espresso text-ivory font-label-md text-label-md hover:bg-mocha transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-space-sm group cursor-pointer border border-espresso/20" id="btn-begin" onclick="beginConversationalFlow()">
+<span>Begin</span>
+<span class="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- ======================================================
+         VIEW 2: STREAM-OF-THOUGHT CONVERSATIONAL CHAT INTERFACE
+         ====================================================== -->
+<div class="hidden opacity-0 w-full max-w-2xl flex-grow flex flex-col justify-between transition-all duration-700 ease-out h-[calc(100vh-190px)] min-h-[520px]" id="chat-interface">
+<!-- Conversation Scroll Canvas (Containerless, Open Sanctuary style) -->
+<div class="flex-grow overflow-y-auto space-y-6 pr-2 py-space-md scroll-smooth" id="chat-messages">
+<!-- Messages will be injected dynamically here -->
+</div>
+<!-- Live Interactive Chips / Quick-Prompt Area (Contextual to current step) -->
+<div class="w-full pt-2 pb-3 transition-all duration-300" id="prompt-chips-container">
+<!-- Injected options depending on flow step -->
+</div>
+<!-- Stream-of-Thought Containerless Input Composer -->
+<div class="w-full pt-1 pb-2">
+<form class="relative flex items-center gap-2 bg-background/75 backdrop-blur-md border border-espresso/20 rounded-full px-4 py-2.5 shadow-sm transition-all focus-within:border-espresso/50 focus-within:bg-background/90 focus-within:shadow" id="chat-form" onsubmit="handleUserSubmit(event)">
+<input autocomplete="off" class="flex-grow bg-transparent border-0 outline-none focus:ring-0 text-ink font-body-md text-base placeholder:text-espresso/45 py-1 px-1" id="chat-input" placeholder="Type your reflection or thoughts here..." type="text">
+<!-- Skip button if applicable -->
+<button class="text-xs font-label-sm text-espresso/60 hover:text-espresso px-2 py-1 transition-colors rounded-full" id="btn-skip-step" onclick="handleSkipStep()" type="button">
+            Skip for now
+          </button>
+<!-- Voice Mic Indicator (Ambient decorative/interactive) -->
+<button class="p-1.5 rounded-full text-espresso/60 hover:text-espresso transition-colors flex items-center justify-center hover:bg-espresso/5" id="btn-voice-toggle" onclick="toggleVoiceMic()" title="Voice reflection mode" type="button">
+<span class="material-symbols-outlined text-xl">mic</span>
+</button>
+<!-- Submit arrow button -->
+<button class="w-9 h-9 rounded-full bg-espresso text-ivory flex items-center justify-center hover:bg-mocha transition-all duration-200 shadow-sm flex-shrink-0" id="btn-send-message" type="submit">
+<span class="material-symbols-outlined text-lg">arrow_upward</span>
+</button>
+</form>
+</div>
+</div>
+</main>
+<!-- ========================================================
+       FOOTER
+       ======================================================== -->
+<footer class="w-full py-space-sm md:py-space-md px-margin-mobile md:px-margin text-center z-20">
+<div class="flex flex-col sm:flex-row items-center justify-center gap-x-4 gap-y-1 text-espresso/70 text-xs sm:text-body-sm">
+<span class="inline-flex items-center gap-1 font-label-sm text-xs text-espresso/60">
+<span class="material-symbols-outlined text-sm text-caramel">lock</span>
+<span>Private &amp; encrypted · Non-diagnostic companion</span>
+</span>
+<span class="hidden sm:inline text-espresso/30">·</span>
+<a class="hover:text-espresso transition-colors underline underline-offset-2 font-label-sm text-xs text-espresso/70" data-path="crisis-support" href="#">
+        Access 24/7 Crisis Support Resources
+      </a>
+</div>
+</footer>
+<!-- ========================================================
+       CONVERSATIONAL STATE MACHINE JAVASCRIPT
+       ======================================================== -->
+<script>
+    // State storage for user dialogue
+    const flowState = {
+      step: 0, // 0: Welcome, 1: Name, 2: Reason, 3: Heart/Mind, 4: Support, 5: Ready
+      userName: '',
+      reason: '',
+      feeling: '',
+      supportType: '',
+      isTyping: false
+    };
+
+    const welcomeHeroEl = document.getElementById('welcome-hero');
+    const chatInterfaceEl = document.getElementById('chat-interface');
+    const chatMessagesEl = document.getElementById('chat-messages');
+    const chatInputEl = document.getElementById('chat-input');
+    const promptChipsContainer = document.getElementById('prompt-chips-container');
+    const headerStageLabel = document.getElementById('header-stage-label');
+    const btnSkipStep = document.getElementById('btn-skip-step');
+
+    // Transitions from Welcome Hero into Conversational Chat
+    function beginConversationalFlow() {
+      welcomeHeroEl.classList.add('opacity-0', '-translate-y-4');
+      setTimeout(() => {
+        welcomeHeroEl.classList.add('hidden');
+        chatInterfaceEl.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          chatInterfaceEl.classList.remove('opacity-0');
+          chatInterfaceEl.classList.add('opacity-100');
+        });
+        startStep1Name();
+      }, 500);
+    }
+
+    // Reset back to welcome state
+    function resetToWelcome() {
+      flowState.step = 0;
+      flowState.userName = '';
+      flowState.reason = '';
+      flowState.feeling = '';
+      flowState.supportType = '';
+      chatMessagesEl.innerHTML = '';
+      promptChipsContainer.innerHTML = '';
+      chatInputEl.value = '';
+      headerStageLabel.textContent = 'Welcome';
+
+      chatInterfaceEl.classList.add('opacity-0');
+      setTimeout(() => {
+        chatInterfaceEl.classList.add('hidden');
+        welcomeHeroEl.classList.remove('hidden', 'opacity-0', '-translate-y-4');
+      }, 400);
+    }
+
+    // Helper: append companion message with typing delay
+    function appendMythriMessage(text, optionsHtml = null, callback = null) {
+      flowState.isTyping = true;
+      
+      // Temporary typing indicator
+      const typingId = 'typing-' + Date.now();
+      const typingEl = document.createElement('div');
+      typingEl.id = typingId;
+      typingEl.className = 'flex items-start gap-3 chat-bubble-mythri';
+      typingEl.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-background/80 backdrop-blur-md border border-espresso/20 flex items-center justify-center text-espresso flex-shrink-0 shadow-xs">
+          <span class="material-symbols-outlined text-base">spa</span>
+        </div>
+        <div class="py-2 px-3 text-espresso/60 flex items-center gap-1.5 font-body-sm text-sm italic">
+          <span>Mythri is listening</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-caramel animate-ping"></span>
+        </div>
+      `;
+      chatMessagesEl.appendChild(typingEl);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+      setTimeout(() => {
+        const typingItem = document.getElementById(typingId);
+        if (typingItem) typingItem.remove();
+
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'flex items-start gap-3 chat-bubble-mythri';
+        msgDiv.innerHTML = `
+          <div class="w-8 h-8 rounded-full bg-background/80 backdrop-blur-md border border-espresso/20 flex items-center justify-center text-espresso flex-shrink-0 shadow-xs mt-0.5">
+            <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">spa</span>
+          </div>
+          <div class="flex flex-col space-y-1.5 max-w-xl">
+            <div class="text-espresso font-label-sm text-xs font-medium tracking-wide">Mythri</div>
+            <div class="text-ink font-body-lg text-base sm:text-[17px] leading-relaxed">
+              ${text}
+            </div>
+            ${optionsHtml ? `<div class="pt-2">${optionsHtml}</div>` : ''}
+          </div>
+        `;
+        chatMessagesEl.appendChild(msgDiv);
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        flowState.isTyping = false;
+        if (callback) callback();
+      }, 650);
+    }
+
+    // Helper: append user message
+    function appendUserMessage(text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'flex items-end justify-end chat-bubble-user';
+      msgDiv.innerHTML = `
+        <div class="bg-oat/90 backdrop-blur-md text-espresso border border-espresso/15 rounded-2xl rounded-br-xs px-4 py-2.5 max-w-md font-body-md text-base leading-relaxed shadow-xs">
+          ${escapeHtml(text)}
+        </div>
+      `;
+      chatMessagesEl.appendChild(msgDiv);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    // ----------------------------------------------------
+    // STEP 1: Name or Nickname
+    // ----------------------------------------------------
+    function startStep1Name() {
+      flowState.step = 1;
+      headerStageLabel.textContent = '1 of 5 · Introduction';
+      btnSkipStep.classList.remove('hidden');
+      chatInputEl.placeholder = "Your name or preferred nickname...";
+      chatInputEl.focus();
+
+      appendMythriMessage(
+        "Peace to you. I'm glad you came in.<br>To make this space feel familiar, <strong>what would you like me to call you?</strong>"
+      );
+
+      promptChipsContainer.innerHTML = `
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <span class="text-espresso/60 text-xs font-label-sm">Quick choice:</span>
+          <button type="button" onclick="submitName('A gentle soul')" class="px-3 py-1 rounded-full bg-background/60 hover:bg-background border border-espresso/15 text-espresso transition-all">
+            "A gentle soul"
+          </button>
+          <button type="button" onclick="submitName('Friend')" class="px-3 py-1 rounded-full bg-background/60 hover:bg-background border border-espresso/15 text-espresso transition-all">
+            "Friend"
+          </button>
+          <button type="button" onclick="handleSkipStep()" class="px-3 py-1 rounded-full bg-background/60 hover:bg-background border border-espresso/15 text-espresso/70 transition-all">
+            Keep it anonymous
+          </button>
+        </div>
+      `;
+    }
+
+    function submitName(nameVal) {
+      flowState.userName = nameVal.trim() || 'Friend';
+      appendUserMessage(nameVal);
+      promptChipsContainer.innerHTML = '';
+      setTimeout(() => {
+        startStep2Reason();
+      }, 400);
+    }
+
+    // ----------------------------------------------------
+    // STEP 2: Reason for visiting
+    // ----------------------------------------------------
+    function startStep2Reason() {
+      flowState.step = 2;
+      headerStageLabel.textContent = '2 of 5 · Current Season';
+      btnSkipStep.classList.remove('hidden');
+      chatInputEl.placeholder = "Write freely, or tap a thought below...";
+      chatInputEl.focus();
+
+      const nameGreeting = flowState.userName && flowState.userName !== 'Friend' 
+        ? `It's good to meet you, ${flowState.userName}.` 
+        : `It's good to meet you.`;
+
+      appendMythriMessage(
+        `${nameGreeting} What brought you to this quiet sanctuary today?`
+      );
+
+      // Prompt pills
+      promptChipsContainer.innerHTML = `
+        <div class="flex flex-wrap items-center gap-2 pt-1">
+          <button type="button" onclick="selectReasonChip('Carrying a lot lately')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            Carrying a lot lately
+          </button>
+          <button type="button" onclick="selectReasonChip('Work & life pressure')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            Work & life pressure
+          </button>
+          <button type="button" onclick="selectReasonChip('Need a quiet pause')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            Need a quiet pause
+          </button>
+          <button type="button" onclick="selectReasonChip('Navigating a transition')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            Navigating a transition
+          </button>
+        </div>
+      `;
+    }
+
+    function selectReasonChip(text) {
+      chatInputEl.value = text;
+      chatInputEl.focus();
+    }
+
+    // ----------------------------------------------------
+    // STEP 3: How they feel
+    // ----------------------------------------------------
+    function startStep3Feelings() {
+      flowState.step = 3;
+      headerStageLabel.textContent = '3 of 5 · State of Mind';
+      btnSkipStep.classList.remove('hidden');
+      chatInputEl.placeholder = "Describe how you're feeling, or choose a spark...";
+      chatInputEl.focus();
+
+      appendMythriMessage(
+        "I hear you. Emotions constantly rise and fall like tides.<br><strong>How does your mind and body feel right now?</strong>"
+      );
+
+      promptChipsContainer.innerHTML = `
+        <div class="flex flex-wrap items-center gap-2 pt-1">
+          <button type="button" onclick="selectFeeling('Restless & overstimulated')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            Restless &amp; overstimulated
+          </button>
+          <button type="button" onclick="selectFeeling('A little exhausted')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            A little exhausted
+          </button>
+          <button type="button" onclick="selectFeeling('Gentle & quiet')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            Gentle &amp; quiet
+          </button>
+          <button type="button" onclick="selectFeeling('Searching for clarity')" class="px-3.5 py-1.5 rounded-full bg-background/70 hover:bg-espresso hover:text-ivory border border-espresso/20 text-espresso text-xs font-body-sm transition-all shadow-xs">
+            Searching for clarity
+          </button>
+        </div>
+      `;
+    }
+
+    function selectFeeling(text) {
+      chatInputEl.value = text;
+      chatInputEl.focus();
+    }
+
+    // ----------------------------------------------------
+    // STEP 4: Support style
+    // ----------------------------------------------------
+    function startStep4Support() {
+      flowState.step = 4;
+      headerStageLabel.textContent = '4 of 5 · Support Rhythm';
+      btnSkipStep.classList.remove('hidden');
+      chatInputEl.placeholder = "Choose one of the support pathways above...";
+
+      const optionsHtml = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-2">
+          <button type="button" onclick="selectSupportPathway('Just listen & talk through')" class="text-left p-3 rounded-xl bg-background/75 hover:bg-background border border-espresso/20 hover:border-espresso transition-all group shadow-xs">
+            <span class="material-symbols-outlined text-espresso block mb-1">hearing</span>
+            <div class="font-label-sm text-xs font-medium text-espresso">Just listen &amp; talk</div>
+            <div class="font-body-sm text-[11px] text-espresso/60 leading-tight mt-0.5">Free conversational flow without unsolicited advice.</div>
+          </button>
+
+          <button type="button" onclick="selectSupportPathway('Gentle grounding reflection')" class="text-left p-3 rounded-xl bg-background/75 hover:bg-background border border-espresso/20 hover:border-espresso transition-all group shadow-xs">
+            <span class="material-symbols-outlined text-espresso block mb-1">self_improvement</span>
+            <div class="font-label-sm text-xs font-medium text-espresso">Gentle grounding</div>
+            <div class="font-body-sm text-[11px] text-espresso/60 leading-tight mt-0.5">Mindful pauses, somatic check-ins, calm breathing.</div>
+          </button>
+
+          <button type="button" onclick="selectSupportPathway('Explore unguided thoughts')" class="text-left p-3 rounded-xl bg-background/75 hover:bg-background border border-espresso/20 hover:border-espresso transition-all group shadow-xs">
+            <span class="material-symbols-outlined text-espresso block mb-1">explore</span>
+            <div class="font-label-sm text-xs font-medium text-espresso">Unguided thoughts</div>
+            <div class="font-body-sm text-[11px] text-espresso/60 leading-tight mt-0.5">Organic journaling space with quiet companion presence.</div>
+          </button>
+        </div>
+      `;
+
+      appendMythriMessage(
+        "Thank you for sharing your headspace with me.<br><strong>What kind of support would feel most comforting right now?</strong>",
+        optionsHtml
+      );
+
+      promptChipsContainer.innerHTML = '';
+    }
+
+    function selectSupportPathway(choice) {
+      flowState.supportType = choice;
+      appendUserMessage(choice);
+      promptChipsContainer.innerHTML = '';
+      setTimeout(() => {
+        startStep5Completion();
+      }, 500);
+    }
+
+    // ----------------------------------------------------
+    // STEP 5: Sanctuary is Ready
+    // ----------------------------------------------------
+    function startStep5Completion() {
+      flowState.step = 5;
+      headerStageLabel.textContent = 'Sanctuary Ready';
+      btnSkipStep.classList.add('hidden');
+      chatInputEl.placeholder = "Your space is open...";
+      chatInputEl.disabled = true;
+
+      const completionHtml = `
+        <div class="mt-4 pt-2 flex flex-col sm:flex-row items-center gap-3">
+          <a href="#" data-path="enter-sanctuary" class="w-full sm:w-auto px-7 py-3 rounded-full bg-espresso text-ivory font-label-md text-sm hover:bg-mocha transition-all duration-300 shadow-md flex items-center justify-center gap-2 group cursor-pointer">
+            <span>Enter your sanctuary</span>
+            <span class="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">east</span>
+          </a>
+          <button type="button" onclick="resetToWelcome()" class="text-xs font-label-sm text-espresso/70 hover:text-espresso transition-colors underline underline-offset-4 py-2">
+            Start reflection anew
+          </button>
+        </div>
+      `;
+
+      const friendlyName = flowState.userName && flowState.userName !== 'Friend' ? `, ${flowState.userName}` : '';
+
+      appendMythriMessage(
+        `Your sanctuary is ready whenever you are${friendlyName}.<br>Take a slow, deep breath. There are no deadlines, evaluations, or expectations here—only gentle presence.`,
+        completionHtml
+      );
+    }
+
+    // Form submission router
+    function handleUserSubmit(e) {
+      e.preventDefault();
+      if (flowState.isTyping) return;
+      const text = chatInputEl.value.trim();
+      if (!text) return;
+
+      appendUserMessage(text);
+      chatInputEl.value = '';
+      promptChipsContainer.innerHTML = '';
+
+      if (flowState.step === 1) {
+        flowState.userName = text;
+        setTimeout(() => startStep2Reason(), 400);
+      } else if (flowState.step === 2) {
+        flowState.reason = text;
+        setTimeout(() => startStep3Feelings(), 400);
+      } else if (flowState.step === 3) {
+        flowState.feeling = text;
+        setTimeout(() => startStep4Support(), 400);
+      } else if (flowState.step === 4) {
+        flowState.supportType = text;
+        setTimeout(() => startStep5Completion(), 400);
+      }
+    }
+
+    // Skip handler
+    function handleSkipStep() {
+      if (flowState.isTyping) return;
+      chatInputEl.value = '';
+      promptChipsContainer.innerHTML = '';
+
+      if (flowState.step === 1) {
+        flowState.userName = 'Friend';
+        appendUserMessage("I'd prefer to skip for now");
+        setTimeout(() => startStep2Reason(), 400);
+      } else if (flowState.step === 2) {
+        flowState.reason = 'Just exploring';
+        appendUserMessage("Let's skip this for now");
+        setTimeout(() => startStep3Feelings(), 400);
+      } else if (flowState.step === 3) {
+        flowState.feeling = 'Holding everything softly';
+        appendUserMessage("Prefer not to say");
+        setTimeout(() => startStep4Support(), 400);
+      } else if (flowState.step === 4) {
+        selectSupportPathway('Just listen & talk through');
+      }
+    }
+
+    function toggleVoiceMic() {
+      const micBtn = document.getElementById('btn-voice-toggle');
+      if (micBtn) {
+        micBtn.classList.toggle('text-espresso');
+        micBtn.classList.toggle('bg-caramel/30');
+      }
+    }
+  </script>
+</body></html>

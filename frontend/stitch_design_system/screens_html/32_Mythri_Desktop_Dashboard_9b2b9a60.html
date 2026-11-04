@@ -1,0 +1,142 @@
+<!DOCTYPE html><html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Mythri - Sanctuary</title>
+<!-- Tailwind CSS v3 CDN with forms and container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Literata & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;1,7..72,400&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Literata', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            sanctuary: {
+              espresso: '#38261d',
+              dark: '#2c1e17',
+              ivory: '#f4ede4',
+              softcard: '#eee5da',
+              border: 'rgba(216, 198, 180, 0.25)',
+              icon: '#bca89a',
+              iconActive: '#ffffff',
+            }
+          },
+          boxShadow: {
+            'card-warm': '0 20px 40px -15px rgba(58, 37, 24, 0.18), 0 0 25px rgba(255, 250, 242, 0.4) inset',
+            'pill-subtle': '0 4px 14px 0 rgba(44, 30, 23, 0.25)',
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Stylesheet for backdrop and fine-tuning -->
+<style data-purpose="custom-styling">
+    .bg-sanctuary-scene {
+      background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBEXr2ojfsoRpxaGKZTrdEtPtBA201U8FoylwlVCszYZ-ozJIMow89c0taFuKwtCbGl7jFj9YxMCW0FuWFRVjUzytYTU4Rtz5XnFg-85Hq3x67wRoo5ZTI022CK5fzXst-rbjBsHxpsH8bnKl-Z_-c1hwGlIaK5Y_xx3ZVxOQLc8KKC56I_8zd7H75Je1hpuVRQ9VGjXz3FwmIuawF10BepDaqXVCAcgvWh_Q-6I9VpuCWjftaBckpvwkOpaLUVquVAzkA');
+      background-size: cover;
+      background-position: center 60%;
+      background-repeat: no-repeat;
+    }
+    
+    /* Gentle ambient blur and glow for companion card */
+    .sanctuary-glass-card {
+      background-color: rgba(243, 236, 226, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 16px 36px -10px rgba(56, 38, 29, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.45) inset;
+    }
+
+    /* Soft transition for interactive elements */
+    .smooth-transition {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  </style>
+</head>
+<body class="h-full w-full m-0 p-0 overflow-hidden font-sans select-none antialiased bg-[#2A1D18]">
+<!-- BEGIN: MainContainer -->
+<!-- Full-bleed background view using pristine architectural snapshot -->
+<div class="relative w-full h-screen bg-sanctuary-scene flex flex-col justify-between overflow-hidden">
+<!-- Subtle vignette and golden hour ambient warmth overlay -->
+<div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/15 via-transparent to-transparent"></div>
+<!-- BEGIN: TopBar -->
+<header class="relative z-30 flex items-center justify-between w-full px-6 pt-6 sm:px-8 sm:pt-7">
+<!-- Brand Logo & Name -->
+<div class="flex items-center space-x-2.5">
+<!-- Brand Sparkle Icon -->
+<svg class="w-6 h-6 text-[#f0e8de]/90 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8L12 0Z"></path></svg>
+<span class="font-serif text-[1.45rem] tracking-wide text-[#f4eee6] font-normal drop-shadow-sm">
+          Mythri
+        </span>
+</div>
+<!-- User Profile Top Right -->
+<div class="flex items-center">
+<button aria-label="User profile settings" class="relative w-9 h-9 rounded-full ring-2 ring-white/50 hover:ring-white transition-all shadow-md overflow-hidden focus:outline-none focus:ring-amber-200" type="button">
+<div class="w-full h-full bg-[#baa696] flex items-center justify-center text-white">
+<!-- Gentle placeholder avatar portrait silhouette -->
+<svg class="w-6 h-6 text-[#4a362a]/70 translate-y-0.5" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"></path>
+</svg>
+</div>
+</button>
+</div>
+</header>
+<!-- END: TopBar -->
+<!-- BEGIN: LeftVerticalNavigation -->
+<!-- Floating minimalist rail on left side below header -->
+<aside aria-label="Main Navigation" class="absolute left-6 sm:left-7 top-24 z-30 flex flex-col items-center space-y-7"><button aria-label="New Session" class="text-white/70 hover:text-white transition-all p-2 rounded-full hover:bg-white/10 focus:outline-none" type="button"><svg class="w-6 h-6 stroke-[2] drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><nav class="flex flex-col items-center space-y-6 pt-2"><a aria-current="page" aria-label="Home" class="text-white hover:text-amber-100 transition-all p-2 rounded-full hover:bg-white/10 relative" href="#"><svg class="w-6 h-6 fill-current drop-shadow-sm" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg></a><a aria-label="Conversations" class="text-white/70 hover:text-white transition-all p-2 rounded-full hover:bg-white/10" href="#"><svg class="w-6 h-6 fill-current drop-shadow-sm" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-6 9H8v-2h6v2zm3-4H7V5h10v2z"></path></svg></a><a aria-label="Meditation and Wellness" class="text-white/70 hover:text-white transition-all p-2 rounded-full hover:bg-white/10" href="#"><svg class="w-6 h-6 fill-current drop-shadow-sm" viewBox="0 0 24 24"><path d="M12 3c-.5 2-2 4.5-4 6 1.8.3 3.4.1 4-1.5.6 1.6 2.2 1.8 4 1.5-2-1.5-3.5-4-4-6zm-6 8c-2 0-4 1.5-4 4 2.5 0 5-1.5 6-3-0.7-.7-1.3-.9-2-1zm12 0c-.7.1-1.3.3-2 1 1 1.5 3.5 3 6 3 0-2.5-2-4-4-4zm-8.8 3.5C7.5 16 5 17 2 17c1.5 2 4.5 3 7.5 2 1-.5 1.5-1.5 1.7-2.5-.7-.4-1.4-1.2-2-2zm9.6 0c-.6.8-1.3 1.6-2 2 .2 1 .7 2 1.7 2.5 3 1 6 0 7.5-2-3 0-5.5-1-7.2-2.5zM12 11c-1.5 2-2.5 4.5-2 7.5 1.2.3 2.8.3 4 0 .5-3-.5-5.5-2-7.5z"></path></svg></a><a aria-label="Account Settings" class="text-white/70 hover:text-white transition-all p-2 rounded-full hover:bg-white/10" href="#"><svg class="w-6 h-6 fill-current drop-shadow-sm" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg></a></nav></aside>
+<!-- END: LeftVerticalNavigation -->
+<!-- BEGIN: CenterLeftGreetingSection -->
+<!-- Serene main heading rendered directly over the warm sandstone architecture -->
+<main class="relative z-20 flex-1 flex flex-col justify-center px-12 sm:px-28 md:px-36 -translate-y-8 select-text">
+<div class="max-w-xl"><h1 class="font-serif text-4xl sm:text-5xl md:text-[3.5rem] font-medium leading-[1.18] tracking-tight drop-shadow-md text-[#FAF6F0]" style="color: rgb(250, 246, 240); text-shadow: rgba(44, 39, 36, 0.4) 0px 2px 10px, rgba(0, 0, 0, 0.25) 0px 4px 20px;">Good evening, Ananya.</h1>
+<p class="mt-4 font-serif text-base sm:text-lg md:text-[1.2rem] font-normal leading-relaxed text-[#F4ECE1]" style="color: rgb(244, 236, 225); text-shadow: rgba(44, 39, 36, 0.4) 0px 2px 10px, rgba(0, 0, 0, 0.25) 0px 4px 20px;">Step into a calmer space. Take your time here.</p></div>
+</main>
+<!-- END: CenterLeftGreetingSection -->
+<!-- BEGIN: BottomCompanionCard -->
+<!-- Elevated conversational prompt card floating gracefully above reflection pool -->
+<div class="relative z-30 px-6 pb-9 sm:px-10 sm:pb-11 flex justify-start">
+<section class="sanctuary-glass-card rounded-[26px] p-5 sm:p-6 w-full max-w-[340px] text-[#3b271e] transition-all hover:shadow-xl" data-purpose="companion-card" style="background: rgba(251, 248, 242, 0.16); backdrop-filter: blur(14px) saturate(140%); border: 1px solid rgba(255, 255, 255, 0.38); box-shadow: rgba(40, 25, 18, 0.15) 0px 20px 35px -10px, rgba(255, 255, 255, 0.5) 0px 1px 1px 0px inset, rgba(255, 255, 255, 0.15) 0px -1px 1px 0px inset;"><!-- Companion Identifier Header -->
+<div class="flex items-center space-x-2.5 mb-2.5">
+  <!-- Sparkle Emblem badge with liquid glass touch -->
+  <div class="w-6 h-6 rounded-full bg-white/70 shadow-sm border border-white/80 flex items-center justify-center text-[#2C2724]" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.4); color: rgb(255, 255, 255);">
+    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8L12 0Z"></path>
+    </svg>
+  </div>
+  <span class="font-sans font-semibold text-[0.95rem] tracking-tight text-[#2C2724]" style="color: rgb(255, 255, 255); text-shadow: rgba(0, 0, 0, 0.4) 0px 1px 4px;">
+    Mythri
+  </span>
+</div>
+<!-- Empathetic invitation copy with crisp contrast -->
+<p class="font-sans text-[0.875rem] leading-[1.48] text-[#38261d] font-normal mb-5 pl-0.5" style="color: rgba(255, 255, 255, 0.95); text-shadow: rgba(0, 0, 0, 0.4) 0px 1px 4px;">
+  I'm here with you. Whenever you're ready, we can talk about what's on your mind.
+</p>
+<!-- Primary Action Pill Button -->
+<button class="w-full flex items-center justify-center space-x-2 py-3 px-5 rounded-full bg-[#271a13] hover:bg-[#1a110c] text-[#fbf8f2] text-[0.84rem] font-medium tracking-wide shadow-pill-subtle smooth-transition focus:outline-none focus:ring-2 focus:ring-[#523b2c] active:scale-[0.98] transition-all duration-200 border border-white/10" type="button">
+  <span class="">Start a conversation</span>
+  <svg class="w-3.5 h-3.5 stroke-[2] transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+</button></section>
+</div>
+<!-- END: BottomCompanionCard -->
+</div>
+<!-- END: MainContainer -->
+
+
+
+
+
+
+
+
+
+
+</body></html>
