@@ -1,15 +1,15 @@
 /**
  * Mythri Sanctuary - Progressive Web App Service Worker
  * Production-ready caching strategy designed for Next.js App Router
+ * Version: v5 (Purges all legacy v1..v4 caches and eliminates chunk reload loops)
  */
 
-const CACHE_VERSION = 'mythri-pwa-v3';
+const CACHE_VERSION = 'mythri-pwa-v5';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
-// Core static assets to precache on install
+// Core static offline assets (NEVER include '/' or HTML pages in precache to prevent serving stale versions)
 const PRECACHE_ASSETS = [
-  '/',
   '/manifest.json',
   '/favicon.ico',
   '/icons/icon-192x192.png',
@@ -38,26 +38,29 @@ const BYPASS_PATTERNS = [
   /\/ws\//i                       // WebSockets
 ];
 
+// Install: precache offline assets and skip waiting immediately
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
       return cache.addAll(PRECACHE_ASSETS).catch((err) => {
         console.warn('[SW] Precache partial error:', err);
       });
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
+// Activate: purge ALL legacy/stale caches from previous versions and claim all open tabs
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames
-          .filter((name) => name.startsWith('mythri-') && name !== STATIC_CACHE && name !== RUNTIME_CACHE)
-          .map((name) => {
-            console.log('[SW] Deleting old cache:', name);
+        cacheNames.map((name) => {
+          if (name !== STATIC_CACHE && name !== RUNTIME_CACHE) {
+            console.log('[SW] Purging outdated cache:', name);
             return caches.delete(name);
-          })
+          }
+        })
       );
     }).then(() => self.clients.claim())
   );
@@ -87,53 +90,56 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 5. HTML Page Navigation: Network-First with Cache fallback
+  // 5. Next.js Static Chunks (/_next/static/*): Let browser HTTP cache handle directly
+  // CRITICAL FIX: NEVER serve stale-while-revalidate for Next.js JS chunks!
+  // Next.js chunks are immutable with content hashes. Stale chunks cause ChunkLoadError reload loops across deploys.
+  if (url.pathname.startsWith('/_next/static/')) {
+    return; // Pass through to native browser cache and network
+  }
+
+  // 6. HTML Page Navigation: Network-First, NEVER fall back to stale '/' HTML
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
+          // Do not cache HTML navigation responses to ensure users always see the latest deployed app version
           return networkResponse;
         })
         .catch(async () => {
+          // If completely offline, try exact match for this specific path only
           const cachedResponse = await caches.match(request);
           if (cachedResponse) {
             return cachedResponse;
           }
-          const rootCached = await caches.match('/');
-          if (rootCached) {
-            return rootCached;
-          }
-          return new Response('Offline - Please check your internet connection.', {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain' }
-          });
+          return new Response(
+            `<!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <title>Offline | Mythri Sanctuary</title>
+                <style>
+                  body { font-family: system-ui, sans-serif; background: #2A1D18; color: #FAF6EE; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 24px; text-align: center; }
+                  .card { background: rgba(255, 255, 255, 0.08); padding: 32px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.15); max-width: 420px; }
+                  h1 { font-family: serif; font-size: 24px; margin-bottom: 12px; }
+                  p { color: #E0D4C8; font-size: 14px; line-height: 1.6; }
+                  button { margin-top: 20px; padding: 10px 24px; border-radius: 9999px; background: #FAF6EE; color: #2A1D18; border: none; font-weight: 600; cursor: pointer; }
+                </style>
+              </head>
+              <body>
+                <div class="card">
+                  <h1>Sanctuary is Paused</h1>
+                  <p>You appear to be offline. Reconnect to the internet to resume your quiet space with Mythri.</p>
+                  <button onclick="window.location.reload()">Retry Connection</button>
+                </div>
+              </body>
+            </html>`,
+            {
+              status: 503,
+              headers: { 'Content-Type': 'text/html; charset=utf-8' }
+            }
+          );
         })
-    );
-    return;
-  }
-
-  // 6. Next.js Static Chunks (/_next/static/*): Stale-While-Revalidate
-  if (url.pathname.startsWith('/_next/static/')) {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(STATIC_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return networkResponse;
-        }).catch(() => null);
-
-        return cachedResponse || fetchPromise;
-      })
     );
     return;
   }
@@ -162,8 +168,7 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/assets/') ||
-    url.pathname.startsWith('/images/') ||
-    url.pathname.startsWith('/landing/')
+    url.pathname.startsWith('/images/')
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
@@ -186,13 +191,10 @@ self.addEventListener('fetch', (event) => {
   // Default: Network with Runtime Cache Fallback
   event.respondWith(
     fetch(request)
-      .then((networkResponse) => {
-        return networkResponse;
-      })
+      .then((networkResponse) => networkResponse)
       .catch(async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
-        // Never return undefined to event.respondWith as it throws TypeError
         return new Response('Network error occurred.', {
           status: 503,
           statusText: 'Service Unavailable',

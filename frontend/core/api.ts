@@ -113,12 +113,12 @@ export async function refreshToken(): Promise<string | null> {
       localStorage.removeItem('mb_language');
       sessionStorage.removeItem('mb_session_id');
 
-      // CRITICAL FIX: NEVER force redirect or reload if user is already on a public page (/, /landing, /login, /waitlist)
+      // Safely redirect to /login without causing hard-reload loops
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;
-        const isPublicPage = path === '/' || path === '/landing' || path === '/login' || path === '/waitlist';
+        const isPublicPage = path === '/' || path === '/landing' || path === '/login' || path === '/waitlist' || path.startsWith('/login');
         if (!isPublicPage) {
-          window.location.href = '/login';
+          window.location.replace('/login');
         }
       }
     }
@@ -261,7 +261,9 @@ export async function logout() {
         const { signOut } = await import('firebase/auth')
         await signOut(auth)
       } catch (_) {}
-      window.location.href = '/login'
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.replace('/login')
+      }
     }
   }
 }

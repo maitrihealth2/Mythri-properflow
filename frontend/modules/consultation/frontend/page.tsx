@@ -969,7 +969,7 @@ export default function ConsultationPage() {
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto py-2 flex flex-col gap-3 hide-scrollbar pr-1"
-          onClick={() => { setMenuOpen(false); setLangMenuOpen(false) }}
+          onClick={() => { setLangMenuOpen(false) }}
         >
           {/* Subtle date harbor marker */}
           <div className="flex justify-center my-1 select-none">
